@@ -157,7 +157,7 @@ def test_build_page_trims_the_sites_until_the_page_fits(tmp_path, monkeypatch):
         "IGV": "../igv/top.html#{value}",
         "IGV desktop": "http://localhost:60151/goto?locus={chromosome}:{position}",
     }
-    assert "The top 1 call of this view has IGV views in igv/top.html" in present.desc
+    assert "\n- The top 1 call of this view has IGV views in `igv/top.html`" in present.desc
     assert "1 of the 6 requested calls fit the size limit of 10 MB" in summary.table.desc
 
     site = tmp_path / "site"

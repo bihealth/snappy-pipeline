@@ -38,14 +38,16 @@ from snappy_wrappers.tools.qc_summary import (
 from .vcf import Record, Vcf
 
 #: What the table's description says about the varlociraptor columns
-DESCRIPTION = (
-    "`P(...)` columns are the posterior probabilities of the events of the scenario (red for "
-    "artifact and absent). Per sample: the allele frequency with its posterior density "
-    "(relative to the cell's maximum), the depth, the genotype, the observations (bars per "
-    "strength of evidence: reads for the alternative allele to the right, for the reference or "
-    "another allele to the left; pale bars from reads with uncertain mapping) and the biases "
-    "varlociraptor found. The details hold the hints. "
-)
+COLUMN_NOTES = [
+    "`event`: the most probable event of the call; `P(...)`: the posterior probability of "
+    "every event of the scenario, artifact and absent on the red ramp.",
+    "Per sample: `AF` (allele frequency), `DP` (depth) and `GT` (genotype).",
+    "Row details, per sample: the observations as bars per strength of evidence, reads for the "
+    "alternative allele to the right, for the reference or another allele to the left, pale "
+    "from reads with uncertain mapping; and the posterior density of the allele frequency, "
+    "relative to the cell's maximum.",
+    "`biases` (on demand): the biases varlociraptor found.",
+]
 
 #: The strengths of evidence of an observation (extended Kass-Raftery scores), weakest first
 STRENGTHS = {"E": "equal", "B": "barely", "P": "positive", "S": "strong", "V": "very strong"}

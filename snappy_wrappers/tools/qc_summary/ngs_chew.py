@@ -332,10 +332,27 @@ def summarize(
     )
 
     prediction_note = (
-        "Predicted sex is the sheet sex whose cohort median chrX alt/hom ratio is nearer. "
+        "Predicted sex is the sheet sex whose cohort median chrX alt/hom ratio is nearer."
         if predicted
         else "No sex is predicted: the cohort lacks libraries of both sexes with a known sheet "
-        "sex, which the prediction compares with. "
+        "sex, which the prediction compares with."
+    )
+    libraries_desc = "\n\n".join(
+        [
+            "One row per library: the sample sheet against the fingerprints of ngs-chew.",
+            "**Checks**\n"
+            "- `sex check`: the sheet's sex against `predicted sex`; `chrX alt/hom`, `chrX reads` "
+            "and `chrY reads` are the evidence.\n"
+            "- `father check`, `mother check`: `ok` when the pair's relatedness is near 0.5 and "
+            "its IBS0 rate is low, `unrelated` otherwise; `not sequenced` and `none` when the "
+            "sheet names no sequenced parent.\n"
+            f"- `relatedness check`: `ok` when every pair within the pedigree is within "
+            f"{TOLERANCE} of the relatedness the sheet implies (kinship over the pedigree, "
+            "unsequenced donors included), `mismatch` otherwise; the pairs view has the numbers.\n"
+            f"- `unexpected relatives`: libraries of other pedigrees with a relatedness of at "
+            f"least {UNEXPECTED_RELATEDNESS}: a swap, a duplicate or an undeclared relation.",
+            f"**Notes**\n- {prediction_note}\n- The row details hold the autosomal counts and var(het).",
+        ]
     )
     scatter_frame = summary.select("library", "sex", "predicted sex", "chrx_het_hom", "chry_frac")
     shown_pairs = pair_frame.filter(
@@ -346,13 +363,7 @@ def summarize(
             "libraries",
             "Fingerprint checks",
             summary,
-            desc="One row per library: the sheet's sex against the sex predicted from the chrX "
-            "alt/hom ratio of the fingerprint (with the chrX and chrY read fractions as further "
-            "evidence), the sheet's father and mother against the relatedness and IBS0 rate of "
-            "the pairs, whether every pair within the pedigree has the relatedness the sheet "
-            f"implies (within {TOLERANCE}), and libraries of other pedigrees with a relatedness "
-            f"of at least {UNEXPECTED_RELATEDNESS}. " + prediction_note + "The details hold "
-            "the autosomal counts and var(het).",
+            desc=libraries_desc,
             columns=SUMMARY_COLUMNS,
         ),
         views=[
@@ -368,10 +379,11 @@ def summarize(
                 x_title="chrX alt/hom ratio",
                 y_title="fraction of reads on chrY",
                 link=None,
-                desc="One dot per library, colored by the sex of the sample sheet. Males sit "
-                "low on the chrX ratio and high on chrY reads, females the other way; a dot of "
-                "the wrong color in a cluster is a sex mismatch, a dot between the clusters a "
-                "library to look at.",
+                desc="One dot per library, colored by the sex of the sample sheet.\n\n"
+                "**How to read it**\n"
+                "- Males sit low on the chrX ratio and high on chrY reads, females the other way.\n"
+                "- A dot of the wrong color in a cluster is a sex mismatch.\n"
+                "- A dot between the clusters is a library to look at.",
             ),
             Chart(
                 "relatedness",
@@ -386,17 +398,26 @@ def summarize(
                 y_title="relatedness from the fingerprints",
                 link=None,
                 desc="One dot per pair of a pedigree, and the pairs across pedigrees that are "
-                "related at all. Pairs on the diagonal are as the sheet says; a dot far off it "
-                "is a swapped, unrelated or duplicated library.",
+                "related at all.\n\n"
+                "**How to read it**\n"
+                "- Pairs on the diagonal are as the sample sheet says.\n"
+                "- A dot far below the diagonal is a pair the sheet relates but the data does not: "
+                "a swap or a wrong parent.\n"
+                "- A dot far above it is an undeclared relation or a duplicated library.",
             ),
             Table(
                 "pairs",
                 "Pairs",
                 shown_pairs,
                 desc="Every pair of libraries within a pedigree, and the pairs across pedigrees "
-                f"with a relatedness of at least {UNEXPECTED_RELATEDNESS}: the relatedness the "
-                "sheet implies (kinship over the pedigree, unsequenced donors included), the "
-                "relatedness and IBS0 rate of the fingerprints, and the check.",
+                f"with a relatedness of at least {UNEXPECTED_RELATEDNESS}.\n\n"
+                "**Columns**\n"
+                "- `relatedness (sheet)`: what the pedigree implies, kinship over the pedigree "
+                "with unsequenced donors included.\n"
+                "- `relatedness`, `IBS0 rate`: the fingerprints; parent and child share an allele "
+                "at every site but errors, so their IBS0 rate is near 0.\n"
+                f"- `check`: `ok` within {TOLERANCE} of the sheet (and an IBS0 rate of at most "
+                f"{PARENT_MAX_IBS0} for a parent and child), `mismatch` otherwise.",
                 columns=PAIR_COLUMNS,
                 pinned=("pedigree", "a", "b"),
             ),

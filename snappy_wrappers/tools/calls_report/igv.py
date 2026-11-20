@@ -264,13 +264,16 @@ def annotate(summary: Summary, sites: pl.DataFrame, requested: int, limit_mb: in
         if view.name in counts:
             n = counts[view.name]
             view.desc += (
-                f" The top {n} {'call' if n == 1 else 'calls'} of this view "
-                f"{'has' if n == 1 else 'have'} IGV views in {PAGE} (the igv column)."
+                f"\n- The top {n} {'call' if n == 1 else 'calls'} of this view "
+                f"{'has' if n == 1 else 'have'} IGV views in `{PAGE}` (the `igv` column)."
             )
-    note = f" IGV views of the top calls of the views are in {PAGE}; the igv column links a call to its view."
+    note = (
+        f"\n- IGV views of the top calls of the views are in `{PAGE}`; "
+        "the `igv` column links a call to its view."
+    )
     if requested > sites.height:
         note += (
-            f" {sites.height} of the {requested} requested calls fit the size limit of "
+            f"\n- {sites.height} of the {requested} requested calls fit the size limit of "
             f"{limit_mb} MB."
         )
     summary.table.desc += note

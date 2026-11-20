@@ -18,7 +18,7 @@ the build-dependent ones need the assembly.
 
 from __future__ import annotations
 
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from typing import Any
 
 import polars as pl
@@ -150,36 +150,83 @@ def frame_of(rows: list[dict[str, Any]], columns: dict[str, Column]) -> pl.DataF
     return frame.select(*(c for c in columns if c in frame.columns))
 
 
+@dataclass
+class Description:
+    """A view description for datavzrd, which renders it as Markdown:
+    a lead sentence, then titled bullet lists (``Columns``, ``Links``, ``Navigation``)."""
+
+    lead: str
+    sections: dict[str, list[str]] = field(default_factory=dict)
+
+    def with_lead(self, lead: str, **extra: list[str]) -> "Description":
+        """A copy with another lead and further bullets per section."""
+        sections = {title: list(items) for title, items in self.sections.items()}
+        for title, items in extra.items():
+            sections.setdefault(title.capitalize(), []).extend(items)
+        return Description(lead, sections)
+
+    def markdown(self) -> str:
+        parts = [self.lead]
+        for title, items in self.sections.items():
+            if items:
+                parts.append(f"**{title}**\n" + "\n".join(f"- {item}" for item in items))
+        return "\n\n".join(parts)
+
+
+def describe(vcf: Vcf, columns: dict[str, Column], options: Options) -> Description:
+    """What the columns of the table show, as the bullets every view shares."""
+    column_notes: list[str] = []
+    if varlociraptor.events(vcf):
+        column_notes += varlociraptor.COLUMN_NOTES
+    else:
+        column_notes.append(
+            "Per sample: genotype, allele frequency, reads for the alternative allele, depth and "
+            "genotype quality, as far as the VCF has them."
+        )
+    if "gene" in columns:
+        column_notes.append(
+            "`gene`, `consequence`, `impact`, `hgvs.c`, `hgvs.p`: the picked annotation, "
+            "the first of the highest impact for the allele; transcript, biotype and exon on "
+            "demand, the other annotations in the row details."
+        )
+    if "gnomAD AF" in columns:
+        column_notes.append(
+            "`gnomAD AF`: the larger of the exomes and genomes frequencies, empty when not "
+            "observed; the single frequencies and the homozygote count on demand."
+        )
+    if "ClinVar" in columns:
+        column_notes.append("`ClinVar`: the germline classifications; the VCV accession on demand.")
+    on_demand = [name for name in ("id", "quality", "filter") if name in columns]
+    if on_demand:
+        column_notes.append(", ".join(f"`{name}`" for name in on_demand) + ": on demand.")
+    if "hints" in columns:
+        column_notes.append("`hints`: varlociraptor's hints, in the row details.")
+    links: list[str] = []
+    for name in ("position", "gene", "id", "ClinVar"):
+        if name in columns and columns[name].links:
+            links.append(f"`{name}`: " + ", ".join(columns[name].links))
+    if "inspect" in columns:
+        links.append(
+            "`inspect`: the observations of the call in varlociraptor-inspect, "
+            "the samples numbered in the order of the VCF (the order of the sample columns)."
+        )
+    if options.linkouts and options.assembly not in annotation.ASSEMBLIES:
+        links.append(
+            "The variants carry no genome build (no annotation task in the chain), "
+            "so the gnomAD, ClinVar, dbSNP and Ensembl links by position and gene are left out."
+        )
+    return Description("", {"Columns": column_notes, "Links": links})
+
+
 def summarize(path: str, options: Options = Options()) -> Summary:
     """The calls of one VCF as the views of a site, ready to render."""
     vcf = read_vcf(path)
     rows, columns = rows_and_columns(vcf, options)
-    desc = "One row per call. "
-    if varlociraptor.events(vcf):
-        desc += varlociraptor.DESCRIPTION
-    else:
-        desc += (
-            "Per sample: the genotype, the allele frequency, the reads for the alternative "
-            "allele, the depth and the genotype quality, as far as the VCF has them. "
-        )
-    if "gene" in columns:
-        desc += (
-            "Gene, consequence, impact and HGVS are those of the picked annotation (the first "
-            "of the highest impact for the allele); the other annotations are in the details. "
-        )
-    if "gnomAD AF" in columns:
-        desc += "gnomAD AF is the larger of the exomes and genomes frequencies; empty means not observed. "
-    if options.linkouts and options.assembly not in annotation.ASSEMBLIES:
-        desc += (
-            "The variants carry no genome build (no annotation task in the chain), so the "
-            "gnomAD, ClinVar, dbSNP and Ensembl linkouts by position and gene are left out. "
-        )
-    if "inspect" in columns:
-        desc += (
-            "The inspect link opens the observations of the call in varlociraptor-inspect, "
-            "the samples numbered in the order of the VCF (the order of the sample columns). "
-        )
-    desc += "The ID, quality and filter columns are available on demand."
     return views.build(
-        vcf, frame_of(rows, columns), columns, options.page_size, options.max_in_memory_rows, desc
+        vcf,
+        frame_of(rows, columns),
+        columns,
+        options.page_size,
+        options.max_in_memory_rows,
+        describe(vcf, columns, options),
     )

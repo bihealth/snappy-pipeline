@@ -179,7 +179,7 @@ def build(
     columns: dict[str, Column],
     page_size: int,
     max_in_memory_rows: int | None,
-    desc: str,
+    description,
 ) -> Summary:
     """The summary of the site: ``all`` as its table, the event or ranked views, the default."""
     events = varlociraptor.events(vcf)
@@ -199,13 +199,18 @@ def build(
     for event in event_names(for_events):
         calls = frame.filter(pl.col("event") == event) if frame.height else frame
         calls = ranked(calls, vcf.contigs, varlociraptor.probability_column(event))
+        lead = (
+            f"The {calls.height} calls whose most probable event is {event_label(event)}, "
+            f"ranked by {_ranking_text(calls, True)}."
+        )
         views.append(
             Table(
                 event,
                 f"{event} calls",
                 calls,
-                desc=f"{calls.height} calls whose most probable event is {event_label(event)}, "
-                f"by {_ranking_text(calls, True)}. {desc} A row links to the same call in all calls.",
+                desc=description.with_lead(
+                    lead, navigation=["A row links to the same call in all calls."]
+                ).markdown(),
                 links={"all calls": (LINK_COLUMN, f"all/{LINK_COLUMN}", False)},
                 **settings,
             )
@@ -217,13 +222,14 @@ def build(
                 "ranked",
                 "ranked calls",
                 calls,
-                desc=f"All calls by {_ranking_text(calls, False)}. {desc} A row links to the "
-                "same call in all calls.",
+                desc=description.with_lead(
+                    f"All calls ranked by {_ranking_text(calls, False)}.",
+                    navigation=["A row links to the same call in all calls."],
+                ).markdown(),
                 links={"all calls": (LINK_COLUMN, f"all/{LINK_COLUMN}", False)},
                 **settings,
             )
         )
-    all_desc = f"All calls in genomic order. {desc}"
     kinds = []
     if any(columns[name].custom_plot for name in heavy):
         kinds.append("the observation and density plots")
@@ -231,22 +237,22 @@ def build(
         kinds.append("the other annotations")
     if "inspect" in heavy:
         kinds.append("the inspect link")
+    navigation = []
     if kinds:
-        all_desc += (
-            f" {' and '.join(kinds).capitalize()} are in the other views and in the result TSV."
-        )
+        listed = ", ".join(kinds[:-1]) + (" and " if len(kinds) > 1 else "") + kinds[-1]
+        navigation.append(f"{listed.capitalize()} are in the other views and in the result TSV.")
     if views:
-        all_desc += " A row links to the same call in its other views."
+        navigation.append("A row links to the same call in its other views.")
     if max_in_memory_rows is not None and frame.height > max_in_memory_rows:
-        all_desc += (
-            f" With {frame.height} rows, above the in-memory limit of {max_in_memory_rows}, "
+        navigation.append(
+            f"With {frame.height} rows, above the in-memory limit of {max_in_memory_rows}, "
             "this view is paged without sorting; the other views sort."
         )
     table = Table(
         "all",
         "all calls",
         genomic_order(frame, vcf.contigs),
-        desc=all_desc,
+        desc=description.with_lead("All calls in genomic order.", navigation=navigation).markdown(),
         links={view.name: (LINK_COLUMN, f"{view.name}/{LINK_COLUMN}", True) for view in views},
         exclude=heavy,
         **settings,

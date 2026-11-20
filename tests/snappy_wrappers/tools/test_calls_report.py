@@ -426,9 +426,15 @@ def test_varlociraptor_calls_get_a_view_per_event_ranked_by_posterior_rarity_and
     assert "case001subregion-N1-DNA1-WES1: AF" not in table.exclude
     assert table.frame["position"].to_list() == sorted(table.frame["position"].to_list())
     assert (
-        "The observation and density plots and the other annotations and the inspect link are in the other views"
+        "- The observation and density plots, the other annotations and the inspect link are "
+        "in the other views" in table.desc
+    )
+    assert table.desc.startswith("All calls in genomic order.\n\n**Columns**\n- `event`")
+    assert (
+        "\n\n**Links**\n- `position`: gnomAD, ClinVar, dbSNP\n- `gene`: Ensembl, GeneCards, OMIM"
         in table.desc
     )
+    assert "\n\n**Navigation**\n- " in table.desc
     cfg = _validate(summary)
     assert cfg["default-view"] == "present"
     assert "inspect" not in cfg["views"]["all"]["render-table"]["columns"]
@@ -457,7 +463,7 @@ def test_annotated_calls_without_events_get_a_ranked_view():
     assert view.frame["position"].to_list() == [25398284, 23893753, 26634226]
     assert "by impact, then position" in view.desc
     assert summary.table.exclude == ("other annotations",)
-    assert "The other annotations are in the other views" in summary.table.desc
+    assert "- The other annotations are in the other views" in summary.table.desc
 
 
 def test_event_of_takes_the_most_probable_event_and_contigs_sort_by_the_header(tmp_path):
