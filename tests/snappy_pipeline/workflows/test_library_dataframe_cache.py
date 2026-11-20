@@ -7,6 +7,7 @@ from types import SimpleNamespace
 import pandas as pd
 import pytest
 
+from snappy_pipeline.base import ConfigError
 from snappy_pipeline.workflows import abstract
 from snappy_pipeline.workflows.abstract import BaseStep
 from snappy_pipeline.workflows.abstract.protocol import DataSignature, DataType
@@ -117,8 +118,8 @@ def test_a_pedigree_whose_index_has_no_dna_library_has_no_index(mocker):
             "extraction_type": ["rna", "dna", "dna"],
             "kind": ["germline", "germline", "germline"],
             "role": ["index", "father", "mother"],
-            "is_primary": [True, False, False],
-            "related_group": ["index-RNA1", "FAM_index", "FAM_index"],
+            "is_primary": [False, False, False],
+            "related_group": ["FAM_index", "FAM_index", "FAM_index"],
             "donor_name": ["index", "father", "mother"],
         }
     )
@@ -126,6 +127,29 @@ def test_a_pedigree_whose_index_has_no_dna_library_has_no_index(mocker):
     step = _make_step()
     assert step.pedigrees() == {"FAM_index": ["father-DNA1", "mother-DNA1"]}
     assert step.pedigree_index("FAM_index") is None
+    assert step.member_libraries("FAM_index") == ["father-DNA1", "mother-DNA1"]
+
+
+def test_a_joint_call_takes_one_dna_library_per_donor_the_index_first(mocker):
+    df = pd.DataFrame(
+        {
+            "library_name": ["father-DNA1", "index-DNA1", "index-DNA2", "index-RNA1", "P1-T1-DNA1"],
+            "extraction_type": ["dna", "dna", "dna", "rna", "dna"],
+            "kind": ["germline"] * 4 + ["cancer"],
+            "role": ["father", "index", "index", "index", "tumor"],
+            "is_primary": [False, True, False, False, True],
+            "related_group": ["FAM_index"] * 4 + ["PAT_P1"],
+            "donor_name": ["father", "index", "index", "index", "P1"],
+        }
+    )
+    mocker.patch.object(abstract, "build_library_dataframe", return_value=df)
+    step = _make_step()
+    assert step.get_related_libraries("FAM_index") == df["library_name"].tolist()[:4]
+    assert step.pedigrees() == {"FAM_index": ["father-DNA1", "index-DNA1"]}
+    assert step.member_libraries("FAM_index") == ["index-DNA1", "father-DNA1"]
+    # A cancer donor without a normal has nothing to call jointly
+    with pytest.raises(ConfigError, match="'PAT_P1' of task 'dummy' has no DNA library"):
+        step.member_libraries("PAT_P1")
 
 
 def test_group_by_comes_from_the_task_then_its_step_then_upstream():

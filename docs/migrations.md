@@ -46,7 +46,7 @@ The columns that are **always available**:
 | `extraction_type` | "dna", "rna", ... (always lowercased)                                                          |
 | `kind`            | "cancer" or "germline"                                                                         |
 | `role`            | "tumor" / "normal" / "index" / "father" / "mother" / "affected" / "unaffected" / "unknown"     |
-| `is_primary`      | True for the primary tumor (cancer) or the pedigree index (germline)                           |
+| `is_primary`      | True for the primary tumor (cancer) or the DNA library of the pedigree index (germline)        |
 | `sex`             | "male", "female", or "unknown"                                                                 |
 | `donor_name`      | Patient or family identifier                                                                   |
 | `sample_name`     | Bio-sample name                                                                                |
@@ -310,6 +310,7 @@ A real-run comparison of the e2e pipelines against main 0.6.3 gives the same res
 The per-step Snakefiles (`workflows/*/Snakefile`) still use the same patterns: `wf.config`, `wf.get_input_files()`, `wf.get_params()` and wrappers.
 Outside the e2e pipelines, results change on purpose where main was wrong or ignored a setting: MELT's GroupAnalysis reads the discovery output of all pedigree members (main read the first member's only), the `ignore_contigs` defaults apply to mutect2 and sequenza (migration note 14), arcasHLA gets `zygosity_threshold` (note 17), VEP annotates multiallelic records split into one record per allele (`bcftools norm`), the ebfilter panel draws from all normal DNA libraries instead of the normals matched to a tumor, Control-FREEC takes each donor's sex from the sample sheet (main used `XX` for every sample), a PureCN panel reads the GenomicsDB of its `mutect2` panel (main fails there, because the `genomicsdb` R package of the PureCN image needs integers where GATK writes strings), the BWA mappers read a fixed 100 Mbp per batch (`bases_per_batch`, `-K`), so their alignments no longer depend on `num_threads_align`, their read group IDs are the names of the discovered read groups (main: `<library>.0`, `<library>.1`, ... for `bwa` and one read group for all reads for `bwa_mem2`), `bwa_mem2` maps single-end reads (main read the right file, which they do not have) and fails when it cannot decompress the reads (main wrote an empty BAM), and the BWA mappers and STAR mask the duplicates of single-end reads (main's samblaster aborted on reads without mates, and `bwa` could not read single-end files at all).
 The family column of the PED files is the pedigree's name, so a sheet with a family id (`pedigree_field`, else `familyId`) gets that id instead of `FAM_` and the index donor, and the trio PED of a child who is not the index names the child's family; a pedigree whose index has no DNA library is processed like any other (main dropped its members).
+A joint germline call takes the pedigree members, one DNA library per donor, so a donor's RNA libraries and further DNA libraries stay out of it; on a cancer sheet it takes the normal (before: every library of the donor, the tumor included).
 
 ## Migration notes
 

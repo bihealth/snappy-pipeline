@@ -1209,7 +1209,7 @@ def test_the_prefix_of_a_donor_named_group_follows_the_sheet_type(cancer_sheet_t
     assert (df["related_group"] == "PAT_" + df["donor_name"]).all()
 
 
-def test_a_donors_other_libraries_are_groups_of_their_own():
+def test_a_donors_other_libraries_join_the_family_but_only_the_first_dna_library_is_primary():
     from snappy_pipeline.workflows.abstract import library_entities
 
     # The index has an RNA library and a second DNA library; the mother is sequenced
@@ -1225,14 +1225,11 @@ def test_a_donors_other_libraries_are_groups_of_their_own():
     df = build_library_dataframe([_make_data_set_info("germline_variants")], [sheet])
     # Library names: <donor>-N1-<extraction>-<type>-<pk>; the first DNA library is the donor's
     types = df["library_name"].str.split("-").str[3]
-    groups = dict(zip(types, df["related_group"]))
     family = "FAM_" + df.loc[df["role"] == "index", "donor_name"].iloc[0]
-    assert groups["WES1"] == family
-    assert groups["WGS1"] == df.loc[types == "WGS1", "library_name"].iloc[0]
-    assert groups["mRNA_seq1"] == df.loc[types == "mRNA_seq1", "library_name"].iloc[0]
-    assert library_entities(select_libraries(df, None), "related") == sorted(
-        [family, groups["WGS1"]]
-    )
+    assert set(df["related_group"]) == {family}
+    assert set(types[df["is_primary"]]) == {"WES1"}
+    assert set(types[df["role"] == "index"]) == {"WES1", "WGS1", "mRNA_seq1"}
+    assert library_entities(select_libraries(df, None), "related") == [family]
 
 
 class TestLibraryRequirement:

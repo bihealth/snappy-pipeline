@@ -41,6 +41,7 @@ def _part(group_by="library", kits="", **settings):
         effective_group_by=group_by,
         primary_dna_libraries=lambda: PRIMARY_DNA,
         get_related_libraries=lambda name: RELATED,
+        member_libraries=lambda name: PRIMARY_DNA["library_name"].tolist(),
         primary_library=lambda name: name,
         library_row=lambda name: ROWS[name],
         get_upstream_paths=_alignments,

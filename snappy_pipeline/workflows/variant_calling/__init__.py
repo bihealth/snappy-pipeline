@@ -311,9 +311,9 @@ class VariantCallingStepPart(BaseStepPart):
 
         # Determine the target libraries based on the wildcard
         if group_by == "related":
-            # wildcards.library_name is the related group; find its libraries
+            # wildcards.library_name is the related group; its pedigree members are called
             df_target = df[
-                df["library_name"].isin(self.parent.get_related_libraries(wildcards.library_name))
+                df["library_name"].isin(self.parent.member_libraries(wildcards.library_name))
             ]
         elif group_by == "library":
             # Per-library logic
@@ -517,9 +517,9 @@ class Gatk4HaplotypeCallerGvcfStepPart(GatkCallerStepPartBase):
 
         # Determine the target libraries based on the wildcard
         if group_by == "related":
-            # wildcards.library_name is the related group; find its libraries
+            # wildcards.library_name is the related group; its pedigree members are called
             df_target = df[
-                df["library_name"].isin(self.parent.get_related_libraries(wildcards.library_name))
+                df["library_name"].isin(self.parent.member_libraries(wildcards.library_name))
             ]
         elif group_by == "library":
             # Per-library logic
@@ -620,7 +620,7 @@ class ReportStepPart(BaseStepPart):
     def _result_wildcards(self, entity: str) -> dict[str, list[str]]:
         result = super()._result_wildcards(entity)
         if self.report_per_donor and self.parent.effective_group_by == "related":
-            result["donor_library_name"] = self.parent.get_related_libraries(entity)
+            result["donor_library_name"] = self.parent.member_libraries(entity)
         return result
 
 
@@ -697,9 +697,7 @@ class BcftoolsRohStepPart(ReportStepPart):
 
     def vcf_libraries(self, library_name: str) -> list[str]:
         """Return the libraries in the VCF of the entity."""
-        if self.parent.effective_group_by == "library":
-            return [library_name]
-        return self.parent.get_related_libraries(library_name)
+        return self.parent.member_libraries(library_name)
 
     def _get_params_run(self, wildcards):
         return {
@@ -1045,20 +1043,11 @@ class ScatteredCallerStepPart(BaseStepPart):
         return getattr(self.parent.workflow.globals.get(kind), self.name)
 
     def members(self, library_name: str) -> list[str]:
-        """Return the libraries called together for the entity ``library_name``, the entity
-        first: with ``group_by: related`` the primary DNA libraries of its related group (one
-        per individual), else the library and its matched normal, if it has one."""
-        first = self.parent.primary_library(library_name)
+        """Return the libraries called together for the entity ``library_name``: with ``group_by: related`` the pedigree members of its related group (one DNA library per donor, the index first), else the library and its matched normal, if it has one."""
         if self.parent.effective_group_by == "related":
-            primary = set(self.parent.primary_dna_libraries()["library_name"])
-            others = [
-                name
-                for name in self.parent.get_related_libraries(library_name)
-                if name in primary and name != first
-            ]
-            return [first, *others]
-        normal = self.parent.library_row(first).get("matched_normal_lib") or None
-        return [first, normal] if normal else [first]
+            return self.parent.member_libraries(library_name)
+        normal = self.parent.library_row(library_name).get("matched_normal_lib") or None
+        return [library_name, normal] if normal else [library_name]
 
     def _get_input_files_gather(self, wildcards):
         gather = self._scattergather("gather")

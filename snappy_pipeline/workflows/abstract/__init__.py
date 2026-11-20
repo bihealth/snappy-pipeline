@@ -1030,6 +1030,21 @@ class BaseStep:
             )
         return self.related_libraries[entity]
 
+    def member_libraries(self, entity: str) -> list[str]:
+        """Return the libraries that an entity of this task stands for in a joint result: with ``group_by: related`` the pedigree members of its related group (one DNA library per donor, the index first), else the library itself.
+        Raises ``ValueError`` for a name that is no related group and ``ConfigError`` for a group without members, such as a cancer donor without a normal."""
+        if self.effective_group_by != "related":
+            return [entity]
+        self.get_related_libraries(entity)  # raises for a name that is no related group
+        members = self.pedigree_members(entity)["library_name"].tolist()
+        if not members:
+            raise ConfigError(
+                f"the related group {entity!r} of task {self.task_name!r} has no DNA library to "
+                "call jointly: no pedigree member, or no normal of a cancer donor"
+            )
+        index = self.pedigree_index(entity)
+        return [index, *(name for name in members if name != index)] if index else members
+
     def upstream_entity(self, field: str, library_name: str) -> str:
         """Return the entity under which the task of ``depends_on.<field>`` writes the result of ``library_name``: its related group when that task writes one result per related group, else the library itself."""
         (upstream,) = self.upstream_task_names(field)
@@ -1042,10 +1057,9 @@ class BaseStep:
 
         This is the germline view of the sample sheets: a donor's first DNA library that is not
         from a tumor sample. The column ``pedigree`` is the name of the donor's pedigree, its
-        ``related_group``. On a cancer sample sheet, each donor is a pedigree of its own. A library
-        that is a group of its own (an RNA library, a donor's further DNA library) is no pedigree
-        member. The task's ``library_selection`` applies first, so it narrows the pedigrees and
-        their members.
+        ``related_group``. On a cancer sample sheet, each donor is a pedigree of its own. A donor's
+        RNA libraries and further DNA libraries are in the group, but no pedigree members. The
+        task's ``library_selection`` applies first, so it narrows the pedigrees and their members.
         """
         if include_background not in self._primary_dna_libraries:
             df = self.build_library_dataframe(include_background=include_background)
@@ -1053,7 +1067,6 @@ class BaseStep:
                 df = _query_libraries(df, selection)
             _check_groups(df)
             dna = df[(df["extraction_type"] == "dna") & (df["role"] != "tumor")]
-            dna = dna[dna["related_group"] != dna["library_name"]]
             dna = dna.drop_duplicates(["related_group", "donor_name"])
             dna = dna.assign(pedigree=dna["related_group"])
             self._primary_dna_libraries[include_background] = dna
@@ -1783,8 +1796,8 @@ def build_library_dataframe(
         * ``kind`` — ``"cancer"`` or ``"germline"``
         * ``role`` — ``"tumor"`` / ``"normal"`` / ``"index"`` / ``"father"``
           / ``"mother"`` / ``"affected"`` / ``"unaffected"``
-        * ``is_primary`` — ``True`` for primary tumor (cancer) or pedigree
-          index (germline); ``False`` otherwise
+        * ``is_primary`` — ``True`` for the primary tumor (cancer) or the DNA library of the
+          pedigree index (germline); ``False`` otherwise
         * ``sex`` — ``"male"``, ``"female"``, or ``"unknown"``
         * ``donor_name`` — patient / family identifier
         * ``sample_name`` — bio-sample name
@@ -1874,10 +1887,11 @@ def build_library_dataframe(
             # All libraries, with the pedigrees of the germline view (joined by the data set's
             # ``pedigree_field``, if set)
             index_donor_names: set[str] = set()
+            index_lib_names: set[str] = set()
             father_lib_names: set[str] = set()
             mother_lib_names: set[str] = set()
             lib_sex: dict[str, str] = {}
-            lib_pedigree: dict[str, str] = {}
+            donor_family: dict[str, str] = {}
             lib_father: dict[str, str] = {}
             lib_mother: dict[str, str] = {}
             lib_disease: dict[str, int] = {}
@@ -1908,6 +1922,7 @@ def build_library_dataframe(
                     # Index / proband: all libraries of the donor, so the RNA library too
                     if ped.index and ped.index.dna_ngs_library:
                         index_donor_names.add(_donor_name(ped.index))
+                        index_lib_names.add(ped.index.dna_ngs_library.name)
 
                     # Build sets of PKs referenced as father / mother by children
                     pk_is_father: set = {
@@ -1922,6 +1937,7 @@ def build_library_dataframe(
                     }
 
                     for d in ped.donors:
+                        donor_family[_donor_name(d)] = family
                         lib = getattr(d, "dna_ngs_library", None)
                         if lib is None:
                             continue
@@ -1932,7 +1948,6 @@ def build_library_dataframe(
                             else "unknown"
                         )
                         lib_sex[lib.name] = sex_raw if sex_raw in ("male", "female") else "unknown"
-                        lib_pedigree[lib.name] = family
                         if pk in pk_is_father:
                             father_lib_names.add(lib.name)
                         elif pk in pk_is_mother:
@@ -1981,12 +1996,10 @@ def build_library_dataframe(
                 status = str(is_affected).lower() if is_affected is not None else "unknown"
                 sex = lib_sex.get(lib_name, "unknown")
 
-                # Only the pedigree index is primary.
-                # It is the entity of the pedigree and the key of the donor table.
-                is_primary = False
+                # Only the index's DNA library is primary: the library that stands for the pedigree
+                is_primary = lib_name in index_lib_names
                 if donor_name in index_donor_names:
                     role = "index"
-                    is_primary = True
                 elif lib_name in father_lib_names:
                     role = "father"
                 elif lib_name in mother_lib_names:
@@ -2011,10 +2024,8 @@ def build_library_dataframe(
                         "sex": sex,
                         "donor_name": donor_name,
                         "sample_name": sample_name,
-                        # A donor's further libraries (RNA, a second DNA library) are groups
-                        # of their own: a joint call takes every library of a group
-                        "related_group": lib_pedigree.get(
-                            lib_name, lib_name if pedigrees else _group_prefix(info) + donor_name
+                        "related_group": donor_family.get(
+                            donor_name, _group_prefix(info) + donor_name
                         ),
                         "father_name": lib_father.get(lib_name, "0"),
                         "mother_name": lib_mother.get(lib_name, "0"),
@@ -2284,9 +2295,11 @@ def _check_groups(df) -> None:
         first_data_set = next(iter(colliding.values()))[0]
         raise ConfigError(
             f"related groups of the same name in several data sets: {names}. A task names the "
-            "files of a related group after it, so it can only take one group of a name. Select "
-            "the libraries of one data set with library_selection, for example "
-            f"library_selection: \"data_set == '{first_data_set}'\", or use one task per data set."
+            "files of a related group after it, so it can only take one group of a name. A family "
+            "sequenced in batches belongs into one sheet: one data set, whose search_paths list "
+            "the folders of all batches. For unrelated groups, select the libraries of one data "
+            f'set with library_selection, for example library_selection: "data_set == '
+            f"'{first_data_set}'\", or use one task per data set."
         )
 
 
