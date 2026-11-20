@@ -53,12 +53,11 @@ class SvCallingGetResultFilesMixin:
             ]
             #: Generate all concrete output paths.
             for path_tpl in result_paths_tpls:
-                for pedigree in self.parent.pedigrees(self.pedigrees_include_background):
+                pedigrees = self.parent.pedigrees(self.pedigrees_include_background)
+                for pedigree, members in pedigrees.items():
                     if cfg := getattr(self.config, self.name, None):
-                        index = self.parent.pedigree_index(
-                            pedigree, self.pedigrees_include_background
-                        )
-                        if index not in cfg.skip_libraries:
+                        # skip_libraries skips the whole pedigree of a listed library
+                        if not set(members) & set(cfg.skip_libraries):
                             yield from expand(path_tpl, library_name=pedigree)
 
 
