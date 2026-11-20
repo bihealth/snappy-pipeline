@@ -42,7 +42,11 @@ dependencies = [
     "snakemake-software-deployment-plugin-conda >=0.8.4,<0.9",
     "snakemake-software-deployment-plugin-container @ git+https://github.com/snakemake/snakemake-software-deployment-plugin-container.git@80be55cbaa3168566e3ad5503b8951187633a521",
     "snakemake-executor-plugin-slurm >=2,<3",
-    "snakemake-logger-plugin-snkmt >=0.1.6",
+    # snkmt and its logger plugin from the heads of open pull requests, until releases carry them:
+    # snkmt#53 (console polls no longer leak SQLite read locks) and the plugin's #30 (SQLite
+    # pragmas for network file systems, as Snakemake's persistence database sets them)
+    "snkmt @ git+https://github.com/tedil/snkmt.git@3ac54fc376da0c5d6071caf9e53539ba0dbe30e5",
+    "snakemake-logger-plugin-snkmt @ git+https://github.com/tedil/snakemake-logger-plugin-snkmt.git@74013b9a27fe4719ec1130d7b8f2e1e08ba3aa7f",
     # Required for plotting
     "matplotlib >=3.8.4",
     # Library for working with VCF files.
