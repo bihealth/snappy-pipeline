@@ -39,6 +39,7 @@ def test_flagged_outputs_go_into_the_task_category_labelled_by_their_wildcards()
 
 
 def test_snappy_report_writes_report_zip_in_the_project(mocker, tmp_path):
+    (tmp_path / "config.yaml").touch()  # the project needs a config; Snakemake is mocked
     snakemake_main = mocker.patch("snappy_pipeline.apps.snappy_cli.snakemake_main", return_value=0)
     result = CliRunner().invoke(snappy_cli.main, ["report", "--directory", str(tmp_path)])
 

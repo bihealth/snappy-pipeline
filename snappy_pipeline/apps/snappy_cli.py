@@ -699,10 +699,7 @@ def task_list(directory, available):
         return
 
     project_directory = directory() if callable(directory) else directory
-    config_filename = os.path.join(project_directory, CONFIG_SUBDIR, CONFIG_FILENAME)
-    if not os.path.exists(config_filename):
-        click.echo(f"Error: Configuration file not found at {config_filename}", err=True)
-        sys.exit(1)
+    config_filename = _project_config(project_directory)
 
     with open(config_filename, "rt") as f:
         yaml = ruamel_yaml.YAML()
@@ -877,7 +874,7 @@ def check_files(directory):
     machine. It exits with 1 if a file is missing.
     """
     directory_path = directory() if callable(directory) else directory
-    config_path = os.path.abspath(os.path.join(directory_path, CONFIG_SUBDIR, CONFIG_FILENAME))
+    config_path = _project_config(directory_path)
     try:
         project = load_project(load_configfile(config_path), os.path.dirname(config_path))
         missing = missing_files(project)
@@ -896,6 +893,18 @@ def check_files(directory):
     log("All files of {path} exist", {"path": config_path}, level=LVL_SUCCESS)
 
 
+def _project_config(directory_path: str) -> str:
+    """Return the absolute path of the project's config file.
+    Without one, fail with the usage and a hint instead of a traceback from Snakemake."""
+    path = os.path.abspath(os.path.join(directory_path, CONFIG_SUBDIR, CONFIG_FILENAME))
+    if not os.path.isfile(path):
+        raise click.UsageError(
+            f"No {CONFIG_FILENAME} in {os.path.dirname(path)}. Change into the project directory, "
+            "pass --directory <project>, or create a project with snappy init."
+        )
+    return path
+
+
 def _snakemake_argv(directory_path: str, config: tuple = ()) -> list[str]:
     """Return the Snakemake arguments that snappy run and snappy report share."""
     apps = os.path.dirname(os.path.abspath(__file__))
@@ -904,7 +913,7 @@ def _snakemake_argv(directory_path: str, config: tuple = ()) -> list[str]:
         directory_path,
         # The project directory of relative paths is that of the config file, see the Snakefile
         "--configfile",
-        os.path.abspath(os.path.join(directory_path, CONFIG_SUBDIR, CONFIG_FILENAME)),
+        _project_config(directory_path),
         # The orchestrator Snakefile, which loads the tasks of config.yaml
         "--snakefile",
         os.path.join(os.path.dirname(apps), "Snakefile"),

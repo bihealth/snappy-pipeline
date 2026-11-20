@@ -2,6 +2,7 @@
 """Tests for the ``snappy run`` subcommand."""
 
 import os
+import re
 
 import click
 from click.testing import CliRunner
@@ -9,11 +10,44 @@ from click.testing import CliRunner
 from snappy_pipeline.apps import snappy_cli
 
 
+def _compact(output: str) -> str:
+    """The output without whitespace and the box that rich-click draws around errors."""
+    return re.sub(r"[\s│╭╮╰╯─]", "", output)
+
+
 def _invoke_run(mocker, args):
+    # The project directory needs a config.yaml; Snakemake itself is mocked
+    directory = args[args.index("--directory") + 1]
+    os.makedirs(directory, exist_ok=True)
+    with open(os.path.join(directory, "config.yaml"), "a"):
+        pass
     snakemake_main = mocker.patch("snappy_pipeline.apps.snappy_cli.snakemake_main", return_value=0)
     result = CliRunner().invoke(snappy_cli.main, ["run", *args])
     assert result.exit_code == 0, result.output
     return snakemake_main.call_args.args[0]
+
+
+def test_run_without_a_config_hints_at_the_project_directory(mocker, tmp_path):
+    snakemake_main = mocker.patch("snappy_pipeline.apps.snappy_cli.snakemake_main")
+
+    result = CliRunner().invoke(snappy_cli.main, ["run", "--directory", str(tmp_path)])
+
+    assert result.exit_code == 2
+    compact = _compact(result.output)
+    assert f"Noconfig.yamlin{tmp_path}." in compact
+    assert "--directory<project>" in compact and "snappyinit" in compact
+    assert "Traceback" not in result.output
+    snakemake_main.assert_not_called()
+
+
+def test_report_without_a_config_hints_at_the_project_directory(mocker, tmp_path):
+    snakemake_main = mocker.patch("snappy_pipeline.apps.snappy_cli.snakemake_main")
+
+    result = CliRunner().invoke(snappy_cli.main, ["report", "--directory", str(tmp_path)])
+
+    assert result.exit_code == 2
+    assert f"Noconfig.yamlin{tmp_path}." in _compact(result.output)
+    snakemake_main.assert_not_called()
 
 
 def test_run_writes_snkmt_database_into_project(mocker, tmp_path):

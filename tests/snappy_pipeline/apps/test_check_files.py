@@ -1,6 +1,8 @@
 # -*- coding: utf-8 -*-
 """Tests for ``snappy check-files``."""
 
+import re
+
 from click.testing import CliRunner
 
 from snappy_pipeline.apps.snappy_cli import main
@@ -33,3 +35,11 @@ def test_check_files_succeeds_when_all_files_exist(tmp_path):
     (tmp_path / "refs" / "genome.fa").touch()
     result = CliRunner().invoke(main, ["check-files", "--directory", str(tmp_path)])
     assert result.exit_code == 0
+
+
+def test_check_files_without_a_config_hints_at_the_project_directory(tmp_path):
+    result = CliRunner().invoke(main, ["check-files", "--directory", str(tmp_path)])
+
+    assert result.exit_code == 2
+    assert f"Noconfig.yamlin{tmp_path}." in re.sub(r"[\s│╭╮╰╯─]", "", result.output)
+    assert "Traceback" not in result.output
