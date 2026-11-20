@@ -355,12 +355,12 @@ def test_columns_link_out_show_pills_and_hide_until_asked():
         "T",
         pl.DataFrame({"gene": ["BRCA1"], "impact": ["HIGH"], "p": [0.5], "note": ["x"]}),
         columns={
-            "gene": qc_summary.Column(links={"Ensembl": "https://e/{value}"}, ellipsis=8),
+            "gene": qc_summary.Column(links={"Ensembl": "https://e/{value}"}),
             "impact": qc_summary.pills(
                 ("HIGH", "LOW"), (qc_summary.STATUS["critical"], qc_summary.STATUS["warning"])
             ),
             "p": qc_summary.heatmap(display="available"),
-            "note": qc_summary.Column(display="available", optional=True),
+            "note": qc_summary.Column(display="available", optional=True, ellipsis=8),
         },
         pinned=("gene",),
         max_in_memory_rows=1000,
@@ -374,7 +374,7 @@ def test_columns_link_out_show_pills_and_hide_until_asked():
     assert columns["gene"]["link-to-url"] == {
         "Ensembl": {"url": "https://e/{value}", "new-window": True}
     }
-    assert columns["gene"]["display-mode"] == "pinned" and columns["gene"]["ellipsis"] == 8
+    assert columns["gene"]["display-mode"] == "pinned"
     assert columns["impact"]["plot"]["pills"] == {
         "separator": ",",
         "domain": ["HIGH", "LOW"],
@@ -382,7 +382,7 @@ def test_columns_link_out_show_pills_and_hide_until_asked():
     }
     assert columns["p"]["plot"]["heatmap"]["range"] == list(qc_summary.SEQUENTIAL)
     assert columns["p"]["display-mode"] == "available"
-    assert columns["note"] == {"display-mode": "available", "optional": True}
+    assert columns["note"] == {"display-mode": "available", "optional": True, "ellipsis": 8}
     assert cfg["views"]["t"]["max-in-memory-rows"] == 1000
     assert cfg["datasets"]["t"]["links"] == {
         "all": {"column": "gene", "table-row": "all/gene", "optional": True}
@@ -418,3 +418,19 @@ def test_excluded_columns_stay_out_of_the_dataset_but_in_the_result_tsv(tmp_path
             "v",
             "heavy",
         ]
+
+
+def test_a_column_refuses_the_option_pairs_that_datavzrd_rejects():
+    import pytest
+
+    with pytest.raises(ValueError, match="ellipsis and link-to-url and pills"):
+        qc_summary.Column(
+            ellipsis=8, links={"x": "{value}"}, plot={"pills": {"domain": ["a"]}}
+        ).spec()
+    with pytest.raises(ValueError, match="ellipsis and ticks"):
+        qc_summary.Column(ellipsis=8, plot={"ticks": {}}).spec()
+    # The pairs datavzrd allows, and the pills' own ellipsis
+    qc_summary.Column(links={"x": "{value}"}, plot={"pills": {"domain": ["a"]}}).spec()
+    qc_summary.Column(ellipsis=8, plot={"heatmap": {}}).spec()
+    pills = qc_summary.pills(("a",), ("#000000",), ellipsis=24, links={"x": "{value}"})
+    assert pills.spec()["plot"]["pills"]["ellipsis"] == 24 and "ellipsis" not in pills.spec()

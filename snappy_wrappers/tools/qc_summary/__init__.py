@@ -122,6 +122,7 @@ class Column:
     optional: bool = False
 
     def spec(self) -> dict:
+        self.check()
         spec: dict = {}
         if self.label:
             spec["label"] = self.label
@@ -146,6 +147,25 @@ class Column:
         if self.optional:
             spec["optional"] = True
         return spec
+
+    def check(self) -> None:
+        """datavzrd takes one of ellipsis, links, a custom plot and a cell plot per column, plus
+        the pairs heatmap with ellipsis or links and pills with links; a pills plot has its own
+        ``ellipsis``."""
+        features = []
+        if self.ellipsis:
+            features.append("ellipsis")
+        if self.links:
+            features.append("link-to-url")
+        if self.custom_plot:
+            features.append("custom-plot")
+        features += list(self.plot or {})
+        allowed = len(features) == 2 and (
+            ("heatmap" in features and ("ellipsis" in features or "link-to-url" in features))
+            or ("pills" in features and "link-to-url" in features)
+        )
+        if len(features) > 1 and not allowed:
+            raise ValueError(f"datavzrd rejects a column with {' and '.join(features)}")
 
 
 def ticks(
@@ -190,8 +210,10 @@ def pills(
 ) -> Column:
     """Categories as colored pills, the text on the pill.
     ``domain`` lists the categories and ``colors`` their colors in the same order, so a category keeps its color in every table; the values of a cell are split at ``separator``."""
-    plot = {"pills": {"separator": separator, "domain": list(domain), "range": list(colors)}}
-    return Column(label=label, plot=plot, ellipsis=ellipsis, display=display, links=links)
+    plot: dict = {"pills": {"separator": separator, "domain": list(domain), "range": list(colors)}}
+    if ellipsis:
+        plot["pills"]["ellipsis"] = ellipsis  # the pills' own ellipsis, which datavzrd allows
+    return Column(label=label, plot=plot, display=display, links=links)
 
 
 def heatmap(
