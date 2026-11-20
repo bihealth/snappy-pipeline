@@ -74,7 +74,8 @@ PAIR_COLUMNS = {
     "a": Column(),
     "b": Column(),
     "expected": ticks(label="relatedness (sheet)", precision=2, domain=(0, 1)),
-    "relatedness": ticks(precision=2, domain=(0, 1)),
+    # peddy's estimate falls below 0 for unrelated pairs and above 1 for duplicates, so no fixed domain
+    "relatedness": ticks(precision=2),
     "difference": ticks(precision=2),
     "ibs0_rate": ticks(label="IBS0 rate", precision=4),
     "ibs0": bars(label="IBS0 sites", display="available"),

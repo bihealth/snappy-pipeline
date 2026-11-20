@@ -139,6 +139,13 @@ def test_pairs_table_and_charts():
         "ok",
     )
     assert grandparent["ibs0_rate"] == pytest.approx(900 / 20000)
+    unrelated = pairs.filter((pairs["a"] == _lib("gfA")) & (pairs["b"] == _lib("moA"))).row(
+        0, named=True
+    )
+    assert unrelated["relatedness"] == pytest.approx(-0.0103) and unrelated["check"] == "ok"
+    # peddy's estimate leaves [0, 1], so the relatedness ticks have no fixed domain
+    assert "domain" not in views["pairs"].columns["relatedness"].plot["ticks"]
+    assert views["pairs"].columns["expected"].plot["ticks"]["domain"] == [0, 1]
     assert isinstance(views["sex"], Chart) and views["sex"].series == "sex"
     assert (views["sex"].x, views["sex"].y) == ("chrx_het_hom", "chry_frac")
     assert views["relatedness"].mark == "scatter" and views["relatedness"].x == "expected"
