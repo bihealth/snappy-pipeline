@@ -1032,16 +1032,13 @@ class BaseStep:
 
     def member_libraries(self, entity: str) -> list[str]:
         """Return the libraries that an entity of this task stands for in a joint result: with ``group_by: related`` the pedigree members of its related group (one DNA library per donor, the index first), else the library itself.
-        Raises ``ValueError`` for a name that is no related group and ``ConfigError`` for a group without members, such as a cancer donor without a normal."""
+        A group without pedigree members, such as a cancer donor without a normal, stands for its primary library (the primary tumor).
+        Raises ``ValueError`` for a name that is no entity."""
         if self.effective_group_by != "related":
             return [entity]
-        self.get_related_libraries(entity)  # raises for a name that is no related group
         members = self.pedigree_members(entity)["library_name"].tolist()
         if not members:
-            raise ConfigError(
-                f"the related group {entity!r} of task {self.task_name!r} has no DNA library to "
-                "call jointly: no pedigree member, or no normal of a cancer donor"
-            )
+            return [self.primary_library(entity)]
         index = self.pedigree_index(entity)
         return [index, *(name for name in members if name != index)] if index else members
 

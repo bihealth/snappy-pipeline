@@ -286,6 +286,10 @@ GATK_GERMLINE_FILTER_IDS = frozenset({"LowQual"})
 
 
 class VariantCallingStepPart(BaseStepPart):
+    def members(self, library_name: str) -> list[str]:
+        """Return the libraries called for the entity ``library_name``: the pedigree members of its related group with ``group_by: related``, else the library."""
+        return self.parent.member_libraries(library_name)
+
     """Base class for germline variant calling step parts
 
     Variant calling is performed on a per-pedigree level.  The (single) index individual is used
@@ -309,17 +313,7 @@ class VariantCallingStepPart(BaseStepPart):
 
         group_by = self.parent.effective_group_by
 
-        # Determine the target libraries based on the wildcard
-        if group_by == "related":
-            # wildcards.library_name is the related group; its pedigree members are called
-            df_target = df[
-                df["library_name"].isin(self.parent.member_libraries(wildcards.library_name))
-            ]
-        elif group_by == "library":
-            # Per-library logic
-            df_target = df[df["library_name"] == wildcards.library_name]
-        else:
-            raise ValueError(f"Unknown group_by: {group_by}")
+        df_target = df[df["library_name"].isin(self.members(wildcards.library_name))]
 
         if df_target["kind"].eq("cancer").all():
             yield "ped", []
@@ -515,17 +509,7 @@ class Gatk4HaplotypeCallerGvcfStepPart(GatkCallerStepPartBase):
 
         group_by = self.parent.effective_group_by
 
-        # Determine the target libraries based on the wildcard
-        if group_by == "related":
-            # wildcards.library_name is the related group; its pedigree members are called
-            df_target = df[
-                df["library_name"].isin(self.parent.member_libraries(wildcards.library_name))
-            ]
-        elif group_by == "library":
-            # Per-library logic
-            df_target = df[df["library_name"] == wildcards.library_name]
-        else:
-            raise ValueError(f"Unknown group_by: {group_by}")
+        df_target = df[df["library_name"].isin(self.members(wildcards.library_name))]
 
         if df_target["kind"].eq("cancer").all():
             yield "ped", []
@@ -620,7 +604,7 @@ class ReportStepPart(BaseStepPart):
     def _result_wildcards(self, entity: str) -> dict[str, list[str]]:
         result = super()._result_wildcards(entity)
         if self.report_per_donor and self.parent.effective_group_by == "related":
-            result["donor_library_name"] = self.parent.member_libraries(entity)
+            result["donor_library_name"] = self.parent.called_libraries(entity)
         return result
 
 
@@ -697,7 +681,7 @@ class BcftoolsRohStepPart(ReportStepPart):
 
     def vcf_libraries(self, library_name: str) -> list[str]:
         """Return the libraries in the VCF of the entity."""
-        return self.parent.member_libraries(library_name)
+        return self.parent.called_libraries(library_name)
 
     def _get_params_run(self, wildcards):
         return {
@@ -783,6 +767,11 @@ class SomaticVariantCallingStepPart(BaseStepPart):
         if tumor_df.empty:
             return None
         return tumor_df.iloc[0].get("matched_normal_lib") or None
+
+    def members(self, library_name: str) -> list[str]:
+        """Return the libraries in the VCF of the tumor ``library_name``: the tumor and its matched normal, if it has one."""
+        normal = self.get_normal_lib_name(Wildcards(fromdict={"library_name": library_name}))
+        return [library_name, normal] if normal else [library_name]
 
     def get_tumor_lib_name(self, wildcards):
         return wildcards.library_name
@@ -1522,6 +1511,10 @@ class VariantCallingWorkflow(BaseStep):
             tags = {str(config.varlociraptor.scenario), "varlociraptor", *kinds}
             return (DataSignature(DataType.VARIANTS, frozenset(tags)),)
         return (DataSignature(DataType.VARIANTS, frozenset({"germline", "snv", "indel"})),)
+
+    def called_libraries(self, entity: str) -> list[str]:
+        """Return the libraries in the VCF of an entity, as the task's caller takes them (its ``members``)."""
+        return self.sub_steps[self.config.tool].members(entity)
 
     @classmethod
     def default_group_by(cls, config):

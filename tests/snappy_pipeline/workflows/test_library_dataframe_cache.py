@@ -7,7 +7,6 @@ from types import SimpleNamespace
 import pandas as pd
 import pytest
 
-from snappy_pipeline.base import ConfigError
 from snappy_pipeline.workflows import abstract
 from snappy_pipeline.workflows.abstract import BaseStep
 from snappy_pipeline.workflows.abstract.protocol import DataSignature, DataType
@@ -147,9 +146,10 @@ def test_a_joint_call_takes_one_dna_library_per_donor_the_index_first(mocker):
     assert step.get_related_libraries("FAM_index") == df["library_name"].tolist()[:4]
     assert step.pedigrees() == {"FAM_index": ["father-DNA1", "index-DNA1"]}
     assert step.member_libraries("FAM_index") == ["index-DNA1", "father-DNA1"]
-    # A cancer donor without a normal has nothing to call jointly
-    with pytest.raises(ConfigError, match="'PAT_P1' of task 'dummy' has no DNA library"):
-        step.member_libraries("PAT_P1")
+    # A cancer donor without a normal stands for its primary tumor
+    assert step.member_libraries("PAT_P1") == ["P1-T1-DNA1"]
+    with pytest.raises(ValueError, match="'P1-T1-DNA1' is no entity of task 'dummy'"):
+        step.member_libraries("P1-T1-DNA1")
 
 
 def test_group_by_comes_from_the_task_then_its_step_then_upstream():
