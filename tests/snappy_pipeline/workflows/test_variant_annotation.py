@@ -27,3 +27,20 @@ def test_no_stats_declares_no_summary():
 def test_stats_flags_are_not_extra_arguments():
     with pytest.raises(ValueError):
         Vep(extra_arguments=["--no_stats"])
+
+
+def test_the_annotated_variants_carry_the_tool_and_the_genome_build():
+    from snappy_pipeline.workflows.abstract.protocol import DataSignature, DataType
+    from snappy_pipeline.workflows.variant_annotation import VariantAnnotationWorkflow
+    from snappy_pipeline.workflows.variant_annotation.model import VariantAnnotation
+
+    config = VariantAnnotation(
+        depends_on={"variants": "calls", "reference": "genome", "database": "mehari_db"},
+        tool="mehari",
+        mehari={"assembly": "GRCh37"},
+    )
+    germline = DataSignature(DataType.VARIANTS, frozenset({"germline"}))
+
+    (produced,) = VariantAnnotationWorkflow.task_produces(config, {"variants": germline})
+
+    assert produced.tags == {"germline", "annotated", "mehari", "GRCh37"}

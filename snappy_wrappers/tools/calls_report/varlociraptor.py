@@ -11,6 +11,7 @@ from __future__ import annotations
 import math
 import re
 from typing import Any
+from urllib.parse import quote, urlencode
 
 from snappy_wrappers.tools.qc_summary import (
     AGAINST,
@@ -56,6 +57,9 @@ AGAINST_EVENTS = ("ARTIFACT", "ABSENT")
 
 #: Sampled allele frequencies that a density cell keeps at most
 AFD_POINTS = 24
+
+#: varlociraptor-inspect, which draws the observations of a record from the URL's parameters
+INSPECT_URL = "https://varlociraptor.github.io/varlociraptor-inspect/"
 
 #: The JS function that turns a cell ``SAOBS|SROBS`` into the records of the observations plot:
 #: one per allele, strength and mapping certainty, the count signed (alt to the right)
@@ -244,13 +248,18 @@ def probability_column(event: str) -> str:
     return f"P({event.lower()})"
 
 
-def values(record: Record, events: list[str], samples: list[str]) -> dict[str, Any]:
-    """The varlociraptor values of ``record``: one probability per event, and per sample the
-    allele frequency, depth, genotype, the compact observation and density strings and the
-    biases."""
+def probabilities(record: Record, events: list[str]) -> dict[str, Any]:
+    """One posterior probability per event."""
+    return {
+        probability_column(event): phred_to_probability(record.info.get(f"PROB_{event}", "."))
+        for event in events
+    }
+
+
+def sample_values(record: Record, samples: list[str]) -> dict[str, Any]:
+    """Per sample the allele frequency, depth, genotype, the compact observation and density
+    strings and the biases."""
     row: dict[str, Any] = {}
-    for event in events:
-        row[probability_column(event)] = phred_to_probability(record.info.get(f"PROB_{event}", "."))
     for sample in samples:
         fields = record.samples.get(sample, {})
         af = fields.get("AF", ".")
@@ -265,13 +274,41 @@ def values(record: Record, events: list[str], samples: list[str]) -> dict[str, A
     return row
 
 
-def columns(vcf: Vcf, rows: list[dict[str, Any]]) -> dict[str, Column]:
-    """The rendering of the varlociraptor columns, in order: the probabilities (heatmaps, the
-    against-events on the red ramp), then per sample."""
+def inspect_url(record: Record, events: list[str], samples: list[str]) -> str:
+    """The link that opens the record in varlociraptor-inspect: the event probabilities and
+    per sample the observations and the allele frequency density, nothing else.
+    The samples are ``s1``, ``s2``, ... in the order of the VCF, so the URL carries no names."""
+    params = [(f"PROB_{event}", record.info.get(f"PROB_{event}", "")) for event in events]
+    for number, sample in enumerate(samples, 1):
+        fields = record.samples.get(sample, {})
+        params.append((f"OBS_s{number}", fields.get("OBS", "")))
+        params.append((f"AFD_s{number}", fields.get("AFD", "")))
+    return INSPECT_URL + "?" + urlencode(params, quote_via=quote)
+
+
+def inspect_values(record: Record, events: list[str], samples: list[str]) -> dict[str, Any]:
+    return {"inspect": "inspect", "inspect_url": inspect_url(record, events, samples)}
+
+
+def inspect_columns() -> dict[str, Column]:
+    return {
+        "inspect": Column(links={"varlociraptor-inspect": "{inspect_url}"}),
+        "inspect_url": Column(display="hidden"),
+    }
+
+
+def probability_columns(vcf: Vcf) -> dict[str, Column]:
+    """The probabilities as heatmaps, the against-events on the red ramp."""
     result: dict[str, Column] = {}
     for event in events(vcf):
         colors = AGAINST if event.upper() in AGAINST_EVENTS else SEQUENTIAL
         result[probability_column(event)] = heatmap(colors=colors)
+    return result
+
+
+def sample_columns(vcf: Vcf, rows: list[dict[str, Any]]) -> dict[str, Column]:
+    """The rendering of the per-sample columns, in order."""
+    result: dict[str, Column] = {}
     for sample in vcf.samples:
         result[f"{sample}: AF"] = ticks(precision=3, domain=(0, 1))
         result[f"{sample}: DP"] = bars()

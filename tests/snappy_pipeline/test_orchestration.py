@@ -299,7 +299,7 @@ def test_load_project_passes_variant_tags_through_annotation_and_filtration():
         DataSignature(DataType.ALIGNMENTS, frozenset({"dna"})),
     )
     assert project.signatures["filtration"] == (
-        DataSignature(DataType.VARIANTS, somatic | {"annotated", "vep", "filtered"}),
+        DataSignature(DataType.VARIANTS, somatic | {"annotated", "vep", "GRCh38", "filtered"}),
     )
 
 
@@ -309,7 +309,7 @@ def test_load_project_rejects_germline_variants_for_tmb():
     with pytest.raises(
         ValueError,
         match=r"Task 'tmb' \(step tumor_mutational_burden\): depends_on.variants requires variants \[somatic\], "
-        r"but task 'filtration' produces variants \[annotated, filtered, germline, indel, snv, vep\]",
+        r"but task 'filtration' produces variants \[GRCh38, annotated, filtered, germline, indel, snv, vep\]",
     ):
         load_project(_config(*tasks), WORK_DIR)
 

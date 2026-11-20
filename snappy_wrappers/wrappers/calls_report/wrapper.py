@@ -17,7 +17,12 @@ args = getattr(snakemake.params, "args", {})
 
 
 def main():
-    options = Options(page_size=args["page_size"], max_in_memory_rows=args["max_in_memory_rows"])
+    options = Options(
+        page_size=args["page_size"],
+        max_in_memory_rows=args["max_in_memory_rows"],
+        linkouts=tuple(args["linkouts"]),
+        assembly=args["assembly"],
+    )
     summary = summarize(snakemake.input.vcf, options)
     render(summary, args["title"], snakemake.output.tsv, snakemake.output.html)
 

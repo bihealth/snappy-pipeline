@@ -159,9 +159,12 @@ class VariantAnnotationWorkflow(BaseStep):
 
     @classmethod
     def task_produces(cls, config, upstream):
-        """The variants this task reads, tagged ``annotated`` and with the annotator, so that a
-        consumer can require one (neoepitope prediction needs VEP)."""
-        return (upstream["variants"].with_tags("annotated", str(config.tool)),)
+        """The variants this task reads, tagged ``annotated``, with the annotator, so that a
+        consumer can require one (neoepitope prediction needs VEP), and with the genome build
+        of the annotation (``GRCh37``, ``GRCh38``), which the calls report reads for its
+        build-dependent linkouts."""
+        assembly = getattr(config, str(config.tool)).assembly
+        return (upstream["variants"].with_tags("annotated", str(config.tool), assembly),)
 
     config_model_class = VariantAnnotationConfigModel
 

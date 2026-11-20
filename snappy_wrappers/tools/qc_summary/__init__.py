@@ -186,11 +186,12 @@ def pills(
     separator: str = ",",
     ellipsis: int | None = None,
     display: str | None = None,
+    links: dict[str, str] | None = None,
 ) -> Column:
     """Categories as colored pills, the text on the pill.
     ``domain`` lists the categories and ``colors`` their colors in the same order, so a category keeps its color in every table; the values of a cell are split at ``separator``."""
     plot = {"pills": {"separator": separator, "domain": list(domain), "range": list(colors)}}
-    return Column(label=label, plot=plot, ellipsis=ellipsis, display=display)
+    return Column(label=label, plot=plot, ellipsis=ellipsis, display=display, links=links)
 
 
 def heatmap(

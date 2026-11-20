@@ -16,6 +16,9 @@ from snakemake.iocontainers import Wildcards
 from snappy_pipeline.utils import dictify
 from snappy_pipeline.workflows.abstract import BaseStepPart, ReportOutput, ResourceUsage
 
+#: The genome builds that an annotation task tags its variants with
+ASSEMBLIES = frozenset({"GRCh37", "GRCh38"})
+
 
 class CallsReportStepPart(BaseStepPart):
     """The calls of each VCF of the task as a table and a datavzrd site for the report."""
@@ -52,10 +55,21 @@ class CallsReportStepPart(BaseStepPart):
     def _get_log_file_run(self):
         return {"log": "work/{library_name}/log/{library_name}.calls_report.log"}
 
+    def assembly(self) -> str | None:
+        """The genome build the task's variants are tagged with (``variant_annotation`` adds it
+        and the steps after it keep it), else ``None``."""
+        for signature in self.parent.project.signatures[self.parent.task_name]:
+            for tag in signature.tags:
+                if tag in ASSEMBLIES:
+                    return tag
+        return None
+
     def _get_params_run(self, wildcards: Wildcards) -> dict[str, Any]:
         settings = self.parent.config.calls_report
         return {
             "title": f"{self.parent.task_name}: calls of {wildcards.library_name}",
             "page_size": settings.page_size,
             "max_in_memory_rows": settings.max_in_memory_rows,
+            "linkouts": [str(link) for link in settings.linkouts],
+            "assembly": self.assembly(),
         }

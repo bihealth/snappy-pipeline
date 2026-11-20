@@ -8,6 +8,7 @@ from pathlib import Path
 import fastjsonschema
 import pytest
 
+from snappy_pipeline.models.calls_report import Linkout
 from snappy_wrappers.tools.calls_report import Options, summarize, variant_type
 from snappy_wrappers.tools.calls_report.varlociraptor import (
     biases,
@@ -263,4 +264,119 @@ def test_summary_of_an_empty_vcf_has_the_columns_and_no_rows(tmp_path):
     assert summary.table.frame.height == 0
     assert "P(present)" in summary.table.frame.columns
     assert summary.table.frame.columns[:5] == ["chromosome", "position", "type", "ref", "alt"]
+    _validate(summary)
+
+
+ANNOTATED = FIXTURES / "calls.annotated.vcf"
+MUTECT2 = FIXTURES / "calls.mutect2.vcf"
+LINKOUTS = tuple(str(link) for link in Linkout)
+
+
+def test_annotated_calls_get_gene_consequence_impact_hgvs_and_the_other_entries():
+    summary = summarize(str(ANNOTATED))
+    frame = summary.table.frame
+    columns = summary.table.columns
+
+    assert frame.columns[9:16] == [
+        "gene",
+        "consequence",
+        "impact",
+        "hgvs.c",
+        "hgvs.p",
+        "transcript",
+        "biotype",
+    ]
+    row = frame.row(0, named=True)
+    # The first entry of the highest impact for the allele, percent-decoded
+    assert (row["gene"], row["consequence"], row["impact"]) == ("SOX5", "synonymous_variant", "LOW")
+    assert (row["hgvs.c"], row["hgvs.p"]) == ("c.2052C>T", "p.(Ser684=)")
+    assert row["transcript"] == "ENST00000309359.1" and row["exon"] == "15/15"
+    assert row["gene_id"] == "ENSG00000134532" and row["hgnc_id"] == "11201"
+    assert row["other annotations"].startswith("ENST00000367206.3: downstream_gene_variant; ")
+    assert columns["impact"].plot["pills"]["domain"] == ["HIGH", "MODERATE", "LOW", "MODIFIER"]
+    assert columns["consequence"].ellipsis == 32 and columns["hgvs.p"].ellipsis == 28
+    assert columns["transcript"].display == "available"
+    assert columns["other annotations"].display == "detail"
+    assert columns["gene_id"].display == "hidden"
+    _validate(summary)
+
+
+def test_frequencies_and_clinvar_come_from_the_fields_mehari_adds():
+    frame = summarize(str(ANNOTATED)).table.frame
+
+    # AF = (2 hom + het + hemi) / AN; gnomAD AF is the larger of exomes and genomes
+    assert frame["gnomAD exomes AF"].to_list()[:2] == pytest.approx([0.5, 1e-5])
+    assert frame["gnomAD genomes AF"].to_list()[:2] == pytest.approx([0.2, 0.0])
+    assert frame["gnomAD AF"].to_list()[:2] == pytest.approx([0.5, 1e-5])
+    assert frame["gnomAD AF"][2] is None  # not observed
+    assert frame["gnomAD exomes AF"][3] == pytest.approx((400 + 200 + 50) / 800)  # with hemi
+    assert frame["gnomAD hom"].to_list()[:2] == [110, 0]
+    assert frame["ClinVar"].to_list()[4] == "Pathogenic,Uncertain significance"
+    assert frame["ClinVar VCV"][4] == "VCV000012345.6,VCV000067890.1"
+    assert frame["clinvar_id"][4] == "12345" and frame["clinvar_id"][0] == ""
+    assert frame["id"].to_list() == ["", "rs123", "", "", "rs456", ""]
+
+
+def test_linkouts_follow_the_assembly_and_the_selection():
+    grch37 = summarize(str(ANNOTATED), Options(linkouts=LINKOUTS, assembly="GRCh37")).table
+    grch38 = summarize(str(ANNOTATED), Options(linkouts=LINKOUTS, assembly="GRCh38")).table
+    unknown = summarize(str(ANNOTATED), Options(linkouts=LINKOUTS)).table
+    some = summarize(
+        str(ANNOTATED), Options(linkouts=("genecards", "dbsnp"), assembly="GRCh38")
+    ).table
+
+    assert grch37.columns["position"].links["gnomAD"].endswith("?dataset=gnomad_r2_1")
+    assert grch38.columns["position"].links["gnomAD"] == (
+        "https://gnomad.broadinstitute.org/variant/{gnomad_chromosome}-{position}-{ref}-{alt}"
+        "?dataset=gnomad_r4"
+    )
+    assert "[chrpos37]" in grch37.columns["position"].links["ClinVar"]
+    assert "[Base Position Previous]" in grch37.columns["position"].links["dbSNP"]
+    assert grch38.columns["gene"].links["Ensembl"].startswith("https://www.ensembl.org/")
+    assert grch37.columns["gene"].links["Ensembl"].startswith("https://grch37.ensembl.org/")
+    assert set(grch38.columns["gene"].links) == {"Ensembl", "GeneCards", "OMIM"}
+    assert grch38.columns["id"].links == {"dbSNP": "https://www.ncbi.nlm.nih.gov/snp/{value}"}
+    assert grch38.columns["ClinVar"].links == {
+        "ClinVar": "https://www.ncbi.nlm.nih.gov/clinvar/variation/{clinvar_id}/"
+    }
+    assert grch38.frame["gnomad_chromosome"][0] == "12"
+    assert grch38.columns["gnomad_chromosome"].display == "hidden"
+    # Without a build the position and Ensembl links are left out and the description says so
+    assert unknown.columns["position"].links is None
+    assert set(unknown.columns["gene"].links) == {"GeneCards", "OMIM"}
+    assert "gnomad_chromosome" not in unknown.frame.columns
+    assert "no annotation task in the chain" in unknown.desc
+    assert set(some.columns["gene"].links) == {"GeneCards"}
+    assert set(some.columns["position"].links) == {"dbSNP"}
+    assert "inspect" not in some.frame.columns
+    assert summarize(str(ANNOTATED), Options(linkouts=())).table.columns["gene"].links is None
+
+
+def test_the_inspect_link_carries_the_observations_without_names():
+    table = summarize(str(ANNOTATED), Options(linkouts=("varlociraptor_inspect",))).table
+
+    url = table.frame["inspect_url"][0]
+    assert url.startswith(
+        "https://varlociraptor.github.io/varlociraptor-inspect/?PROB_DENOVO=2796.69&"
+    )
+    assert "&PROB_ARTIFACT=inf&" in url
+    assert "&OBS_s1=" in url and "&AFD_s3=" in url and "case001" not in url
+    assert "%" in url  # the observation string is URL-encoded
+    assert table.columns["inspect"].links == {"varlociraptor-inspect": "{inspect_url}"}
+    assert table.columns["inspect_url"].display == "hidden"
+    assert table.frame["inspect"][0] == "inspect"
+    assert "numbered in the order of the VCF" in table.desc
+
+
+def test_annotated_mutect2_calls_mix_the_generic_sample_columns_with_the_annotation():
+    summary = summarize(str(MUTECT2), Options(linkouts=LINKOUTS, assembly="GRCh38"))
+    frame = summary.table.frame
+
+    assert frame["gene"].to_list() == ["SOX5", "KRAS", "ITPR2"]
+    assert frame["impact"].to_list() == ["MODIFIER", "MODERATE", "MODIFIER"]
+    assert frame["hgvs.p"][1] == "p.(Gly12Asp)"
+    assert "P(present)" not in frame.columns and "gnomAD AF" not in frame.columns
+    assert "case001subregion-T1-DNA1-WES1: AF" in frame.columns
+    assert frame["filter"].to_list() == ["PASS", "weak_evidence", "PASS"]
+    assert "quality" not in frame.columns and "inspect" not in frame.columns
     _validate(summary)
