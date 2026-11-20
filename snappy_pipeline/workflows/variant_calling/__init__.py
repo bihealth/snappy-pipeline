@@ -1244,8 +1244,10 @@ class VarlociraptorStepPart(ScatteredCallerStepPart):
     resource_usage = {
         "scatter": ResourceUsage(threads=1, runtime="2h", mem="4GB"),
         "alignment_properties": ResourceUsage(threads=1, runtime="2h", mem="4GB"),
-        "preprocess": ResourceUsage(threads=1, runtime="1d", mem="4GB"),
-        "call": ResourceUsage(threads=1, runtime="1d", mem="4GB"),
+        # The joint model grows with the samples of the pedigree: a chunk of an eight-member
+        # family with complex candidates took 14 GB
+        "preprocess": ResourceUsage(threads=1, runtime="1d", mem="8GB"),
+        "call": ResourceUsage(threads=1, runtime="1d", mem="16GB"),
         "gather": ResourceUsage(threads=1, runtime="2h", mem="4GB"),
     }
 

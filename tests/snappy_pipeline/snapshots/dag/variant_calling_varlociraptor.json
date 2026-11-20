@@ -496,9 +496,9 @@
    }
   },
   "resources": {
-   "mem": "4 GB",
-   "mem_mb": 4000,
-   "mem_mib": 3815,
+   "mem": "16 GB",
+   "mem_mb": 16000,
+   "mem_mib": 15259,
    "partition": "medium",
    "runtime": 1440
   },
@@ -539,9 +539,9 @@
    }
   },
   "resources": {
-   "mem": "4 GB",
-   "mem_mb": 4000,
-   "mem_mib": 3815,
+   "mem": "16 GB",
+   "mem_mb": 16000,
+   "mem_mib": 15259,
    "partition": "medium",
    "runtime": 1440
   },
@@ -614,9 +614,9 @@
    }
   },
   "resources": {
-   "mem": "4 GB",
-   "mem_mb": 4000,
-   "mem_mib": 3815,
+   "mem": "8 GB",
+   "mem_mb": 8000,
+   "mem_mib": 7630,
    "partition": "medium",
    "runtime": 1440
   },
@@ -656,9 +656,9 @@
    }
   },
   "resources": {
-   "mem": "4 GB",
-   "mem_mb": 4000,
-   "mem_mib": 3815,
+   "mem": "8 GB",
+   "mem_mb": 8000,
+   "mem_mib": 7630,
    "partition": "medium",
    "runtime": 1440
   },
@@ -698,9 +698,9 @@
    }
   },
   "resources": {
-   "mem": "4 GB",
-   "mem_mb": 4000,
-   "mem_mib": 3815,
+   "mem": "8 GB",
+   "mem_mb": 8000,
+   "mem_mib": 7630,
    "partition": "medium",
    "runtime": 1440
   },
@@ -740,9 +740,9 @@
    }
   },
   "resources": {
-   "mem": "4 GB",
-   "mem_mb": 4000,
-   "mem_mib": 3815,
+   "mem": "8 GB",
+   "mem_mb": 8000,
+   "mem_mib": 7630,
    "partition": "medium",
    "runtime": 1440
   },
