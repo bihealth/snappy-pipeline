@@ -29,6 +29,7 @@ The ``tool`` field selects the caller.
 ``freebayes``
     Candidate calling for ``varlociraptor``: ``freebayes --pooled-continuous`` jointly over the libraries of each entity (the primary DNA libraries of the pedigree with ``group_by: related``, else the library and its matched normal), in parallel over genome windows (``num_jobs``).
     With ``depends_on.kits``, the candidates are restricted to the targets of the libraries' kit, and the windows hold equal numbers of target bases instead of equal lengths, so the jobs take about equally long.
+    The candidates are normalised against the reference (left-aligned indels, one record per allele, exact duplicates removed) and, with ``atomize`` (the default), complex alleles are split into their SNVs and indels, as the dna-seq-varlociraptor workflow does.
     The calls are candidates, not genotype calls: they carry the tag ``candidates`` and feed ``depends_on.candidates`` of a ``varlociraptor`` task.
 
 ``varlociraptor``
@@ -1145,6 +1146,7 @@ class FreebayesStepPart(ScatteredCallerStepPart):
         return {
             "min_alternate_fraction": self.config.freebayes.min_alternate_fraction,
             "min_alternate_count": self.config.freebayes.min_alternate_count,
+            "atomize": self.config.freebayes.atomize,
         }
 
     def _get_output_files_scatter(self):

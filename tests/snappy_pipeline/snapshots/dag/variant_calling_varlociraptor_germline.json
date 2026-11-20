@@ -337,6 +337,7 @@
   ],
   "params": {
    "args": {
+    "atomize": true,
     "extra_arguments": [],
     "min_alternate_count": 2,
     "min_alternate_fraction": 0.05
@@ -384,6 +385,7 @@
   ],
   "params": {
    "args": {
+    "atomize": true,
     "extra_arguments": [],
     "min_alternate_count": 2,
     "min_alternate_fraction": 0.05

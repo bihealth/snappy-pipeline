@@ -212,6 +212,13 @@ class Freebayes(ToolModel, IgnoreContigs):
     min_alternate_count: Annotated[int, Field(ge=1)] = 2
     """Minimum number of observations that support an alternate allele (``--min-alternate-count``)"""
 
+    atomize: bool = True
+    """Split complex alleles into their SNVs and indels (``bcftools norm --atomize``).
+    Varlociraptor then evaluates each atom instead of realigning a long complex allele,
+    which is much cheaper on the alleles freebayes builds in polymorphic regions.
+    Annotation and filters see atomic variants.
+    Off, adjacent substitutions stay one record and one codon change"""
+
     num_jobs: Annotated[int, Field(ge=1)] = 24
     """Number of genome windows that are called in parallel"""
 

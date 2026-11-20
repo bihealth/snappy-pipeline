@@ -1,8 +1,12 @@
 # -*- coding: utf-8 -*-
 """Candidate calling with freebayes over the libraries of an entity, in one genome window.
 
-Genotyping is left to varlociraptor, so freebayes runs with ``--pooled-continuous``. With a
-``targets`` input (the targets of the libraries' kit), the window is cut to the targets. A window
+Genotyping is left to varlociraptor, so freebayes runs with ``--pooled-continuous``.
+``bcftools norm`` normalises the candidates against the reference:
+left-aligned indels, one record per allele, exact duplicates removed.
+With ``atomize``, complex alleles are split into their SNVs and indels,
+as the dna-seq-varlociraptor workflow does.
+With a ``targets`` input (the targets of the libraries' kit), the window is cut to the targets. A window
 without targets is cut to its first base, so that its chunk has the header and the samples of the
 other chunks and the gather can concatenate them.
 """
@@ -58,6 +62,7 @@ with tempfile.NamedTemporaryFile("wt", suffix=".bed", delete=False) as f:
         print(contig, start, end, sep="\t", file=f)
 
 bams = " ".join(snakemake.input.bam)
+atomize = "--atomize --atom-overlaps ." if args["atomize"] else ""
 
 try:
     ShellWrapper(snakemake).run(
@@ -70,6 +75,13 @@ freebayes \
     --min-alternate-fraction {args[min_alternate_fraction]} \
     {extra_arguments} \
     {bams} \
+    | bcftools norm \
+        --fasta-ref {snakemake.input.reference} \
+        --check-ref s \
+        --multiallelics -any \
+        --rm-dup exact \
+        {atomize} \
+        --output-type u \
     | bcftools sort \
         --temp-dir $TMPDIR \
         --output-type b \

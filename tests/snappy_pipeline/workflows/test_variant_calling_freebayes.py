@@ -72,7 +72,8 @@ def test_run_calls_the_members_in_the_window_and_the_kit_targets():
 def test_run_passes_the_candidate_thresholds():
     params = _part(min_alternate_fraction=0.1)._get_params_run(SimpleNamespace())
 
-    assert params == {"min_alternate_fraction": 0.1, "min_alternate_count": 2}
+    assert params == {"min_alternate_fraction": 0.1, "min_alternate_count": 2, "atomize": True}
+    assert _part(atomize=False)._get_params_run(SimpleNamespace())["atomize"] is False
 
 
 def test_scatter_windows_are_disjoint_and_skip_the_ignored_contigs():
