@@ -81,6 +81,8 @@ Below ``tasks/<task>/output/``, for each ``{library_name}``:
   For ``mutect2`` this is the filtered (PASS) calls.
 - ``{library_name}/out/{library_name}.g.vcf.gz`` with the same companion files, for ``gatk4_hc_gvcf`` only.
 
+- with ``calls_report``: ``{library_name}/report/calls/{library_name}.calls.tsv``, the calls of the VCF as a table (one row per call), and the same table as a datavzrd site below ``report/calls/html/``, which ``snappy report`` shows.
+
 Downstream tasks read ``vcf`` and ``vcf_tbi`` through ``depends_on``.
 The germline callers produce ``variants`` with tags ``germline``, ``snv``, ``indel``.
 ``mutect2`` produces ``somatic``, ``snv``, ``indel`` for all calls and additionally ``filtered`` for the PASS calls.
@@ -225,6 +227,7 @@ from snappy_pipeline.workflows.abstract import (
     WritePedigreeStepPart,
     _declared_group_by,
 )
+from snappy_pipeline.workflows.common.calls_report import CallsReportStepPart
 from snappy_pipeline.workflows.abstract.common import (
     SnakemakeDict,
     SnakemakeDictItemsGenerator,
@@ -1611,6 +1614,8 @@ class VariantCallingWorkflow(BaseStep):
         )
         if self.config.bcftools_stats and self.config.bcftools_stats.enabled:
             self.register_sub_step_classes((BcftoolsStatsSummaryStepPart,))
+        if self.config.calls_report:
+            self.register_sub_step_classes((CallsReportStepPart,))
         if (
             self.config.depends_on.kits
             and self.config.bcftools_roh
@@ -1684,4 +1689,6 @@ class VariantCallingWorkflow(BaseStep):
                 names.append(name)
         if "qc_summary" in self.sub_steps:  # the summary of the bcftools stats
             names.append("qc_summary")
+        if "calls_report" in self.sub_steps:
+            names.append("calls_report")
         return [path for name in names for path in self.sub_steps[name].get_result_files()]

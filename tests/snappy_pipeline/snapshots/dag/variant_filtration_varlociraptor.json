@@ -814,6 +814,8 @@
   ],
   "params": {
    "args": {
+    "max_in_memory_rows": 50000,
+    "page_size": 25,
     "title": "variant_filtration_varlociraptor: calls of case001subregion-T1-DNA1-WES1"
    }
   },
@@ -822,9 +824,9 @@
    "tasks/variant_filtration_varlociraptor/work/case001subregion-T1-DNA1-WES1/report/calls/html"
   ],
   "resources": {
-   "mem": "4 GB",
-   "mem_mb": 4000,
-   "mem_mib": 3815,
+   "mem": "8 GB",
+   "mem_mb": 8000,
+   "mem_mib": 7630,
    "partition": "medium",
    "runtime": 120
   },
@@ -834,7 +836,7 @@
   "wildcards": {
    "library_name": "case001subregion-T1-DNA1-WES1"
   },
-  "wrapper": "file://<repo>/snappy_wrappers/wrappers/varlociraptor/report"
+  "wrapper": "file://<repo>/snappy_wrappers/wrappers/calls_report"
  },
  {
   "benchmark": "tasks/variant_filtration_varlociraptor/benchmarks/case001subregion-T1-DNA1-WES1/case001subregion-T1-DNA1-WES1.tsv",

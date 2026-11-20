@@ -11,6 +11,7 @@ from snappy_pipeline.workflows.abstract.protocol import (
     ExpectedPathSchema,
     Reference,
 )
+from snappy_pipeline.models.calls_report import CallsReport
 
 
 class RenameCombine(enum.StrEnum):
@@ -47,4 +48,7 @@ class CombineVariantsDependsOn(SnappyModel):
 
 class CombineVariants(SnappyStepModel, ToolModel):
     depends_on: CombineVariantsDependsOn
+
+    calls_report: CallsReport | None = None
+    """The calls of each VCF as a table and a datavzrd site for the report; unset: no report"""
     rename_combined: RenameCombine | None = None

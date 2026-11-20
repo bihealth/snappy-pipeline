@@ -69,3 +69,26 @@ elif wf.config.tool == Tool.mehari:
 
 else:
     raise ValueError(f"unknown tool {wf.config.tool}")
+
+
+if "calls_report" in wf.sub_steps:
+
+    rule variant_annotation_calls_report:
+        input:
+            unpack(wf.get_input_files("calls_report", "run")),
+        output:
+            **wf.get_output_files("calls_report", "run"),
+        log:
+            **wf.get_log_file("calls_report", "run"),
+        benchmark:
+            wf.get_benchmark_file("calls_report", "run")
+        threads: wf.get_resource("calls_report", "run", "threads")
+        resources:
+            runtime=wf.get_resource("calls_report", "run", "runtime"),
+            mem=wf.get_resource("calls_report", "run", "mem"),
+            partition=wf.get_resource("calls_report", "run", "partition"),
+            tmpdir=wf.get_resource("calls_report", "run", "tmpdir"),
+        params:
+            args=wf.get_params("calls_report", "run"),
+        wrapper:
+            wf.wrapper_path("calls_report")

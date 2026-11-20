@@ -12,6 +12,7 @@ from snappy_pipeline.workflows.abstract.protocol import (
     Reference,
     TOOL,
 )
+from snappy_pipeline.models.calls_report import CallsReport
 
 
 class Tool(enum.StrEnum):
@@ -66,6 +67,9 @@ class VariantAnnotationDependsOn(SnappyModel):
 
 class VariantAnnotation(SnappyStepModel):
     depends_on: VariantAnnotationDependsOn
+
+    calls_report: CallsReport | None = None
+    """The calls of each VCF as a table and a datavzrd site for the report; unset: no report"""
 
     tool: Annotated[Tool, EnumField(Tool)]
 

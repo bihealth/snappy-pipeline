@@ -474,8 +474,10 @@ TASK_CONFIG: dict[tuple[str, str | None], dict[str, Any]] = {
     ("variant_filtration", "regions"): {"regions": {"action": "exclude"}},
     ("variant_filtration", "vembrane"): {"vembrane": {"expressions": {"some_filter": "True"}}},
     ("variant_filtration", "varlociraptor"): {
-        "varlociraptor": {"events": ["somatic_tumor_high", "somatic_tumor_medium"]}
+        "varlociraptor": {"events": ["somatic_tumor_high", "somatic_tumor_medium"]},
+        "calls_report": {},
     },
+    ("variant_annotation", "mehari"): {"calls_report": {}},
     ("wgs_cnv_export_external", None): VARIANT_EXPORT_EXTERNAL,
     ("wgs_sv_export_external", None): VARIANT_EXPORT_EXTERNAL,
 }

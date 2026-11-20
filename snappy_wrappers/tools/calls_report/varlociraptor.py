@@ -1,8 +1,6 @@
 # -*- coding: utf-8 -*-
-"""The calls of varlociraptor in one VCF, as a table for the report.
+"""The columns of varlociraptor's calls: the posterior probability of every event of the scenario and, per sample, the allele frequency, the depth, the genotype and the observations.
 
-One row per call with the posterior probability of every event of the scenario and, per sample,
-the allele frequency, the depth, the genotype and the observations.
 The observations are drawn in the cell: the reads for the alternative allele to the right and those for the reference (or a third allele) to the left, one bar per strength of evidence (``SAOBS`` and ``SROBS``), and the posterior density of the allele frequency (``AFD``) as a bar per sampled frequency, relative to the cell's maximum.
 The cells hold the compact strings of the VCF (``SAOBS|SROBS``, and ``AFD`` thinned to :data:`AFD_POINTS` frequencies), which the browser parses, so a row costs tens of bytes per sample.
 The biases that varlociraptor found (strand, read orientation, read position, softclip, homopolymer, alt locus, fragment end) are listed as text.
@@ -10,13 +8,9 @@ The biases that varlociraptor found (strand, read orientation, read position, so
 
 from __future__ import annotations
 
-import gzip
 import math
 import re
-from dataclasses import dataclass, field
 from typing import Any
-
-import polars as pl
 
 from snappy_wrappers.tools.qc_summary import (
     AGAINST,
@@ -26,11 +20,21 @@ from snappy_wrappers.tools.qc_summary import (
     SEQUENTIAL,
     VEGA_LITE,
     Column,
-    Summary,
-    Table,
     bars,
     heatmap,
     ticks,
+)
+
+from .vcf import Record, Vcf
+
+#: What the table's description says about the varlociraptor columns
+DESCRIPTION = (
+    "`P(...)` columns are the posterior probabilities of the events of the scenario (red for "
+    "artifact and absent). Per sample: the allele frequency with its posterior density "
+    "(relative to the cell's maximum), the depth, the genotype, the observations (bars per "
+    "strength of evidence: reads for the alternative allele to the right, for the reference or "
+    "another allele to the left; pale bars from reads with uncertain mapping) and the biases "
+    "varlociraptor found. The details hold the hints. "
 )
 
 #: The strengths of evidence of an observation (extended Kass-Raftery scores), weakest first
@@ -171,19 +175,6 @@ AFD_PLOT = {
 }
 
 
-@dataclass
-class Calls:
-    """The records of a varlociraptor VCF: its samples, events and one dict per call."""
-
-    samples: list[str]
-    events: list[str]
-    rows: list[dict[str, Any]] = field(default_factory=list)
-
-
-def _open(path: str):
-    return gzip.open(path, "rt") if path.endswith(".gz") else open(path, "rt")
-
-
 def phred_to_probability(text: str) -> float | None:
     """A probability from varlociraptor's PHRED-scaled value; ``inf`` is zero, ``.`` unknown."""
     if text in (".", ""):
@@ -244,112 +235,59 @@ def biases(sample: dict[str, str]) -> str:
     return ", ".join(found)
 
 
-def variant_type(ref: str, alt: str, info: dict[str, str]) -> str:
-    if "SVTYPE" in info:
-        return info["SVTYPE"]
-    if len(ref) == 1 and len(alt) == 1:
-        return "SNV"
-    if len(ref) == len(alt):
-        return "MNV"
-    return "INS" if len(alt) > len(ref) else "DEL"
+def events(vcf: Vcf) -> list[str]:
+    """The events of the scenario, from the ``PROB_*`` INFO fields of the header."""
+    return [name[5:] for name in vcf.info if name.startswith("PROB_")]
 
 
-def read_calls(path: str) -> Calls:
-    """Read the calls of a varlociraptor VCF (one ALT per record, as varlociraptor writes)."""
-    samples: list[str] = []
-    events: list[str] = []
-    rows: list[dict[str, Any]] = []
-    with _open(path) as f:
-        for line in f:
-            line = line.rstrip("\n")
-            if line.startswith("##"):
-                if match := re.match(r"##INFO=<ID=PROB_(\w+),", line):
-                    events.append(match.group(1))
-                continue
-            if line.startswith("#"):
-                samples = line.split("\t")[9:]
-                continue
-            fields = line.split("\t")
-            chromosome, position, _, ref, alt = fields[:5]
-            info: dict[str, str] = {}
-            for entry in fields[7].split(";"):
-                key, _, value = entry.partition("=")
-                info[key] = value
-            row: dict[str, Any] = {
-                "chromosome": chromosome,
-                "position": int(position),
-                "type": variant_type(ref, alt, info),
-                "ref": ref,
-                "alt": alt,
-            }
-            for event in events:
-                row[f"prob: {event.lower()}"] = phred_to_probability(info.get(f"PROB_{event}", "."))
-            keys = fields[8].split(":")
-            for sample, text in zip(samples, fields[9:]):
-                values = dict(zip(keys, text.split(":")))
-                af = values.get("AF", ".")
-                dp = values.get("DP", ".")
-                row[f"{sample}: allele frequency"] = None if af == "." else float(af)
-                row[f"{sample}: depth"] = None if dp == "." else int(dp)
-                row[f"{sample}: genotype"] = values.get("GT", ".")
-                saobs, srobs = values.get("SAOBS", ""), values.get("SROBS", "")
-                row[f"{sample}: observations"] = f"{saobs}|{srobs}" if saobs or srobs else ""
-                row[f"{sample}: allele frequency density"] = compact_afd(values.get("AFD", ""))
-                row[f"{sample}: biases"] = biases(values)
-            row["hints"] = info.get("HINTS", "")
-            rows.append(row)
-    return Calls(samples, events, rows)
+def probability_column(event: str) -> str:
+    return f"P({event.lower()})"
 
 
-def _probability(event: str) -> Column:
-    return heatmap(colors=AGAINST if event.upper() in AGAINST_EVENTS else SEQUENTIAL)
+def values(record: Record, events: list[str], samples: list[str]) -> dict[str, Any]:
+    """The varlociraptor values of ``record``: one probability per event, and per sample the
+    allele frequency, depth, genotype, the compact observation and density strings and the
+    biases."""
+    row: dict[str, Any] = {}
+    for event in events:
+        row[probability_column(event)] = phred_to_probability(record.info.get(f"PROB_{event}", "."))
+    for sample in samples:
+        fields = record.samples.get(sample, {})
+        af = fields.get("AF", ".")
+        dp = fields.get("DP", ".")
+        row[f"{sample}: AF"] = None if af == "." else float(af)
+        row[f"{sample}: DP"] = None if dp == "." else int(dp)
+        row[f"{sample}: GT"] = fields.get("GT", ".")
+        saobs, srobs = fields.get("SAOBS", ""), fields.get("SROBS", "")
+        row[f"{sample}: observations"] = f"{saobs}|{srobs}" if saobs or srobs else ""
+        row[f"{sample}: AFD"] = compact_afd(fields.get("AFD", ""))
+        row[f"{sample}: biases"] = biases(fields)
+    return row
 
 
-def summarize(path: str) -> Summary:
-    """The calls table of one VCF, ready to render."""
-    calls = read_calls(path)
-    columns: dict[str, Column] = {"position": Column(precision=0), "hints": Column(detail=True)}
-    for event in calls.events:
-        columns[f"prob: {event.lower()}"] = _probability(event)
-    for sample in calls.samples:
-        columns[f"{sample}: allele frequency"] = ticks(precision=3, domain=(0, 1))
-        columns[f"{sample}: depth"] = bars()
-        columns[f"{sample}: genotype"] = Column()
+def columns(vcf: Vcf, rows: list[dict[str, Any]]) -> dict[str, Column]:
+    """The rendering of the varlociraptor columns, in order: the probabilities (heatmaps, the
+    against-events on the red ramp), then per sample."""
+    result: dict[str, Column] = {}
+    for event in events(vcf):
+        colors = AGAINST if event.upper() in AGAINST_EVENTS else SEQUENTIAL
+        result[probability_column(event)] = heatmap(colors=colors)
+    for sample in vcf.samples:
+        result[f"{sample}: AF"] = ticks(precision=3, domain=(0, 1))
+        result[f"{sample}: DP"] = bars()
+        result[f"{sample}: GT"] = Column()
         most = max(
             (
                 record["count"]
-                for row in calls.rows
-                for record in observations(*row[f"{sample}: observations"].split("|"))
+                for row in rows
                 if row[f"{sample}: observations"]
+                for record in observations(*row[f"{sample}: observations"].split("|"))
             ),
             default=0,
         )
-        columns[f"{sample}: observations"] = Column(custom_plot=observations_plot(most))
-        columns[f"{sample}: allele frequency density"] = Column(custom_plot=AFD_PLOT)
-        columns[f"{sample}: biases"] = Column()
-    order = ["chromosome", "position", "type", "ref", "alt"]
-    frame = (
-        pl.from_dicts(calls.rows, infer_schema_length=None)
-        if calls.rows
-        else pl.DataFrame(schema={column: pl.Null for column in [*order, *columns]})
-    )
-    rest = [c for c in frame.columns if c not in order]
-    frame = frame.select(*order, *rest)
-    return Summary(
-        table=Table(
-            "calls",
-            "varlociraptor calls",
-            frame,
-            desc="One row per call. `prob:` columns are the posterior probabilities of the "
-            "events of the scenario (red for artifact and absent). Per sample: the allele "
-            "frequency with its posterior density (relative to the cell's maximum), the depth, "
-            "the genotype, the observations (bars per strength of evidence: reads for the "
-            "alternative allele to the right, for the reference or another allele to the left; "
-            "pale bars from reads with uncertain mapping) and the biases varlociraptor found. "
-            "The details hold the hints.",
-            columns=columns,
-            pinned=("chromosome", "position"),
-            page_size=20,
-        ),
-        views=[],
-    )
+        result[f"{sample}: observations"] = Column(
+            custom_plot=observations_plot(most), display="detail"
+        )
+        result[f"{sample}: AFD"] = Column(custom_plot=AFD_PLOT, display="detail")
+        result[f"{sample}: biases"] = Column(display="available")
+    return result

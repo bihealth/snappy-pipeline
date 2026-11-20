@@ -12,6 +12,7 @@ from snappy_pipeline.workflows.abstract.protocol import (
     Reference,
     Regions,
 )
+from snappy_pipeline.models.calls_report import CallsReport
 from snappy_pipeline.workflows.ngs_mapping.model import ExpectedAlignments
 
 
@@ -180,6 +181,9 @@ class VariantFiltrationDependsOn(SnappyModel):
 
 class VariantFiltration(SnappyStepModel):
     depends_on: VariantFiltrationDependsOn
+
+    calls_report: CallsReport | None = None
+    """The calls of each VCF as a table and a datavzrd site for the report; unset: no report"""
 
     tool: ToolLiteral
     """One task = one tool. Vembrane supports both ``tag`` and ``filter`` modes."""

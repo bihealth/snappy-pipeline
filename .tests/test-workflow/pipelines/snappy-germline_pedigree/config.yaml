@@ -81,5 +81,6 @@ tasks:
       depends_on:
         variants: calling
       tool: varlociraptor
+      calls_report: {}
       varlociraptor:
         events: [present, denovo, recessive, dominant]

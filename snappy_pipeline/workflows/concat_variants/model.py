@@ -9,6 +9,7 @@ from snappy_pipeline.workflows.abstract.protocol import (
     DataType,
     ExpectedPathSchema,
 )
+from snappy_pipeline.models.calls_report import CallsReport
 
 
 class Tool(enum.StrEnum):
@@ -36,6 +37,9 @@ class ConcatVariantsDependsOn(SnappyModel):
 
 class ConcatVariants(SnappyStepModel):
     depends_on: ConcatVariantsDependsOn
+
+    calls_report: CallsReport | None = None
+    """The calls of each VCF as a table and a datavzrd site for the report; unset: no report"""
 
     tool: Annotated[Tool, EnumField(Tool)]
 

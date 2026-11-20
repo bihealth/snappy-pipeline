@@ -14,6 +14,7 @@ from snappy_pipeline.models import (
     ToggleModel,
     ToolModel,
 )
+from snappy_pipeline.models.calls_report import CallsReport
 from snappy_pipeline.models.gatk import GATK
 from snappy_pipeline.models.parallel import Parallel
 from snappy_pipeline.workflows.abstract.protocol import (
@@ -351,6 +352,9 @@ class VariantCallingDependsOn(SnappyModel):
 
 class VariantCalling(SnappyStepModel):
     depends_on: VariantCallingDependsOn
+
+    calls_report: CallsReport | None = None
+    """The calls of each VCF as a table and a datavzrd site for the report; unset: no report"""
 
     tool: Annotated[Tool, EnumField(Tool)]
 

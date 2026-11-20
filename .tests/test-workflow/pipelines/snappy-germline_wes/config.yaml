@@ -99,6 +99,7 @@ tasks:
     step: variant_filtration
     config:
       tool: vembrane
+      calls_report: {}
       depends_on:
         variants: annotation
       vembrane:
@@ -138,6 +139,7 @@ tasks:
       depends_on:
         variants: calling_varlociraptor
       tool: varlociraptor
+      calls_report: {}
       varlociraptor:
         events: [present, denovo, recessive, dominant]
 
@@ -149,6 +151,7 @@ tasks:
         reference: genome
         database: mehari_db
       tool: "mehari"
+      calls_report: {}
       mehari:
         assembly: GRCh37
 

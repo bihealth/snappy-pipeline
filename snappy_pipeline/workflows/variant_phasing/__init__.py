@@ -26,6 +26,8 @@ Below ``tasks/<task>/output/``:
 
 Here ``library_name`` is the library of the child, or the tumor library.
 The output has the tags of the input plus ``phased``.
+- with ``calls_report``: ``{library_name}/report/calls/{library_name}.calls.tsv``, the calls of the VCF as a table (one row per call), and the same table as a datavzrd site below ``report/calls/html/``, which ``snappy report`` shows.
+
 Downstream tasks read ``vcf`` and ``vcf_tbi`` through ``depends_on``.
 """
 
@@ -41,6 +43,7 @@ from snappy_pipeline.workflows.abstract import (
     BaseStepPart,
     ResourceUsage,
 )
+from snappy_pipeline.workflows.common.calls_report import CallsReportStepPart
 from snappy_pipeline.workflows.abstract.protocol import DataSignature, DataType, select_signature
 
 from .model import VariantPhasing as VariantPhasingConfigModel
@@ -341,6 +344,8 @@ class VariantPhasingWorkflow(BaseStep):
         self.register_sub_step_classes(
             (WriteTrioPedigreeStepPart, _TOOL_STEP_PART[self.config.tool])
         )
+        if self.config.calls_report:
+            self.register_sub_step_classes((CallsReportStepPart,))
 
     @cached_property
     def variants_are_phased(self) -> bool:

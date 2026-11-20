@@ -10,6 +10,7 @@ from snappy_pipeline.models import (
     SnappyStepModel,
     ToolModel,
 )
+from snappy_pipeline.models.calls_report import CallsReport
 from snappy_pipeline.workflows.abstract.protocol import (
     RELATED_LEVEL,
     DataSignature,
@@ -100,6 +101,9 @@ class VariantPhasingDependsOn(SnappyModel):
 
 class VariantPhasing(SnappyStepModel):
     depends_on: VariantPhasingDependsOn
+
+    calls_report: CallsReport | None = None
+    """The calls of each VCF as a table and a datavzrd site for the report; unset: no report"""
 
     tool: Annotated[Tool, EnumField(Tool)]
 
