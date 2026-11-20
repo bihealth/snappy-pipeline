@@ -347,3 +347,48 @@ def test_render_writes_the_tsv_and_the_site(tmp_path):
     assert (tmp_path / "html" / "index.html").is_file()
     tsv = pl.read_csv(tmp_path / "qc_summary.tsv", separator="\t")
     assert tsv["library"].to_list() == ["lib1"]
+
+
+def test_columns_link_out_show_pills_and_hide_until_asked():
+    table = Table(
+        "t",
+        "T",
+        pl.DataFrame({"gene": ["BRCA1"], "impact": ["HIGH"], "p": [0.5], "note": ["x"]}),
+        columns={
+            "gene": qc_summary.Column(links={"Ensembl": "https://e/{value}"}, ellipsis=8),
+            "impact": qc_summary.pills(
+                ("HIGH", "LOW"), (qc_summary.STATUS["critical"], qc_summary.STATUS["warning"])
+            ),
+            "p": qc_summary.heatmap(display="available"),
+            "note": qc_summary.Column(display="available", optional=True),
+        },
+        pinned=("gene",),
+        max_in_memory_rows=1000,
+        links={"all": ("gene", "all/gene", True)},
+        offer_excel=False,
+    )
+
+    cfg = config([table], "T", "/data", default_view="t")
+
+    columns = cfg["views"]["t"]["render-table"]["columns"]
+    assert columns["gene"]["link-to-url"] == {
+        "Ensembl": {"url": "https://e/{value}", "new-window": True}
+    }
+    assert columns["gene"]["display-mode"] == "pinned" and columns["gene"]["ellipsis"] == 8
+    assert columns["impact"]["plot"]["pills"] == {
+        "separator": ",",
+        "domain": ["HIGH", "LOW"],
+        "range": ["#d03b3b", "#fab219"],
+    }
+    assert columns["p"]["plot"]["heatmap"]["range"] == list(qc_summary.SEQUENTIAL)
+    assert columns["p"]["display-mode"] == "available"
+    assert columns["note"] == {"display-mode": "available", "optional": True}
+    assert cfg["views"]["t"]["max-in-memory-rows"] == 1000
+    assert cfg["datasets"]["t"]["links"] == {
+        "all": {"column": "gene", "table-row": "all/gene", "optional": True}
+    }
+    assert cfg["datasets"]["t"]["offer-excel"] is False
+    assert cfg["default-view"] == "t"
+    assert qc_summary.Column(detail=True).spec() == {"display-mode": "detail"}
+    assert qc_summary.ticks(domain=(0, 1)).spec()["plot"]["ticks"]["domain"] == [0, 1]
+    _validate_config(cfg)

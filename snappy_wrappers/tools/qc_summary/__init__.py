@@ -37,9 +37,9 @@ MAX_POINTS = 120
 #: Libraries that get a color of their own (and a legend); more share one ink
 MAX_COLORED = 6
 
-#: Categorical colors in their fixed order (blue, orange, aqua, yellow, magenta, green), a
-#: palette whose adjacent pairs stay apart under color vision deficiencies
-COLORS = ("#2a78d6", "#eb6834", "#1baf7a", "#eda100", "#e87ba4", "#008300")
+#: Categorical colors in their fixed order (blue, orange, aqua, yellow, magenta, green, violet,
+#: red), a palette whose adjacent pairs stay apart under color vision deficiencies
+COLORS = ("#2a78d6", "#eb6834", "#1baf7a", "#eda100", "#e87ba4", "#008300", "#6250d6", "#e34948")
 
 #: The one ink of many libraries, and the inks of text and axes
 INK = "#2a78d6"
@@ -48,6 +48,21 @@ INK = "#2a78d6"
 LINK = "row"
 TEXT = "#52514e"
 AXIS = "#c3c2b7"
+
+#: The ink of what is not the data: a reference allele, a category without meaning
+MUTED = AXIS
+
+#: A ramp of one hue, light to dark, for a magnitude such as a probability
+SEQUENTIAL = ("#cde2fb", "#0d366b")
+
+#: The red arm of the diverging scheme, for a magnitude that counts against (artifact, absent)
+AGAINST = ("#fbe1e0", "#e34948")
+
+#: Status colors; a status never shows as color alone, its label says what it means
+STATUS = {"good": "#0ca30c", "warning": "#fab219", "serious": "#ec835a", "critical": "#d03b3b"}
+
+#: The vega-lite schema of every chart and cell plot
+VEGA_LITE = "https://vega.github.io/schema/vega-lite/v6.json"
 
 #: Vega-lite configuration of every chart: no grid, hairline axes, no frame, muted text
 CHART_CONFIG = {
@@ -73,10 +88,21 @@ CHART_CONFIG = {
     "header": {"labelColor": TEXT, "titleColor": TEXT, "labelFontSize": 11, "titleFontSize": 11},
 }
 
+#: Vega-lite configuration of a plot inside a table cell: small labels, no legend
+CELL_CONFIG = {
+    **CHART_CONFIG,
+    "axis": {**CHART_CONFIG["axis"], "labelFontSize": 8, "ticks": False},
+    "legend": {"disable": True},
+}
+
 
 @dataclass(frozen=True)
 class Column:
-    """Rendering of one table column: its label, precision, cell plot and visibility."""
+    """Rendering of one table column: its label, precision, cell plot, visibility and links.
+
+    ``display`` is a datavzrd display mode: ``normal``, ``pinned`` (kept at the left when the table scrolls), ``available`` (hidden until the reader shows it), ``detail`` (in the details of a row) or ``hidden`` (kept for links, tooltips and the TSV).
+    ``links`` map a link name to a URL with ``{value}`` and ``{Other column}`` placeholders, which datavzrd fills without encoding, so only URL-safe columns feed them.
+    """
 
     label: str | None = None
     precision: int | None = None
@@ -84,10 +110,16 @@ class Column:
     plot: dict | None = None
     #: A vega-lite plot per cell: ``{"data": <JS function of value and row>, "spec": {...}}``
     custom_plot: dict | None = None
-    #: Shown in the details of a row only
+    #: Shown in the details of a row only (``display="detail"``)
     detail: bool = False
-    #: Not shown at all (kept for links, tooltips and the TSV)
+    #: Not shown at all (``display="hidden"``)
     hidden: bool = False
+    display: str | None = None
+    #: Cut the text after this many characters; the rest shows on hover
+    ellipsis: int | None = None
+    links: dict[str, str] | None = None
+    #: The column may be missing from the data
+    optional: bool = False
 
     def spec(self) -> dict:
         spec: dict = {}
@@ -102,24 +134,75 @@ class Column:
             if isinstance(plot.get("spec"), dict):
                 plot["spec"] = json.dumps(plot["spec"])
             spec["custom-plot"] = plot
-        if self.detail:
-            spec["display-mode"] = "detail"
-        if self.hidden:
-            spec["display-mode"] = "hidden"
+        display = self.display or ("detail" if self.detail else "hidden" if self.hidden else None)
+        if display:
+            spec["display-mode"] = display
+        if self.ellipsis:
+            spec["ellipsis"] = self.ellipsis
+        if self.links:
+            spec["link-to-url"] = {
+                name: {"url": url, "new-window": True} for name, url in self.links.items()
+            }
+        if self.optional:
+            spec["optional"] = True
         return spec
 
 
-def ticks(label: str | None = None, detail: bool = False, precision: int = 3) -> Column:
+def ticks(
+    label: str | None = None,
+    detail: bool = False,
+    precision: int = 3,
+    domain: tuple[float, float] | None = None,
+    scale: str = "linear",
+    display: str | None = None,
+) -> Column:
     """A fraction, rate or measure as a tick on the range of the column's values, so the
-    libraries compare at a glance; the number stays beside it."""
-    plot = {"ticks": {"scale": "linear", "color": {"range": [INK]}}}
-    return Column(label=label, precision=precision, plot=plot, detail=detail)
+    libraries compare at a glance; the number stays beside it.
+    ``domain`` fixes the range, so the cells of several tables compare."""
+    plot: dict = {"ticks": {"scale": scale, "color": {"range": [INK]}}}
+    if domain is not None:
+        plot["ticks"]["domain"] = list(domain)
+    return Column(label=label, precision=precision, plot=plot, detail=detail, display=display)
 
 
-def bars(label: str | None = None, detail: bool = False, precision: int = 0) -> Column:
+def bars(
+    label: str | None = None,
+    detail: bool = False,
+    precision: int = 0,
+    domain: tuple[float, float] | None = None,
+    display: str | None = None,
+) -> Column:
     """A count, with a bar proportional to its value."""
-    plot = {"bars": {"scale": "linear", "color": {"range": [INK]}}}
-    return Column(label=label, precision=precision, plot=plot, detail=detail)
+    plot: dict = {"bars": {"scale": "linear", "color": {"range": [INK]}}}
+    if domain is not None:
+        plot["bars"]["domain"] = list(domain)
+    return Column(label=label, precision=precision, plot=plot, detail=detail, display=display)
+
+
+def pills(
+    domain: tuple[str, ...],
+    colors: tuple[str, ...],
+    label: str | None = None,
+    separator: str = ",",
+    ellipsis: int | None = None,
+    display: str | None = None,
+) -> Column:
+    """Categories as colored pills, the text on the pill.
+    ``domain`` lists the categories and ``colors`` their colors in the same order, so a category keeps its color in every table; the values of a cell are split at ``separator``."""
+    plot = {"pills": {"separator": separator, "domain": list(domain), "range": list(colors)}}
+    return Column(label=label, plot=plot, ellipsis=ellipsis, display=display)
+
+
+def heatmap(
+    domain: tuple[str, str] = ("0", "1"),
+    colors: tuple[str, str] = SEQUENTIAL,
+    label: str | None = None,
+    precision: int = 3,
+    display: str | None = None,
+) -> Column:
+    """A magnitude as the color of its cell, on a linear scale from the first to the last color over ``domain``."""
+    plot = {"heatmap": {"scale": "linear", "domain": list(domain), "range": list(colors)}}
+    return Column(label=label, precision=precision, plot=plot, display=display)
 
 
 @dataclass
@@ -135,6 +218,13 @@ class Table:
     pinned: tuple[str, ...] = ("library",)
     #: Rows per page
     page_size: int = 25
+    #: Rows up to which the view sorts and filters in the browser; datavzrd pages a larger view
+    #: without sorting (``None``: datavzrd's default)
+    max_in_memory_rows: int | None = None
+    #: Links from a row to the row of another table: name -> (column, ``"view/column"``, optional)
+    links: dict[str, tuple[str, str, bool]] = field(default_factory=dict)
+    #: Whether the site offers the table as an Excel download
+    offer_excel: bool = True
 
 
 @dataclass
@@ -335,7 +425,7 @@ class Chart:
         if self.link and self.series in self.frame.columns:
             encoding["href"] = {"field": LINK}
         spec: dict = {
-            "$schema": "https://vega.github.io/schema/vega-lite/v5.json",
+            "$schema": VEGA_LITE,
             "title": self.title,
             "mark": mark,
             "encoding": encoding,
@@ -365,12 +455,15 @@ class Summary:
 
     table: Table
     views: list[Table | Chart]
+    #: The view the site opens with (``None``: the summary table)
+    default_view: str | None = None
 
 
-def summarize(format: str, files: dict[str, list[str]], labels: list[str]) -> Summary:
-    """Parse ``files`` (paths by kind, one per label in the same order) with the format module."""
+def summarize(format: str, files: dict[str, list[str]], labels: list[str], **options) -> Summary:
+    """Parse ``files`` (paths by kind, one per label in the same order) with the format module.
+    ``options`` are passed on to the module's ``summarize``, such as the sheet facts a check needs."""
     module = importlib.import_module(f"{__name__}.{format}")
-    return module.summarize(files, labels)
+    return module.summarize(files, labels, **options)
 
 
 def render(summary: Summary, title: str, tsv: str, site: str) -> None:
@@ -383,13 +476,15 @@ def render(summary: Summary, title: str, tsv: str, site: str) -> None:
             view.frame.write_csv(os.path.join(tmpdir, f"{view.name}.tsv"), separator="\t")
         config_path = os.path.join(tmpdir, "config.json")
         with open(config_path, "wt") as f:
-            json.dump(config(views, title, tmpdir), f, indent=1)
+            json.dump(config(views, title, tmpdir, summary.default_view), f, indent=1)
         subprocess.run(
             ["datavzrd", config_path, "--output", site, "--overwrite-output"], check=True
         )
 
 
-def config(views: list[Table | Chart], title: str, data_dir: str) -> dict:
+def config(
+    views: list[Table | Chart], title: str, data_dir: str, default_view: str | None = None
+) -> dict:
     """The datavzrd configuration of ``views``, whose frames are TSV files in ``data_dir``."""
     datasets = {
         view.name: {"path": os.path.join(data_dir, f"{view.name}.tsv"), "separator": "\t"}
@@ -397,7 +492,16 @@ def config(views: list[Table | Chart], title: str, data_dir: str) -> dict:
     }
     tables = {view.name: view for view in views if isinstance(view, Table)}
     for view in views:
-        if not isinstance(view, Chart) or not view.link or view.link not in tables:
+        if isinstance(view, Table):
+            if view.links:
+                datasets[view.name]["links"] = {
+                    name: {"column": column, "table-row": target, "optional": optional}
+                    for name, (column, target, optional) in view.links.items()
+                }
+            if not view.offer_excel:
+                datasets[view.name]["offer-excel"] = False
+            continue
+        if not view.link or view.link not in tables:
             continue
         if view.series in view.frame.columns and view.series in tables[view.link].frame.columns:
             datasets[view.name]["links"] = {
@@ -409,7 +513,7 @@ def config(views: list[Table | Chart], title: str, data_dir: str) -> dict:
             }
     return {
         "name": title,
-        "default-view": views[0].name,
+        "default-view": default_view or views[0].name,
         "datasets": datasets,
         "views": {view.name: _view(view) for view in views},
     }
@@ -427,6 +531,8 @@ def _view(view: Table | Chart) -> dict:
         if name in view.frame.columns:
             columns[name] = columns.get(name, {}) | column.spec()
     spec["page-size"] = view.page_size
+    if view.max_in_memory_rows is not None:
+        spec["max-in-memory-rows"] = view.max_in_memory_rows
     spec["render-table"] = {"columns": columns}
     return spec
 
