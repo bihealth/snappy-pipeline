@@ -63,7 +63,7 @@ class VarfishAnnotatorExternalStepPart(BaseStepPart):
         if self.config.merge_vcf_flag:
             yield "vcf", sorted(self._collect_vcfs(wildcards))
         else:
-            yield "vcf", [self._vcf(wildcards.related_group)]
+            yield "vcf", [self._vcf(self.parent.pedigree_index(wildcards.related_group))]
 
     @dictify
     def _get_input_files_annotate(self, wildcards):
@@ -97,7 +97,7 @@ class VarfishAnnotatorExternalStepPart(BaseStepPart):
 
     def get_result_files(self) -> list[str]:
         """The files of the export, for the index of each pedigree"""
-        indexes = list(self.parent.pedigrees())
+        indexes = [p for p in self.parent.pedigrees() if self.parent.pedigree_index(p)]
         return [
             path
             for tpl in self.get_output_files("annotate").values()

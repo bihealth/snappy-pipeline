@@ -198,7 +198,8 @@ Background libraries are in the default table only of steps that set `background
 A step whose requirement or default depends on the task's config (its tool) overrides `task_library_requirement(config)` or `task_library_default(config)`.
 `task_libraries(task_name)` gives the libraries of another task from its config, so a step can match the files of an upstream task also under `--frozen`.
 `output_entities` gives the entities a task writes, from `libraries` and `effective_group_by` (the task's `group_by`, else the step's `default_group_by(config)`, else what upstream tasks declare, else `library`); `related_libraries` gives the libraries of each `related_group`, which only an explicit `library_selection` restricts.
-`primary_dna_libraries()`, `pedigrees()`, `pedigree_members()`, `pedigree_index()` and `children_with_both_parents()` give the germline view: one DNA library per donor, grouped by pedigree.
+`primary_library(entity)` gives the library that stands for an entity (itself, or the `is_primary` member of its related group) and `get_related_libraries(entity)` all of them; a step never takes an entity for a library.
+`primary_dna_libraries()`, `pedigrees()`, `pedigree_members()`, `pedigree_of(library)`, `pedigree_index(pedigree)` and `children_with_both_parents()` give the germline view: one DNA library per donor, grouped by pedigree.
 `pedigree_donors()` gives the donor table of a pedigree (`build_donor_dataframe()`): every donor of the germline sheets, sequenced or not, with its parents as donor names, its sex and its DNA library, for steps that model unsequenced relatives.
 
 (dev_contracts)=

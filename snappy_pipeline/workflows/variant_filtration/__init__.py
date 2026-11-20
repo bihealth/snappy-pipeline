@@ -191,7 +191,7 @@ class _BamAwareStepPart(VariantFiltrationStepPart):
 
         yield from self.parent.reference_inputs().items()
 
-        lib = wildcards.tumor_library
+        lib = self.parent.primary_library(wildcards.tumor_library)
         tumor_aln: ExpectedAlignments = self.parent.get_upstream_paths(
             "alignments", library_name=lib
         )

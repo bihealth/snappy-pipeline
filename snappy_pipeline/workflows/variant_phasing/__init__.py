@@ -115,7 +115,7 @@ class VariantPhasingBaseStep(BaseStepPart):
         """
         library_name = wildcards.library_name
         if not self.parent.variants_are_phased:
-            library_name = self.parent.pedigree_index(library_name, include_background=True)
+            library_name = self.parent.pedigree_of(library_name, include_background=True)
         variants = self.parent.get_upstream_paths("variants", library_name=library_name)
         yield "vcf", variants.vcf
         yield "vcf_tbi", variants.vcf_tbi

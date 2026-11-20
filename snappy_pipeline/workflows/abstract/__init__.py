@@ -991,10 +991,24 @@ class BaseStep:
         )
 
     @cached_property
+    def _entity_libraries(self) -> dict[str, str]:
+        """Entity -> its primary library, see :func:`entity_libraries`."""
+        return entity_libraries(self.libraries, self.effective_group_by)
+
+    @cached_property
     def output_entities(self) -> list[str]:
-        """Output entity names for this workflow: one library per group of related libraries with
-        ``group_by == "related"``, otherwise each of the task's libraries."""
-        return library_entities(self.libraries, self.effective_group_by)
+        """Output entity names for this workflow: one per group of related libraries with ``group_by == "related"``, otherwise each of the task's libraries."""
+        return list(self._entity_libraries)
+
+    def primary_library(self, entity: str) -> str:
+        """Return the primary library of an entity of this task: the library itself with ``group_by: library``, else the ``is_primary`` member of the related group (the pedigree index, the primary tumor) or its first one.
+        Raises ``ValueError`` for a name that is no entity, such as a library behind a task that writes one result per related group."""
+        if entity not in self._entity_libraries:
+            raise ValueError(
+                f"{entity!r} is no entity of task {self.task_name!r}, which writes one result per "
+                f"{self.effective_group_by}: {', '.join(self._entity_libraries)}"
+            )
+        return self._entity_libraries[entity]
 
     @cached_property
     def related_libraries(self) -> dict[str, list[str]]:
@@ -1062,8 +1076,8 @@ class BaseStep:
         dna = self.primary_dna_libraries(include_background)
         return dna[dna["pedigree"] == index_library]
 
-    def pedigree_index(self, library_name: str, include_background: bool = False) -> str:
-        """Return the index library of the pedigree of the primary DNA library ``library_name``.
+    def pedigree_of(self, library_name: str, include_background: bool = False) -> str:
+        """Return the pedigree (the key of :meth:`pedigrees`) of the primary DNA library ``library_name``.
 
         Raises ``KeyError`` for a library that is no primary DNA library.
         """
@@ -1072,6 +1086,12 @@ class BaseStep:
         if pedigree.empty:
             raise KeyError(library_name)
         return pedigree.iloc[0]
+
+    def pedigree_index(self, pedigree: str, include_background: bool = False) -> str | None:
+        """Return the index library of ``pedigree``: its ``is_primary`` primary DNA library (the index, a cancer donor's normal), ``None`` when the index has no DNA library."""
+        members = self.pedigree_members(pedigree, include_background)
+        index = members[members["is_primary"]]
+        return None if index.empty else index.iloc[0]["library_name"]
 
     def pedigree_donors(self, index_library: str, include_background: bool = True):
         """Return the donor table rows of the pedigree of ``index_library``: every donor of the
@@ -2206,18 +2226,24 @@ def colliding_libraries_message(colliding: dict[str, list[str]]) -> str:
     )
 
 
-def library_entities(df, group_by: str | None) -> list[str]:
-    """Return the output entities of the libraries ``df``: with ``group_by == "related"`` the
-    primary library of each ``related_group`` (else its first one), otherwise every library."""
+def entity_libraries(df, group_by: str | None) -> dict[str, str]:
+    """Return the output entities of the libraries ``df`` with their primary library.
+    With ``group_by == "related"`` the entity of each ``related_group`` is its primary library (the ``is_primary`` row, else the first one), otherwise every library is an entity of its own."""
     if df.empty:
-        return []
+        return {}
     if group_by == "related":
-        entities = []
+        entities = {}
         for _, group in df.groupby("related_group"):
             primary = group[group["is_primary"]]
-            entities.append((primary if not primary.empty else group).iloc[0]["library_name"])
+            library = (primary if not primary.empty else group).iloc[0]["library_name"]
+            entities[library] = library
         return entities
-    return df["library_name"].unique().tolist()
+    return {name: name for name in df["library_name"].unique()}
+
+
+def library_entities(df, group_by: str | None) -> list[str]:
+    """Return the output entities of the libraries ``df``, see :func:`entity_libraries`."""
+    return list(entity_libraries(df, group_by))
 
 
 def libraries_by_related_group(df) -> dict[str, list[str]]:

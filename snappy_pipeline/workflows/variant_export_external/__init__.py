@@ -104,7 +104,7 @@ class VarfishAnnotatorAnnotateStepPart(BaseStepPart):
 
     def get_result_files(self) -> list[str]:
         """The files of the export, for the index of each pedigree"""
-        indexes = list(self.parent.pedigrees())
+        indexes = [p for p in self.parent.pedigrees() if self.parent.pedigree_index(p)]
         keys = ["gts", "gts_md5", "db_infos", "db_infos_md5"]
         outputs = self.get_output_files("annotate")
         if self.config.bam_available_flag:
@@ -150,7 +150,7 @@ class VarfishAnnotatorAnnotateStepPart(BaseStepPart):
         if self.config.merge_vcf_flag:
             yield "vcf", sorted(self._collect_vcfs(wildcards))
         else:
-            yield "vcf", [self._vcf(wildcards.related_group)]
+            yield "vcf", [self._vcf(self.parent.pedigree_index(wildcards.related_group))]
         yield from self.parent.reference_inputs().items()
 
     @dictify
@@ -284,7 +284,7 @@ class VarfishAnnotatorAnnotateStepPart(BaseStepPart):
 
     def _collect_gvcf(self, wildcards):
         """Yield the path of the index's gVCF"""
-        yield self._vcf(wildcards.related_group)
+        yield self._vcf(self.parent.pedigree_index(wildcards.related_group))
 
     def _collect_vcfs(self, wildcards):
         """Yield the paths of the VCFs of the pedigree's DNA libraries"""

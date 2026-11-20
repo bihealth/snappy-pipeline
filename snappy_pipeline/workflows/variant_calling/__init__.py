@@ -620,10 +620,7 @@ class ReportStepPart(BaseStepPart):
     def _result_wildcards(self, entity: str) -> dict[str, list[str]]:
         result = super()._result_wildcards(entity)
         if self.report_per_donor and self.parent.effective_group_by == "related":
-            for members in self.parent.related_libraries.values():
-                if entity in members:
-                    result["donor_library_name"] = members
-                    break
+            result["donor_library_name"] = self.parent.get_related_libraries(entity)
         return result
 
 
@@ -1051,16 +1048,17 @@ class ScatteredCallerStepPart(BaseStepPart):
         """Return the libraries called together for the entity ``library_name``, the entity
         first: with ``group_by: related`` the primary DNA libraries of its related group (one
         per individual), else the library and its matched normal, if it has one."""
+        first = self.parent.primary_library(library_name)
         if self.parent.effective_group_by == "related":
             primary = set(self.parent.primary_dna_libraries()["library_name"])
             others = [
                 name
                 for name in self.parent.get_related_libraries(library_name)
-                if name in primary and name != library_name
+                if name in primary and name != first
             ]
-            return [library_name, *others]
-        normal = self.parent.library_row(library_name).get("matched_normal_lib") or None
-        return [library_name, normal] if normal else [library_name]
+            return [first, *others]
+        normal = self.parent.library_row(first).get("matched_normal_lib") or None
+        return [first, normal] if normal else [first]
 
     def _get_input_files_gather(self, wildcards):
         gather = self._scattergather("gather")
@@ -1270,25 +1268,26 @@ class VarlociraptorStepPart(ScatteredCallerStepPart):
         tumors of its donor that the task takes, and its matched normal by
         ``tumor_normal_mode``."""
         cfg = self.config.varlociraptor
+        tumor = self.parent.primary_library(library_name)
         if cfg.scenario == ScenarioKind.germline:
             if self.parent.effective_group_by == "related":
                 return super().members(library_name)
-            return [library_name]
-        members = [library_name]
+            return [tumor]
+        members = [tumor]
         if self.parent.effective_group_by == "related":
             members += self.other_tumors(library_name)
         if cfg.tumor_normal_mode != TumorNormalMode.TUMOR_ONLY:
-            normal = self.parent.library_row(library_name).get("matched_normal_lib") or None
+            normal = self.parent.library_row(tumor).get("matched_normal_lib") or None
             if normal:
                 members.append(normal)
         return members
 
     def other_tumors(self, library_name: str) -> list[str]:
-        """The other tumor libraries of the donor of ``library_name`` that the task takes"""
+        """The other tumor libraries of the donor of the entity ``library_name`` that the task takes"""
         libraries = self.parent.libraries
-        donor = self.parent.library_row(library_name)["related_group"]
-        same_donor = libraries["related_group"] == donor
-        other = libraries["library_name"] != library_name
+        tumor = self.parent.primary_library(library_name)
+        same_donor = libraries["related_group"] == self.parent.library_row(tumor)["related_group"]
+        other = libraries["library_name"] != tumor
         return libraries[same_donor & other]["library_name"].tolist()
 
     def sample(self, library_name: str) -> dict[str, Any]:
@@ -1399,7 +1398,7 @@ class VarlociraptorStepPart(ScatteredCallerStepPart):
         cfg = self.config.varlociraptor
         members = self.members(library_name)
         somatic = cfg.scenario == ScenarioKind.somatic
-        purity = self.purity(library_name) if somatic else None
+        purity = self.purity(members[0]) if somatic else None
         if cfg.template:
             settings = {"species": cfg.species.model_dump(), "purity": purity}
             samples = (
@@ -1414,14 +1413,14 @@ class VarlociraptorStepPart(ScatteredCallerStepPart):
             if others := self.other_tumors(library_name):
                 raise ConfigError(
                     "the somatic scenario calls one tumor with its matched normal, but the donor "
-                    f"of {library_name} has the tumors {', '.join([library_name, *others])} in "
+                    f"of {members[0]} has the tumors {', '.join([members[0], *others])} in "
                     "the task; call each time point in a task of its own (library_selection), or "
                     "give a scenario template with group_by: related for a joint scenario of the "
                     "donor's tumors"
                 )
             normal = members[1] if len(members) > 1 else None
             ffpe = frozenset(name for name in members if is_ffpe(self.sample(name).get("is_ffpe")))
-            scenario = somatic_scenario(library_name, normal, purity, ffpe)
+            scenario = somatic_scenario(members[0], normal, purity, ffpe)
         else:
             scenario = germline_scenario(
                 self.pedigree_samples(library_name), cfg.species.model_dump()
@@ -1681,7 +1680,11 @@ class VariantCallingWorkflow(BaseStep):
             and self.config.varlociraptor.scenario == ScenarioKind.somatic
         ):
             part = self.sub_steps["varlociraptor"]
-            unknown = [name for name in self.output_entities if part.purity(name) is None]
+            unknown = [
+                name
+                for name in self.output_entities
+                if part.purity(self.primary_library(name)) is None
+            ]
             if unknown:
                 warnings.append(
                     f"Task {self.task_name!r} takes the tumors without a purity as pure, with no "

@@ -275,6 +275,7 @@ def _part(group_by="library", libraries=TUMORS, **settings):
             {"library_name": ["child-DNA1", "father-DNA1", "mother-DNA1"]}
         ),
         get_related_libraries=lambda name: ["father-DNA1", "child-DNA1", "mother-DNA1"],
+        primary_library=lambda name: name,
         library_row=lambda name: ROWS[name],
         get_upstream_paths=_upstream,
         reference_inputs=lambda: {"reference": "ref.fa"},

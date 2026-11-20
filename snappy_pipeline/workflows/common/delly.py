@@ -94,10 +94,8 @@ class Delly2StepPart(
     @dictify
     def _get_input_files_genotype(self, wildcards):
         yield from self._get_input_files_call(wildcards).items()
-        index_library_name = self.parent.pedigree_index(
-            wildcards.library_name, include_background=True
-        )
-        bcf = f"work/{index_library_name}/out/{index_library_name}.merge_calls.bcf"
+        pedigree = self.parent.pedigree_of(wildcards.library_name, include_background=True)
+        bcf = f"work/{pedigree}/out/{pedigree}.merge_calls.bcf"
         yield "bcf", bcf
         yield "bcf_csi", f"{bcf}.csi"
 

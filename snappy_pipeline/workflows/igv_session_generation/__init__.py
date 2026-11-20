@@ -55,8 +55,8 @@ class WriteIgvSessionFileStepPart(BaseStepPart):
 
     def _members(self, wildcards):
         """Return the rows of the pedigree members with a DNA library."""
-        index = self.parent.pedigree_index(wildcards.library_name, include_background=True)
-        return self.parent.pedigree_members(index, include_background=True)
+        pedigree = self.parent.pedigree_of(wildcards.library_name, include_background=True)
+        return self.parent.pedigree_members(pedigree, include_background=True)
 
     def _get_path_bam(self, library_name):
         return self.parent.get_upstream_paths("alignments", library_name=library_name).bam
@@ -66,9 +66,7 @@ class WriteIgvSessionFileStepPart(BaseStepPart):
         if self.previous_step == "phased_variants":
             library_name = wildcards.library_name
         else:
-            library_name = self.parent.pedigree_index(
-                wildcards.library_name, include_background=True
-            )
+            library_name = self.parent.pedigree_of(wildcards.library_name, include_background=True)
         return self.parent.get_upstream_paths(self.previous_step, library_name=library_name).vcf
 
     @staticmethod
