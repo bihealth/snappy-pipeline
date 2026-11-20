@@ -1,6 +1,5 @@
 # -*- coding: utf-8 -*-
-"""Tests of the fingerprint checks: the kinship over the pedigree, the sex prediction, the
-checks of the pairs and the parents, and the datavzrd configuration."""
+"""Tests of the fingerprint checks: the kinship over the pedigree, the sex prediction, the checks of the pairs and the parents, and the datavzrd configuration."""
 
 import json
 from pathlib import Path
@@ -37,8 +36,7 @@ def _donor(donor, pedigree, father="0", mother="0", sex="unknown", sequenced=Tru
     }
 
 
-#: Two pedigrees, a singleton of unknown sex and a duplicate of pB1 in a pedigree of its own;
-#: FAM_A has a grandfather through an unsequenced grandmother, FAM_B two declared siblings
+#: Two pedigrees, a singleton of unknown sex and a duplicate of pB1 in a pedigree of its own; FAM_A has a grandfather through an unsequenced grandmother, FAM_B two declared siblings
 LIBRARIES = [
     _entry("gfA", "FAM_A", "male"),
     _entry("faA", "FAM_A", "male"),

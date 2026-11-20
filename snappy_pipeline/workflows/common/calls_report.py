@@ -40,8 +40,7 @@ class CallsReportStepPart(BaseStepPart):
     }
 
     def igv_libraries(self, entity: str) -> list[str]:
-        """The libraries whose BAMs the IGV views show: the members of the entity and, on cancer
-        sheets, their matched normals."""
+        """The libraries whose BAMs the IGV views show: the members of the entity and, on cancer sheets, their matched normals."""
         libraries = list(self.parent.member_libraries(entity))
         table = self.parent.libraries
         if "matched_normal_lib" in table.columns:
@@ -53,8 +52,7 @@ class CallsReportStepPart(BaseStepPart):
         return libraries
 
     def _get_input_files_run(self, wildcards: Wildcards) -> dict[str, Any]:
-        """The task's own output VCF of the entity (the PASS calls of mutect2); with IGV views
-        the BAMs of its libraries and the genome."""
+        """The task's own output VCF of the entity (the PASS calls of mutect2); with IGV views the BAMs of its libraries and the genome."""
         paths = self.parent.get_output_paths(
             self.parent.config, library_name=wildcards.library_name
         )
@@ -80,8 +78,7 @@ class CallsReportStepPart(BaseStepPart):
         return {"log": "work/{library_name}/log/{library_name}.calls_report.log"}
 
     def assembly(self) -> str | None:
-        """The genome build the task's variants are tagged with (``variant_annotation`` adds it
-        and the steps after it keep it), else ``None``."""
+        """The genome build the task's variants are tagged with (``variant_annotation`` adds it and the steps after it keep it), else ``None``."""
         for signature in self.parent.project.signatures[self.parent.task_name]:
             for tag in signature.tags:
                 if tag in ASSEMBLIES:

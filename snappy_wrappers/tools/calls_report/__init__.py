@@ -69,9 +69,7 @@ def _trailing(record: Record, vcf: Vcf) -> dict[str, Any]:
 def rows_and_columns(
     vcf: Vcf, options: Options = Options()
 ) -> tuple[list[dict[str, Any]], dict[str, Column]]:
-    """The rows of the calls table and the rendering of its columns, in column order: the
-    core, the event probabilities, the annotation, the frequencies and ClinVar, the samples,
-    then ID, quality, filter, hints and the inspect link."""
+    """The rows of the calls table and the rendering of its columns, in column order: the core, the event probabilities, the annotation, the frequencies and ClinVar, the samples, then ID, quality, filter, hints and the inspect link."""
     events = varlociraptor.events(vcf)
     annotated = annotation.annotation_of(vcf)
     frequencies = annotation.frequency_columns(vcf, annotated)

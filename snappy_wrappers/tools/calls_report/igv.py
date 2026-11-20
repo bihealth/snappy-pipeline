@@ -54,8 +54,7 @@ def igv_js_path() -> Path:
 
 
 def select_sites(views: Sequence[Table], top: int, names: Sequence[str] = ()) -> pl.DataFrame:
-    """The sites of the page: the first ``top`` calls of each view in ``names`` (all views if
-    empty), interleaved by rank so that every view contributes, each call once."""
+    """The sites of the page: the first ``top`` calls of each view in ``names`` (all views if empty), interleaved by rank so that every view contributes, each call once."""
     chosen = [view for view in views if not names or view.name in names]
     heads = [view.frame.head(top).to_dicts() for view in chosen]
     rows: list[dict[str, Any]] = []
@@ -158,8 +157,7 @@ def create_report_command(
 
 
 def fit_to_size(sites: int, size: int, limit: int) -> int:
-    """How many of ``sites`` keep a page of ``size`` bytes under ``limit``: all if it fits, else
-    the proportion with a tenth of margin, so that the next page fits."""
+    """How many of ``sites`` keep a page of ``size`` bytes under ``limit``: all if it fits, else the proportion with a tenth of margin, so that the next page fits."""
     if size <= limit:
         return sites
     return max(0, math.floor(sites * 0.9 * limit / size))
@@ -187,8 +185,7 @@ def build_page(
     title: str,
     run: Callable[..., Any] = subprocess.run,
 ) -> tuple[str | None, pl.DataFrame, int]:
-    """Create the page in ``workdir``: the path (``None`` without sites), the sites it shows
-    and the number of sites requested before the size limit cut them."""
+    """Create the page in ``workdir``: the path (``None`` without sites), the sites it shows and the number of sites requested before the size limit cut them."""
     sites = select_sites(summary.views, settings["top"], settings.get("views", ()))
     requested = sites.height
     limit = settings["max_size_mb"] * 1024 * 1024
@@ -224,8 +221,7 @@ def build_page(
 
 
 def annotate(summary: Summary, sites: pl.DataFrame, requested: int, limit_mb: int) -> None:
-    """Add the ``igv`` column (the rank of a selected call, linked to the page and to IGV
-    desktop) to every table of ``summary`` and a sentence to the descriptions."""
+    """Add the ``igv`` column (the rank of a selected call, linked to the page and to IGV desktop) to every table of ``summary`` and a sentence to the descriptions."""
     ranks = sites.select(
         *KEY[:1], pl.col("begin").alias("position"), "ref", "alt", pl.col("rank").alias("igv")
     )

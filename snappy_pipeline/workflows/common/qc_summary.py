@@ -93,8 +93,7 @@ class QcSummaryStepPart(BaseStepPart):
         return {"log": "work/qc_summary/log/qc_summary.log"}
 
     def summary_options(self) -> dict[str, Any]:
-        """Further params for the format module's ``summarize``, such as the sample sheet facts
-        a check compares the files with; none by default."""
+        """Further params for the format module's ``summarize``, such as the sample sheet facts a check compares the files with; none by default."""
         return {}
 
     def _get_params_run(self, wildcards: Wildcards) -> dict[str, Any]:

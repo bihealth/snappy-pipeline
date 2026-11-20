@@ -330,8 +330,7 @@ class NgsChewSummaryStepPart(QcSummaryStepPart):
         return ["cohort"]
 
     def summary_options(self) -> dict[str, Any]:
-        """The sheet facts the checks compare with: each DNA library's donor, pedigree and sex,
-        and every donor of the pedigrees with its parents and library (``""`` if unsequenced)."""
+        """The sheet facts the checks compare with: each DNA library's donor, pedigree and sex, and every donor of the pedigrees with its parents and library (``""`` if unsequenced)."""
         table = self.parent.build_library_dataframe()
         libraries = []
         for library in self.parent.dna_libraries():
