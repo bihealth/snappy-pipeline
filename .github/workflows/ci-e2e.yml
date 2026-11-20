@@ -37,6 +37,12 @@ jobs:
           cache: true
           frozen: true
 
+      # The simulated pedigree needs the reference for its reads
+      - name: Simulate the pedigree reads
+        run: |
+          git lfs pull --include=".tests/test-workflow/resources/refs/subregion.fa"
+          pixi run python .tests/test-workflow/simulate_pedigree.py
+
       - name: Dry-run each pipeline
         run: |
           set -euo pipefail
@@ -81,6 +87,9 @@ jobs:
           key: sdm-${{ hashFiles('snappy_wrappers/wrappers/**/environment.linux-64.pin.txt') }}
           restore-keys: sdm-
 
+      - name: Simulate the pedigree reads
+        run: pixi run python .tests/test-workflow/simulate_pedigree.py
+
       - name: Run each pipeline
         run: |
           set -euo pipefail
@@ -96,3 +105,6 @@ jobs:
             (cd "${pipeline_dir}" && pixi run snappy run -- --cores 1 --software-deployment-method conda \
               --sdm-cache-prefix "$HOME/.cache/snappy-sdm" --show-failed-logs)
           done
+
+      - name: Check the events of the simulated pedigree
+        run: pixi run python .tests/test-workflow/pipelines/snappy-germline_pedigree/check_events.py

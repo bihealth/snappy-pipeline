@@ -107,6 +107,16 @@ work/
 !.tests/test-workflow/pipelines/snappy-cancer_wes/raw/case001subregion-T1-DNA1-WES1/
 !.tests/test-workflow/pipelines/snappy-cancer_wes/raw/case001subregion-T1-DNA1-WES1/case001subregion-T1-DNA1-WES1.R1.fastq.gz
 !.tests/test-workflow/pipelines/snappy-cancer_wes/raw/case001subregion-T1-DNA1-WES1/case001subregion-T1-DNA1-WES1.R2.fastq.gz
+!.tests/test-workflow/simulate_pedigree.py
+!.tests/test-workflow/pipelines/snappy-germline_pedigree/
+!.tests/test-workflow/pipelines/snappy-germline_pedigree/config.yaml
+!.tests/test-workflow/pipelines/snappy-germline_pedigree/samplesheet.tsv
+!.tests/test-workflow/pipelines/snappy-germline_pedigree/check_events.py
+!.tests/test-workflow/pipelines/snappy-germline_pedigree/resources/
+!.tests/test-workflow/pipelines/snappy-germline_pedigree/resources/SimExome.chr12.bed
+# simulate_pedigree.py writes the reads and the truth table
+.tests/test-workflow/pipelines/snappy-germline_pedigree/raw/
+.tests/test-workflow/pipelines/snappy-germline_pedigree/truth.tsv
 !.tests/test-workflow/resources/
 !.tests/test-workflow/resources/.gitattributes
 !.tests/test-workflow/resources/mehari/

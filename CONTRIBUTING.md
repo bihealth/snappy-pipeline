@@ -44,6 +44,7 @@ If you are proposing a feature:
 Here is how to set up `snappy-pipeline` for local development.
 
 1. Fork the `snappy-pipeline` repository on GitHub.
+
 2. Clone your fork locally:
 
    ```shell
@@ -117,3 +118,7 @@ To dry-run one of the test pipelines:
 cd .tests/test-workflow/pipelines/snappy-germline_wes
 pixi run snappy run -n -- --cores 1
 ```
+
+The pipeline `snappy-germline_pedigree` runs on simulated reads: a three-generation pedigree with an unsequenced grandmother, an unknown grandfather, a child without data, unknown affected status, and planted dominant, recessive and de novo variants.
+`.tests/test-workflow/simulate_pedigree.py` writes its reads and `truth.tsv` from the e2e reference, which CI runs before the pipelines; `check_events.py` in the pipeline directory then checks the posteriors of the planted variants against the truth.
+The sample sheet and the kit BED are committed, and a unit test keeps them equal to what the script writes.

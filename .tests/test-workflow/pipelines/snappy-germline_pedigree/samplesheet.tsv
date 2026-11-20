@@ -1,0 +1,22 @@
+[Metadata]
+schema	germline_variants
+schema_version	v1
+title	simulated_pedigree
+description	Three generations with planted dominant, recessive and de novo variants
+
+[Custom Fields]
+key	annotatedEntity	docs	type	minimum	maximum	unit	choices	pattern
+familyId	bioEntity	family	string	0	0	0	0	0
+extractionType	bioSample	extraction type	string	0	0	0	0	0
+libraryKit	ngsLibrary	exome enrichment kit	string	0	0	0	0	0
+
+[Data]
+familyId	patientName	fatherName	motherName	sex	isAffected	extractionType	libraryType	folderName	libraryKit	hpoTerms
+PED1	pgf	0	0	M	Y	DNA	WES	pgf-N1-DNA1-WES1	SimExome	.
+PED1	pgm	0	0	F	N	DNA	.	.	.	.
+PED1	fa	pgf	pgm	M	Y	DNA	WES	fa-N1-DNA1-WES1	SimExome	.
+PED1	mgm	0	0	F	N	DNA	WES	mgm-N1-DNA1-WES1	SimExome	.
+PED1	mo	0	mgm	F	U	DNA	WES	mo-N1-DNA1-WES1	SimExome	.
+PED1	idx	fa	mo	F	Y	DNA	WES	idx-N1-DNA1-WES1	SimExome	.
+PED1	sib1	fa	mo	M	N	DNA	WES	sib1-N1-DNA1-WES1	SimExome	.
+PED1	sib2	fa	mo	M	U	DNA	.	.	.	.

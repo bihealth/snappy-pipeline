@@ -1,0 +1,85 @@
+project:
+  name: snappy-germline_pedigree
+
+# A simulated three-generation pedigree with planted dominant, recessive and de novo variants;
+# ../../simulate_pedigree.py writes raw/ and truth.tsv, check_events.py checks the posteriors
+data_sets:
+  pedigree:
+    file: samplesheet.tsv
+    search_patterns:
+      - { left: '(?P<readgroup>.+)\.R1\.fastq\.gz', right: '(?P<readgroup>.+)\.R2\.fastq\.gz' }
+    search_paths:
+      - raw
+    type: germline_variants
+    naming_scheme: only_secondary_id
+
+tasks:
+  - name: genome
+    step: external_data
+    config:
+      produces: {type: raw, tags: [reference, dna]}
+      files: {fasta: ../../resources/refs/subregion.fa}
+
+  - name: kits
+    step: external_data
+    config:
+      produces: {type: regions, tags: [kits]}
+      kits:
+        SimExome:
+          targets: resources/SimExome.chr12.bed
+          baits: resources/SimExome.chr12.bed
+
+  - name: bwa_index
+    step: reference_index
+    config:
+      depends_on:
+        reference: genome
+      tool: bwa
+
+  - name: mapping
+    step: ngs_mapping
+    config:
+      depends_on:
+        reads: data_sets
+        reference: genome
+        index: bwa_index
+      tool: bwa
+      bwa:
+        mask_duplicates: false
+        memory_bam_sort: 2G
+        num_threads_bam_sort: 2
+        num_threads_bam_view: 2
+        num_threads_align: 2
+
+  - name: candidates
+    step: variant_calling
+    config:
+      depends_on:
+        alignments: mapping
+        reference: genome
+        kits: kits
+      group_by: related
+      tool: freebayes
+      freebayes:
+        num_jobs: 2
+
+  - name: calling
+    step: variant_calling
+    config:
+      depends_on:
+        alignments: mapping
+        reference: genome
+        candidates: candidates
+      tool: varlociraptor
+      varlociraptor:
+        scenario: germline
+        num_jobs: 2
+
+  - name: fdr
+    step: variant_filtration
+    config:
+      depends_on:
+        variants: calling
+      tool: varlociraptor
+      varlociraptor:
+        events: [present, denovo, recessive, dominant]
