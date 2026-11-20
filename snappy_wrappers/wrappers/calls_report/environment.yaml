@@ -1,1 +1,9 @@
-../qc_summary/environment.yaml
+channels:
+  - conda-forge
+  - bioconda
+  - nodefaults
+dependencies:
+  - datavzrd ==2.78.1
+  - polars ==2.1.0
+  - python ==3.14.10
+  - igv-reports ==1.16.0

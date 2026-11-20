@@ -565,6 +565,22 @@ EXTRA_TASKS: list[dict[str, Any]] = [
     _external_vcfs("external_sv", ["germline", "sv"]),
     # The inputs of neoepitope prediction that other closures do not need
     _external_file("proteome", "raw", ["proteome"], "fasta", PLACEHOLDER),
+    # FDR control of the germline varlociraptor calls with IGV views of the top calls, which
+    # read the BAMs and the genome
+    {
+        "step": "variant_filtration",
+        "name": "variant_filtration_varlociraptor_igv",
+        "config": {
+            "depends_on": {
+                "variants": "variant_calling_varlociraptor_germline",
+                "alignments": "ngs_mapping_bwa",
+                "reference": "genome",
+            },
+            "tool": "varlociraptor",
+            "varlociraptor": {"events": ["present", "denovo", "recessive", "dominant"]},
+            "calls_report": {"igv": {}},
+        },
+    },
     # Candidate calling per pedigree, as the germline varlociraptor closure reads it
     {
         "step": "variant_calling",

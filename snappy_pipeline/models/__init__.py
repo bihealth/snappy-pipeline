@@ -226,6 +226,7 @@ class ReadBy:
     it is enabled, every section on it is present and a bool at its end is true; ``value``
     compares the setting instead, ``contains`` tests membership in a list. A task must not set a
     field that none of its readers reads. A field without markers is read by every tool.
+    A path that ends in an optional section (``calls_report.igv``) is on when the section is set.
     """
 
     def __init__(self, *tools: str, when: str | None = None, value=None, contains=None):

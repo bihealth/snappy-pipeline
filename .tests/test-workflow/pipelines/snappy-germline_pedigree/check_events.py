@@ -9,7 +9,9 @@ The check reads the VCF of the ``fdr`` task and requires:
   PHRED value of the four events, below ``MAX_PHRED``;
 - at least ``MIN_CALLED`` of all simulated variants are called, and at least ``MIN_CORRECT`` of the
   called ones have their expected event in front;
-- no called variant has ``denovo`` or ``recessive`` in front unless the truth says so.
+- no called variant has ``denovo`` or ``recessive`` in front unless the truth says so;
+- the calls report of the ``fdr`` task has its IGV page (``igv/top.html``) below the size limit,
+  with igv.js inlined and the planted de novo site of the index among its sites.
 
 Exit code 1 on failure, with the offending sites printed.
 """
@@ -25,6 +27,31 @@ EVENTS = ("present", "denovo", "recessive", "dominant")
 MAX_PHRED = 10.0
 MIN_CALLED = 0.9
 MIN_CORRECT = 0.9
+
+
+IGV_LIMIT_MB = 50
+
+
+def check_igv_page(truth: list[dict[str, str]]) -> list[str]:
+    """The IGV page of the calls report exists, is self-contained and shows the de novo site."""
+    pages = sorted((HERE / "tasks" / "fdr" / "work").glob("*/report/calls/html/igv/top.html"))
+    if len(pages) != 1:
+        return [f"expected one IGV page of the fdr calls report, found {[str(p) for p in pages]}"]
+    page = pages[0]
+    failures = []
+    size = page.stat().st_size
+    if size > IGV_LIMIT_MB * 1024 * 1024:
+        failures.append(f"{page} has {size} bytes, above {IGV_LIMIT_MB} MB")
+    html = page.read_text(encoding="utf-8")
+    if "cdn.jsdelivr.net/npm/igv@" in html or "sessionDictionary" not in html:
+        failures.append(f"{page}: igv.js is not inlined or the page has no sessions")
+    denovo = [row["pos"] for row in truth if row["label"] == "denovo_idx"]
+    if denovo and not any(
+        f'"{pos}"' in html or f"\t{pos}\t" in html or f">{pos}<" in html for pos in denovo
+    ):
+        failures.append(f"{page}: the planted de novo site {denovo} is not among its sites")
+    print(f"IGV page: {page.relative_to(HERE)}, {size / 1024 / 1024:.1f} MB")
+    return failures
 
 
 def read_truth() -> list[dict[str, str]]:
@@ -106,6 +133,7 @@ def main() -> int:
         failures.append(
             f"only {correct} of {called} called variants have their expected event in front"
         )
+    failures += check_igv_page(truth)
     for failure in failures:
         print("FAIL", failure)
     return 1 if failures else 0

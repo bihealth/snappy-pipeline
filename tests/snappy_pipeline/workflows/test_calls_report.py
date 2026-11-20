@@ -51,6 +51,7 @@ def test_the_report_reads_the_tasks_own_vcf_of_the_entity():
             "varlociraptor_inspect",
         ],
         "assembly": None,
+        "igv": None,
     }
 
 
@@ -76,3 +77,77 @@ def test_the_report_writes_the_calls_table_and_the_site():
     assert _part()._get_log_file_run() == {
         "log": "work/{library_name}/log/{library_name}.calls_report.log"
     }
+
+
+def _part_with_igv(matched_normal=None, **igv):
+    import pandas as pd
+
+    part = _part(igv=igv)
+    rows = [{"library_name": "P001-N1-DNA1-WES1", "matched_normal_lib": ""}]
+    if matched_normal is not None:
+        rows = [{"library_name": "P001-T1-DNA1-WES1", "matched_normal_lib": matched_normal}]
+    part.parent.libraries = pd.DataFrame(rows)
+    part.parent.member_libraries = lambda entity: [rows[0]["library_name"]]
+    part.parent.get_upstream_paths = lambda field, library_name: SimpleNamespace(
+        bam=f"tasks/mapping/work/{library_name}/out/{library_name}.bam",
+        bai=f"tasks/mapping/work/{library_name}/out/{library_name}.bam.bai",
+    )
+    part.parent.reference_inputs = lambda: {
+        "reference": "genome.fa",
+        "reference_fai": "genome.fa.fai",
+        "reference_dict": "genome.dict",
+    }
+    return part
+
+
+def test_igv_views_read_the_bams_of_the_members_and_their_matched_normals():
+    part = _part_with_igv(matched_normal="P001-N1-DNA1-WES1", top=5, views=["somatic_tumor_high"])
+    wildcards = SimpleNamespace(library_name="P001-T1-DNA1-WES1")
+
+    inputs = part._get_input_files_run(wildcards)
+    params = part._get_params_run(wildcards)
+
+    assert part.igv_libraries("P001-T1-DNA1-WES1") == ["P001-T1-DNA1-WES1", "P001-N1-DNA1-WES1"]
+    assert inputs["bam"] == [
+        "tasks/mapping/work/P001-T1-DNA1-WES1/out/P001-T1-DNA1-WES1.bam",
+        "tasks/mapping/work/P001-N1-DNA1-WES1/out/P001-N1-DNA1-WES1.bam",
+    ]
+    assert inputs["bai"][1].endswith("P001-N1-DNA1-WES1.bam.bai")
+    assert inputs["reference"] == "genome.fa" and inputs["reference_dict"] == "genome.dict"
+    assert params["igv"] == {
+        "top": 5,
+        "views": ["somatic_tumor_high"],
+        "flanking": 300,
+        "max_size_mb": 50,
+        "extra_arguments": [],
+        "libraries": ["P001-T1-DNA1-WES1", "P001-N1-DNA1-WES1"],
+    }
+
+
+def test_without_igv_the_report_reads_only_the_vcf():
+    part = _part()
+    wildcards = SimpleNamespace(library_name="P001-N1-DNA1-WES1")
+
+    assert set(part._get_input_files_run(wildcards)) == {"vcf", "vcf_tbi"}
+    assert part._get_params_run(wildcards)["igv"] is None
+
+
+def test_igv_views_need_the_alignments_and_the_genome():
+    import pytest
+    from pydantic import ValidationError
+
+    from snappy_pipeline.workflows.variant_filtration.model import VariantFiltration
+
+    settings = {
+        "depends_on": {"variants": "calling"},
+        "tool": "varlociraptor",
+        "varlociraptor": {"events": ["present"]},
+        "calls_report": {"igv": {}},
+    }
+    with pytest.raises(
+        ValidationError,
+        match="calls_report.igv needs depends_on.alignments and depends_on.reference",
+    ):
+        VariantFiltration(**settings)
+    settings["depends_on"] |= {"alignments": "mapping", "reference": "genome"}
+    assert VariantFiltration(**settings).calls_report.igv.top == 20

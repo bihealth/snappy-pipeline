@@ -196,6 +196,7 @@
   "params": {
    "args": {
     "assembly": "GRCh38",
+    "igv": null,
     "linkouts": [
      "gnomad",
      "clinvar",

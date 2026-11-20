@@ -80,7 +80,11 @@ tasks:
     config:
       depends_on:
         variants: calling
+        alignments: mapping
+        reference: genome
       tool: varlociraptor
-      calls_report: {}
+      # The calls report with IGV views of the top calls of the three event views
+      calls_report:
+        igv: {top: 5, views: [denovo, recessive, dominant]}
       varlociraptor:
         events: [present, denovo, recessive, dominant]

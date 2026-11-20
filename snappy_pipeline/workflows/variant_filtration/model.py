@@ -171,9 +171,12 @@ class VariantFiltrationDependsOn(SnappyModel):
         DataSignature(DataType.ALIGNMENTS, frozenset({"dna"})),
         ExpectedPathSchema(ExpectedAlignments),
         RequiredBy("dkfz", "ebfilter"),
+        RequiredBy(when="calls_report.igv"),
     ] = ""
 
-    reference: Annotated[Reference, RequiredBy("dkfz", "ebfilter")] = ""
+    reference: Annotated[
+        Reference, RequiredBy("dkfz", "ebfilter"), RequiredBy(when="calls_report.igv")
+    ] = ""
 
     regions: Annotated[Regions, RequiredBy("regions")] = ""
     """Task with the BED file of the ``regions`` filter"""

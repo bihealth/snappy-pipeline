@@ -815,6 +815,7 @@
   "params": {
    "args": {
     "assembly": null,
+    "igv": null,
     "linkouts": [
      "gnomad",
      "clinvar",

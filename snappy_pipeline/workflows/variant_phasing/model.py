@@ -77,6 +77,7 @@ class VariantPhasingDependsOn(SnappyModel):
         RequiredBy(
             Tool.gatk_read_backed_phasing, Tool.gatk_read_backed_phasing_tumor, Tool.whatshap_tumor
         ),
+        RequiredBy(when="calls_report.igv"),
     ] = ""
     variants: Annotated[
         str,

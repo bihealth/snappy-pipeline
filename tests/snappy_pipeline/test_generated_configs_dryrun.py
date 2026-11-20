@@ -69,6 +69,7 @@ GERMLINE_TASKS = {
     "variant_calling_freebayes_germline",
     "variant_calling_varlociraptor_germline",
     "variant_calling_varlociraptor_sv",
+    "variant_filtration_varlociraptor_igv",
     "variant_phasing_gatk_phase_by_transmission",
     "variant_phasing_gatk_read_backed_phasing",
     "igv_session_generation",

@@ -2,7 +2,7 @@
 
 import enum
 
-from snappy_pipeline.models import SnappyModel
+from snappy_pipeline.models import SnappyModel, ToolModel
 
 
 class Linkout(enum.StrEnum):
@@ -13,6 +13,23 @@ class Linkout(enum.StrEnum):
     genecards = "genecards"
     omim = "omim"
     varlociraptor_inspect = "varlociraptor_inspect"
+
+
+class IgvViews(ToolModel):
+    """IGV views (igv-reports) of the top calls of each view in one page, ``igv/top.html`` in the site, which the ``igv`` column of the calls table links to; ``extra_arguments`` go to ``create_report``.
+    The BAMs come from ``depends_on.alignments`` (the members of the entity and their matched normals), the genome from ``depends_on.reference``."""
+
+    top: int = 20
+    """Calls per view that get an IGV view, from the top of the view's ranking; a call in several views counts once"""
+
+    views: list[str] = []
+    """Views whose top calls get an IGV view (the events, or ``ranked``); empty takes every view"""
+
+    flanking: int = 300
+    """Width of the window around a call in base pairs, half on each side"""
+
+    max_size_mb: int = 50
+    """Size limit of the IGV page; the lowest-ranked calls are dropped until it fits"""
 
 
 class CallsReport(SnappyModel):
@@ -28,3 +45,6 @@ class CallsReport(SnappyModel):
     linkouts: list[Linkout] = list(Linkout)
     """Links of a variant (``gnomad``, ``clinvar``, ``dbsnp``, and ``varlociraptor_inspect``, which opens varlociraptor's observations of the call without any names) and of its gene (``ensembl``, ``genecards``, ``omim``); empty for none.
     gnomAD, ClinVar and dbSNP by position and Ensembl need the genome build, which an annotation task in the chain tags its variants with; without one they are left out"""
+
+    igv: IgvViews | None = None
+    """IGV views of the top calls of each view, from the BAMs of ``depends_on.alignments`` and the genome of ``depends_on.reference``; unset: none"""

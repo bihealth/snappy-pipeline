@@ -2,6 +2,7 @@
 """The calls report of a task: one job per entity that renders the calls of its VCF as a table.
 
 A step that writes VCFs registers :class:`CallsReportStepPart` when its ``calls_report`` section is set.
+With ``calls_report.igv`` the job also reads the BAMs of the entity's libraries (``depends_on.alignments``) and the genome, and writes IGV views of the top calls into the site.
 The job reads the task's own output VCF of the entity, writes the calls table as the result file ``{library_name}/report/calls/{library_name}.calls.tsv`` and renders a datavzrd site below ``{library_name}/report/calls/html/``, which the Snakemake report shows (``snappy report``).
 The ``calls_report`` wrapper builds the table with ``snappy_wrappers.tools.calls_report``; the columns follow what the VCF carries.
 """
@@ -38,12 +39,35 @@ class CallsReportStepPart(BaseStepPart):
         }
     }
 
-    def _get_input_files_run(self, wildcards: Wildcards) -> dict[str, str]:
-        """The task's own output VCF of the entity (the PASS calls of mutect2)."""
+    def igv_libraries(self, entity: str) -> list[str]:
+        """The libraries whose BAMs the IGV views show: the members of the entity and, on cancer
+        sheets, their matched normals."""
+        libraries = list(self.parent.member_libraries(entity))
+        table = self.parent.libraries
+        if "matched_normal_lib" in table.columns:
+            for library in list(libraries):
+                rows = table[table["library_name"] == library]
+                normal = rows.iloc[0].get("matched_normal_lib") if not rows.empty else None
+                if normal and normal not in libraries:
+                    libraries.append(normal)
+        return libraries
+
+    def _get_input_files_run(self, wildcards: Wildcards) -> dict[str, Any]:
+        """The task's own output VCF of the entity (the PASS calls of mutect2); with IGV views
+        the BAMs of its libraries and the genome."""
         paths = self.parent.get_output_paths(
             self.parent.config, library_name=wildcards.library_name
         )
-        return {"vcf": paths["vcf"], "vcf_tbi": paths["vcf_tbi"]}
+        inputs: dict[str, Any] = {"vcf": paths["vcf"], "vcf_tbi": paths["vcf_tbi"]}
+        if self.parent.config.calls_report.igv:
+            alignments = [
+                self.parent.get_upstream_paths("alignments", library_name=library)
+                for library in self.igv_libraries(wildcards.library_name)
+            ]
+            inputs["bam"] = [paths.bam for paths in alignments]
+            inputs["bai"] = [paths.bai for paths in alignments]
+            inputs |= self.parent.reference_inputs()
+        return inputs
 
     @dictify
     def _get_output_files_run(self):
@@ -72,4 +96,18 @@ class CallsReportStepPart(BaseStepPart):
             "max_in_memory_rows": settings.max_in_memory_rows,
             "linkouts": [str(link) for link in settings.linkouts],
             "assembly": self.assembly(),
+            "igv": self._igv_params(wildcards.library_name),
+        }
+
+    def _igv_params(self, entity: str) -> dict[str, Any] | None:
+        igv = self.parent.config.calls_report.igv
+        if not igv:
+            return None
+        return {
+            "top": igv.top,
+            "views": list(igv.views),
+            "flanking": igv.flanking,
+            "max_size_mb": igv.max_size_mb,
+            "extra_arguments": list(igv.extra_arguments),
+            "libraries": self.igv_libraries(entity),
         }

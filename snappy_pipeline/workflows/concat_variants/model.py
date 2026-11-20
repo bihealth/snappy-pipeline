@@ -3,13 +3,15 @@ from typing import Annotated
 
 from pydantic import Field
 
-from snappy_pipeline.models import EnumField, SnappyModel, SnappyStepModel, ToolModel
+from snappy_pipeline.models import EnumField, RequiredBy, SnappyModel, SnappyStepModel, ToolModel
 from snappy_pipeline.workflows.abstract.protocol import (
     DataSignature,
     DataType,
     ExpectedPathSchema,
+    Reference,
 )
 from snappy_pipeline.models.calls_report import CallsReport
+from snappy_pipeline.workflows.ngs_mapping.model import ExpectedAlignments
 
 
 class Tool(enum.StrEnum):
@@ -33,6 +35,17 @@ class ConcatVariantsDependsOn(SnappyModel):
     ] = Field(min_length=2)
     """The tasks whose calls are concatenated, for example the small variants and the structural
     variants of each pedigree; they must write the same entities with the same samples"""
+
+    alignments: Annotated[
+        str,
+        DataSignature(DataType.ALIGNMENTS, frozenset({"dna"})),
+        ExpectedPathSchema(ExpectedAlignments),
+        RequiredBy(when="calls_report.igv"),
+    ] = ""
+    """The BAMs of the libraries, for the IGV views of ``calls_report.igv``"""
+
+    reference: Annotated[Reference, RequiredBy(when="calls_report.igv")] = ""
+    """The genome, for the IGV views of ``calls_report.igv``"""
 
 
 class ConcatVariants(SnappyStepModel):
