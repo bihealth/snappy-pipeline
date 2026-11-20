@@ -74,15 +74,19 @@ def test_the_germline_preset_of_a_trio_has_mendelian_inheritance_and_a_denovo_ev
         "inheritance": {"mendelian": {"from": ["mother-DNA1", "father-DNA1"]}},
     }
     assert scenario["samples"]["mother-DNA1"] == {"sex": "female"}
+    # The de novo event is per child, named after the donor (here the library) in lower case
+    assert scenario["expressions"] == {
+        "denovo_child_dna1_pattern": "child-DNA1:]0.0,1.0] & mother-DNA1:0.0 & father-DNA1:0.0"
+    }
     assert scenario["events"] == {
-        "denovo": "child-DNA1:]0.0,1.0] & mother-DNA1:0.0 & father-DNA1:0.0",
+        "denovo_child_dna1": "$denovo_child_dna1_pattern",
         "recessive": False,
         "dominant": False,
         "present": (
-            "(child-DNA1:]0.0,1.0] | father-DNA1:]0.0,1.0] | mother-DNA1:]0.0,1.0]) & !$denovo"
+            "(child-DNA1:]0.0,1.0] | father-DNA1:]0.0,1.0] | mother-DNA1:]0.0,1.0])"
+            " & !$denovo_child_dna1_pattern"
         ),
     }
-    assert "expressions" not in scenario
 
 
 def test_the_affected_status_adds_disjoint_recessive_and_dominant_events():
@@ -93,15 +97,18 @@ def test_the_affected_status_adds_disjoint_recessive_and_dominant_events():
 
     scenario = germline_scenario([child, sibling, father, mother], SPECIES)
 
-    assert scenario["expressions"] == {
-        "recessive_pattern": "child-DNA1:1.0 & sibling-DNA1:1.0 & !father-DNA1:1.0",
-        "dominant_pattern": "child-DNA1:]0.0,1.0] & sibling-DNA1:]0.0,1.0] & father-DNA1:0.0",
-    }
-    assert scenario["events"]["recessive"] == "$recessive_pattern & !$denovo"
-    assert scenario["events"]["dominant"] == ("$dominant_pattern & !$denovo & !$recessive_pattern")
+    denovo = "!$denovo_child_dna1_pattern & !$denovo_sibling_dna1_pattern"
+    assert scenario["expressions"]["recessive_pattern"] == (
+        "child-DNA1:1.0 & sibling-DNA1:1.0 & !father-DNA1:1.0"
+    )
+    assert scenario["expressions"]["dominant_pattern"] == (
+        "child-DNA1:]0.0,1.0] & sibling-DNA1:]0.0,1.0] & father-DNA1:0.0"
+    )
+    assert scenario["events"]["recessive"] == f"$recessive_pattern & {denovo}"
+    assert scenario["events"]["dominant"] == (f"$dominant_pattern & {denovo} & !$recessive_pattern")
     assert scenario["events"]["present"] == (
         "(child-DNA1:]0.0,1.0] | sibling-DNA1:]0.0,1.0] | father-DNA1:]0.0,1.0]"
-        " | mother-DNA1:]0.0,1.0]) & !$denovo & !$recessive_pattern & !$dominant_pattern"
+        f" | mother-DNA1:]0.0,1.0]) & {denovo} & !$recessive_pattern & !$dominant_pattern"
     )
     assert list(scenario) == ["species", "samples", "expressions", "events"]
 
@@ -116,7 +123,6 @@ def test_affected_members_without_a_child_leave_out_the_denovo_exclusion():
     scenario = germline_scenario(siblings, SPECIES)
 
     assert scenario["events"] == {
-        "denovo": False,
         "recessive": "$recessive_pattern",
         "dominant": "$dominant_pattern & !$recessive_pattern",
         "present": (
@@ -126,15 +132,32 @@ def test_affected_members_without_a_child_leave_out_the_denovo_exclusion():
     }
 
 
-def test_the_germline_preset_of_a_quad_ors_the_denovo_events_of_both_children():
-    sibling = _row("sibling-DNA1", "female", "father-DNA1", "mother-DNA1")
+def test_the_germline_preset_of_a_quad_has_a_disjoint_denovo_event_per_child():
+    sibling = _row("sibling-DNA1", "female", "father-DNA1", "mother-DNA1", donor_name="Sib-2")
 
     scenario = germline_scenario([*TRIO, sibling], SPECIES)
 
-    assert scenario["events"]["denovo"] == (
-        "(child-DNA1:]0.0,1.0] & mother-DNA1:0.0 & father-DNA1:0.0)"
-        " | (sibling-DNA1:]0.0,1.0] & mother-DNA1:0.0 & father-DNA1:0.0)"
+    # The event takes the donor's name, in lower case with letters, digits and underscores
+    assert scenario["expressions"]["denovo_sib_2_pattern"] == (
+        "sibling-DNA1:]0.0,1.0] & mother-DNA1:0.0 & father-DNA1:0.0"
     )
+    assert scenario["events"]["denovo_child_dna1"] == "$denovo_child_dna1_pattern"
+    assert scenario["events"]["denovo_sib_2"] == (
+        "$denovo_sib_2_pattern & !$denovo_child_dna1_pattern"
+    )
+    assert scenario["events"]["present"].endswith(
+        "& !$denovo_child_dna1_pattern & !$denovo_sib_2_pattern"
+    )
+
+
+def test_two_children_whose_donors_name_the_same_event_are_rejected():
+    twins = [
+        _row("a-DNA1", "male", "father-DNA1", "mother-DNA1", donor_name="P-1"),
+        _row("b-DNA1", "male", "father-DNA1", "mother-DNA1", donor_name="P.1"),
+    ]
+
+    with pytest.raises(ValueError, match="both get the event denovo_p_1"):
+        germline_scenario([*twins, ROWS["father-DNA1"], ROWS["mother-DNA1"]], SPECIES)
 
 
 def test_the_germline_preset_without_a_child_has_only_present_and_unknown_sex_is_diploid():
@@ -144,7 +167,6 @@ def test_the_germline_preset_without_a_child_has_only_present_and_unknown_sex_is
 
     assert scenario["samples"] == {"a-DNA1": {"ploidy": 2}, "b-DNA1": {"sex": "female"}}
     assert scenario["events"] == {
-        "denovo": False,
         "recessive": False,
         "dominant": False,
         "present": "a-DNA1:]0.0,1.0] | b-DNA1:]0.0,1.0]",
@@ -166,7 +188,11 @@ def test_the_germline_preset_models_several_generations():
         "mother-DNA1",
         "father-DNA1",
     ]
-    assert scenario["events"]["denovo"].count(" | ") == 1
+    # One de novo event per child: the mother (from the grandparents) and the child
+    assert [e for e in scenario["events"] if e.startswith("denovo_")] == [
+        "denovo_child_dna1",
+        "denovo_mother_dna1",
+    ]
 
 
 @pytest.mark.parametrize(
@@ -369,7 +395,7 @@ def test_the_germline_scenario_of_the_step_part_takes_the_pedigree_rows():
     scenario = yaml.safe_load(part.scenario("child-DNA1"))
 
     assert set(scenario["samples"]) == {"child-DNA1", "father-DNA1", "mother-DNA1"}
-    assert "denovo" in scenario["events"]
+    assert any(event.startswith("denovo_") for event in scenario["events"])
 
 
 def test_a_template_file_replaces_the_preset(tmp_path):
@@ -639,11 +665,14 @@ def test_the_unsequenced_parent_of_a_duo_joins_as_an_unobserved_sample():
         "mendelian": {"from": ["mother-DNA1", "father"]}
     }
     assert scenario["samples"]["father"] == {"sex": "male"}
+    assert scenario["expressions"]["denovo_child_pattern"] == (
+        "child-DNA1:]0.0,1.0] & mother-DNA1:0.0 & father:0.0"
+    )
     assert scenario["events"] == {
-        "denovo": "child-DNA1:]0.0,1.0] & mother-DNA1:0.0 & father:0.0",
+        "denovo_child": "$denovo_child_pattern",
         "recessive": False,
         "dominant": False,
-        "present": "(child-DNA1:]0.0,1.0] | mother-DNA1:]0.0,1.0]) & !$denovo",
+        "present": "(child-DNA1:]0.0,1.0] | mother-DNA1:]0.0,1.0]) & !$denovo_child_pattern",
     }
 
 
@@ -696,7 +725,7 @@ def test_siblings_share_their_unsequenced_parents():
     scenario = germline_scenario(part.pedigree_samples("s1-DNA1"), SPECIES)
 
     assert set(scenario["samples"]) == {"s1-DNA1", "s2-DNA1", "father", "mother"}
-    assert scenario["events"]["denovo"].count(" | ") == 1
+    assert [e for e in scenario["events"] if e.startswith("denovo_")] == ["denovo_s1", "denovo_s2"]
 
 
 def test_the_unknown_parent_of_a_child_with_one_parent_joins_as_an_unobserved_sample():
@@ -718,7 +747,7 @@ def test_the_unknown_parent_of_a_child_with_one_parent_joins_as_an_unobserved_sa
         "observed": False,
     }
     assert scenario["samples"]["child.father"] == {"sex": "male"}
-    assert scenario["events"]["denovo"] == (
+    assert scenario["expressions"]["denovo_child_pattern"] == (
         "child-DNA1:]0.0,1.0] & mother-DNA1:0.0 & child.father:0.0"
     )
 

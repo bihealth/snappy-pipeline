@@ -35,6 +35,12 @@ def _excluding(formula: str, exclusions: list[str]) -> str:
     return " & ".join([formula, *(f"!{excluded}" for excluded in exclusions)])
 
 
+def event_suffix(sample: dict[str, Any]) -> str:
+    """The member's part of a per-member event name such as ``denovo_<member>``: the donor name (else the library name) in lower case with letters, digits and ``_`` only, so that ``PROB_<EVENT>`` is a valid VCF INFO ID and the name comes back from the header unchanged."""
+    name = str(sample.get("donor_name") or sample["library_name"]).lower()
+    return re.sub(r"[^a-z0-9]", "_", name)
+
+
 def germline_scenario(samples: list[dict[str, Any]], species: dict[str, Any]) -> dict[str, Any]:
     """Return the ``germline`` preset for the library rows ``samples`` of a pedigree.
 
@@ -46,16 +52,17 @@ def germline_scenario(samples: list[dict[str, Any]], species: dict[str, Any]) ->
 
     The events partition the configurations in which an observed member carries the variant, by the sheet's ``isAffected``.
     ``disease_state`` 2 is affected, 1 unaffected, anything else unknown, which constrains nothing.
-    ``denovo``: an observed child carries a variant that its parents do not.
+    ``denovo_<member>``, one per observed child whose parents are both samples: the child carries a variant that its parents do not (a de novo mutation in that member, which its descendants inherit).
+    ``<member>`` is the donor name in lower case (:func:`event_suffix`).
     ``recessive``: every affected member is homozygous, no unaffected member is (``!member:1.0``).
     ``dominant``: every affected member carries the variant, no unaffected member does.
     ``present``: the rest.
     Each event excludes the ones before it, so they are disjoint.
     ``dominant`` thus means inherited dominant; in a trio with unaffected parents it is empty.
-    An event without a pattern (no child with both parents, no affected member) is the impossible event ``false``,
-    so one FDR control over all four events fits every pedigree.
+    Without an affected member, ``recessive`` and ``dominant`` are the impossible event ``false``, and a pedigree without a child has no de novo event,
+    so FDR control over the kinds ``denovo``, ``recessive``, ``dominant`` and ``present`` fits every pedigree.
 
-    The patterns of ``recessive`` and ``dominant`` are ``expressions``, so that the events negate ``$`` references without a negation inside.
+    The patterns of the events are ``expressions``, so that the events negate ``$`` references without a negation inside.
     varlociraptor 8.12.0 expands references one level deep and panics on a negated reference to an event that negates another.
 
     Varlociraptor models inheritance from both parents only.
@@ -90,7 +97,7 @@ def germline_scenario(samples: list[dict[str, Any]], species: dict[str, Any]) ->
         if len(present) == 2:
             entry["inheritance"] = {"mendelian": {"from": [mother, father]}}
             if name in observed:
-                children.append((name, mother, father))
+                children.append((name, mother, father, event_suffix(sample)))
         elif known:
             raise ValueError(
                 f"{name} has the parents {' and '.join(known)} in the sample sheet, but the "
@@ -102,19 +109,19 @@ def germline_scenario(samples: list[dict[str, Any]], species: dict[str, Any]) ->
     expressions: dict[str, str] = {}
     events: dict[str, Any] = {}
     exclusions: list[str] = []
-    if children:
-        # A formula is a conjunction, a disjunction or an atom; only the terms of a disjunction
-        # may be parenthesised conjunctions
-        terms = [
-            f"{child}:]0.0,1.0] & {mother}:0.0 & {father}:0.0" for child, mother, father in children
-        ]
-        events["denovo"] = (
-            terms[0] if len(terms) == 1 else " | ".join(f"({term})" for term in terms)
-        )
-        exclusions.append("$denovo")
-    else:
-        # The literal false may not be negated, so the other events leave it out
-        events["denovo"] = False
+    named: dict[str, str] = {}
+    for child, mother, father, suffix in children:
+        event = f"denovo_{suffix}"
+        if event in named:
+            raise ValueError(
+                f"{child} and {named[event]} both get the event {event}; give their donors "
+                "names that differ in letters and digits"
+            )
+        named[event] = child
+        pattern = f"{event}_pattern"
+        expressions[pattern] = f"{child}:]0.0,1.0] & {mother}:0.0 & {father}:0.0"
+        events[event] = _excluding(f"${pattern}", exclusions)
+        exclusions.append(f"${pattern}")
     if affected:
         # "not homozygous" as a negated atom: varlociraptor 8.12.1 mishandles an interval that
         # holds 0.0 and 0.5, such as [0.0,1.0[, and the negation holds on every ploidy

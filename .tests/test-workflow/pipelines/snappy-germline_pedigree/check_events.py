@@ -5,8 +5,9 @@
 that should hold its posterior mass.
 The check reads the VCF of the ``fdr`` task and requires:
 
-- every planted site (the labels without a dot) is called, and its event has the smallest
-  PHRED value of the four events, below ``MAX_PHRED``;
+- every planted site (the labels without a dot) is called, and its event (``denovo_<member>``,
+  ``recessive``, ``dominant`` or ``present``) has the smallest PHRED value of the events, below
+  ``MAX_PHRED``;
 - at least ``MIN_CALLED`` of all simulated variants are called, and at least ``MIN_CORRECT`` of the
   called ones have their expected event in front;
 - no called variant has ``denovo`` or ``recessive`` in front unless the truth says so;
@@ -23,7 +24,8 @@ import sys
 from pathlib import Path
 
 HERE = Path(__file__).resolve().parent
-EVENTS = ("present", "denovo", "recessive", "dominant")
+#: The events of the scenario, read from the VCF header: present, denovo_<member>, recessive, dominant
+EVENTS: list[str] = []
 MAX_PHRED = 10.0
 MIN_CALLED = 0.9
 MIN_CORRECT = 0.9
@@ -68,6 +70,10 @@ def read_calls() -> dict[tuple[int, str, str], dict[str, float]]:
     calls = {}
     with gzip.open(vcfs[0], "rt") as f:
         for line in f:
+            if line.startswith("##INFO=<ID=PROB_"):
+                event = line.split("ID=PROB_", 1)[1].split(",", 1)[0].lower()
+                if event not in ("artifact", "absent"):
+                    EVENTS.append(event)
             if line.startswith("#"):
                 continue
             fields = line.rstrip("\n").split("\t")
@@ -122,7 +128,7 @@ def main() -> int:
                 f"{row['pos']} {row['label']}: expected {row['event']}, got {front} at PHRED "
                 f"{probs[front]:.1f}"
             )
-        if not ok and front in ("denovo", "recessive"):
+        if not ok and (front.startswith("denovo") or front == "recessive"):
             failures.append(
                 f"{row['pos']} {row['label']}: {front} in front, expected {row['event']}"
             )

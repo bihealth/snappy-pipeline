@@ -579,7 +579,7 @@
     "obs_names": [
      "case001subregion-N1-DNA1-WES1"
     ],
-    "scenario": "species:\n  heterozygosity: 0.001\n  germline-mutation-rate: 1.2e-08\n  ploidy:\n    male:\n      all: 2\n      X: 1\n      Y: 1\n    female:\n      all: 2\n      X: 2\n      Y: 0\nsamples:\n  case001subregion-N1-DNA1-WES1:\n    ploidy: 2\nevents:\n  denovo: false\n  recessive: false\n  dominant: false\n  present: case001subregion-N1-DNA1-WES1:]0.0,1.0]\n"
+    "scenario": "species:\n  heterozygosity: 0.001\n  germline-mutation-rate: 1.2e-08\n  ploidy:\n    male:\n      all: 2\n      X: 1\n      Y: 1\n    female:\n      all: 2\n      X: 2\n      Y: 0\nsamples:\n  case001subregion-N1-DNA1-WES1:\n    ploidy: 2\nevents:\n  recessive: false\n  dominant: false\n  present: case001subregion-N1-DNA1-WES1:]0.0,1.0]\n"
    }
   },
   "resources": {
@@ -620,7 +620,7 @@
     "obs_names": [
      "case001subregion-N1-DNA1-WES1"
     ],
-    "scenario": "species:\n  heterozygosity: 0.001\n  germline-mutation-rate: 1.2e-08\n  ploidy:\n    male:\n      all: 2\n      X: 1\n      Y: 1\n    female:\n      all: 2\n      X: 2\n      Y: 0\nsamples:\n  case001subregion-N1-DNA1-WES1:\n    ploidy: 2\nevents:\n  denovo: false\n  recessive: false\n  dominant: false\n  present: case001subregion-N1-DNA1-WES1:]0.0,1.0]\n"
+    "scenario": "species:\n  heterozygosity: 0.001\n  germline-mutation-rate: 1.2e-08\n  ploidy:\n    male:\n      all: 2\n      X: 1\n      Y: 1\n    female:\n      all: 2\n      X: 2\n      Y: 0\nsamples:\n  case001subregion-N1-DNA1-WES1:\n    ploidy: 2\nevents:\n  recessive: false\n  dominant: false\n  present: case001subregion-N1-DNA1-WES1:]0.0,1.0]\n"
    }
   },
   "resources": {
@@ -842,7 +842,7 @@
     "obs_names": [
      "case001subregion-N1-DNA1-WES1"
     ],
-    "scenario": "species:\n  heterozygosity: 0.001\n  germline-mutation-rate: 1.2e-08\n  ploidy:\n    male:\n      all: 2\n      X: 1\n      Y: 1\n    female:\n      all: 2\n      X: 2\n      Y: 0\nsamples:\n  case001subregion-N1-DNA1-WES1:\n    ploidy: 2\nevents:\n  denovo: false\n  recessive: false\n  dominant: false\n  present: case001subregion-N1-DNA1-WES1:]0.0,1.0]\n"
+    "scenario": "species:\n  heterozygosity: 0.001\n  germline-mutation-rate: 1.2e-08\n  ploidy:\n    male:\n      all: 2\n      X: 1\n      Y: 1\n    female:\n      all: 2\n      X: 2\n      Y: 0\nsamples:\n  case001subregion-N1-DNA1-WES1:\n    ploidy: 2\nevents:\n  recessive: false\n  dominant: false\n  present: case001subregion-N1-DNA1-WES1:]0.0,1.0]\n"
    }
   },
   "resources": {
@@ -883,7 +883,7 @@
     "obs_names": [
      "case001subregion-N1-DNA1-WES1"
     ],
-    "scenario": "species:\n  heterozygosity: 0.001\n  germline-mutation-rate: 1.2e-08\n  ploidy:\n    male:\n      all: 2\n      X: 1\n      Y: 1\n    female:\n      all: 2\n      X: 2\n      Y: 0\nsamples:\n  case001subregion-N1-DNA1-WES1:\n    ploidy: 2\nevents:\n  denovo: false\n  recessive: false\n  dominant: false\n  present: case001subregion-N1-DNA1-WES1:]0.0,1.0]\n"
+    "scenario": "species:\n  heterozygosity: 0.001\n  germline-mutation-rate: 1.2e-08\n  ploidy:\n    male:\n      all: 2\n      X: 1\n      Y: 1\n    female:\n      all: 2\n      X: 2\n      Y: 0\nsamples:\n  case001subregion-N1-DNA1-WES1:\n    ploidy: 2\nevents:\n  recessive: false\n  dominant: false\n  present: case001subregion-N1-DNA1-WES1:]0.0,1.0]\n"
    }
   },
   "resources": {

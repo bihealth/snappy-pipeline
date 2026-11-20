@@ -41,9 +41,9 @@ The ``tool`` field selects the caller.
         The pedigree (``group_by: related``, the default) or one library: each member with its sex and the ploidy of ``species`` (diploid when the sex is unknown); a member whose parents are both in the task inherits from them, in any constellation (trios, siblings, several generations, uncles and cousins with their parents).
         An unsequenced relative that connects members (a parent of two sequenced siblings, the grandparents of cousins) joins the scenario as a sample without observations, named after the donor, so inheritance flows through it and the posteriors integrate over its genotype.
         Varlociraptor models inheritance from both parents only, so a member with one parent in the scenario and an unknown other parent gets an unobserved one as well, named ``<donor>.father`` or ``<donor>.mother``; the VCF holds the observed libraries only.
-        The events partition the configurations in which a member carries the variant, by the sheet's ``isAffected``: ``denovo`` (a child carries a variant that its parents do not), ``recessive`` (every affected member is homozygous and no unaffected member is), ``dominant`` (every affected member carries it and no unaffected member does) and ``present`` (the rest).
+        The events partition the configurations in which a member carries the variant, by the sheet's ``isAffected``: ``denovo_<member>`` for each child whose parents are both in the scenario (the child carries a variant that its parents do not: a de novo mutation in that member, which its descendants inherit; ``<member>`` is the donor name in lower case), ``recessive`` (every affected member is homozygous and no unaffected member is), ``dominant`` (every affected member carries it and no unaffected member does) and ``present`` (the rest).
         Each event excludes the ones before it, so ``dominant`` is inherited dominant and empty in a trio with unaffected parents; members of unknown status constrain nothing.
-        Without an affected member, ``recessive`` and ``dominant`` are the impossible event ``false``, as is ``denovo`` without a child with both parents, so one FDR control over all four events fits every pedigree and keeps every variant, one over ``denovo`` and ``dominant`` the dominant hypothesis.
+        Without an affected member, ``recessive`` and ``dominant`` are the impossible event ``false``, and a pedigree without a child has no de novo event, so one FDR control over the kinds ``present``, ``denovo``, ``recessive`` and ``dominant`` fits every pedigree and keeps every variant, one over ``denovo`` and ``dominant`` the dominant hypothesis.
         The call passes ``--full-prior`` (``full_prior``), so that the mendelian prior and ``germline_mutation_rate`` weigh the events: varlociraptor's default prior only tells absent from present and gives a child with unobserved parents a fixed share of ``denovo``.
         A member with a sequenced parent outside the task (one that ``library_selection`` drops) is an error: take both parents into the task or give a ``template``.
         Libraries without a pedigree (``group_by: library``) are called alone.
@@ -206,7 +206,7 @@ the annotation and the other consumers read:
           tool: varlociraptor
           varlociraptor: {events: [somatic_tumor_high, somatic_tumor_medium]}
 
-For a germline cohort, ``candidates`` gets ``group_by: related``, ``calling`` gets ``scenario: germline`` and ``fdr_control`` the events ``present``, ``denovo``, ``recessive`` and ``dominant``.
+For a germline cohort, ``candidates`` gets ``group_by: related``, ``calling`` gets ``scenario: germline`` and ``fdr_control`` the events ``present``, ``denovo`` (every ``denovo_<member>``), ``recessive`` and ``dominant``.
 """
 
 import math
@@ -1309,6 +1309,7 @@ class VarlociraptorStepPart(ScatteredCallerStepPart):
         for sample in samples:
             donor = by_library.get(sample["library_name"])
             if donor is not None:
+                sample.setdefault("donor_name", donor)  # names the member's de novo event
                 sample["father_name"] = parent_name(rows[donor]["father_name"])
                 sample["mother_name"] = parent_name(rows[donor]["mother_name"])
         for donor in sorted(included):

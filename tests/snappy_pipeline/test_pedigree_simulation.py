@@ -35,8 +35,8 @@ def test_the_planted_variants_have_their_events():
     assert events == {
         "dominant": "dominant",
         "recessive": "recessive",
-        "denovo_idx": "denovo",
-        "denovo_sib1": "denovo",
+        "denovo_idx": "denovo_idx",
+        "denovo_sib1": "denovo_sib1",
         "unknown_father": "present",
     }
 
