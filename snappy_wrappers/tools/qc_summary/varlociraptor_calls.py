@@ -2,18 +2,15 @@
 """The calls of varlociraptor in one VCF, as a table for the report.
 
 One row per call with the posterior probability of every event of the scenario and, per sample,
-the allele frequency, the depth, the genotype and the observations. The observations are drawn
-in the cell: the reads for the alternative allele to the right and those for the reference (or
-a third allele) to the left, one bar per strength of evidence (``SAOBS`` and ``SROBS``), and the
-posterior density of the allele frequency (``AFD``) as a bar per sampled frequency. The biases that
-varlociraptor found (strand, read orientation, read position, softclip, homopolymer, alt locus,
-fragment end) are listed as text. The full observation strings (``OBS``) stay in the details.
+the allele frequency, the depth, the genotype and the observations.
+The observations are drawn in the cell: the reads for the alternative allele to the right and those for the reference (or a third allele) to the left, one bar per strength of evidence (``SAOBS`` and ``SROBS``), and the posterior density of the allele frequency (``AFD``) as a bar per sampled frequency, relative to the cell's maximum.
+The cells hold the compact strings of the VCF (``SAOBS|SROBS``, and ``AFD`` thinned to :data:`AFD_POINTS` frequencies), which the browser parses, so a row costs tens of bytes per sample.
+The biases that varlociraptor found (strand, read orientation, read position, softclip, homopolymer, alt locus, fragment end) are listed as text.
 """
 
 from __future__ import annotations
 
 import gzip
-import json
 import math
 import re
 from dataclasses import dataclass, field
@@ -22,12 +19,17 @@ from typing import Any
 import polars as pl
 
 from snappy_wrappers.tools.qc_summary import (
+    AGAINST,
+    CELL_CONFIG,
     INK,
-    TEXT,
+    MUTED,
+    SEQUENTIAL,
+    VEGA_LITE,
     Column,
     Summary,
     Table,
     bars,
+    heatmap,
     ticks,
 )
 
@@ -45,8 +47,42 @@ BIASES = {
     "FEB": ("fragment end", "F"),
 }
 
-#: Events whose probability counts against the call, drawn in red
-AGAINST = ("ARTIFACT", "ABSENT")
+#: Events whose probability counts against the call, drawn on the red ramp
+AGAINST_EVENTS = ("ARTIFACT", "ABSENT")
+
+#: Sampled allele frequencies that a density cell keeps at most
+AFD_POINTS = 24
+
+#: The JS function that turns a cell ``SAOBS|SROBS`` into the records of the observations plot:
+#: one per allele, strength and mapping certainty, the count signed (alt to the right)
+OBSERVATIONS_DATA = """function(value, row) {
+  const strengths = {E: "equal", B: "barely", P: "positive", S: "strong", V: "very strong"};
+  const records = [];
+  if (!value) return records;
+  const [saobs, srobs] = value.split("|");
+  for (const [allele, text, sign] of [["alt", saobs, 1], ["ref", srobs, -1]]) {
+    for (const match of (text || "").matchAll(/(\\d+)([A-Za-z])/g)) {
+      const strength = strengths[match[2].toUpperCase()];
+      if (!strength) continue;
+      const count = parseInt(match[1]);
+      const mapping = match[2] === match[2].toUpperCase() ? "certain" : "uncertain";
+      records.push({allele: allele, strength: strength, mapping: mapping, count: count, reads: sign * count});
+    }
+  }
+  return records;
+}"""
+
+#: The JS function that turns a cell ``af=phred,...`` into the records of the density plot, the
+#: density relative to the cell's maximum
+AFD_DATA = """function(value, row) {
+  if (!value) return [];
+  const records = value.split(",").filter((entry) => entry.includes("=")).map((entry) => {
+    const [af, phred] = entry.split("=");
+    return {af: parseFloat(af), density: Math.pow(10, -parseFloat(phred) / 10)};
+  });
+  const max = Math.max(0, ...records.map((record) => record.density));
+  return records.map((record) => ({af: record.af, density: max > 0 ? record.density / max : 0}));
+}"""
 
 
 def observations_plot(max_reads: int) -> dict:
@@ -58,9 +94,9 @@ def observations_plot(max_reads: int) -> dict:
     """
     limit = max(1, max_reads)
     return {
-        "data": "function(value, row) { return value ? JSON.parse(value) : []; }",
+        "data": OBSERVATIONS_DATA,
         "spec": {
-            "$schema": "https://vega.github.io/schema/vega-lite/v5.json",
+            "$schema": VEGA_LITE,
             "width": 110,
             "height": 60,
             "mark": {"type": "bar", "tooltip": True},
@@ -70,23 +106,18 @@ def observations_plot(max_reads: int) -> dict:
                     "type": "ordinal",
                     # Every strength, the strongest evidence on top
                     "scale": {"domain": list(reversed(STRENGTHS.values()))},
-                    "axis": {"title": None, "labelFontSize": 8, "ticks": False, "domain": False},
+                    "axis": {"title": None, "domain": False},
                 },
                 "x": {
                     "field": "reads",
                     "type": "quantitative",
                     "scale": {"domain": [-limit, limit]},
-                    "axis": {
-                        "title": None,
-                        "labelFontSize": 8,
-                        "values": [-limit, 0, limit],
-                        "format": "~s",
-                    },
+                    "axis": {"title": None, "values": [-limit, 0, limit], "format": "~s"},
                 },
                 "color": {
                     "field": "allele",
                     "type": "nominal",
-                    "scale": {"domain": ["alt", "ref"], "range": [INK, "#c3c2b7"]},
+                    "scale": {"domain": ["alt", "ref"], "range": [INK, MUTED]},
                     "legend": None,
                 },
                 "opacity": {
@@ -102,16 +133,16 @@ def observations_plot(max_reads: int) -> dict:
                     {"field": "mapping", "type": "nominal"},
                 ],
             },
-            "config": {"view": {"stroke": None}, "axis": {"grid": False, "labelColor": TEXT}},
+            "config": CELL_CONFIG,
         },
     }
 
 
-#: The in-cell plot of the allele frequency density: an area over the allele frequency
+#: The in-cell plot of the allele frequency density: bars over the allele frequency
 AFD_PLOT = {
-    "data": "function(value, row) { return value ? JSON.parse(value) : []; }",
+    "data": AFD_DATA,
     "spec": {
-        "$schema": "https://vega.github.io/schema/vega-lite/v5.json",
+        "$schema": VEGA_LITE,
         "width": 110,
         "height": 36,
         # One bar per sampled allele frequency: three in the discrete case (0, 0.5, 1), a
@@ -122,15 +153,20 @@ AFD_PLOT = {
                 "field": "af",
                 "type": "quantitative",
                 "scale": {"domain": [0, 1]},
-                "axis": {"title": None, "labelFontSize": 8, "values": [0, 0.5, 1]},
+                "axis": {"title": None, "values": [0, 0.5, 1]},
             },
             "y": {"field": "density", "type": "quantitative", "axis": None},
             "tooltip": [
                 {"field": "af", "type": "quantitative", "title": "allele frequency"},
-                {"field": "density", "type": "quantitative", "format": ".3~g"},
+                {
+                    "field": "density",
+                    "type": "quantitative",
+                    "format": ".3~g",
+                    "title": "relative density",
+                },
             ],
         },
-        "config": {"view": {"stroke": None}, "axis": {"grid": False, "labelColor": TEXT}},
+        "config": CELL_CONFIG,
     },
 }
 
@@ -181,15 +217,21 @@ def observations(saobs: str, srobs: str) -> list[dict[str, Any]]:
     return records
 
 
-def allele_frequency_density(afd: str) -> list[dict[str, float]]:
-    """The posterior density of the allele frequency from ``AFD`` (``af=phred,...``)."""
-    records = []
+def compact_afd(afd: str, points: int = AFD_POINTS) -> str:
+    """``AFD`` (``af=phred,...``) with at most ``points`` frequencies, the mode always among them,
+    and short numbers; entries without density (``inf``) are dropped."""
+    entries = []
     for entry in (afd or "").split(","):
         if "=" not in entry:
             continue
         af, phred = entry.split("=", 1)
-        records.append({"af": float(af), "density": 10 ** (-float(phred) / 10)})
-    return records
+        if not math.isinf(float(phred)):
+            entries.append((float(af), float(phred)))
+    if len(entries) > points:
+        keep = {round(i * (len(entries) - 1) / (points - 2)) for i in range(points - 1)}
+        keep.add(min(range(len(entries)), key=lambda i: entries[i][1]))
+        entries = [entries[i] for i in sorted(keep)]
+    return ",".join(f"{round(af, 3):g}={round(phred, 1) or 0.0:.1f}" for af, phred in entries)
 
 
 def biases(sample: dict[str, str]) -> str:
@@ -250,25 +292,17 @@ def read_calls(path: str) -> Calls:
                 row[f"{sample}: allele frequency"] = None if af == "." else float(af)
                 row[f"{sample}: depth"] = None if dp == "." else int(dp)
                 row[f"{sample}: genotype"] = values.get("GT", ".")
-                row[f"{sample}: observations"] = json.dumps(
-                    observations(values.get("SAOBS", ""), values.get("SROBS", ""))
-                )
-                row[f"{sample}: allele frequency density"] = json.dumps(
-                    allele_frequency_density(values.get("AFD", ""))
-                )
+                saobs, srobs = values.get("SAOBS", ""), values.get("SROBS", "")
+                row[f"{sample}: observations"] = f"{saobs}|{srobs}" if saobs or srobs else ""
+                row[f"{sample}: allele frequency density"] = compact_afd(values.get("AFD", ""))
                 row[f"{sample}: biases"] = biases(values)
-                row[f"{sample}: raw observations"] = values.get("OBS", "")
             row["hints"] = info.get("HINTS", "")
             rows.append(row)
     return Calls(samples, events, rows)
 
 
 def _probability(event: str) -> Column:
-    scheme = "reds" if event.upper() in AGAINST else "blues"
-    plot = {
-        "heatmap": {"scale": "linear", "domain": ["0", "1"], "color-scheme": scheme},
-    }
-    return Column(precision=3, plot=plot)
+    return heatmap(colors=AGAINST if event.upper() in AGAINST_EVENTS else SEQUENTIAL)
 
 
 def summarize(path: str) -> Summary:
@@ -278,21 +312,21 @@ def summarize(path: str) -> Summary:
     for event in calls.events:
         columns[f"prob: {event.lower()}"] = _probability(event)
     for sample in calls.samples:
-        columns[f"{sample}: allele frequency"] = ticks(precision=3)
+        columns[f"{sample}: allele frequency"] = ticks(precision=3, domain=(0, 1))
         columns[f"{sample}: depth"] = bars()
         columns[f"{sample}: genotype"] = Column()
         most = max(
             (
                 record["count"]
                 for row in calls.rows
-                for record in json.loads(row[f"{sample}: observations"])
+                for record in observations(*row[f"{sample}: observations"].split("|"))
+                if row[f"{sample}: observations"]
             ),
             default=0,
         )
         columns[f"{sample}: observations"] = Column(custom_plot=observations_plot(most))
         columns[f"{sample}: allele frequency density"] = Column(custom_plot=AFD_PLOT)
         columns[f"{sample}: biases"] = Column()
-        columns[f"{sample}: raw observations"] = Column(detail=True)
     order = ["chromosome", "position", "type", "ref", "alt"]
     frame = (
         pl.from_dicts(calls.rows, infer_schema_length=None)
@@ -308,11 +342,11 @@ def summarize(path: str) -> Summary:
             frame,
             desc="One row per call. `prob:` columns are the posterior probabilities of the "
             "events of the scenario (red for artifact and absent). Per sample: the allele "
-            "frequency with its posterior density, the depth, the genotype, the observations "
-            "(bars per strength of evidence: reads for the alternative allele to the right, "
-            "for the reference or another allele to the left; pale bars from reads with "
-            "uncertain mapping) and the biases varlociraptor found. The details hold the raw "
-            "observation strings and the hints.",
+            "frequency with its posterior density (relative to the cell's maximum), the depth, "
+            "the genotype, the observations (bars per strength of evidence: reads for the "
+            "alternative allele to the right, for the reference or another allele to the left; "
+            "pale bars from reads with uncertain mapping) and the biases varlociraptor found. "
+            "The details hold the hints.",
             columns=columns,
             pinned=("chromosome", "position"),
             page_size=20,
