@@ -250,7 +250,10 @@ class Preprocess(ToolModel):
     """``varlociraptor preprocess variants``"""
 
     max_depth: Annotated[int, Field(ge=1)] = 200
-    """Maximum read depth at a position (``--max-depth``); more reads are downsampled"""
+    """Observations per library and position that varlociraptor keeps (``--max-depth``); more reads are downsampled.
+    Raise it where the expected allele frequencies are low, such as subclonal somatic variants or mosaics:
+    at 1 percent, two of 200 observations support the variant, and a single one counts as ambiguous.
+    Preprocessing and calling take longer with more observations"""
 
 
 class Varlociraptor(ToolModel):
