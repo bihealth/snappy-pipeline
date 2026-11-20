@@ -1307,17 +1307,33 @@ class BaseStep:
         )
 
     def _check_upstream_library(self, upstream: str, library_name: str) -> None:
-        """Raise ``ConfigError`` if the upstream task has the library ``library_name`` from another
-        data set than this task: files are found by library name, so the upstream file would be
-        of the other library."""
+        """Raise ``ConfigError`` if the upstream task writes no result for ``library_name``: a
+        related group that it does not write (it writes per library, or its libraries leave the
+        group out), or a library that it takes from another data set than this task (files are
+        found by library name, so the upstream file would be of the other library)."""
         from snappy_pipeline.orchestration import _TASK_INSTANCES
 
         # Only between tasks of the running project; with --frozen, upstream tasks are not loaded
         instance = _TASK_INSTANCES.get(upstream)
         if _TASK_INSTANCES.get(self.task_name) is not self or instance is None:
             return
-        if library_name not in self._library_rows or library_name not in instance._library_rows:
-            return  # not a library name, e.g. a cohort
+        if library_name not in self._library_rows:
+            # A related group, not a library
+            if library_name in instance.output_entities:
+                return
+            if instance.effective_group_by != "related":
+                raise ConfigError(
+                    f"task {upstream!r} writes one result per library, but {library_name!r} is a "
+                    f"related group; set group_by: library on task {self.task_name!r}, or "
+                    f"group_by: related on {upstream!r}"
+                )
+            raise ConfigError(
+                f"task {upstream!r} writes no result for the related group {library_name!r}: its "
+                f"libraries leave the group out; align library_selection of {self.task_name!r} "
+                f"and {upstream!r}"
+            )
+        if library_name not in instance._library_rows:
+            return
         own, theirs = (
             self.library_row(library_name)["data_set"],
             instance.library_row(library_name)["data_set"],

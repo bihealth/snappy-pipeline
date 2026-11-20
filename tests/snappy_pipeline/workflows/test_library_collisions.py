@@ -72,6 +72,29 @@ def test_library_selection_decides_between_libraries_of_one_name():
     assert FIX in str(error.value)
 
 
+def test_upstream_task_must_write_a_result_for_a_related_group(monkeypatch):
+    rows = _rows("batch1")
+    mapping = _step("mapping", rows, selected=rows)
+    mapping.__dict__["output_entities"] = ["P001-N1-DNA1-WES1"]
+    mapping.__dict__["effective_group_by"] = "library"
+    calling = _step("calling", rows, selected=rows)
+    monkeypatch.setattr(orchestration, "_TASK_INSTANCES", {"mapping": mapping, "calling": calling})
+    with pytest.raises(
+        ConfigError,
+        match="task 'mapping' writes one result per library, but 'FAM_P001' is a related group; "
+        "set group_by: library on task 'calling', or group_by: related on 'mapping'",
+    ):
+        calling._check_upstream_library("mapping", "FAM_P001")
+
+    mapping.__dict__["effective_group_by"] = "related"
+    mapping.__dict__["output_entities"] = ["FAM_P002"]
+    with pytest.raises(ConfigError, match="writes no result for the related group 'FAM_P001'"):
+        calling._check_upstream_library("mapping", "FAM_P001")
+
+    mapping.__dict__["output_entities"] = ["FAM_P001"]
+    calling._check_upstream_library("mapping", "FAM_P001")
+
+
 def test_upstream_task_must_have_the_library_of_the_same_data_set(monkeypatch):
     rows = _rows("batch1", "batch2")
     mapping = _step("mapping", rows, selected=rows[:1])
