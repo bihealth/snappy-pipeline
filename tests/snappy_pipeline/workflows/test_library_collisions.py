@@ -45,6 +45,18 @@ def test_a_selection_with_colliding_names_fails_with_the_fix():
     assert len(select_libraries(df, "data_set == 'batch2'")) == 1
 
 
+def test_a_related_group_in_several_data_sets_fails_with_the_fix():
+    rows = _rows("batch1") + _rows("batch2", name="P001-N2-DNA1-WES1")
+    for row in rows:
+        row["related_group"] = "FAM_P001"
+    with pytest.raises(
+        ConfigError, match="related groups of the same name in several data sets: FAM_P001"
+    ) as error:
+        select_libraries(pd.DataFrame(rows), None)
+    assert FIX in str(error.value)
+    assert len(select_libraries(pd.DataFrame(rows), "data_set == 'batch2'")) == 1
+
+
 def test_library_selection_decides_between_libraries_of_one_name():
     rows = _rows("batch1", "batch2") + _rows("batch1", name="P002-N1-DNA1-WES1")
     step = _step("mapping", rows, selected=rows[1:])

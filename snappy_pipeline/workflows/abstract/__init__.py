@@ -358,7 +358,7 @@ class BaseStepPart:
 
 
 class WritePedigreeStepPart(BaseStepPart):
-    """Write out pedigree file for primary DNA sample given the index NGS library name"""
+    """Write the PED file of a pedigree, whose family column is the pedigree's name (its ``related_group``)"""
 
     #: Step name
     name = "write_pedigree"
@@ -399,17 +399,14 @@ class WritePedigreeStepPart(BaseStepPart):
         return self.parent.library_row(library_name)[self.individual_column]
 
     def run(self, wildcards: Wildcards, output: OutputFiles):
-        """Write the pedigree as biomedsheets did: family ``FAM_`` and the index donor, then the
-        individual, its father and mother, sex (1 male, 2 female, 0 unknown) and affected status
-        (2 affected, 1 unaffected, 0 unknown)."""
+        """Write the pedigree as biomedsheets did: the family, the individual, its father and mother, sex (1 male, 2 female, 0 unknown) and affected status (2 affected, 1 unaffected, 0 unknown).
+        The family is the pedigree's name, ``FAM_`` and the index donor on a germline sheet without a family id."""
         sexes = {"male": "1", "female": "2"}
         with open(str(output), "w") as f:
             for members in self._pedigrees(wildcards.related_group):
-                index = self.parent.library_row(members["pedigree"].iloc[0])
-                family = "FAM_" + index["donor_name"]
                 for _, row in members.iterrows():
                     fields = (
-                        family,
+                        wildcards.related_group,
                         self._individual(row["library_name"]),
                         self._individual(row["father_name"]),
                         self._individual(row["mother_name"]),
@@ -1018,50 +1015,52 @@ class BaseStep:
         df = self.build_library_dataframe(include_background=self.background_results)
         if selection := getattr(self.config, "library_selection", None):
             df = _query_libraries(df, selection)
+        _check_groups(df)
         return libraries_by_related_group(df)
 
-    @cached_property
-    def _related_libraries_by_library(self) -> dict[str, list[str]]:
-        """Library name -> the libraries of its (first) ``related_group``."""
-        result: dict[str, list[str]] = {}
-        for members in self.related_libraries.values():
-            for library_name in members:
-                result.setdefault(library_name, members)
-        return result
-
-    def get_related_libraries(self, library_name: str) -> list[str]:
-        """Return the names of the libraries related to *library_name*, itself included.
-
-        Returns ``[library_name]`` when its group cannot be found or when
-        ``effective_group_by != "related"``.
-        """
+    def get_related_libraries(self, entity: str) -> list[str]:
+        """Return the names of the libraries of an entity of this task: the members of its related group with ``group_by: related``, else the library itself.
+        Raises ``ValueError`` for a name that is no related group, such as a library behind a task that writes one result per related group."""
         if self.effective_group_by != "related":
-            return [library_name]
-        return self._related_libraries_by_library.get(library_name, [library_name])
+            return [entity]
+        if entity not in self.related_libraries:
+            raise ValueError(
+                f"{entity!r} is no entity of task {self.task_name!r}, which writes one result per "
+                f"related group: {', '.join(self.related_libraries)}"
+            )
+        return self.related_libraries[entity]
+
+    def upstream_entity(self, field: str, library_name: str) -> str:
+        """Return the entity under which the task of ``depends_on.<field>`` writes the result of ``library_name``: its related group when that task writes one result per related group, else the library itself."""
+        (upstream,) = self.upstream_task_names(field)
+        if _declared_group_by(self.project, upstream, frozenset()) != "related":
+            return library_name
+        return self.library_row(library_name)["related_group"]
 
     def primary_dna_libraries(self, include_background: bool = False):
         """Return the library dataframe rows of the primary DNA library of each donor.
 
         This is the germline view of the sample sheets: a donor's first DNA library that is not
-        from a tumor sample. The column ``pedigree`` names the index library of the donor's
-        pedigree. On a cancer sample sheet, each donor is a pedigree of its own. Pedigrees whose
-        index has no DNA library are left out. The task's ``library_selection`` applies first, so
-        it narrows the pedigrees and their members.
+        from a tumor sample. The column ``pedigree`` is the name of the donor's pedigree, its
+        ``related_group``. On a cancer sample sheet, each donor is a pedigree of its own. A library
+        that is a group of its own (an RNA library, a donor's further DNA library) is no pedigree
+        member. The task's ``library_selection`` applies first, so it narrows the pedigrees and
+        their members.
         """
         if include_background not in self._primary_dna_libraries:
             df = self.build_library_dataframe(include_background=include_background)
             if selection := getattr(self.config, "library_selection", None):
                 df = _query_libraries(df, selection)
+            _check_groups(df)
             dna = df[(df["extraction_type"] == "dna") & (df["role"] != "tumor")]
+            dna = dna[dna["related_group"] != dna["library_name"]]
             dna = dna.drop_duplicates(["related_group", "donor_name"])
-            pedigree = dna["related_group"].where(dna["kind"] == "germline", dna["library_name"])
-            dna = dna.assign(pedigree=pedigree)
-            dna = dna[dna["pedigree"].isin(set(dna["library_name"]))]
+            dna = dna.assign(pedigree=dna["related_group"])
             self._primary_dna_libraries[include_background] = dna
         return self._primary_dna_libraries[include_background]
 
     def pedigrees(self, include_background: bool = False) -> dict[str, list[str]]:
-        """Return the primary DNA libraries of each pedigree, keyed by the index library.
+        """Return the primary DNA libraries of each pedigree, keyed by the pedigree's name.
 
         Pedigrees and their members keep the order of the sample sheets.
         """
@@ -1071,10 +1070,10 @@ class BaseStep:
             for index, members in dna.groupby("pedigree", sort=False)
         }
 
-    def pedigree_members(self, index_library: str, include_background: bool = False):
-        """Return the primary DNA library rows of the pedigree of ``index_library``."""
+    def pedigree_members(self, pedigree: str, include_background: bool = False):
+        """Return the primary DNA library rows of the pedigree named ``pedigree``."""
         dna = self.primary_dna_libraries(include_background)
-        return dna[dna["pedigree"] == index_library]
+        return dna[dna["pedigree"] == pedigree]
 
     def pedigree_of(self, library_name: str, include_background: bool = False) -> str:
         """Return the pedigree (the key of :meth:`pedigrees`) of the primary DNA library ``library_name``.
@@ -1093,8 +1092,8 @@ class BaseStep:
         index = members[members["is_primary"]]
         return None if index.empty else index.iloc[0]["library_name"]
 
-    def pedigree_donors(self, index_library: str, include_background: bool = True):
-        """Return the donor table rows of the pedigree of ``index_library``: every donor of the
+    def pedigree_donors(self, pedigree: str, include_background: bool = True):
+        """Return the donor table rows of the pedigree named ``pedigree``: every donor of the
         pedigree, sequenced or not, with its parents as donor names, its sex and its DNA
         library (``""`` without one); see :func:`build_donor_dataframe`."""
         if include_background not in self._donor_tables:
@@ -1102,7 +1101,7 @@ class BaseStep:
                 self.data_set_infos, self.sheets, include_background=include_background
             )
         donors = self._donor_tables[include_background]
-        return donors[donors["pedigree"] == index_library]
+        return donors[donors["pedigree"] == pedigree]
 
     def children_with_both_parents(self) -> list[str]:
         """Return the primary DNA libraries whose father and mother both have one."""
@@ -1800,7 +1799,7 @@ def build_library_dataframe(
         ``library_kit``; see :func:`_library_extra_columns`.
     """
     import pandas as pd
-    from biomedsheets.shortcuts import GenericSampleSheet, GermlineCaseSheet
+    from biomedsheets.shortcuts import GenericSampleSheet
     from biomedsheets.shortcuts.cancer import CancerCaseSheet, CancerCaseSheetOptions
 
     rows: list[dict] = []
@@ -1858,7 +1857,7 @@ def build_library_dataframe(
                                     "sex": "unknown",
                                     "donor_name": donor_name,
                                     "sample_name": sample_name,
-                                    "related_group": donor_name,
+                                    "related_group": _group_prefix(info) + donor_name,
                                     "father_name": "0",
                                     "mother_name": "0",
                                     "disease_state": 0,
@@ -1884,7 +1883,7 @@ def build_library_dataframe(
             lib_disease: dict[str, int] = {}
 
             all_ngs_libs = GenericSampleSheet(_raw_sheet).all_ngs_libraries
-            germline_sheet = GermlineCaseSheet(_raw_sheet, **(info.pedigree_field_kwargs or {}))
+            germline_sheet = _germline_case_sheet(info, _raw_sheet)
             pedigrees = germline_sheet.cohort.pedigrees
 
             if pedigrees:
@@ -1896,7 +1895,16 @@ def build_library_dataframe(
                         if lib:
                             pk_to_lib[getattr(d, "pk", None)] = lib.name
 
+                families: dict[str, str] = {}
                 for ped in pedigrees:
+                    family = _family_name(info, ped)
+                    if family in families:
+                        raise ConfigError(
+                            f"the pedigrees of {families[family]} and {_donor_name(ped.index)} in "
+                            f"data set {info.name!r} are both named {family}; group them with "
+                            f"pedigree_field: {FAMILY_FIELD} on the data set, or fix the sheet"
+                        )
+                    families[family] = _donor_name(ped.index)
                     # Index / proband: all libraries of the donor, so the RNA library too
                     if ped.index and ped.index.dna_ngs_library:
                         index_donor_names.add(_donor_name(ped.index))
@@ -1924,11 +1932,7 @@ def build_library_dataframe(
                             else "unknown"
                         )
                         lib_sex[lib.name] = sex_raw if sex_raw in ("male", "female") else "unknown"
-                        lib_pedigree[lib.name] = (
-                            ped.index.dna_ngs_library.name
-                            if ped.index and ped.index.dna_ngs_library
-                            else "unknown"
-                        )
+                        lib_pedigree[lib.name] = family
                         if pk in pk_is_father:
                             father_lib_names.add(lib.name)
                         elif pk in pk_is_mother:
@@ -2007,7 +2011,11 @@ def build_library_dataframe(
                         "sex": sex,
                         "donor_name": donor_name,
                         "sample_name": sample_name,
-                        "related_group": lib_pedigree.get(lib_name, donor_name),
+                        # A donor's further libraries (RNA, a second DNA library) are groups
+                        # of their own: a joint call takes every library of a group
+                        "related_group": lib_pedigree.get(
+                            lib_name, lib_name if pedigrees else _group_prefix(info) + donor_name
+                        ),
                         "father_name": lib_father.get(lib_name, "0"),
                         "mother_name": lib_mother.get(lib_name, "0"),
                         "disease_state": lib_disease.get(lib_name, 0),
@@ -2045,13 +2053,66 @@ def _donor_name(donor) -> str:
     return getattr(getattr(donor, "bio_entity", None), "name", None) or donor.name
 
 
+#: The custom field that names a family on germline sheets, such as those of ``snappy pull-sheet``
+FAMILY_FIELD = "familyId"
+
+#: The prefix of a related group that is named after a donor, by sheet type
+_GROUP_PREFIXES = {"matched_cancer": "PAT_", "germline_variants": "FAM_", "generic": ""}
+
+
+def _sheet_type(info) -> str:
+    return getattr(info, "sheet_type", "") or str(getattr(info, "type", ""))
+
+
+def _germline_case_sheet(info, raw_sheet):
+    """The biomedsheets germline view of a sheet, with the pedigrees joined by the data set's ``pedigree_field``.
+    Raises ``ConfigError`` when a donor lacks the field."""
+    from biomedsheets.shortcuts import GermlineCaseSheet
+    from biomedsheets.shortcuts.germline import UndefinedFieldException
+
+    try:
+        return GermlineCaseSheet(raw_sheet, **(getattr(info, "pedigree_field_kwargs", None) or {}))
+    except UndefinedFieldException as exc:
+        raise ConfigError(f"pedigree_field of data set {info.name!r}: {exc}") from exc
+
+
+def _group_prefix(info) -> str:
+    """The prefix of the related groups of a data set that are named after a donor."""
+    return _GROUP_PREFIXES.get(_sheet_type(info), "")
+
+
+def _family_name(info, pedigree) -> str:
+    """Return the name of a pedigree, the ``related_group`` of its members.
+    It is the value of the data set's ``pedigree_field``, else of the ``familyId`` custom field, over the donors that have one.
+    Without any, it is the index donor's name with the prefix of the sheet type: ``FAM_`` on germline sheets, none on generic ones.
+    Raises ``ConfigError`` when the donors disagree: the pedigree then comes from the parent columns, and the field names another family."""
+    field = (getattr(info, "pedigree_field_kwargs", None) or {}).get("join_by_field")
+    name_field = field or FAMILY_FIELD
+    values = {
+        str(value)
+        for donor in pedigree.donors
+        if (value := getattr(donor, "extra_infos", {}).get(name_field)) not in (None, "", ".")
+    }
+    index = _donor_name(pedigree.index)
+    if len(values) > 1:
+        raise ConfigError(
+            f"the pedigree of {index} has several values of {name_field}: "
+            f"{', '.join(sorted(values))}; group the pedigrees by the field with pedigree_field: "
+            f"{name_field} on the data set, or fix the sheet"
+        )
+    if field and not values:
+        raise ConfigError(
+            f"{field} of data set {info.name!r} has no value for the pedigree of {index}"
+        )
+    return values.pop() if values else _group_prefix(info) + index
+
+
 def build_donor_dataframe(data_set_infos, sheets, include_background=False):
     """Build a DataFrame with one row per donor of the germline sample sheets, sequenced or
     not: the parents as donor names (``"0"`` for none), ``sex``, the donor's primary DNA
-    library (``""`` without one) and ``pedigree``, the index library of its pedigree. Cancer
-    sheets have no rows: their donors are all sequenced."""
+    library (``""`` without one) and ``pedigree``, the name of its pedigree (the ``related_group``
+    of its members). Cancer sheets have no rows: their donors are all sequenced."""
     import pandas as pd
-    from biomedsheets.shortcuts import GermlineCaseSheet
 
     rows: list[dict] = []
     for info, raw_sheet in zip(data_set_infos, sheets):
@@ -2060,12 +2121,9 @@ def build_donor_dataframe(data_set_infos, sheets, include_background=False):
         sheet_type = getattr(info, "sheet_type", "") or str(getattr(info, "type", ""))
         if sheet_type == "matched_cancer" or raw_sheet is None:
             continue
-        germline_sheet = GermlineCaseSheet(raw_sheet, **(info.pedigree_field_kwargs or {}))
+        germline_sheet = _germline_case_sheet(info, raw_sheet)
         for pedigree in germline_sheet.cohort.pedigrees:
-            index = pedigree.index
-            index_library = (
-                index.dna_ngs_library.name if index and index.dna_ngs_library else "unknown"
-            )
+            family = _family_name(info, pedigree)
             for donor in pedigree.donors:
                 parents = []
                 for pk in (donor.father_pk, donor.mother_pk):
@@ -2083,7 +2141,7 @@ def build_donor_dataframe(data_set_infos, sheets, include_background=False):
                         "mother_name": parents[1],
                         "sex": sex if sex in ("male", "female") else "unknown",
                         "library_name": donor.dna_ngs_library.name if donor.dna_ngs_library else "",
-                        "pedigree": index_library,
+                        "pedigree": family,
                         "data_set": info.name,
                         "is_background": info.is_background,
                     }
@@ -2198,6 +2256,7 @@ def select_libraries(
         df = _query_libraries(df, expr)
     if colliding := _colliding_libraries(df):
         raise ConfigError(colliding_libraries_message(colliding))
+    _check_groups(df)
     return df
 
 
@@ -2214,6 +2273,23 @@ def _colliding_libraries(df) -> dict[str, list[str]]:
     return {name: list(group["data_set"]) for name, group in duplicated.groupby("library_name")}
 
 
+def _check_groups(df) -> None:
+    """Raise ``ConfigError`` for a related group whose libraries ``df`` span several data sets,
+    since the group's files are named after it."""
+    if df.empty or not {"related_group", "data_set"} <= set(df.columns):
+        return
+    data_sets = df.groupby("related_group")["data_set"].agg(lambda names: sorted(set(names)))
+    if colliding := {name: sets for name, sets in data_sets.items() if len(sets) > 1}:
+        names = ", ".join(f"{name} ({', '.join(sets)})" for name, sets in colliding.items())
+        first_data_set = next(iter(colliding.values()))[0]
+        raise ConfigError(
+            f"related groups of the same name in several data sets: {names}. A task names the "
+            "files of a related group after it, so it can only take one group of a name. Select "
+            "the libraries of one data set with library_selection, for example "
+            f"library_selection: \"data_set == '{first_data_set}'\", or use one task per data set."
+        )
+
+
 def colliding_libraries_message(colliding: dict[str, list[str]]) -> str:
     """Return the error for libraries of the same name from several data sets, with the fix."""
     names = ", ".join(f"{name} ({', '.join(data_sets)})" for name, data_sets in colliding.items())
@@ -2228,15 +2304,14 @@ def colliding_libraries_message(colliding: dict[str, list[str]]) -> str:
 
 def entity_libraries(df, group_by: str | None) -> dict[str, str]:
     """Return the output entities of the libraries ``df`` with their primary library.
-    With ``group_by == "related"`` the entity of each ``related_group`` is its primary library (the ``is_primary`` row, else the first one), otherwise every library is an entity of its own."""
+    With ``group_by == "related"`` each ``related_group`` is an entity, named like the group, and its primary library is the ``is_primary`` row, else the first one; otherwise every library is an entity of its own."""
     if df.empty:
         return {}
     if group_by == "related":
         entities = {}
-        for _, group in df.groupby("related_group"):
+        for name, group in df.groupby("related_group"):
             primary = group[group["is_primary"]]
-            library = (primary if not primary.empty else group).iloc[0]["library_name"]
-            entities[library] = library
+            entities[name] = (primary if not primary.empty else group).iloc[0]["library_name"]
         return entities
     return {name: name for name in df["library_name"].unique()}
 

@@ -773,6 +773,20 @@ def test_pedigree_consumers_need_one_vcf_per_pedigree():
         load_project(_config(_mapping(), germline, _peddy()), WORK_DIR)
 
 
+def test_a_per_library_task_behind_joint_calls_is_an_error():
+    germline = _calling(tool="bcftools_call")
+    annotation = _annotation()
+    load_project(_config(_mapping(), germline, annotation), WORK_DIR)  # inherits related
+
+    annotation[2]["group_by"] = "library"
+    with pytest.raises(
+        ValueError,
+        match="task 'calling' writes one result per related group, but depends_on.variants reads "
+        "it per library; set group_by: related on this task",
+    ):
+        load_project(_config(_mapping(), germline, annotation), WORK_DIR)
+
+
 def test_background_selection_only_for_steps_that_use_background():
     load_project(_config(_mapping(background_selection="data_set == 'cohort'")), WORK_DIR)
     calling = _calling(tool="bcftools_call")

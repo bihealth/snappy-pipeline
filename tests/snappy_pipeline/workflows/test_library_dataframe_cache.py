@@ -5,6 +5,7 @@ instance."""
 from types import SimpleNamespace
 
 import pandas as pd
+import pytest
 
 from snappy_pipeline.workflows import abstract
 from snappy_pipeline.workflows.abstract import BaseStep
@@ -51,13 +52,15 @@ def test_library_dataframe_is_built_once(mocker):
 
     for _ in range(3):
         step.build_library_dataframe()
-        assert step.output_entities == ["index-DNA1", "single-DNA1"]
+        assert step.output_entities == ["family1", "family2"]
         assert step.related_libraries == {
             "family1": ["index-DNA1", "father-DNA1"],
             "family2": ["single-DNA1"],
         }
-        assert step.get_related_libraries("father-DNA1") == ["index-DNA1", "father-DNA1"]
-        assert step.get_related_libraries("unknown-DNA1") == ["unknown-DNA1"]
+        assert step.get_related_libraries("family1") == ["index-DNA1", "father-DNA1"]
+        assert step.primary_library("family1") == "index-DNA1"
+        with pytest.raises(ValueError, match="'father-DNA1' is no entity of task 'dummy'"):
+            step.get_related_libraries("father-DNA1")
 
     assert build.call_count == 1
 
@@ -90,17 +93,39 @@ def test_library_selection_narrows_the_pedigrees(mocker):
             "extraction_type": ["dna", "dna"],
             "kind": ["germline", "germline"],
             "role": ["index", "father"],
-            "related_group": ["index-DNA1", "index-DNA1"],
+            "is_primary": [True, False],
+            "related_group": ["FAM_index", "FAM_index"],
             "donor_name": ["index", "father"],
         }
     )
     mocker.patch.object(abstract, "build_library_dataframe", return_value=df)
     step = _make_step()
-    assert step.pedigrees() == {"index-DNA1": ["index-DNA1", "father-DNA1"]}
+    assert step.pedigrees() == {"FAM_index": ["index-DNA1", "father-DNA1"]}
+    assert step.pedigree_of("father-DNA1") == "FAM_index"
+    assert step.pedigree_index("FAM_index") == "index-DNA1"
 
     step = _make_step()
     step.config.library_selection = "role != 'father'"
-    assert step.pedigrees() == {"index-DNA1": ["index-DNA1"]}
+    assert step.pedigrees() == {"FAM_index": ["index-DNA1"]}
+
+
+def test_a_pedigree_whose_index_has_no_dna_library_has_no_index(mocker):
+    # The index has an RNA library only, so it is a group of its own
+    df = pd.DataFrame(
+        {
+            "library_name": ["index-RNA1", "father-DNA1", "mother-DNA1"],
+            "extraction_type": ["rna", "dna", "dna"],
+            "kind": ["germline", "germline", "germline"],
+            "role": ["index", "father", "mother"],
+            "is_primary": [True, False, False],
+            "related_group": ["index-RNA1", "FAM_index", "FAM_index"],
+            "donor_name": ["index", "father", "mother"],
+        }
+    )
+    mocker.patch.object(abstract, "build_library_dataframe", return_value=df)
+    step = _make_step()
+    assert step.pedigrees() == {"FAM_index": ["father-DNA1", "mother-DNA1"]}
+    assert step.pedigree_index("FAM_index") is None
 
 
 def test_group_by_comes_from_the_task_then_its_step_then_upstream():

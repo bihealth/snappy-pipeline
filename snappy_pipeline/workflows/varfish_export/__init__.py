@@ -1,6 +1,6 @@
 """Export of germline variants for VarFish
 
-The step writes the tables that ``varfish-cli`` imports into VarFish, one set per pedigree, named after the DNA library of the index:
+The step writes the tables that ``varfish-cli`` imports into VarFish, one set per pedigree, named after the pedigree (its ``related_group``):
 the pedigree file, the small variants annotated with Mehari (``mehari annotate seqvars``, then ``mehari postprocess varfish-seqvars`` for the table), with ``depends_on.structural_variants`` the structural variants (``mehari annotate strucvars``), and with ``depends_on.qc`` the BAM quality control table from the ``samtools`` reports of ``ngs_mapping`` and the target coverage of alfred.
 The task has no ``tool`` field.
 It reads the calls of ``variant_calling`` (``depends_on.variants``, one VCF per pedigree) and the reports of ``ngs_mapping`` (``depends_on.alignments``).
@@ -18,7 +18,7 @@ With ``depends_on.exons``, a BED file of exons, the export keeps only the small 
 Outputs
 -------
 
-The task links these result files below ``tasks/<task>/output/``, each with a ``.md5`` file; ``{library_name}`` is the DNA library of the pedigree index:
+The task links these result files below ``tasks/<task>/output/``, each with a ``.md5`` file; ``{library_name}`` is the name of the pedigree:
 
 - ``{library_name}/out/{library_name}.ped``
 - ``{library_name}/out/{library_name}.seqvars.gts.tsv.gz``
@@ -50,9 +50,6 @@ from snappy_pipeline.workflows.common.gcnv.gcnv_common import InconsistentLibrar
 from .model import VarfishExport as VarfishExportConfigModel
 
 __author__ = "Manuel Holtgrewe <manuel.holtgrewe@bih-charite.de>"
-
-#: ``related_group`` of libraries in a pedigree whose index has no DNA library
-_NO_INDEX = "unknown"
 
 #: The result files of each action, with their suffixes below ``work/{library_name}/out/``
 _OUTPUTS = {
@@ -97,41 +94,29 @@ class MehariStepPart(BaseStepPart):
     def get_result_files(self):
         result = []
         for action in filter(self._has_result_files, self.actions):
-            index_libraries = self._get_index_ngs_libraries(
+            pedigrees = self._pedigrees_with_index(
                 require_consistent_pedigree_kits=(
                     action == "annotate_strucvars" and self._sv_calling_is_targeted()
                 )
             )
             for path in self.get_output_files(action).values():
-                result += expand(
-                    path.replace("work/", "output/", 1), library_name=list(index_libraries)
-                )
+                result += expand(path.replace("work/", "output/", 1), library_name=list(pedigrees))
         return result
 
     @dictify
-    def _get_index_ngs_libraries(
+    def _pedigrees_with_index(
         self, *, require_consistent_pedigree_kits: bool = False
     ) -> typing.Generator[typing.Tuple[str, typing.List[str]], None, None]:
-        """Return ``dict`` that maps the index DNA library name to a list of all pedigree
-        member's DNA library names.
-        """
-        self._warn_pedigrees_without_index()
-        for index in self.parent.pedigrees():
-            yield (
-                index,
-                self.parent.pedigree_members(index, include_background=True)[
-                    "library_name"
-                ].tolist(),
-            )
-
-    def _warn_pedigrees_without_index(self):
-        """Issue a warning for the members of pedigrees whose index has no DNA library."""
-        df = self.parent.build_library_dataframe(include_background=False)
-        unindexed = (df["kind"] == "germline") & (df["related_group"] == _NO_INDEX)
-        names = sorted(df.loc[unindexed, "donor_name"])
-        if names:
-            msg = f"INFO: pedigree index without DNA NGS library (names: {names})"
-            warnings.warn(InconsistentPedigreeWarning(msg))
+        """Return ``dict`` that maps each pedigree whose index has a DNA library to the DNA libraries of its members.
+        The other pedigrees are skipped with a warning that names their donors."""
+        for pedigree in self.parent.pedigrees():
+            members = self.parent.pedigree_members(pedigree, include_background=True)
+            if self.parent.pedigree_index(pedigree, include_background=True) is None:
+                names = sorted(members["donor_name"])
+                msg = f"INFO: pedigree {pedigree} has no index with a DNA library (donors: {names})"
+                warnings.warn(InconsistentPedigreeWarning(msg))
+                continue
+            yield pedigree, members["library_name"].tolist()
 
     def _get_output_files(self, action: str) -> dict[str, str]:
         prefix = "work/{library_name}/out/{library_name}"
@@ -199,8 +184,8 @@ class MehariStepPart(BaseStepPart):
                 if len(set(library_kits)) != 1:
                     names_kits = list(zip(library_names, library_kits))
                     msg = (
-                        "Found inconsistent library kits (more than one kit!) for pedigree with "
-                        f"index {wildcards.library_name}.  The library name/kit pairs are "
+                        "Found inconsistent library kits (more than one kit!) for pedigree "
+                        f"{wildcards.library_name}.  The library name/kit pairs are "
                         f"{names_kits}.  This pedigree will be SKIPPED for gcnv export (as it was "
                         "skipped for gcnv calls)."
                     )

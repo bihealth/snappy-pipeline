@@ -59,7 +59,7 @@ The ``tool`` field selects the caller.
     The calls are all candidates with the posterior probability of each event (``INFO/PROB_<EVENT>``), not a filtered call set: chain a ``variant_filtration`` task with ``tool: varlociraptor`` (FDR control on the events of interest) before any consumer.
     A ``template`` is rendered with ``samples`` (the library table rows of the entity's libraries, as dicts with ``library_name``, ``role``, ``sex``, ``father_name``, ``mother_name``, ``disease_state``, ``matched_normal_lib`` and the sheet's other columns; for the germline scenario also the unsequenced relatives, with ``observed: false``), ``library_name`` (the entity) and ``settings`` (``species`` and ``purity``); its sample keys must be the library names.
 
-By default (``group_by: related``), the germline callers call each pedigree jointly and produce one result per pedigree, named after the index library.
+By default (``group_by: related``), the germline callers call each pedigree jointly and produce one result per pedigree, named after the pedigree: its ``related_group``, the family id of the sample sheet (``pedigree_field``, else ``familyId``), else ``FAM_`` and the index donor.
 With ``group_by: library``, they call each library on its own and produce one result per library.
 ``mutect2`` produces one result per tumor DNA library; ``library_selection`` can only narrow these.
 ``varlociraptor`` groups like the germline callers with ``scenario: germline`` and like ``mutect2`` with ``scenario: somatic``.
@@ -311,7 +311,7 @@ class VariantCallingStepPart(BaseStepPart):
 
         # Determine the target libraries based on the wildcard
         if group_by == "related":
-            # wildcards.library_name is the index library name; find its related libraries
+            # wildcards.library_name is the related group; find its libraries
             df_target = df[
                 df["library_name"].isin(self.parent.get_related_libraries(wildcards.library_name))
             ]
@@ -517,7 +517,7 @@ class Gatk4HaplotypeCallerGvcfStepPart(GatkCallerStepPartBase):
 
         # Determine the target libraries based on the wildcard
         if group_by == "related":
-            # wildcards.library_name is the index library name; find its related libraries
+            # wildcards.library_name is the related group; find its libraries
             df_target = df[
                 df["library_name"].isin(self.parent.get_related_libraries(wildcards.library_name))
             ]

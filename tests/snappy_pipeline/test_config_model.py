@@ -215,6 +215,12 @@ def test_default_config_marks_required_fields_and_readers():
     assert "# REQUIRED for tool: star" in minimal and "Options:" not in minimal
 
 
+def test_pedigree_field_needs_a_sheet_with_pedigrees():
+    DataSet(type="germline_variants", pedigree_field="familyId")
+    with pytest.raises(pydantic.ValidationError, match="matched_cancer sheet has no pedigrees"):
+        DataSet(type="matched_cancer", pedigree_field="familyId")
+
+
 def test_data_set_defaults_to_r1_r2_patterns_but_not_to_search_paths():
     data_set = DataSet()
     assert data_set.search_paths == []

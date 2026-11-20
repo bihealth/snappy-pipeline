@@ -91,15 +91,19 @@ def select_signature(
 
 @dataclass(frozen=True)
 class Granularity:
-    """``depends_on`` field metadata: the upstream task must write one result per ``level``
-    (its resolved ``group_by``), such as one VCF per pedigree for consumers that look up the
-    pedigree's VCF under the index library."""
+    """``depends_on`` field metadata: how the step reads an upstream task that writes one result per ``level`` (its resolved ``group_by``).
+    ``RELATED_LEVEL``: the task must write one result per related group, such as one VCF per pedigree, which the step looks up under the group of its library.
+    ``ANY_LEVEL``: either level; the step looks the result up through ``upstream_entity()``.
+    A field without it reads the result of the step's own entity, so a task behind one that writes per related group must write per related group too (``load_project()`` checks)."""
 
-    level: str
+    level: str | None
 
 
 #: One result per group of related libraries (``group_by: related``), see :class:`Granularity`
 RELATED_LEVEL = Granularity("related")
+
+#: Results at either level, looked up through ``upstream_entity()``, see :class:`Granularity`
+ANY_LEVEL = Granularity(None)
 
 
 @dataclass(frozen=True)

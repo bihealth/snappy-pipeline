@@ -62,7 +62,7 @@ class WriteIgvSessionFileStepPart(BaseStepPart):
         return self.parent.get_upstream_paths("alignments", library_name=library_name).bam
 
     def _get_path_vcf(self, wildcards):
-        # Phased variants are stored per child, calls and annotated variants per pedigree index
+        # Phased variants are stored per child, calls and annotated variants per pedigree
         if self.previous_step == "phased_variants":
             library_name = wildcards.library_name
         else:

@@ -2,10 +2,10 @@
  {
   "benchmark": null,
   "input": [
-   "tasks/variant_calling_bcftools_call/work/case001subregion-N1-DNA1-WES1/out/case001subregion-N1-DNA1-WES1.vcf.gz",
-   "tasks/variant_calling_bcftools_call/work/case001subregion-N1-DNA1-WES1/out/case001subregion-N1-DNA1-WES1.vcf.gz.md5",
-   "tasks/variant_calling_bcftools_call/work/case001subregion-N1-DNA1-WES1/out/case001subregion-N1-DNA1-WES1.vcf.gz.tbi",
-   "tasks/variant_calling_bcftools_call/work/case001subregion-N1-DNA1-WES1/out/case001subregion-N1-DNA1-WES1.vcf.gz.tbi.md5",
+   "tasks/variant_calling_bcftools_call/work/FAM_case001subregion/out/FAM_case001subregion.vcf.gz",
+   "tasks/variant_calling_bcftools_call/work/FAM_case001subregion/out/FAM_case001subregion.vcf.gz.md5",
+   "tasks/variant_calling_bcftools_call/work/FAM_case001subregion/out/FAM_case001subregion.vcf.gz.tbi",
+   "tasks/variant_calling_bcftools_call/work/FAM_case001subregion/out/FAM_case001subregion.vcf.gz.tbi.md5",
    "tasks/variant_calling_bcftools_call/output/.manifest.tsv"
   ],
   "log": [],
@@ -284,10 +284,10 @@
  {
   "benchmark": null,
   "input": [
-   "tasks/variant_calling_bcftools_call/work/case001subregion-N1-DNA1-WES1/out/case001subregion-N1-DNA1-WES1.vcf.gz",
-   "tasks/variant_calling_bcftools_call/work/case001subregion-N1-DNA1-WES1/out/case001subregion-N1-DNA1-WES1.vcf.gz.md5",
-   "tasks/variant_calling_bcftools_call/work/case001subregion-N1-DNA1-WES1/out/case001subregion-N1-DNA1-WES1.vcf.gz.tbi",
-   "tasks/variant_calling_bcftools_call/work/case001subregion-N1-DNA1-WES1/out/case001subregion-N1-DNA1-WES1.vcf.gz.tbi.md5"
+   "tasks/variant_calling_bcftools_call/work/FAM_case001subregion/out/FAM_case001subregion.vcf.gz",
+   "tasks/variant_calling_bcftools_call/work/FAM_case001subregion/out/FAM_case001subregion.vcf.gz.md5",
+   "tasks/variant_calling_bcftools_call/work/FAM_case001subregion/out/FAM_case001subregion.vcf.gz.tbi",
+   "tasks/variant_calling_bcftools_call/work/FAM_case001subregion/out/FAM_case001subregion.vcf.gz.tbi.md5"
   ],
   "local": true,
   "log": [],
@@ -305,9 +305,9 @@
   "wrapper": null
  },
  {
-  "benchmark": "tasks/variant_calling_bcftools_call/benchmarks/case001subregion-N1-DNA1-WES1/case001subregion-N1-DNA1-WES1.bcftools_call_run.tsv",
+  "benchmark": "tasks/variant_calling_bcftools_call/benchmarks/FAM_case001subregion/FAM_case001subregion.bcftools_call_run.tsv",
   "input": [
-   "tasks/variant_calling_bcftools_call/work/write_pedigree.case001subregion-N1-DNA1-WES1/out/case001subregion-N1-DNA1-WES1.ped",
+   "tasks/variant_calling_bcftools_call/work/write_pedigree.FAM_case001subregion/out/FAM_case001subregion.ped",
    "tasks/ngs_mapping_bwa/work/case001subregion-N1-DNA1-WES1/out/case001subregion-N1-DNA1-WES1.bam",
    "tasks/ngs_mapping_bwa/work/case001subregionFather-N1-DNA1-WES1/out/case001subregionFather-N1-DNA1-WES1.bam",
    "tasks/ngs_mapping_bwa/work/case001subregionMother-N1-DNA1-WES1/out/case001subregionMother-N1-DNA1-WES1.bam",
@@ -317,13 +317,13 @@
    "<repo>/.tests/test-workflow/resources/refs/subregion.fa.fai"
   ],
   "log": [
-   "tasks/variant_calling_bcftools_call/work/case001subregion-N1-DNA1-WES1/log/case001subregion-N1-DNA1-WES1.bcftools_call_run.log"
+   "tasks/variant_calling_bcftools_call/work/FAM_case001subregion/log/FAM_case001subregion.bcftools_call_run.log"
   ],
   "output": [
-   "tasks/variant_calling_bcftools_call/work/case001subregion-N1-DNA1-WES1/out/case001subregion-N1-DNA1-WES1.vcf.gz",
-   "tasks/variant_calling_bcftools_call/work/case001subregion-N1-DNA1-WES1/out/case001subregion-N1-DNA1-WES1.vcf.gz.md5",
-   "tasks/variant_calling_bcftools_call/work/case001subregion-N1-DNA1-WES1/out/case001subregion-N1-DNA1-WES1.vcf.gz.tbi",
-   "tasks/variant_calling_bcftools_call/work/case001subregion-N1-DNA1-WES1/out/case001subregion-N1-DNA1-WES1.vcf.gz.tbi.md5"
+   "tasks/variant_calling_bcftools_call/work/FAM_case001subregion/out/FAM_case001subregion.vcf.gz",
+   "tasks/variant_calling_bcftools_call/work/FAM_case001subregion/out/FAM_case001subregion.vcf.gz.md5",
+   "tasks/variant_calling_bcftools_call/work/FAM_case001subregion/out/FAM_case001subregion.vcf.gz.tbi",
+   "tasks/variant_calling_bcftools_call/work/FAM_case001subregion/out/FAM_case001subregion.vcf.gz.tbi.md5"
   ],
   "params": {
    "args": {
@@ -358,7 +358,7 @@
   "temp": [],
   "threads": 1,
   "wildcards": {
-   "library_name": "case001subregion-N1-DNA1-WES1"
+   "library_name": "FAM_case001subregion"
   },
   "wrapper": "file://<repo>/snappy_wrappers/wrappers/bcftools_call"
  },
@@ -372,7 +372,7 @@
   "local": true,
   "log": [],
   "output": [
-   "tasks/variant_calling_bcftools_call/work/write_pedigree.case001subregion-N1-DNA1-WES1/out/case001subregion-N1-DNA1-WES1.ped"
+   "tasks/variant_calling_bcftools_call/work/write_pedigree.FAM_case001subregion/out/FAM_case001subregion.ped"
   ],
   "params": {},
   "resources": {},
@@ -380,7 +380,7 @@
   "temp": [],
   "threads": 1,
   "wildcards": {
-   "related_group": "case001subregion-N1-DNA1-WES1"
+   "related_group": "FAM_case001subregion"
   },
   "wrapper": null
  }

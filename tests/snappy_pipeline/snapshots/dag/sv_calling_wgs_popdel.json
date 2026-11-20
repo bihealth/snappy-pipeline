@@ -2,10 +2,10 @@
  {
   "benchmark": null,
   "input": [
-   "tasks/sv_calling_wgs_popdel/work/case001subregion-N1-DNA1-WES1/out/case001subregion-N1-DNA1-WES1.vcf.gz",
-   "tasks/sv_calling_wgs_popdel/work/case001subregion-N1-DNA1-WES1/out/case001subregion-N1-DNA1-WES1.vcf.gz.md5",
-   "tasks/sv_calling_wgs_popdel/work/case001subregion-N1-DNA1-WES1/out/case001subregion-N1-DNA1-WES1.vcf.gz.tbi",
-   "tasks/sv_calling_wgs_popdel/work/case001subregion-N1-DNA1-WES1/out/case001subregion-N1-DNA1-WES1.vcf.gz.tbi.md5",
+   "tasks/sv_calling_wgs_popdel/work/PAT_case001subregion/out/PAT_case001subregion.vcf.gz",
+   "tasks/sv_calling_wgs_popdel/work/PAT_case001subregion/out/PAT_case001subregion.vcf.gz.md5",
+   "tasks/sv_calling_wgs_popdel/work/PAT_case001subregion/out/PAT_case001subregion.vcf.gz.tbi",
+   "tasks/sv_calling_wgs_popdel/work/PAT_case001subregion/out/PAT_case001subregion.vcf.gz.tbi.md5",
    "tasks/sv_calling_wgs_popdel/output/.manifest.tsv"
   ],
   "log": [],
@@ -152,10 +152,10 @@
  {
   "benchmark": null,
   "input": [
-   "tasks/sv_calling_wgs_popdel/work/case001subregion-N1-DNA1-WES1/out/case001subregion-N1-DNA1-WES1.vcf.gz",
-   "tasks/sv_calling_wgs_popdel/work/case001subregion-N1-DNA1-WES1/out/case001subregion-N1-DNA1-WES1.vcf.gz.md5",
-   "tasks/sv_calling_wgs_popdel/work/case001subregion-N1-DNA1-WES1/out/case001subregion-N1-DNA1-WES1.vcf.gz.tbi",
-   "tasks/sv_calling_wgs_popdel/work/case001subregion-N1-DNA1-WES1/out/case001subregion-N1-DNA1-WES1.vcf.gz.tbi.md5"
+   "tasks/sv_calling_wgs_popdel/work/PAT_case001subregion/out/PAT_case001subregion.vcf.gz",
+   "tasks/sv_calling_wgs_popdel/work/PAT_case001subregion/out/PAT_case001subregion.vcf.gz.md5",
+   "tasks/sv_calling_wgs_popdel/work/PAT_case001subregion/out/PAT_case001subregion.vcf.gz.tbi",
+   "tasks/sv_calling_wgs_popdel/work/PAT_case001subregion/out/PAT_case001subregion.vcf.gz.tbi.md5"
   ],
   "local": true,
   "log": [],
@@ -386,19 +386,19 @@
   "wrapper": "file://<repo>/snappy_wrappers/wrappers/popdel/profile"
  },
  {
-  "benchmark": "tasks/sv_calling_wgs_popdel/benchmarks/case001subregion-N1-DNA1-WES1/case001subregion-N1-DNA1-WES1.reorder_vcf.tsv",
+  "benchmark": "tasks/sv_calling_wgs_popdel/benchmarks/PAT_case001subregion/PAT_case001subregion.reorder_vcf.tsv",
   "input": [
    "tasks/sv_calling_wgs_popdel/work/cohort/out/cohort.concat_calls.vcf.gz",
    "tasks/sv_calling_wgs_popdel/work/cohort/out/cohort.concat_calls.vcf.gz.tbi"
   ],
   "log": [
-   "tasks/sv_calling_wgs_popdel/work/case001subregion-N1-DNA1-WES1/log/case001subregion-N1-DNA1-WES1.reorder_vcf.log"
+   "tasks/sv_calling_wgs_popdel/work/PAT_case001subregion/log/PAT_case001subregion.reorder_vcf.log"
   ],
   "output": [
-   "tasks/sv_calling_wgs_popdel/work/case001subregion-N1-DNA1-WES1/out/case001subregion-N1-DNA1-WES1.vcf.gz",
-   "tasks/sv_calling_wgs_popdel/work/case001subregion-N1-DNA1-WES1/out/case001subregion-N1-DNA1-WES1.vcf.gz.md5",
-   "tasks/sv_calling_wgs_popdel/work/case001subregion-N1-DNA1-WES1/out/case001subregion-N1-DNA1-WES1.vcf.gz.tbi",
-   "tasks/sv_calling_wgs_popdel/work/case001subregion-N1-DNA1-WES1/out/case001subregion-N1-DNA1-WES1.vcf.gz.tbi.md5"
+   "tasks/sv_calling_wgs_popdel/work/PAT_case001subregion/out/PAT_case001subregion.vcf.gz",
+   "tasks/sv_calling_wgs_popdel/work/PAT_case001subregion/out/PAT_case001subregion.vcf.gz.md5",
+   "tasks/sv_calling_wgs_popdel/work/PAT_case001subregion/out/PAT_case001subregion.vcf.gz.tbi",
+   "tasks/sv_calling_wgs_popdel/work/PAT_case001subregion/out/PAT_case001subregion.vcf.gz.tbi.md5"
   ],
   "params": {
    "args": {
@@ -416,7 +416,7 @@
   "temp": [],
   "threads": 1,
   "wildcards": {
-   "library_name": "case001subregion-N1-DNA1-WES1"
+   "library_name": "PAT_case001subregion"
   },
   "wrapper": "file://<repo>/snappy_wrappers/wrappers/popdel/reorder_vcf"
  }

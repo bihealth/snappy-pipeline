@@ -1,7 +1,7 @@
 import enum
 from typing import Any
 
-from pydantic import ConfigDict, Field
+from pydantic import ConfigDict, Field, model_validator
 
 from snappy_pipeline.models import (
     ConfigPath,
@@ -46,6 +46,16 @@ class DataSet(LibraryFolders):
     sodar_uuid: str | None = None
     sodar_title: str | None = None
     pedigree_field: str | None = None
+    """The custom field of a germline or generic sheet that groups its donors into pedigrees and names them.
+    Unset: the parent columns group them, and the ``familyId`` field, else the index donor (``FAM_`` on germline sheets), names them."""
+
+    @model_validator(mode="after")
+    def _pedigree_field_needs_pedigrees(self):
+        if self.pedigree_field and self.type == DataSetType.MATCHED_CANCER:
+            raise ValueError(
+                "pedigree_field groups the donors of a germline or generic sheet; a matched_cancer sheet has no pedigrees"
+            )
+        return self
 
 
 class TaskModel(SnappyModel):

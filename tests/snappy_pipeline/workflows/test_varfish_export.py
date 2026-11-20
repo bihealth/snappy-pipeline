@@ -58,7 +58,7 @@ def _part(**settings):
     return part
 
 
-def test_the_export_writes_one_file_set_per_pedigree_index():
+def test_the_export_writes_one_file_set_per_pedigree():
     part = _part()
 
     assert part._get_output_files_annotate_seqvars() == {

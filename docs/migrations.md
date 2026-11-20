@@ -40,23 +40,23 @@ library_selection: "role == 'tumor' and extraction_type == 'dna'"
 The expression runs against a DataFrame with one row per NGS library.
 The columns that are **always available**:
 
-| Column            | Description                                                                                |
-| ----------------- | ------------------------------------------------------------------------------------------ |
-| `library_name`    | NGS library identifier                                                                     |
-| `extraction_type` | "dna", "rna", ... (always lowercased)                                                      |
-| `kind`            | "cancer" or "germline"                                                                     |
-| `role`            | "tumor" / "normal" / "index" / "father" / "mother" / "affected" / "unaffected" / "unknown" |
-| `is_primary`      | True for the primary tumor (cancer) or the pedigree index (germline)                       |
-| `sex`             | "male", "female", or "unknown"                                                             |
-| `donor_name`      | Patient or family identifier                                                               |
-| `sample_name`     | Bio-sample name                                                                            |
-| `related_group`   | Germline: the pedigree's index library; cancer: the donor name                             |
-| `tissue_type`     | "tumor", "normal", or "unknown"                                                            |
-| `disease_state`   | The PED phenotype: 2 = affected, 1 = unaffected, 0 = unknown                               |
-| `father_name`     | Parent library name (or "0")                                                               |
-| `mother_name`     | Parent library name (or "0")                                                               |
-| `data_set`        | Name of the library's data set in the config                                               |
-| `is_background`   | True for libraries of background data sets                                                 |
+| Column            | Description                                                                                    |
+| ----------------- | ---------------------------------------------------------------------------------------------- |
+| `library_name`    | NGS library identifier                                                                         |
+| `extraction_type` | "dna", "rna", ... (always lowercased)                                                          |
+| `kind`            | "cancer" or "germline"                                                                         |
+| `role`            | "tumor" / "normal" / "index" / "father" / "mother" / "affected" / "unaffected" / "unknown"     |
+| `is_primary`      | True for the primary tumor (cancer) or the pedigree index (germline)                           |
+| `sex`             | "male", "female", or "unknown"                                                                 |
+| `donor_name`      | Patient or family identifier                                                                   |
+| `sample_name`     | Bio-sample name                                                                                |
+| `related_group`   | The name of the library's pedigree (germline) or donor (cancer), which names the group's files |
+| `tissue_type`     | "tumor", "normal", or "unknown"                                                                |
+| `disease_state`   | The PED phenotype: 2 = affected, 1 = unaffected, 0 = unknown                                   |
+| `father_name`     | Parent library name (or "0")                                                                   |
+| `mother_name`     | Parent library name (or "0")                                                                   |
+| `data_set`        | Name of the library's data set in the config                                                   |
+| `is_background`   | True for libraries of background data sets                                                     |
 
 Further sample sheet columns are added in snake_case, for example `libraryKit` as `library_kit` and `libraryType` as `library_type`.
 
@@ -82,7 +82,7 @@ We plan to move away from biomedsheets as a dependency in a future release, but 
 
 Some steps (variant calling, annotation, filtration) can produce output at different levels of aggregation:
 
-- `group_by: related`: one output per group of related libraries; for a germline trio, one joint VCF for the whole family, named after the index library.
+- `group_by: related`: one output per group of related libraries; for a germline trio, one joint VCF for the whole family, named after the pedigree: the sheet's family id (the data set's `pedigree_field`, else `familyId`), else `FAM_` and the index donor.
   On a cancer sample sheet, the libraries of one donor are related, so one joint VCF per donor (tumor and normal together).
 - `group_by: library`: one output per library.
 - Unset: the step's default, else the setting that upstream tasks declare, else `library`.
@@ -226,7 +226,7 @@ The Snakemake process runs in a terminal multiplexer on the login node or in an 
 Result file paths are now much shorter.
 The old patterns embedded the tool name and step substage (e.g. `bwa.filtered.vcf`, `bwa.raw.vcf`) into every path, even when there was only one tool and one substage involved.
 Since those values are already defined by the task config, repeating them in paths was redundant.
-Paths now contain only the truly variable parts, typically just the library name (for related libraries, the index or primary library).
+Paths now contain only the truly variable parts, typically just the library name (for related libraries, the name of the pedigree or donor).
 In multi-tool workflows or substeps that require disambiguation, additional wildcards are still used, but the default case is a single wildcard.
 `report/` holds what the Snakemake report shows; data for other tools is in `out/`, such as the coverage VCF and bigWig files of `bam_collect_doc` (main: `report/cov/`).
 Tasks whose tools write statistics (`ngs_mapping`, `ngs_data_qc` with `alfred` or `picard`, `variant_calling` with `bcftools_stats`) add one job that writes the result file `qc_summary/out/qc_summary.tsv`, one row per library, and renders tables and charts of all libraries for the report (datavzrd).
@@ -309,6 +309,7 @@ The rules run the same tools (BWA, STAR, GATK, etc.).
 A real-run comparison of the e2e pipelines against main 0.6.3 gives the same results, with two exceptions: main's bcftools 1.15.1 drops every record of the dkfz-filtered calls (it cannot parse their GT), while snake9's bcftools 1.23.1 keeps and tags them, and `FILTER` IDs are task names (migration note 10).
 The per-step Snakefiles (`workflows/*/Snakefile`) still use the same patterns: `wf.config`, `wf.get_input_files()`, `wf.get_params()` and wrappers.
 Outside the e2e pipelines, results change on purpose where main was wrong or ignored a setting: MELT's GroupAnalysis reads the discovery output of all pedigree members (main read the first member's only), the `ignore_contigs` defaults apply to mutect2 and sequenza (migration note 14), arcasHLA gets `zygosity_threshold` (note 17), VEP annotates multiallelic records split into one record per allele (`bcftools norm`), the ebfilter panel draws from all normal DNA libraries instead of the normals matched to a tumor, Control-FREEC takes each donor's sex from the sample sheet (main used `XX` for every sample), a PureCN panel reads the GenomicsDB of its `mutect2` panel (main fails there, because the `genomicsdb` R package of the PureCN image needs integers where GATK writes strings), the BWA mappers read a fixed 100 Mbp per batch (`bases_per_batch`, `-K`), so their alignments no longer depend on `num_threads_align`, their read group IDs are the names of the discovered read groups (main: `<library>.0`, `<library>.1`, ... for `bwa` and one read group for all reads for `bwa_mem2`), `bwa_mem2` maps single-end reads (main read the right file, which they do not have) and fails when it cannot decompress the reads (main wrote an empty BAM), and the BWA mappers and STAR mask the duplicates of single-end reads (main's samblaster aborted on reads without mates, and `bwa` could not read single-end files at all).
+The family column of the PED files is the pedigree's name, so a sheet with a family id (`pedigree_field`, else `familyId`) gets that id instead of `FAM_` and the index donor, and the trio PED of a child who is not the index names the child's family; a pedigree whose index has no DNA library is processed like any other (main dropped its members).
 
 ## Migration notes
 
@@ -364,6 +365,8 @@ To migrate an existing project:
     The report is `{library}/out/{library}.target_coverage.json.gz` instead of `{library}/report/alfred_qc/{library}.alfred.json.gz`.
     `varfish_export` reads it through `depends_on.qc` and writes its BAM QC only with it; pedigree members from background data sets have no target coverage there, since `ngs_data_qc` checks no background libraries (the mapping task did).
 23. `config.yaml` has a required `project` section: its `name`, and optionally the `external_id` of the project in a data management system (such as the SODAR project UUID, which tracks where the raw data lives) and a `description`; `snappy init` writes it.
+24. The results of `group_by: related` tasks (joint germline calls, SV calls, their annotation, filtration and checks, the exports) are named after the related group instead of the index library or the primary tumor: `work/FAM_<index donor>/` on germline sheets, or the sheet's family id (the data set's `pedigree_field`, else the `familyId` custom field), `work/PAT_<donor>/` on cancer sheets and the bare index donor on generic sheets; the `write_pedigree.<group>` PED carries the same name in its family column.
+    Rerun these tasks, or rename their `work/` directories and files.
 
 ## Example: a neoepitope config from main and its translation
 

@@ -307,22 +307,16 @@ class RunGcnvStepPart(
 
         # Iterate over all pedigrees.  Check library kit consistency for each pedigree.  In case of inconsistent
         # library kits within one pedigree, raise a warning about the quality in this pedigree.
-        for (
-            index_library_name,
-            library_names,
-        ) in self.parent.pedigrees(include_background=True).items():
+        for pedigree, library_names in self.parent.pedigrees(include_background=True).items():
             library_kits = [self.ngs_library_to_kit[library_name] for library_name in library_names]
             if len(set(library_kits)) != 1:
                 names_kits = list(zip(library_names, library_kits))
                 msg = (
-                    "Found inconsistent library kits (more than one kit!) for pedigree with index "
-                    f"{index_library_name}.  The library name/kit pairs are {names_kits}.  SNAPPY "
+                    "Found inconsistent library kits (more than one kit!) for pedigree "
+                    f"{pedigree}.  The library name/kit pairs are {names_kits}.  SNAPPY "
                     "will attempt to merge the results but the result may contain artifacts."
                 )
                 warnings.warn(InconsistentLibraryKitsWarning(msg))
             # Yield all concrete output paths, replacing prefix "work/" by "output/".
             for path_tpl in result_path_tpls:
-                yield from expand(
-                    path_tpl,
-                    library_name=[index_library_name],
-                )
+                yield from expand(path_tpl, library_name=[pedigree])

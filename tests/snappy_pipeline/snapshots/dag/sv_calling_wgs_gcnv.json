@@ -2,10 +2,10 @@
  {
   "benchmark": null,
   "input": [
-   "tasks/sv_calling_wgs_gcnv/work/case001subregion-N1-DNA1-WES1/out/case001subregion-N1-DNA1-WES1.vcf.gz",
-   "tasks/sv_calling_wgs_gcnv/work/case001subregion-N1-DNA1-WES1/out/case001subregion-N1-DNA1-WES1.vcf.gz.tbi",
-   "tasks/sv_calling_wgs_gcnv/work/case001subregion-N1-DNA1-WES1/out/case001subregion-N1-DNA1-WES1.vcf.gz.md5",
-   "tasks/sv_calling_wgs_gcnv/work/case001subregion-N1-DNA1-WES1/out/case001subregion-N1-DNA1-WES1.vcf.gz.tbi.md5",
+   "tasks/sv_calling_wgs_gcnv/work/PAT_case001subregion/out/PAT_case001subregion.vcf.gz",
+   "tasks/sv_calling_wgs_gcnv/work/PAT_case001subregion/out/PAT_case001subregion.vcf.gz.tbi",
+   "tasks/sv_calling_wgs_gcnv/work/PAT_case001subregion/out/PAT_case001subregion.vcf.gz.md5",
+   "tasks/sv_calling_wgs_gcnv/work/PAT_case001subregion/out/PAT_case001subregion.vcf.gz.tbi.md5",
    "tasks/sv_calling_wgs_gcnv/output/.manifest.tsv"
   ],
   "log": [],
@@ -335,10 +335,10 @@
  {
   "benchmark": null,
   "input": [
-   "tasks/sv_calling_wgs_gcnv/work/case001subregion-N1-DNA1-WES1/out/case001subregion-N1-DNA1-WES1.vcf.gz",
-   "tasks/sv_calling_wgs_gcnv/work/case001subregion-N1-DNA1-WES1/out/case001subregion-N1-DNA1-WES1.vcf.gz.tbi",
-   "tasks/sv_calling_wgs_gcnv/work/case001subregion-N1-DNA1-WES1/out/case001subregion-N1-DNA1-WES1.vcf.gz.md5",
-   "tasks/sv_calling_wgs_gcnv/work/case001subregion-N1-DNA1-WES1/out/case001subregion-N1-DNA1-WES1.vcf.gz.tbi.md5"
+   "tasks/sv_calling_wgs_gcnv/work/PAT_case001subregion/out/PAT_case001subregion.vcf.gz",
+   "tasks/sv_calling_wgs_gcnv/work/PAT_case001subregion/out/PAT_case001subregion.vcf.gz.tbi",
+   "tasks/sv_calling_wgs_gcnv/work/PAT_case001subregion/out/PAT_case001subregion.vcf.gz.md5",
+   "tasks/sv_calling_wgs_gcnv/work/PAT_case001subregion/out/PAT_case001subregion.vcf.gz.tbi.md5"
   ],
   "local": true,
   "log": [],
@@ -356,21 +356,21 @@
   "wrapper": null
  },
  {
-  "benchmark": "tasks/sv_calling_wgs_gcnv/benchmarks/case001subregion-N1-DNA1-WES1/case001subregion-N1-DNA1-WES1.wgs.joint_segmentation.tsv",
+  "benchmark": "tasks/sv_calling_wgs_gcnv/benchmarks/PAT_case001subregion/PAT_case001subregion.wgs.joint_segmentation.tsv",
   "input": [
    "tasks/sv_calling_wgs_gcnv/work/case001subregion-N1-DNA1-WES1/out/case001subregion-N1-DNA1-WES1.post_germline_calls.vcf.gz",
    "tasks/gcnv_model_wgs/work/wgs/out/wgs.interval_list",
-   "tasks/sv_calling_wgs_gcnv/work/write_pedigree.case001subregion-N1-DNA1-WES1/out/case001subregion-N1-DNA1-WES1.ped",
+   "tasks/sv_calling_wgs_gcnv/work/write_pedigree.PAT_case001subregion/out/PAT_case001subregion.ped",
    "<repo>/.tests/test-workflow/resources/refs/subregion.fa",
    "<repo>/.tests/test-workflow/resources/refs/subregion.fa.fai",
    "<repo>/.tests/test-workflow/resources/refs/subregion.dict"
   ],
   "log": [
-   "tasks/sv_calling_wgs_gcnv/work/case001subregion-N1-DNA1-WES1/log/case001subregion-N1-DNA1-WES1.wgs.joint_segmentation.log"
+   "tasks/sv_calling_wgs_gcnv/work/PAT_case001subregion/log/PAT_case001subregion.wgs.joint_segmentation.log"
   ],
   "output": [
-   "tasks/sv_calling_wgs_gcnv/work/case001subregion-N1-DNA1-WES1/out/case001subregion-N1-DNA1-WES1.wgs.joint_segmentation.vcf.gz",
-   "tasks/sv_calling_wgs_gcnv/work/case001subregion-N1-DNA1-WES1/out/case001subregion-N1-DNA1-WES1.wgs.joint_segmentation.vcf.gz.tbi"
+   "tasks/sv_calling_wgs_gcnv/work/PAT_case001subregion/out/PAT_case001subregion.wgs.joint_segmentation.vcf.gz",
+   "tasks/sv_calling_wgs_gcnv/work/PAT_case001subregion/out/PAT_case001subregion.wgs.joint_segmentation.vcf.gz.tbi"
   ],
   "params": {},
   "resources": {
@@ -382,30 +382,30 @@
   },
   "rule": "sv_calling_wgs_gcnv_sv_calling_wgs_gcnv_joint_germline_cnv_segmentation",
   "temp": [
-   "tasks/sv_calling_wgs_gcnv/work/case001subregion-N1-DNA1-WES1/out/case001subregion-N1-DNA1-WES1.wgs.joint_segmentation.vcf.gz",
-   "tasks/sv_calling_wgs_gcnv/work/case001subregion-N1-DNA1-WES1/out/case001subregion-N1-DNA1-WES1.wgs.joint_segmentation.vcf.gz.tbi"
+   "tasks/sv_calling_wgs_gcnv/work/PAT_case001subregion/out/PAT_case001subregion.wgs.joint_segmentation.vcf.gz",
+   "tasks/sv_calling_wgs_gcnv/work/PAT_case001subregion/out/PAT_case001subregion.wgs.joint_segmentation.vcf.gz.tbi"
   ],
   "threads": 1,
   "wildcards": {
    "kit": "wgs",
-   "library_name": "case001subregion-N1-DNA1-WES1"
+   "library_name": "PAT_case001subregion"
   },
   "wrapper": "file://<repo>/snappy_wrappers/wrappers/gcnv/joint_germline_cnv_segmentation"
  },
  {
-  "benchmark": "tasks/sv_calling_wgs_gcnv/benchmarks/case001subregion-N1-DNA1-WES1/case001subregion-N1-DNA1-WES1.merge_multikit_families.tsv",
+  "benchmark": "tasks/sv_calling_wgs_gcnv/benchmarks/PAT_case001subregion/PAT_case001subregion.merge_multikit_families.tsv",
   "input": [
-   "tasks/sv_calling_wgs_gcnv/work/case001subregion-N1-DNA1-WES1/out/case001subregion-N1-DNA1-WES1.wgs.joint_segmentation.vcf.gz",
-   "tasks/sv_calling_wgs_gcnv/work/case001subregion-N1-DNA1-WES1/out/case001subregion-N1-DNA1-WES1.wgs.joint_segmentation.vcf.gz.tbi"
+   "tasks/sv_calling_wgs_gcnv/work/PAT_case001subregion/out/PAT_case001subregion.wgs.joint_segmentation.vcf.gz",
+   "tasks/sv_calling_wgs_gcnv/work/PAT_case001subregion/out/PAT_case001subregion.wgs.joint_segmentation.vcf.gz.tbi"
   ],
   "log": [
-   "tasks/sv_calling_wgs_gcnv/work/case001subregion-N1-DNA1-WES1/log/case001subregion-N1-DNA1-WES1.merge_multikit_families.log"
+   "tasks/sv_calling_wgs_gcnv/work/PAT_case001subregion/log/PAT_case001subregion.merge_multikit_families.log"
   ],
   "output": [
-   "tasks/sv_calling_wgs_gcnv/work/case001subregion-N1-DNA1-WES1/out/case001subregion-N1-DNA1-WES1.vcf.gz",
-   "tasks/sv_calling_wgs_gcnv/work/case001subregion-N1-DNA1-WES1/out/case001subregion-N1-DNA1-WES1.vcf.gz.tbi",
-   "tasks/sv_calling_wgs_gcnv/work/case001subregion-N1-DNA1-WES1/out/case001subregion-N1-DNA1-WES1.vcf.gz.md5",
-   "tasks/sv_calling_wgs_gcnv/work/case001subregion-N1-DNA1-WES1/out/case001subregion-N1-DNA1-WES1.vcf.gz.tbi.md5"
+   "tasks/sv_calling_wgs_gcnv/work/PAT_case001subregion/out/PAT_case001subregion.vcf.gz",
+   "tasks/sv_calling_wgs_gcnv/work/PAT_case001subregion/out/PAT_case001subregion.vcf.gz.tbi",
+   "tasks/sv_calling_wgs_gcnv/work/PAT_case001subregion/out/PAT_case001subregion.vcf.gz.md5",
+   "tasks/sv_calling_wgs_gcnv/work/PAT_case001subregion/out/PAT_case001subregion.vcf.gz.tbi.md5"
   ],
   "params": {},
   "resources": {
@@ -419,7 +419,7 @@
   "temp": [],
   "threads": 1,
   "wildcards": {
-   "library_name": "case001subregion-N1-DNA1-WES1"
+   "library_name": "PAT_case001subregion"
   },
   "wrapper": "file://<repo>/snappy_wrappers/wrappers/gcnv/merge_multikit_families"
  },
@@ -488,7 +488,7 @@
   "local": true,
   "log": [],
   "output": [
-   "tasks/sv_calling_wgs_gcnv/work/write_pedigree.case001subregion-N1-DNA1-WES1/out/case001subregion-N1-DNA1-WES1.ped"
+   "tasks/sv_calling_wgs_gcnv/work/write_pedigree.PAT_case001subregion/out/PAT_case001subregion.ped"
   ],
   "params": {},
   "resources": {},
@@ -496,7 +496,7 @@
   "temp": [],
   "threads": 1,
   "wildcards": {
-   "related_group": "case001subregion-N1-DNA1-WES1"
+   "related_group": "PAT_case001subregion"
   },
   "wrapper": null
  }

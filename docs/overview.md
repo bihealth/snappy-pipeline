@@ -335,6 +335,7 @@ For example, mapping takes all libraries, the RNA steps all RNA libraries, and a
 `library_selection` replaces that default with a pandas `DataFrame.query()` expression, for example `data_set == 'batch2'` or `donor_name != 'P003'`, but a task never takes libraries that its step cannot process.
 `group_by` sets the granularity: `library` writes one output per library, `related` one per group of related libraries, where the step supports it.
 Related libraries are the members of a pedigree on germline sample sheets and the libraries of one donor on cancer sample sheets (the library table's column `related_group`).
+The group is named after the pedigree or donor, and so are the results of `group_by: related` tasks: the sheet's family id (the data set's `pedigree_field`, else the `familyId` custom field), else the index donor with `FAM_` on germline sheets, `PAT_` on cancer sheets and no prefix on generic sheets.
 Without it, a task takes its step's default, else the granularity of its upstream tasks, else `library`.
 Germline variant calling defaults to `related` and calls each pedigree jointly, so the tasks after it also write one result per pedigree.
 Steps that read one VCF per pedigree (VarFish export, peddy, IGV sessions, pedigree phasing) check when the project loads that their upstream task has `group_by: related`.

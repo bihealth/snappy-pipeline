@@ -220,7 +220,7 @@ A task's outputs are described by `DataSignature` objects: a data type plus tags
 - A file that a step reads is a `depends_on` key if it must match the reference or other data of the project, even if only one tool reads it.
   Examples are regions, variants, a genome, a gene annotation and a mapper index (type `index`, tagged with the tool and the molecule).
   Such a field has a `DataSignature` and an `ExpectedPathSchema`, and the step reads it with `get_upstream_paths()`.
-  A field whose step reads one result per pedigree under the index library (`group_by: related`) adds `RELATED_LEVEL` (`Granularity`) to its metadata; `load_project()` checks the upstream task's resolved `group_by`.
+  A field whose step reads one result per pedigree under the pedigree's name (`group_by: related`) adds `RELATED_LEVEL` (`Granularity`) to its metadata, one that reads the result of a library's group at either level `ANY_LEVEL` (looked up with `upstream_entity()`); `load_project()` checks the upstream task's resolved `group_by`, and for any other field rejects a per-library task behind one that writes per related group.
   A field typed `list[str]` takes several tasks of the same kind, each checked like a single one; the step lists them with `upstream_task_names(field)` and reads each with `get_upstream_paths(field, upstream_task=...)`.
   A file that belongs to the setup of one tool and does not depend on the reference, such as a jar or a script, is a path in the tool's section, which the step passes to the rule as an input.
 - A field that names a file or directory has the type `ConfigPath` (also in `list[...]` or `dict[str, ...]`).
@@ -281,7 +281,7 @@ A task's outputs are described by `DataSignature` objects: a data type plus tags
 
 ## Paths
 
-- Only truly variable values are wildcards: libraries, samples, tumor and normal, pedigrees.
+- Only truly variable values are wildcards: libraries, samples, tumor and normal, related groups (`related_group`: a pedigree or donor, named after it).
 - The tool is part of the task configuration and never appears in a path, neither as a directory prefix (`work/cnvkit.{library_name}/`) nor in a file name.
 - Files are named `{entity}.{suffix}`, with a dot after the wildcard, for example `{tumor_library}.gene_log2.txt`.
   Underscores stay inside multi-word suffixes.

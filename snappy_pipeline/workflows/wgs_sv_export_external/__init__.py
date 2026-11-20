@@ -20,7 +20,7 @@ The task links the following result files below ``tasks/<task>/output/`` as syml
 - ``varfish_annotated.{library_name}/out/varfish_annotated.{library_name}.feature-effects.tsv.gz``
 - ``varfish_annotated.{library_name}/out/varfish_annotated.{library_name}.db-infos.tsv.gz``
 
-Here ``library_name`` is the index library of the pedigree.
+Here ``related_group`` is the name of the pedigree, whose index library holds the external files.
 Downstream tasks read the keys ``gts`` and ``db_infos``.
 """
 
@@ -96,7 +96,7 @@ class VarfishAnnotatorExternalStepPart(BaseStepPart):
             yield key + "_md5", prefix + f".{infix}.tsv.gz.md5"
 
     def get_result_files(self) -> list[str]:
-        """The files of the export, for the index of each pedigree"""
+        """The files of the export, for each pedigree whose index has a DNA library"""
         indexes = [p for p in self.parent.pedigrees() if self.parent.pedigree_index(p)]
         return [
             path

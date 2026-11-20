@@ -344,7 +344,9 @@ class SnappyStepModel(SnappyModel, object):
     group_by: Literal["library", "related"] | None = None
     """``library``: one output per library; ``related``: one output per group of related
     libraries (``related_group``), the members of a pedigree on germline sample sheets and the
-    libraries of a donor on cancer sample sheets.
+    libraries of a donor on cancer sample sheets, named after the group: the sample sheet's family
+    id (the data set's ``pedigree_field``, else ``familyId``), else the index donor with ``FAM_``
+    (germline sheets), ``PAT_`` (cancer sheets) or no prefix (generic sheets).
     Unset: the step's default (related for joint germline calling), else the granularity that
     upstream tasks declare, else ``library``."""
 

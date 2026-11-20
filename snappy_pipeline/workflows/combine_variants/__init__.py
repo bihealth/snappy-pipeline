@@ -71,7 +71,8 @@ class CombineVariantsStepPart(BaseStepPart):
         yield "somatic_vcf", somatic.vcf
 
         normal_lib = self.get_normal_lib_name(wildcards.tumor_library)
-        germline = self.parent.get_upstream_paths("germline_variants", library_name=normal_lib)
+        entity = self.parent.upstream_entity("germline_variants", normal_lib)
+        germline = self.parent.get_upstream_paths("germline_variants", library_name=entity)
         yield "germline_vcf", germline.vcf
 
     def get_normal_lib_name(self, tumor_library: str) -> str:

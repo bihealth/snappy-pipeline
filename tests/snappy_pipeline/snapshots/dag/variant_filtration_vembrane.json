@@ -2,10 +2,10 @@
  {
   "benchmark": null,
   "input": [
-   "tasks/variant_filtration_vembrane/work/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1.vcf.gz",
-   "tasks/variant_filtration_vembrane/work/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1.vcf.gz.tbi",
-   "tasks/variant_filtration_vembrane/work/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1.vcf.gz.md5",
-   "tasks/variant_filtration_vembrane/work/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1.vcf.gz.tbi.md5",
+   "tasks/variant_filtration_vembrane/work/PAT_case001subregion/out/PAT_case001subregion.vcf.gz",
+   "tasks/variant_filtration_vembrane/work/PAT_case001subregion/out/PAT_case001subregion.vcf.gz.tbi",
+   "tasks/variant_filtration_vembrane/work/PAT_case001subregion/out/PAT_case001subregion.vcf.gz.md5",
+   "tasks/variant_filtration_vembrane/work/PAT_case001subregion/out/PAT_case001subregion.vcf.gz.tbi.md5",
    "tasks/variant_filtration_vembrane/output/.manifest.tsv"
   ],
   "log": [],
@@ -216,24 +216,24 @@
   "wrapper": "file://<repo>/snappy_wrappers/wrappers/reference_index/common"
  },
  {
-  "benchmark": "tasks/variant_annotation_vep/benchmarks/case001subregion-T1-DNA1-WES1/case001subregion-T1-DNA1-WES1.tsv",
+  "benchmark": "tasks/variant_annotation_vep/benchmarks/PAT_case001subregion/PAT_case001subregion.tsv",
   "input": [
-   "tasks/variant_calling_gatk4_hc_gvcf/work/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1.vcf.gz",
-   "tasks/variant_calling_gatk4_hc_gvcf/work/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1.vcf.gz.tbi",
+   "tasks/variant_calling_gatk4_hc_gvcf/work/PAT_case001subregion/out/PAT_case001subregion.vcf.gz",
+   "tasks/variant_calling_gatk4_hc_gvcf/work/PAT_case001subregion/out/PAT_case001subregion.vcf.gz.tbi",
    "<repo>/.tests/test-workflow/resources/refs/subregion.fa",
    "<repo>/.tests/test-workflow/resources/refs/subregion.fa.fai",
    "<repo>/.tests/test-workflow/resources/refs/subregion.dict",
    "<repo>/tests/scripts/generate_task_configs.py"
   ],
   "log": [
-   "tasks/variant_annotation_vep/work/case001subregion-T1-DNA1-WES1/log/case001subregion-T1-DNA1-WES1.log"
+   "tasks/variant_annotation_vep/work/PAT_case001subregion/log/PAT_case001subregion.log"
   ],
   "output": [
-   "tasks/variant_annotation_vep/work/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1.vcf.gz",
-   "tasks/variant_annotation_vep/work/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1.vcf.gz.tbi",
-   "tasks/variant_annotation_vep/work/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1.vcf.gz.md5",
-   "tasks/variant_annotation_vep/work/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1.vcf.gz.tbi.md5",
-   "tasks/variant_annotation_vep/work/case001subregion-T1-DNA1-WES1/report/case001subregion-T1-DNA1-WES1.summary.html"
+   "tasks/variant_annotation_vep/work/PAT_case001subregion/out/PAT_case001subregion.vcf.gz",
+   "tasks/variant_annotation_vep/work/PAT_case001subregion/out/PAT_case001subregion.vcf.gz.tbi",
+   "tasks/variant_annotation_vep/work/PAT_case001subregion/out/PAT_case001subregion.vcf.gz.md5",
+   "tasks/variant_annotation_vep/work/PAT_case001subregion/out/PAT_case001subregion.vcf.gz.tbi.md5",
+   "tasks/variant_annotation_vep/work/PAT_case001subregion/report/PAT_case001subregion.summary.html"
   ],
   "params": {
    "args": {
@@ -265,7 +265,7 @@
    }
   },
   "report": [
-   "tasks/variant_annotation_vep/work/case001subregion-T1-DNA1-WES1/report/case001subregion-T1-DNA1-WES1.summary.html"
+   "tasks/variant_annotation_vep/work/PAT_case001subregion/report/PAT_case001subregion.summary.html"
   ],
   "resources": {
    "mem": "16 GB",
@@ -278,12 +278,12 @@
   "temp": [],
   "threads": 1,
   "wildcards": {
-   "library_name": "case001subregion-T1-DNA1-WES1"
+   "library_name": "PAT_case001subregion"
   },
   "wrapper": "file://<repo>/snappy_wrappers/wrappers/vep/run"
  },
  {
-  "benchmark": "tasks/variant_calling_gatk4_hc_gvcf/benchmarks/case001subregion-T1-DNA1-WES1/case001subregion-T1-DNA1-WES1.gatk4_hc_gvcf_combine_gvcfs.tsv",
+  "benchmark": "tasks/variant_calling_gatk4_hc_gvcf/benchmarks/PAT_case001subregion/PAT_case001subregion.gatk4_hc_gvcf_combine_gvcfs.tsv",
   "input": [
    "<repo>/.tests/test-workflow/resources/refs/subregion.fa",
    "<repo>/.tests/test-workflow/resources/refs/subregion.fa.fai",
@@ -294,11 +294,11 @@
    "tasks/variant_calling_gatk4_hc_gvcf/work/gatk4_hc_gvcf_discover.case001subregion-T1-DNA1-WES1/out/gatk4_hc_gvcf_discover.case001subregion-T1-DNA1-WES1.g.vcf.gz.tbi"
   ],
   "log": [
-   "tasks/variant_calling_gatk4_hc_gvcf/work/case001subregion-T1-DNA1-WES1/log/case001subregion-T1-DNA1-WES1.gatk4_hc_gvcf_combine_gvcfs.log"
+   "tasks/variant_calling_gatk4_hc_gvcf/work/PAT_case001subregion/log/PAT_case001subregion.gatk4_hc_gvcf_combine_gvcfs.log"
   ],
   "output": [
-   "tasks/variant_calling_gatk4_hc_gvcf/work/gatk4_hc_gvcf_combine_gvcfs.case001subregion-T1-DNA1-WES1/out/gatk4_hc_gvcf_combine_gvcfs.case001subregion-T1-DNA1-WES1.g.vcf.gz",
-   "tasks/variant_calling_gatk4_hc_gvcf/work/gatk4_hc_gvcf_combine_gvcfs.case001subregion-T1-DNA1-WES1/out/gatk4_hc_gvcf_combine_gvcfs.case001subregion-T1-DNA1-WES1.g.vcf.gz.tbi"
+   "tasks/variant_calling_gatk4_hc_gvcf/work/gatk4_hc_gvcf_combine_gvcfs.PAT_case001subregion/out/gatk4_hc_gvcf_combine_gvcfs.PAT_case001subregion.g.vcf.gz",
+   "tasks/variant_calling_gatk4_hc_gvcf/work/gatk4_hc_gvcf_combine_gvcfs.PAT_case001subregion/out/gatk4_hc_gvcf_combine_gvcfs.PAT_case001subregion.g.vcf.gz.tbi"
   ],
   "params": {
    "args": {
@@ -332,7 +332,7 @@
   "temp": [],
   "threads": 1,
   "wildcards": {
-   "library_name": "case001subregion-T1-DNA1-WES1"
+   "library_name": "PAT_case001subregion"
   },
   "wrapper": "file://<repo>/snappy_wrappers/wrappers/gatk4_hc/combine_gvcfs"
  },
@@ -451,26 +451,26 @@
   "wrapper": "file://<repo>/snappy_wrappers/wrappers/gatk4_hc/discover"
  },
  {
-  "benchmark": "tasks/variant_calling_gatk4_hc_gvcf/benchmarks/case001subregion-T1-DNA1-WES1/case001subregion-T1-DNA1-WES1.gatk4_hc_gvcf_genotype.tsv",
+  "benchmark": "tasks/variant_calling_gatk4_hc_gvcf/benchmarks/PAT_case001subregion/PAT_case001subregion.gatk4_hc_gvcf_genotype.tsv",
   "input": [
    "<repo>/.tests/test-workflow/resources/refs/subregion.fa",
    "<repo>/.tests/test-workflow/resources/refs/subregion.fa.fai",
    "<repo>/.tests/test-workflow/resources/refs/subregion.dict",
-   "tasks/variant_calling_gatk4_hc_gvcf/work/gatk4_hc_gvcf_combine_gvcfs.case001subregion-T1-DNA1-WES1/out/gatk4_hc_gvcf_combine_gvcfs.case001subregion-T1-DNA1-WES1.g.vcf.gz",
-   "tasks/variant_calling_gatk4_hc_gvcf/work/gatk4_hc_gvcf_combine_gvcfs.case001subregion-T1-DNA1-WES1/out/gatk4_hc_gvcf_combine_gvcfs.case001subregion-T1-DNA1-WES1.g.vcf.gz.tbi"
+   "tasks/variant_calling_gatk4_hc_gvcf/work/gatk4_hc_gvcf_combine_gvcfs.PAT_case001subregion/out/gatk4_hc_gvcf_combine_gvcfs.PAT_case001subregion.g.vcf.gz",
+   "tasks/variant_calling_gatk4_hc_gvcf/work/gatk4_hc_gvcf_combine_gvcfs.PAT_case001subregion/out/gatk4_hc_gvcf_combine_gvcfs.PAT_case001subregion.g.vcf.gz.tbi"
   ],
   "log": [
-   "tasks/variant_calling_gatk4_hc_gvcf/work/case001subregion-T1-DNA1-WES1/log/case001subregion-T1-DNA1-WES1.gatk4_hc_gvcf_genotype.log"
+   "tasks/variant_calling_gatk4_hc_gvcf/work/PAT_case001subregion/log/PAT_case001subregion.gatk4_hc_gvcf_genotype.log"
   ],
   "output": [
-   "tasks/variant_calling_gatk4_hc_gvcf/work/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1.g.vcf.gz",
-   "tasks/variant_calling_gatk4_hc_gvcf/work/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1.g.vcf.gz.md5",
-   "tasks/variant_calling_gatk4_hc_gvcf/work/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1.g.vcf.gz.tbi",
-   "tasks/variant_calling_gatk4_hc_gvcf/work/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1.g.vcf.gz.tbi.md5",
-   "tasks/variant_calling_gatk4_hc_gvcf/work/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1.vcf.gz",
-   "tasks/variant_calling_gatk4_hc_gvcf/work/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1.vcf.gz.md5",
-   "tasks/variant_calling_gatk4_hc_gvcf/work/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1.vcf.gz.tbi",
-   "tasks/variant_calling_gatk4_hc_gvcf/work/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1.vcf.gz.tbi.md5"
+   "tasks/variant_calling_gatk4_hc_gvcf/work/PAT_case001subregion/out/PAT_case001subregion.g.vcf.gz",
+   "tasks/variant_calling_gatk4_hc_gvcf/work/PAT_case001subregion/out/PAT_case001subregion.g.vcf.gz.md5",
+   "tasks/variant_calling_gatk4_hc_gvcf/work/PAT_case001subregion/out/PAT_case001subregion.g.vcf.gz.tbi",
+   "tasks/variant_calling_gatk4_hc_gvcf/work/PAT_case001subregion/out/PAT_case001subregion.g.vcf.gz.tbi.md5",
+   "tasks/variant_calling_gatk4_hc_gvcf/work/PAT_case001subregion/out/PAT_case001subregion.vcf.gz",
+   "tasks/variant_calling_gatk4_hc_gvcf/work/PAT_case001subregion/out/PAT_case001subregion.vcf.gz.md5",
+   "tasks/variant_calling_gatk4_hc_gvcf/work/PAT_case001subregion/out/PAT_case001subregion.vcf.gz.tbi",
+   "tasks/variant_calling_gatk4_hc_gvcf/work/PAT_case001subregion/out/PAT_case001subregion.vcf.gz.tbi.md5"
   ],
   "params": {
    "args": {
@@ -503,17 +503,17 @@
   "temp": [],
   "threads": 1,
   "wildcards": {
-   "library_name": "case001subregion-T1-DNA1-WES1"
+   "library_name": "PAT_case001subregion"
   },
   "wrapper": "file://<repo>/snappy_wrappers/wrappers/gatk4_hc/genotype"
  },
  {
   "benchmark": null,
   "input": [
-   "tasks/variant_filtration_vembrane/work/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1.vcf.gz",
-   "tasks/variant_filtration_vembrane/work/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1.vcf.gz.tbi",
-   "tasks/variant_filtration_vembrane/work/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1.vcf.gz.md5",
-   "tasks/variant_filtration_vembrane/work/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1.vcf.gz.tbi.md5"
+   "tasks/variant_filtration_vembrane/work/PAT_case001subregion/out/PAT_case001subregion.vcf.gz",
+   "tasks/variant_filtration_vembrane/work/PAT_case001subregion/out/PAT_case001subregion.vcf.gz.tbi",
+   "tasks/variant_filtration_vembrane/work/PAT_case001subregion/out/PAT_case001subregion.vcf.gz.md5",
+   "tasks/variant_filtration_vembrane/work/PAT_case001subregion/out/PAT_case001subregion.vcf.gz.tbi.md5"
   ],
   "local": true,
   "log": [],
@@ -531,19 +531,19 @@
   "wrapper": null
  },
  {
-  "benchmark": "tasks/variant_filtration_vembrane/benchmarks/case001subregion-T1-DNA1-WES1/case001subregion-T1-DNA1-WES1.tsv",
+  "benchmark": "tasks/variant_filtration_vembrane/benchmarks/PAT_case001subregion/PAT_case001subregion.tsv",
   "input": [
-   "tasks/variant_annotation_vep/work/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1.vcf.gz",
-   "tasks/variant_annotation_vep/work/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1.vcf.gz.tbi"
+   "tasks/variant_annotation_vep/work/PAT_case001subregion/out/PAT_case001subregion.vcf.gz",
+   "tasks/variant_annotation_vep/work/PAT_case001subregion/out/PAT_case001subregion.vcf.gz.tbi"
   ],
   "log": [
-   "tasks/variant_filtration_vembrane/work/case001subregion-T1-DNA1-WES1/log/case001subregion-T1-DNA1-WES1.log"
+   "tasks/variant_filtration_vembrane/work/PAT_case001subregion/log/PAT_case001subregion.log"
   ],
   "output": [
-   "tasks/variant_filtration_vembrane/work/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1.vcf.gz",
-   "tasks/variant_filtration_vembrane/work/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1.vcf.gz.tbi",
-   "tasks/variant_filtration_vembrane/work/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1.vcf.gz.md5",
-   "tasks/variant_filtration_vembrane/work/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1.vcf.gz.tbi.md5"
+   "tasks/variant_filtration_vembrane/work/PAT_case001subregion/out/PAT_case001subregion.vcf.gz",
+   "tasks/variant_filtration_vembrane/work/PAT_case001subregion/out/PAT_case001subregion.vcf.gz.tbi",
+   "tasks/variant_filtration_vembrane/work/PAT_case001subregion/out/PAT_case001subregion.vcf.gz.md5",
+   "tasks/variant_filtration_vembrane/work/PAT_case001subregion/out/PAT_case001subregion.vcf.gz.tbi.md5"
   ],
   "params": {
    "args": {
@@ -567,7 +567,7 @@
   "temp": [],
   "threads": 1,
   "wildcards": {
-   "tumor_library": "case001subregion-T1-DNA1-WES1"
+   "tumor_library": "PAT_case001subregion"
   },
   "wrapper": "file://<repo>/snappy_wrappers/wrappers/vembrane/tag"
  }

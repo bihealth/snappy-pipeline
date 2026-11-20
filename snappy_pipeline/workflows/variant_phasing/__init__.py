@@ -57,7 +57,7 @@ _BASE_PATH_OUT = "work/{library_name}/out/{library_name}"
 
 
 class WriteTrioPedigreeStepPart(BaseStepPart):
-    """Write the trio PED of a child: the child and its sequenced parents, family ``FAM_`` and the child donor"""
+    """Write the trio PED of a child: the child and its sequenced parents, in the child's family (its ``related_group``)"""
 
     #: Step name
     name = "write_trio_pedigree"
@@ -79,7 +79,7 @@ class WriteTrioPedigreeStepPart(BaseStepPart):
             "library_name", drop=False
         )
         child = libraries.loc[wildcards.library_name]
-        family = "FAM_" + child["donor_name"]
+        family = child["related_group"]
         with open(fname, "wt") as ped_file:
             for name in (child["library_name"], child["father_name"], child["mother_name"]):
                 if name == "0":

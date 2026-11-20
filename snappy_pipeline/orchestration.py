@@ -240,25 +240,35 @@ def _check_filter_ids(project: Project) -> None:
 
 
 def _check_granularity(project: Project) -> None:
-    """Raise if a ``depends_on`` field that needs a :class:`Granularity` (such as one VCF per
-    pedigree) names a task that writes its results at another one."""
+    """Raise if a task reads results that its upstream task writes at another level.
+    A ``depends_on`` field with a :class:`Granularity` names the level it needs (``ANY_LEVEL`` takes both); any other field reads the result of the task's own entity, so a task behind one that writes per related group must write per related group too."""
     from snappy_pipeline.workflows.abstract import _declared_group_by
 
     for task in project.tasks:
         with in_task(task):
             depends_on = getattr(project.task_configs[task.name], "depends_on", None)
+            own = None
             for field, value in project.dependencies[task.name].items():
                 metadata = type(depends_on).model_fields[field].metadata
                 required = next((m for m in metadata if isinstance(m, Granularity)), None)
-                if required is None:
-                    continue
                 for upstream in value if isinstance(value, tuple) else (value,):
                     level = _declared_group_by(project, upstream, frozenset()) or "library"
-                    if level != required.level:
-                        raise ConfigError(
-                            f"depends_on.{field} needs results with group_by: {required.level}, "
-                            f"but task {upstream!r} writes them with group_by: {level}"
+                    if required is not None:
+                        if required.level is not None and level != required.level:
+                            raise ConfigError(
+                                f"depends_on.{field} needs results with group_by: {required.level}, "
+                                f"but task {upstream!r} writes them with group_by: {level}"
+                            )
+                    elif level == "related":
+                        own = (
+                            own or _declared_group_by(project, task.name, frozenset()) or "library"
                         )
+                        if own != "related":
+                            raise ConfigError(
+                                f"task {upstream!r} writes one result per related group, but "
+                                f"depends_on.{field} reads it per {own}; set group_by: related on "
+                                "this task"
+                            )
 
 
 def _exists(path: str) -> bool:

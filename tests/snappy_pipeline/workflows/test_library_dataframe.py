@@ -826,12 +826,7 @@ class TestIntegrationRoundtrip:
         members = related_libraries([info], [gsheet.sheet], selection=None)
 
         for entity in entities:
-            found = False
-            for pedigree, libs in members.items():
-                if entity in libs:
-                    found = True
-                    break
-            assert found, f"Entity {entity} not found in any pedigree members"
+            assert members[entity], f"Entity {entity} has no pedigree members"
 
 
 # ---------------------------------------------------------------------------
@@ -976,11 +971,9 @@ class TestScenarioGermlineTrio:
         entities = output_entity_names([info], [gsheet.sheet], selection=None, group_by="related")
         members = related_libraries([info], [gsheet.sheet], selection=None)
 
-        all_member_libs = set()
-        for libs in members.values():
-            all_member_libs.update(libs)
+        # An entity is a related group with members
         for entity in entities:
-            assert entity in all_member_libs
+            assert members[entity]
 
 
 class TestScenarioGermlineDuo:
@@ -1129,7 +1122,7 @@ def test_germline_sheets_list_all_libraries_with_their_pedigree():
     assert set(select_libraries(df, None)["extraction_type"]) == {"dna"}
 
 
-def test_siblings_and_grandparents_are_not_primary_so_the_index_is_the_entity():
+def test_siblings_and_grandparents_are_not_primary_so_the_index_names_the_family():
     from snappy_pipeline.workflows.abstract import library_entities
 
     # Sheet order puts the unaffected sibling and a sibling of unknown status before the index;
@@ -1157,9 +1150,89 @@ def test_siblings_and_grandparents_are_not_primary_so_the_index_is_the_entity():
         "mo": "mother",
     }
     assert set(names[df["is_primary"]]) == {"idx"}
-    index = df.loc[names == "idx", "library_name"].iloc[0]
-    assert library_entities(df, "related") == [index]
-    assert set(df["related_group"]) == {index}
+    family = "FAM_" + df.loc[names == "idx", "donor_name"].iloc[0]
+    assert library_entities(df, "related") == [family]
+    assert set(df["related_group"]) == {family}
+
+
+def test_the_family_id_of_the_sheet_names_the_pedigree(germline_trio_plus_sheet_tsv):
+    from snappy_pipeline.base import ConfigError
+    from snappy_pipeline.workflows.abstract import build_donor_dataframe
+
+    # P007 is unrelated by the parent columns, but familyId puts it into family2
+    gsheet = _parse_germline_sheet(germline_trio_plus_sheet_tsv)
+    info = _make_data_set_info("germline_variants")
+    info.pedigree_field_kwargs = {"join_by_field": "familyId"}
+    df = build_library_dataframe([info], [gsheet.sheet])
+    groups = dict(zip(df["donor_name"].str.split("-").str[0], df["related_group"]))
+    assert groups == {"P001": "family1", "P002": "family1", "P003": "family1"} | dict.fromkeys(
+        ["P004", "P005", "P006", "P007"], "family2"
+    )
+    assert set(build_donor_dataframe([info], [gsheet.sheet])["pedigree"]) == {"family1", "family2"}
+
+    # Without the field, the parent columns make P007 a pedigree of its own, named like P004's
+    info.pedigree_field_kwargs = None
+    with pytest.raises(ConfigError, match="both named family2; group them with pedigree_field"):
+        build_library_dataframe([info], [gsheet.sheet])
+
+    # A familyId of its own names it without the field
+    tsv = germline_trio_plus_sheet_tsv.replace("family2\tP007", "family3\tP007")
+    df = build_library_dataframe([info], [_parse_germline_sheet(tsv).sheet])
+    assert set(df["related_group"]) == {"family1", "family2", "family3"}
+
+
+def test_a_pedigree_field_without_a_value_is_an_error(germline_trio_plus_sheet_tsv):
+    from snappy_pipeline.base import ConfigError
+
+    tsv = germline_trio_plus_sheet_tsv.replace("family2\tP007", ".\tP007")
+    info = _make_data_set_info("germline_variants")
+    info.pedigree_field_kwargs = {"join_by_field": "familyId"}
+    with pytest.raises(ConfigError, match="pedigree_field of data set 'first': Field 'familyId'"):
+        build_library_dataframe([info], [_parse_germline_sheet(tsv).sheet])
+
+
+def test_the_prefix_of_a_donor_named_group_follows_the_sheet_type(cancer_sheet_tsv):
+    tsv = textwrap.dedent("""\
+        [Data]
+        patientName\tfatherName\tmotherName\tsex\tisAffected\tlibraryType\tfolderName\thpoTerms
+        idx\tfa\t.\tF\tY\tWES\tidx\t.
+        fa\t.\t.\tM\tN\tWES\tfa\t.
+    """)
+    for sheet_type, prefix in [("germline_variants", "FAM_"), ("generic", "")]:
+        sheet = read_germline_tsv_sheet(io.StringIO(tsv))
+        df = build_library_dataframe([_make_data_set_info(sheet_type)], [sheet])
+        index_donor = df.loc[df["role"] == "index", "donor_name"].iloc[0]
+        assert set(df["related_group"]) == {prefix + index_donor}
+
+    cancer = _parse_cancer_sheet(cancer_sheet_tsv)
+    df = build_library_dataframe([_make_data_set_info("matched_cancer")], [cancer.sheet])
+    assert (df["related_group"] == "PAT_" + df["donor_name"]).all()
+
+
+def test_a_donors_other_libraries_are_groups_of_their_own():
+    from snappy_pipeline.workflows.abstract import library_entities
+
+    # The index has an RNA library and a second DNA library; the mother is sequenced
+    tsv = textwrap.dedent("""\
+        [Data]
+        patientName\tfatherName\tmotherName\tsex\tisAffected\tlibraryType\tfolderName\thpoTerms
+        idx\t.\tmo\tF\tY\tWES\tidx\t.
+        idx\t.\tmo\tF\tY\tWGS\tidx_wgs\t.
+        idx\t.\tmo\tF\tY\tmRNA_seq\tidx_rna\t.
+        mo\t.\t.\tF\tN\tWES\tmo\t.
+    """)
+    sheet = read_germline_tsv_sheet(io.StringIO(tsv))
+    df = build_library_dataframe([_make_data_set_info("germline_variants")], [sheet])
+    # Library names: <donor>-N1-<extraction>-<type>-<pk>; the first DNA library is the donor's
+    types = df["library_name"].str.split("-").str[3]
+    groups = dict(zip(types, df["related_group"]))
+    family = "FAM_" + df.loc[df["role"] == "index", "donor_name"].iloc[0]
+    assert groups["WES1"] == family
+    assert groups["WGS1"] == df.loc[types == "WGS1", "library_name"].iloc[0]
+    assert groups["mRNA_seq1"] == df.loc[types == "mRNA_seq1", "library_name"].iloc[0]
+    assert library_entities(select_libraries(df, None), "related") == sorted(
+        [family, groups["WGS1"]]
+    )
 
 
 class TestLibraryRequirement:
@@ -1218,8 +1291,8 @@ def test_the_donor_table_lists_unsequenced_donors_with_their_parents():
         "mother_name": "0",
         "sex": "male",
         "library_name": "",
-        "pedigree": "P001-N1-DNA1-WGS1",
+        "pedigree": "FAM_P001",
         "data_set": "first",
         "is_background": False,
     }
-    assert rows["P003"]["pedigree"] == "P001-N1-DNA1-WGS1"
+    assert rows["P003"]["pedigree"] == "FAM_P001"

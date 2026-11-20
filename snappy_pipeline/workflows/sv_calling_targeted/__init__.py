@@ -11,7 +11,7 @@ The ``tool`` field selects the caller:
   Its model per library kit and its intervals are the ones of the calls.
 - ``melt`` calls mobile element insertions, with the genes of the task in ``depends_on.gene_regions``.
 
-The task gives one result per pedigree, named after its index library.
+The task gives one result per pedigree, named after the pedigree (its ``related_group``).
 ``skip_libraries`` of a tool skips the whole pedigree of a library.
 The step gives no results if the mapper of the alignments is not a DNA mapper.
 
@@ -24,7 +24,7 @@ All tools have the same result files.
 - ``{library_name}/out/{library_name}.vcf.gz``
 - ``{library_name}/out/{library_name}.vcf.gz.tbi``
 
-Here ``library_name`` is the index library of the pedigree.
+Here ``library_name`` is the name of the pedigree.
 Downstream tasks read the key ``vcf``.
 """
 
@@ -71,7 +71,7 @@ class SvCallingTargetedWorkflow(BaseStep):
 
     @classmethod
     def default_group_by(cls, config):
-        """The callers write one result per pedigree, named after its index library."""
+        """The callers write one result per pedigree, named after the pedigree."""
         return "related"
 
     @classmethod

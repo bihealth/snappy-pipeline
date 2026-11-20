@@ -2,10 +2,10 @@
  {
   "benchmark": null,
   "input": [
-   "tasks/variant_calling_varlociraptor_germline/work/case001subregion-N1-DNA1-WES1/out/case001subregion-N1-DNA1-WES1.vcf.gz",
-   "tasks/variant_calling_varlociraptor_germline/work/case001subregion-N1-DNA1-WES1/out/case001subregion-N1-DNA1-WES1.vcf.gz.md5",
-   "tasks/variant_calling_varlociraptor_germline/work/case001subregion-N1-DNA1-WES1/out/case001subregion-N1-DNA1-WES1.vcf.gz.tbi",
-   "tasks/variant_calling_varlociraptor_germline/work/case001subregion-N1-DNA1-WES1/out/case001subregion-N1-DNA1-WES1.vcf.gz.tbi.md5",
+   "tasks/variant_calling_varlociraptor_germline/work/FAM_case001subregion/out/FAM_case001subregion.vcf.gz",
+   "tasks/variant_calling_varlociraptor_germline/work/FAM_case001subregion/out/FAM_case001subregion.vcf.gz.md5",
+   "tasks/variant_calling_varlociraptor_germline/work/FAM_case001subregion/out/FAM_case001subregion.vcf.gz.tbi",
+   "tasks/variant_calling_varlociraptor_germline/work/FAM_case001subregion/out/FAM_case001subregion.vcf.gz.tbi.md5",
    "tasks/variant_calling_varlociraptor_germline/output/.manifest.tsv"
   ],
   "log": [],
@@ -282,21 +282,21 @@
   "wrapper": "file://<repo>/snappy_wrappers/wrappers/reference_index/common"
  },
  {
-  "benchmark": "tasks/variant_calling_freebayes_germline/benchmarks/case001subregion-N1-DNA1-WES1/case001subregion-N1-DNA1-WES1.gather.tsv",
+  "benchmark": "tasks/variant_calling_freebayes_germline/benchmarks/FAM_case001subregion/FAM_case001subregion.gather.tsv",
   "input": [
-   "tasks/variant_calling_freebayes_germline/work/case001subregion-N1-DNA1-WES1/out/case001subregion-N1-DNA1-WES1/calls/1-of-2.bcf",
-   "tasks/variant_calling_freebayes_germline/work/case001subregion-N1-DNA1-WES1/out/case001subregion-N1-DNA1-WES1/calls/2-of-2.bcf",
-   "tasks/variant_calling_freebayes_germline/work/case001subregion-N1-DNA1-WES1/out/case001subregion-N1-DNA1-WES1/calls/1-of-2.bcf.csi",
-   "tasks/variant_calling_freebayes_germline/work/case001subregion-N1-DNA1-WES1/out/case001subregion-N1-DNA1-WES1/calls/2-of-2.bcf.csi"
+   "tasks/variant_calling_freebayes_germline/work/FAM_case001subregion/out/FAM_case001subregion/calls/1-of-2.bcf",
+   "tasks/variant_calling_freebayes_germline/work/FAM_case001subregion/out/FAM_case001subregion/calls/2-of-2.bcf",
+   "tasks/variant_calling_freebayes_germline/work/FAM_case001subregion/out/FAM_case001subregion/calls/1-of-2.bcf.csi",
+   "tasks/variant_calling_freebayes_germline/work/FAM_case001subregion/out/FAM_case001subregion/calls/2-of-2.bcf.csi"
   ],
   "log": [
-   "tasks/variant_calling_freebayes_germline/work/case001subregion-N1-DNA1-WES1/log/case001subregion-N1-DNA1-WES1.gather.log"
+   "tasks/variant_calling_freebayes_germline/work/FAM_case001subregion/log/FAM_case001subregion.gather.log"
   ],
   "output": [
-   "tasks/variant_calling_freebayes_germline/work/case001subregion-N1-DNA1-WES1/out/case001subregion-N1-DNA1-WES1.vcf.gz",
-   "tasks/variant_calling_freebayes_germline/work/case001subregion-N1-DNA1-WES1/out/case001subregion-N1-DNA1-WES1.vcf.gz.md5",
-   "tasks/variant_calling_freebayes_germline/work/case001subregion-N1-DNA1-WES1/out/case001subregion-N1-DNA1-WES1.vcf.gz.tbi",
-   "tasks/variant_calling_freebayes_germline/work/case001subregion-N1-DNA1-WES1/out/case001subregion-N1-DNA1-WES1.vcf.gz.tbi.md5"
+   "tasks/variant_calling_freebayes_germline/work/FAM_case001subregion/out/FAM_case001subregion.vcf.gz",
+   "tasks/variant_calling_freebayes_germline/work/FAM_case001subregion/out/FAM_case001subregion.vcf.gz.md5",
+   "tasks/variant_calling_freebayes_germline/work/FAM_case001subregion/out/FAM_case001subregion.vcf.gz.tbi",
+   "tasks/variant_calling_freebayes_germline/work/FAM_case001subregion/out/FAM_case001subregion.vcf.gz.tbi.md5"
   ],
   "params": {},
   "resources": {
@@ -310,12 +310,12 @@
   "temp": [],
   "threads": 1,
   "wildcards": {
-   "library_name": "case001subregion-N1-DNA1-WES1"
+   "library_name": "FAM_case001subregion"
   },
   "wrapper": "file://<repo>/snappy_wrappers/wrappers/bcftools/concat"
  },
  {
-  "benchmark": "tasks/variant_calling_freebayes_germline/benchmarks/case001subregion-N1-DNA1-WES1/case001subregion-N1-DNA1-WES1.run.1-of-2.tsv",
+  "benchmark": "tasks/variant_calling_freebayes_germline/benchmarks/FAM_case001subregion/FAM_case001subregion.run.1-of-2.tsv",
   "input": [
    "<repo>/.tests/test-workflow/resources/refs/subregion.fa",
    "<repo>/.tests/test-workflow/resources/refs/subregion.fa.fai",
@@ -329,11 +329,11 @@
    "tasks/variant_calling_freebayes_germline/work/scatter/1-of-2.region.bed"
   ],
   "log": [
-   "tasks/variant_calling_freebayes_germline/work/case001subregion-N1-DNA1-WES1/log/case001subregion-N1-DNA1-WES1.run.1-of-2.log"
+   "tasks/variant_calling_freebayes_germline/work/FAM_case001subregion/log/FAM_case001subregion.run.1-of-2.log"
   ],
   "output": [
-   "tasks/variant_calling_freebayes_germline/work/case001subregion-N1-DNA1-WES1/out/case001subregion-N1-DNA1-WES1/calls/1-of-2.bcf",
-   "tasks/variant_calling_freebayes_germline/work/case001subregion-N1-DNA1-WES1/out/case001subregion-N1-DNA1-WES1/calls/1-of-2.bcf.csi"
+   "tasks/variant_calling_freebayes_germline/work/FAM_case001subregion/out/FAM_case001subregion/calls/1-of-2.bcf",
+   "tasks/variant_calling_freebayes_germline/work/FAM_case001subregion/out/FAM_case001subregion/calls/1-of-2.bcf.csi"
   ],
   "params": {
    "args": {
@@ -352,18 +352,18 @@
   },
   "rule": "variant_calling_freebayes_germline_variant_calling_freebayes_run",
   "temp": [
-   "tasks/variant_calling_freebayes_germline/work/case001subregion-N1-DNA1-WES1/out/case001subregion-N1-DNA1-WES1/calls/1-of-2.bcf",
-   "tasks/variant_calling_freebayes_germline/work/case001subregion-N1-DNA1-WES1/out/case001subregion-N1-DNA1-WES1/calls/1-of-2.bcf.csi"
+   "tasks/variant_calling_freebayes_germline/work/FAM_case001subregion/out/FAM_case001subregion/calls/1-of-2.bcf",
+   "tasks/variant_calling_freebayes_germline/work/FAM_case001subregion/out/FAM_case001subregion/calls/1-of-2.bcf.csi"
   ],
   "threads": 1,
   "wildcards": {
-   "library_name": "case001subregion-N1-DNA1-WES1",
+   "library_name": "FAM_case001subregion",
    "scatteritem": "1-of-2"
   },
   "wrapper": "file://<repo>/snappy_wrappers/wrappers/freebayes"
  },
  {
-  "benchmark": "tasks/variant_calling_freebayes_germline/benchmarks/case001subregion-N1-DNA1-WES1/case001subregion-N1-DNA1-WES1.run.2-of-2.tsv",
+  "benchmark": "tasks/variant_calling_freebayes_germline/benchmarks/FAM_case001subregion/FAM_case001subregion.run.2-of-2.tsv",
   "input": [
    "<repo>/.tests/test-workflow/resources/refs/subregion.fa",
    "<repo>/.tests/test-workflow/resources/refs/subregion.fa.fai",
@@ -377,11 +377,11 @@
    "tasks/variant_calling_freebayes_germline/work/scatter/2-of-2.region.bed"
   ],
   "log": [
-   "tasks/variant_calling_freebayes_germline/work/case001subregion-N1-DNA1-WES1/log/case001subregion-N1-DNA1-WES1.run.2-of-2.log"
+   "tasks/variant_calling_freebayes_germline/work/FAM_case001subregion/log/FAM_case001subregion.run.2-of-2.log"
   ],
   "output": [
-   "tasks/variant_calling_freebayes_germline/work/case001subregion-N1-DNA1-WES1/out/case001subregion-N1-DNA1-WES1/calls/2-of-2.bcf",
-   "tasks/variant_calling_freebayes_germline/work/case001subregion-N1-DNA1-WES1/out/case001subregion-N1-DNA1-WES1/calls/2-of-2.bcf.csi"
+   "tasks/variant_calling_freebayes_germline/work/FAM_case001subregion/out/FAM_case001subregion/calls/2-of-2.bcf",
+   "tasks/variant_calling_freebayes_germline/work/FAM_case001subregion/out/FAM_case001subregion/calls/2-of-2.bcf.csi"
   ],
   "params": {
    "args": {
@@ -400,12 +400,12 @@
   },
   "rule": "variant_calling_freebayes_germline_variant_calling_freebayes_run",
   "temp": [
-   "tasks/variant_calling_freebayes_germline/work/case001subregion-N1-DNA1-WES1/out/case001subregion-N1-DNA1-WES1/calls/2-of-2.bcf",
-   "tasks/variant_calling_freebayes_germline/work/case001subregion-N1-DNA1-WES1/out/case001subregion-N1-DNA1-WES1/calls/2-of-2.bcf.csi"
+   "tasks/variant_calling_freebayes_germline/work/FAM_case001subregion/out/FAM_case001subregion/calls/2-of-2.bcf",
+   "tasks/variant_calling_freebayes_germline/work/FAM_case001subregion/out/FAM_case001subregion/calls/2-of-2.bcf.csi"
   ],
   "threads": 1,
   "wildcards": {
-   "library_name": "case001subregion-N1-DNA1-WES1",
+   "library_name": "FAM_case001subregion",
    "scatteritem": "2-of-2"
   },
   "wrapper": "file://<repo>/snappy_wrappers/wrappers/freebayes"
@@ -454,10 +454,10 @@
  {
   "benchmark": null,
   "input": [
-   "tasks/variant_calling_varlociraptor_germline/work/case001subregion-N1-DNA1-WES1/out/case001subregion-N1-DNA1-WES1.vcf.gz",
-   "tasks/variant_calling_varlociraptor_germline/work/case001subregion-N1-DNA1-WES1/out/case001subregion-N1-DNA1-WES1.vcf.gz.md5",
-   "tasks/variant_calling_varlociraptor_germline/work/case001subregion-N1-DNA1-WES1/out/case001subregion-N1-DNA1-WES1.vcf.gz.tbi",
-   "tasks/variant_calling_varlociraptor_germline/work/case001subregion-N1-DNA1-WES1/out/case001subregion-N1-DNA1-WES1.vcf.gz.tbi.md5"
+   "tasks/variant_calling_varlociraptor_germline/work/FAM_case001subregion/out/FAM_case001subregion.vcf.gz",
+   "tasks/variant_calling_varlociraptor_germline/work/FAM_case001subregion/out/FAM_case001subregion.vcf.gz.md5",
+   "tasks/variant_calling_varlociraptor_germline/work/FAM_case001subregion/out/FAM_case001subregion.vcf.gz.tbi",
+   "tasks/variant_calling_varlociraptor_germline/work/FAM_case001subregion/out/FAM_case001subregion.vcf.gz.tbi.md5"
   ],
   "local": true,
   "log": [],
@@ -574,18 +574,18 @@
   "wrapper": "file://<repo>/snappy_wrappers/wrappers/varlociraptor/alignment_properties"
  },
  {
-  "benchmark": "tasks/variant_calling_varlociraptor_germline/benchmarks/case001subregion-N1-DNA1-WES1/case001subregion-N1-DNA1-WES1.call.1-of-2.tsv",
+  "benchmark": "tasks/variant_calling_varlociraptor_germline/benchmarks/FAM_case001subregion/FAM_case001subregion.call.1-of-2.tsv",
   "input": [
-   "tasks/variant_calling_varlociraptor_germline/work/case001subregion-N1-DNA1-WES1/out/case001subregion-N1-DNA1-WES1/observations/case001subregion-N1-DNA1-WES1.1-of-2.bcf",
-   "tasks/variant_calling_varlociraptor_germline/work/case001subregion-N1-DNA1-WES1/out/case001subregion-N1-DNA1-WES1/observations/case001subregionFather-N1-DNA1-WES1.1-of-2.bcf",
-   "tasks/variant_calling_varlociraptor_germline/work/case001subregion-N1-DNA1-WES1/out/case001subregion-N1-DNA1-WES1/observations/case001subregionMother-N1-DNA1-WES1.1-of-2.bcf"
+   "tasks/variant_calling_varlociraptor_germline/work/FAM_case001subregion/out/FAM_case001subregion/observations/case001subregion-N1-DNA1-WES1.1-of-2.bcf",
+   "tasks/variant_calling_varlociraptor_germline/work/FAM_case001subregion/out/FAM_case001subregion/observations/case001subregionFather-N1-DNA1-WES1.1-of-2.bcf",
+   "tasks/variant_calling_varlociraptor_germline/work/FAM_case001subregion/out/FAM_case001subregion/observations/case001subregionMother-N1-DNA1-WES1.1-of-2.bcf"
   ],
   "log": [
-   "tasks/variant_calling_varlociraptor_germline/work/case001subregion-N1-DNA1-WES1/log/case001subregion-N1-DNA1-WES1.call.1-of-2.log"
+   "tasks/variant_calling_varlociraptor_germline/work/FAM_case001subregion/log/FAM_case001subregion.call.1-of-2.log"
   ],
   "output": [
-   "tasks/variant_calling_varlociraptor_germline/work/case001subregion-N1-DNA1-WES1/out/case001subregion-N1-DNA1-WES1/calls/1-of-2.bcf",
-   "tasks/variant_calling_varlociraptor_germline/work/case001subregion-N1-DNA1-WES1/out/case001subregion-N1-DNA1-WES1/calls/1-of-2.bcf.csi"
+   "tasks/variant_calling_varlociraptor_germline/work/FAM_case001subregion/out/FAM_case001subregion/calls/1-of-2.bcf",
+   "tasks/variant_calling_varlociraptor_germline/work/FAM_case001subregion/out/FAM_case001subregion/calls/1-of-2.bcf.csi"
   ],
   "params": {
    "args": {
@@ -608,29 +608,29 @@
   },
   "rule": "variant_calling_varlociraptor_germline_variant_calling_varlociraptor_call",
   "temp": [
-   "tasks/variant_calling_varlociraptor_germline/work/case001subregion-N1-DNA1-WES1/out/case001subregion-N1-DNA1-WES1/calls/1-of-2.bcf",
-   "tasks/variant_calling_varlociraptor_germline/work/case001subregion-N1-DNA1-WES1/out/case001subregion-N1-DNA1-WES1/calls/1-of-2.bcf.csi"
+   "tasks/variant_calling_varlociraptor_germline/work/FAM_case001subregion/out/FAM_case001subregion/calls/1-of-2.bcf",
+   "tasks/variant_calling_varlociraptor_germline/work/FAM_case001subregion/out/FAM_case001subregion/calls/1-of-2.bcf.csi"
   ],
   "threads": 1,
   "wildcards": {
-   "library_name": "case001subregion-N1-DNA1-WES1",
+   "library_name": "FAM_case001subregion",
    "scatteritem": "1-of-2"
   },
   "wrapper": "file://<repo>/snappy_wrappers/wrappers/varlociraptor/call"
  },
  {
-  "benchmark": "tasks/variant_calling_varlociraptor_germline/benchmarks/case001subregion-N1-DNA1-WES1/case001subregion-N1-DNA1-WES1.call.2-of-2.tsv",
+  "benchmark": "tasks/variant_calling_varlociraptor_germline/benchmarks/FAM_case001subregion/FAM_case001subregion.call.2-of-2.tsv",
   "input": [
-   "tasks/variant_calling_varlociraptor_germline/work/case001subregion-N1-DNA1-WES1/out/case001subregion-N1-DNA1-WES1/observations/case001subregion-N1-DNA1-WES1.2-of-2.bcf",
-   "tasks/variant_calling_varlociraptor_germline/work/case001subregion-N1-DNA1-WES1/out/case001subregion-N1-DNA1-WES1/observations/case001subregionFather-N1-DNA1-WES1.2-of-2.bcf",
-   "tasks/variant_calling_varlociraptor_germline/work/case001subregion-N1-DNA1-WES1/out/case001subregion-N1-DNA1-WES1/observations/case001subregionMother-N1-DNA1-WES1.2-of-2.bcf"
+   "tasks/variant_calling_varlociraptor_germline/work/FAM_case001subregion/out/FAM_case001subregion/observations/case001subregion-N1-DNA1-WES1.2-of-2.bcf",
+   "tasks/variant_calling_varlociraptor_germline/work/FAM_case001subregion/out/FAM_case001subregion/observations/case001subregionFather-N1-DNA1-WES1.2-of-2.bcf",
+   "tasks/variant_calling_varlociraptor_germline/work/FAM_case001subregion/out/FAM_case001subregion/observations/case001subregionMother-N1-DNA1-WES1.2-of-2.bcf"
   ],
   "log": [
-   "tasks/variant_calling_varlociraptor_germline/work/case001subregion-N1-DNA1-WES1/log/case001subregion-N1-DNA1-WES1.call.2-of-2.log"
+   "tasks/variant_calling_varlociraptor_germline/work/FAM_case001subregion/log/FAM_case001subregion.call.2-of-2.log"
   ],
   "output": [
-   "tasks/variant_calling_varlociraptor_germline/work/case001subregion-N1-DNA1-WES1/out/case001subregion-N1-DNA1-WES1/calls/2-of-2.bcf",
-   "tasks/variant_calling_varlociraptor_germline/work/case001subregion-N1-DNA1-WES1/out/case001subregion-N1-DNA1-WES1/calls/2-of-2.bcf.csi"
+   "tasks/variant_calling_varlociraptor_germline/work/FAM_case001subregion/out/FAM_case001subregion/calls/2-of-2.bcf",
+   "tasks/variant_calling_varlociraptor_germline/work/FAM_case001subregion/out/FAM_case001subregion/calls/2-of-2.bcf.csi"
   ],
   "params": {
    "args": {
@@ -653,32 +653,32 @@
   },
   "rule": "variant_calling_varlociraptor_germline_variant_calling_varlociraptor_call",
   "temp": [
-   "tasks/variant_calling_varlociraptor_germline/work/case001subregion-N1-DNA1-WES1/out/case001subregion-N1-DNA1-WES1/calls/2-of-2.bcf",
-   "tasks/variant_calling_varlociraptor_germline/work/case001subregion-N1-DNA1-WES1/out/case001subregion-N1-DNA1-WES1/calls/2-of-2.bcf.csi"
+   "tasks/variant_calling_varlociraptor_germline/work/FAM_case001subregion/out/FAM_case001subregion/calls/2-of-2.bcf",
+   "tasks/variant_calling_varlociraptor_germline/work/FAM_case001subregion/out/FAM_case001subregion/calls/2-of-2.bcf.csi"
   ],
   "threads": 1,
   "wildcards": {
-   "library_name": "case001subregion-N1-DNA1-WES1",
+   "library_name": "FAM_case001subregion",
    "scatteritem": "2-of-2"
   },
   "wrapper": "file://<repo>/snappy_wrappers/wrappers/varlociraptor/call"
  },
  {
-  "benchmark": "tasks/variant_calling_varlociraptor_germline/benchmarks/case001subregion-N1-DNA1-WES1/case001subregion-N1-DNA1-WES1.gather.tsv",
+  "benchmark": "tasks/variant_calling_varlociraptor_germline/benchmarks/FAM_case001subregion/FAM_case001subregion.gather.tsv",
   "input": [
-   "tasks/variant_calling_varlociraptor_germline/work/case001subregion-N1-DNA1-WES1/out/case001subregion-N1-DNA1-WES1/calls/1-of-2.bcf",
-   "tasks/variant_calling_varlociraptor_germline/work/case001subregion-N1-DNA1-WES1/out/case001subregion-N1-DNA1-WES1/calls/2-of-2.bcf",
-   "tasks/variant_calling_varlociraptor_germline/work/case001subregion-N1-DNA1-WES1/out/case001subregion-N1-DNA1-WES1/calls/1-of-2.bcf.csi",
-   "tasks/variant_calling_varlociraptor_germline/work/case001subregion-N1-DNA1-WES1/out/case001subregion-N1-DNA1-WES1/calls/2-of-2.bcf.csi"
+   "tasks/variant_calling_varlociraptor_germline/work/FAM_case001subregion/out/FAM_case001subregion/calls/1-of-2.bcf",
+   "tasks/variant_calling_varlociraptor_germline/work/FAM_case001subregion/out/FAM_case001subregion/calls/2-of-2.bcf",
+   "tasks/variant_calling_varlociraptor_germline/work/FAM_case001subregion/out/FAM_case001subregion/calls/1-of-2.bcf.csi",
+   "tasks/variant_calling_varlociraptor_germline/work/FAM_case001subregion/out/FAM_case001subregion/calls/2-of-2.bcf.csi"
   ],
   "log": [
-   "tasks/variant_calling_varlociraptor_germline/work/case001subregion-N1-DNA1-WES1/log/case001subregion-N1-DNA1-WES1.gather.log"
+   "tasks/variant_calling_varlociraptor_germline/work/FAM_case001subregion/log/FAM_case001subregion.gather.log"
   ],
   "output": [
-   "tasks/variant_calling_varlociraptor_germline/work/case001subregion-N1-DNA1-WES1/out/case001subregion-N1-DNA1-WES1.vcf.gz",
-   "tasks/variant_calling_varlociraptor_germline/work/case001subregion-N1-DNA1-WES1/out/case001subregion-N1-DNA1-WES1.vcf.gz.md5",
-   "tasks/variant_calling_varlociraptor_germline/work/case001subregion-N1-DNA1-WES1/out/case001subregion-N1-DNA1-WES1.vcf.gz.tbi",
-   "tasks/variant_calling_varlociraptor_germline/work/case001subregion-N1-DNA1-WES1/out/case001subregion-N1-DNA1-WES1.vcf.gz.tbi.md5"
+   "tasks/variant_calling_varlociraptor_germline/work/FAM_case001subregion/out/FAM_case001subregion.vcf.gz",
+   "tasks/variant_calling_varlociraptor_germline/work/FAM_case001subregion/out/FAM_case001subregion.vcf.gz.md5",
+   "tasks/variant_calling_varlociraptor_germline/work/FAM_case001subregion/out/FAM_case001subregion.vcf.gz.tbi",
+   "tasks/variant_calling_varlociraptor_germline/work/FAM_case001subregion/out/FAM_case001subregion.vcf.gz.tbi.md5"
   ],
   "params": {},
   "resources": {
@@ -692,26 +692,26 @@
   "temp": [],
   "threads": 1,
   "wildcards": {
-   "library_name": "case001subregion-N1-DNA1-WES1"
+   "library_name": "FAM_case001subregion"
   },
   "wrapper": "file://<repo>/snappy_wrappers/wrappers/bcftools/concat"
  },
  {
-  "benchmark": "tasks/variant_calling_varlociraptor_germline/benchmarks/case001subregion-N1-DNA1-WES1/case001subregion-N1-DNA1-WES1.preprocess.case001subregion-N1-DNA1-WES1.1-of-2.tsv",
+  "benchmark": "tasks/variant_calling_varlociraptor_germline/benchmarks/FAM_case001subregion/FAM_case001subregion.preprocess.case001subregion-N1-DNA1-WES1.1-of-2.tsv",
   "input": [
    "<repo>/.tests/test-workflow/resources/refs/subregion.fa",
    "<repo>/.tests/test-workflow/resources/refs/subregion.fa.fai",
    "<repo>/.tests/test-workflow/resources/refs/subregion.dict",
-   "tasks/variant_calling_varlociraptor_germline/work/case001subregion-N1-DNA1-WES1/out/case001subregion-N1-DNA1-WES1/candidates/1-of-2.bcf",
+   "tasks/variant_calling_varlociraptor_germline/work/FAM_case001subregion/out/FAM_case001subregion/candidates/1-of-2.bcf",
    "tasks/variant_calling_varlociraptor_germline/work/case001subregion-N1-DNA1-WES1/out/case001subregion-N1-DNA1-WES1.alignment_properties.json",
    "tasks/ngs_mapping_bwa/work/case001subregion-N1-DNA1-WES1/out/case001subregion-N1-DNA1-WES1.bam",
    "tasks/ngs_mapping_bwa/work/case001subregion-N1-DNA1-WES1/out/case001subregion-N1-DNA1-WES1.bam.bai"
   ],
   "log": [
-   "tasks/variant_calling_varlociraptor_germline/work/case001subregion-N1-DNA1-WES1/log/case001subregion-N1-DNA1-WES1.preprocess.case001subregion-N1-DNA1-WES1.1-of-2.log"
+   "tasks/variant_calling_varlociraptor_germline/work/FAM_case001subregion/log/FAM_case001subregion.preprocess.case001subregion-N1-DNA1-WES1.1-of-2.log"
   ],
   "output": [
-   "tasks/variant_calling_varlociraptor_germline/work/case001subregion-N1-DNA1-WES1/out/case001subregion-N1-DNA1-WES1/observations/case001subregion-N1-DNA1-WES1.1-of-2.bcf"
+   "tasks/variant_calling_varlociraptor_germline/work/FAM_case001subregion/out/FAM_case001subregion/observations/case001subregion-N1-DNA1-WES1.1-of-2.bcf"
   ],
   "params": {
    "args": {
@@ -728,32 +728,32 @@
   },
   "rule": "variant_calling_varlociraptor_germline_variant_calling_varlociraptor_preprocess",
   "temp": [
-   "tasks/variant_calling_varlociraptor_germline/work/case001subregion-N1-DNA1-WES1/out/case001subregion-N1-DNA1-WES1/observations/case001subregion-N1-DNA1-WES1.1-of-2.bcf"
+   "tasks/variant_calling_varlociraptor_germline/work/FAM_case001subregion/out/FAM_case001subregion/observations/case001subregion-N1-DNA1-WES1.1-of-2.bcf"
   ],
   "threads": 1,
   "wildcards": {
-   "library_name": "case001subregion-N1-DNA1-WES1",
+   "library_name": "FAM_case001subregion",
    "member": "case001subregion-N1-DNA1-WES1",
    "scatteritem": "1-of-2"
   },
   "wrapper": "file://<repo>/snappy_wrappers/wrappers/varlociraptor/preprocess"
  },
  {
-  "benchmark": "tasks/variant_calling_varlociraptor_germline/benchmarks/case001subregion-N1-DNA1-WES1/case001subregion-N1-DNA1-WES1.preprocess.case001subregion-N1-DNA1-WES1.2-of-2.tsv",
+  "benchmark": "tasks/variant_calling_varlociraptor_germline/benchmarks/FAM_case001subregion/FAM_case001subregion.preprocess.case001subregion-N1-DNA1-WES1.2-of-2.tsv",
   "input": [
    "<repo>/.tests/test-workflow/resources/refs/subregion.fa",
    "<repo>/.tests/test-workflow/resources/refs/subregion.fa.fai",
    "<repo>/.tests/test-workflow/resources/refs/subregion.dict",
-   "tasks/variant_calling_varlociraptor_germline/work/case001subregion-N1-DNA1-WES1/out/case001subregion-N1-DNA1-WES1/candidates/2-of-2.bcf",
+   "tasks/variant_calling_varlociraptor_germline/work/FAM_case001subregion/out/FAM_case001subregion/candidates/2-of-2.bcf",
    "tasks/variant_calling_varlociraptor_germline/work/case001subregion-N1-DNA1-WES1/out/case001subregion-N1-DNA1-WES1.alignment_properties.json",
    "tasks/ngs_mapping_bwa/work/case001subregion-N1-DNA1-WES1/out/case001subregion-N1-DNA1-WES1.bam",
    "tasks/ngs_mapping_bwa/work/case001subregion-N1-DNA1-WES1/out/case001subregion-N1-DNA1-WES1.bam.bai"
   ],
   "log": [
-   "tasks/variant_calling_varlociraptor_germline/work/case001subregion-N1-DNA1-WES1/log/case001subregion-N1-DNA1-WES1.preprocess.case001subregion-N1-DNA1-WES1.2-of-2.log"
+   "tasks/variant_calling_varlociraptor_germline/work/FAM_case001subregion/log/FAM_case001subregion.preprocess.case001subregion-N1-DNA1-WES1.2-of-2.log"
   ],
   "output": [
-   "tasks/variant_calling_varlociraptor_germline/work/case001subregion-N1-DNA1-WES1/out/case001subregion-N1-DNA1-WES1/observations/case001subregion-N1-DNA1-WES1.2-of-2.bcf"
+   "tasks/variant_calling_varlociraptor_germline/work/FAM_case001subregion/out/FAM_case001subregion/observations/case001subregion-N1-DNA1-WES1.2-of-2.bcf"
   ],
   "params": {
    "args": {
@@ -770,32 +770,32 @@
   },
   "rule": "variant_calling_varlociraptor_germline_variant_calling_varlociraptor_preprocess",
   "temp": [
-   "tasks/variant_calling_varlociraptor_germline/work/case001subregion-N1-DNA1-WES1/out/case001subregion-N1-DNA1-WES1/observations/case001subregion-N1-DNA1-WES1.2-of-2.bcf"
+   "tasks/variant_calling_varlociraptor_germline/work/FAM_case001subregion/out/FAM_case001subregion/observations/case001subregion-N1-DNA1-WES1.2-of-2.bcf"
   ],
   "threads": 1,
   "wildcards": {
-   "library_name": "case001subregion-N1-DNA1-WES1",
+   "library_name": "FAM_case001subregion",
    "member": "case001subregion-N1-DNA1-WES1",
    "scatteritem": "2-of-2"
   },
   "wrapper": "file://<repo>/snappy_wrappers/wrappers/varlociraptor/preprocess"
  },
  {
-  "benchmark": "tasks/variant_calling_varlociraptor_germline/benchmarks/case001subregion-N1-DNA1-WES1/case001subregion-N1-DNA1-WES1.preprocess.case001subregionFather-N1-DNA1-WES1.1-of-2.tsv",
+  "benchmark": "tasks/variant_calling_varlociraptor_germline/benchmarks/FAM_case001subregion/FAM_case001subregion.preprocess.case001subregionFather-N1-DNA1-WES1.1-of-2.tsv",
   "input": [
    "<repo>/.tests/test-workflow/resources/refs/subregion.fa",
    "<repo>/.tests/test-workflow/resources/refs/subregion.fa.fai",
    "<repo>/.tests/test-workflow/resources/refs/subregion.dict",
-   "tasks/variant_calling_varlociraptor_germline/work/case001subregion-N1-DNA1-WES1/out/case001subregion-N1-DNA1-WES1/candidates/1-of-2.bcf",
+   "tasks/variant_calling_varlociraptor_germline/work/FAM_case001subregion/out/FAM_case001subregion/candidates/1-of-2.bcf",
    "tasks/variant_calling_varlociraptor_germline/work/case001subregionFather-N1-DNA1-WES1/out/case001subregionFather-N1-DNA1-WES1.alignment_properties.json",
    "tasks/ngs_mapping_bwa/work/case001subregionFather-N1-DNA1-WES1/out/case001subregionFather-N1-DNA1-WES1.bam",
    "tasks/ngs_mapping_bwa/work/case001subregionFather-N1-DNA1-WES1/out/case001subregionFather-N1-DNA1-WES1.bam.bai"
   ],
   "log": [
-   "tasks/variant_calling_varlociraptor_germline/work/case001subregion-N1-DNA1-WES1/log/case001subregion-N1-DNA1-WES1.preprocess.case001subregionFather-N1-DNA1-WES1.1-of-2.log"
+   "tasks/variant_calling_varlociraptor_germline/work/FAM_case001subregion/log/FAM_case001subregion.preprocess.case001subregionFather-N1-DNA1-WES1.1-of-2.log"
   ],
   "output": [
-   "tasks/variant_calling_varlociraptor_germline/work/case001subregion-N1-DNA1-WES1/out/case001subregion-N1-DNA1-WES1/observations/case001subregionFather-N1-DNA1-WES1.1-of-2.bcf"
+   "tasks/variant_calling_varlociraptor_germline/work/FAM_case001subregion/out/FAM_case001subregion/observations/case001subregionFather-N1-DNA1-WES1.1-of-2.bcf"
   ],
   "params": {
    "args": {
@@ -812,32 +812,32 @@
   },
   "rule": "variant_calling_varlociraptor_germline_variant_calling_varlociraptor_preprocess",
   "temp": [
-   "tasks/variant_calling_varlociraptor_germline/work/case001subregion-N1-DNA1-WES1/out/case001subregion-N1-DNA1-WES1/observations/case001subregionFather-N1-DNA1-WES1.1-of-2.bcf"
+   "tasks/variant_calling_varlociraptor_germline/work/FAM_case001subregion/out/FAM_case001subregion/observations/case001subregionFather-N1-DNA1-WES1.1-of-2.bcf"
   ],
   "threads": 1,
   "wildcards": {
-   "library_name": "case001subregion-N1-DNA1-WES1",
+   "library_name": "FAM_case001subregion",
    "member": "case001subregionFather-N1-DNA1-WES1",
    "scatteritem": "1-of-2"
   },
   "wrapper": "file://<repo>/snappy_wrappers/wrappers/varlociraptor/preprocess"
  },
  {
-  "benchmark": "tasks/variant_calling_varlociraptor_germline/benchmarks/case001subregion-N1-DNA1-WES1/case001subregion-N1-DNA1-WES1.preprocess.case001subregionFather-N1-DNA1-WES1.2-of-2.tsv",
+  "benchmark": "tasks/variant_calling_varlociraptor_germline/benchmarks/FAM_case001subregion/FAM_case001subregion.preprocess.case001subregionFather-N1-DNA1-WES1.2-of-2.tsv",
   "input": [
    "<repo>/.tests/test-workflow/resources/refs/subregion.fa",
    "<repo>/.tests/test-workflow/resources/refs/subregion.fa.fai",
    "<repo>/.tests/test-workflow/resources/refs/subregion.dict",
-   "tasks/variant_calling_varlociraptor_germline/work/case001subregion-N1-DNA1-WES1/out/case001subregion-N1-DNA1-WES1/candidates/2-of-2.bcf",
+   "tasks/variant_calling_varlociraptor_germline/work/FAM_case001subregion/out/FAM_case001subregion/candidates/2-of-2.bcf",
    "tasks/variant_calling_varlociraptor_germline/work/case001subregionFather-N1-DNA1-WES1/out/case001subregionFather-N1-DNA1-WES1.alignment_properties.json",
    "tasks/ngs_mapping_bwa/work/case001subregionFather-N1-DNA1-WES1/out/case001subregionFather-N1-DNA1-WES1.bam",
    "tasks/ngs_mapping_bwa/work/case001subregionFather-N1-DNA1-WES1/out/case001subregionFather-N1-DNA1-WES1.bam.bai"
   ],
   "log": [
-   "tasks/variant_calling_varlociraptor_germline/work/case001subregion-N1-DNA1-WES1/log/case001subregion-N1-DNA1-WES1.preprocess.case001subregionFather-N1-DNA1-WES1.2-of-2.log"
+   "tasks/variant_calling_varlociraptor_germline/work/FAM_case001subregion/log/FAM_case001subregion.preprocess.case001subregionFather-N1-DNA1-WES1.2-of-2.log"
   ],
   "output": [
-   "tasks/variant_calling_varlociraptor_germline/work/case001subregion-N1-DNA1-WES1/out/case001subregion-N1-DNA1-WES1/observations/case001subregionFather-N1-DNA1-WES1.2-of-2.bcf"
+   "tasks/variant_calling_varlociraptor_germline/work/FAM_case001subregion/out/FAM_case001subregion/observations/case001subregionFather-N1-DNA1-WES1.2-of-2.bcf"
   ],
   "params": {
    "args": {
@@ -854,32 +854,32 @@
   },
   "rule": "variant_calling_varlociraptor_germline_variant_calling_varlociraptor_preprocess",
   "temp": [
-   "tasks/variant_calling_varlociraptor_germline/work/case001subregion-N1-DNA1-WES1/out/case001subregion-N1-DNA1-WES1/observations/case001subregionFather-N1-DNA1-WES1.2-of-2.bcf"
+   "tasks/variant_calling_varlociraptor_germline/work/FAM_case001subregion/out/FAM_case001subregion/observations/case001subregionFather-N1-DNA1-WES1.2-of-2.bcf"
   ],
   "threads": 1,
   "wildcards": {
-   "library_name": "case001subregion-N1-DNA1-WES1",
+   "library_name": "FAM_case001subregion",
    "member": "case001subregionFather-N1-DNA1-WES1",
    "scatteritem": "2-of-2"
   },
   "wrapper": "file://<repo>/snappy_wrappers/wrappers/varlociraptor/preprocess"
  },
  {
-  "benchmark": "tasks/variant_calling_varlociraptor_germline/benchmarks/case001subregion-N1-DNA1-WES1/case001subregion-N1-DNA1-WES1.preprocess.case001subregionMother-N1-DNA1-WES1.1-of-2.tsv",
+  "benchmark": "tasks/variant_calling_varlociraptor_germline/benchmarks/FAM_case001subregion/FAM_case001subregion.preprocess.case001subregionMother-N1-DNA1-WES1.1-of-2.tsv",
   "input": [
    "<repo>/.tests/test-workflow/resources/refs/subregion.fa",
    "<repo>/.tests/test-workflow/resources/refs/subregion.fa.fai",
    "<repo>/.tests/test-workflow/resources/refs/subregion.dict",
-   "tasks/variant_calling_varlociraptor_germline/work/case001subregion-N1-DNA1-WES1/out/case001subregion-N1-DNA1-WES1/candidates/1-of-2.bcf",
+   "tasks/variant_calling_varlociraptor_germline/work/FAM_case001subregion/out/FAM_case001subregion/candidates/1-of-2.bcf",
    "tasks/variant_calling_varlociraptor_germline/work/case001subregionMother-N1-DNA1-WES1/out/case001subregionMother-N1-DNA1-WES1.alignment_properties.json",
    "tasks/ngs_mapping_bwa/work/case001subregionMother-N1-DNA1-WES1/out/case001subregionMother-N1-DNA1-WES1.bam",
    "tasks/ngs_mapping_bwa/work/case001subregionMother-N1-DNA1-WES1/out/case001subregionMother-N1-DNA1-WES1.bam.bai"
   ],
   "log": [
-   "tasks/variant_calling_varlociraptor_germline/work/case001subregion-N1-DNA1-WES1/log/case001subregion-N1-DNA1-WES1.preprocess.case001subregionMother-N1-DNA1-WES1.1-of-2.log"
+   "tasks/variant_calling_varlociraptor_germline/work/FAM_case001subregion/log/FAM_case001subregion.preprocess.case001subregionMother-N1-DNA1-WES1.1-of-2.log"
   ],
   "output": [
-   "tasks/variant_calling_varlociraptor_germline/work/case001subregion-N1-DNA1-WES1/out/case001subregion-N1-DNA1-WES1/observations/case001subregionMother-N1-DNA1-WES1.1-of-2.bcf"
+   "tasks/variant_calling_varlociraptor_germline/work/FAM_case001subregion/out/FAM_case001subregion/observations/case001subregionMother-N1-DNA1-WES1.1-of-2.bcf"
   ],
   "params": {
    "args": {
@@ -896,32 +896,32 @@
   },
   "rule": "variant_calling_varlociraptor_germline_variant_calling_varlociraptor_preprocess",
   "temp": [
-   "tasks/variant_calling_varlociraptor_germline/work/case001subregion-N1-DNA1-WES1/out/case001subregion-N1-DNA1-WES1/observations/case001subregionMother-N1-DNA1-WES1.1-of-2.bcf"
+   "tasks/variant_calling_varlociraptor_germline/work/FAM_case001subregion/out/FAM_case001subregion/observations/case001subregionMother-N1-DNA1-WES1.1-of-2.bcf"
   ],
   "threads": 1,
   "wildcards": {
-   "library_name": "case001subregion-N1-DNA1-WES1",
+   "library_name": "FAM_case001subregion",
    "member": "case001subregionMother-N1-DNA1-WES1",
    "scatteritem": "1-of-2"
   },
   "wrapper": "file://<repo>/snappy_wrappers/wrappers/varlociraptor/preprocess"
  },
  {
-  "benchmark": "tasks/variant_calling_varlociraptor_germline/benchmarks/case001subregion-N1-DNA1-WES1/case001subregion-N1-DNA1-WES1.preprocess.case001subregionMother-N1-DNA1-WES1.2-of-2.tsv",
+  "benchmark": "tasks/variant_calling_varlociraptor_germline/benchmarks/FAM_case001subregion/FAM_case001subregion.preprocess.case001subregionMother-N1-DNA1-WES1.2-of-2.tsv",
   "input": [
    "<repo>/.tests/test-workflow/resources/refs/subregion.fa",
    "<repo>/.tests/test-workflow/resources/refs/subregion.fa.fai",
    "<repo>/.tests/test-workflow/resources/refs/subregion.dict",
-   "tasks/variant_calling_varlociraptor_germline/work/case001subregion-N1-DNA1-WES1/out/case001subregion-N1-DNA1-WES1/candidates/2-of-2.bcf",
+   "tasks/variant_calling_varlociraptor_germline/work/FAM_case001subregion/out/FAM_case001subregion/candidates/2-of-2.bcf",
    "tasks/variant_calling_varlociraptor_germline/work/case001subregionMother-N1-DNA1-WES1/out/case001subregionMother-N1-DNA1-WES1.alignment_properties.json",
    "tasks/ngs_mapping_bwa/work/case001subregionMother-N1-DNA1-WES1/out/case001subregionMother-N1-DNA1-WES1.bam",
    "tasks/ngs_mapping_bwa/work/case001subregionMother-N1-DNA1-WES1/out/case001subregionMother-N1-DNA1-WES1.bam.bai"
   ],
   "log": [
-   "tasks/variant_calling_varlociraptor_germline/work/case001subregion-N1-DNA1-WES1/log/case001subregion-N1-DNA1-WES1.preprocess.case001subregionMother-N1-DNA1-WES1.2-of-2.log"
+   "tasks/variant_calling_varlociraptor_germline/work/FAM_case001subregion/log/FAM_case001subregion.preprocess.case001subregionMother-N1-DNA1-WES1.2-of-2.log"
   ],
   "output": [
-   "tasks/variant_calling_varlociraptor_germline/work/case001subregion-N1-DNA1-WES1/out/case001subregion-N1-DNA1-WES1/observations/case001subregionMother-N1-DNA1-WES1.2-of-2.bcf"
+   "tasks/variant_calling_varlociraptor_germline/work/FAM_case001subregion/out/FAM_case001subregion/observations/case001subregionMother-N1-DNA1-WES1.2-of-2.bcf"
   ],
   "params": {
    "args": {
@@ -938,27 +938,27 @@
   },
   "rule": "variant_calling_varlociraptor_germline_variant_calling_varlociraptor_preprocess",
   "temp": [
-   "tasks/variant_calling_varlociraptor_germline/work/case001subregion-N1-DNA1-WES1/out/case001subregion-N1-DNA1-WES1/observations/case001subregionMother-N1-DNA1-WES1.2-of-2.bcf"
+   "tasks/variant_calling_varlociraptor_germline/work/FAM_case001subregion/out/FAM_case001subregion/observations/case001subregionMother-N1-DNA1-WES1.2-of-2.bcf"
   ],
   "threads": 1,
   "wildcards": {
-   "library_name": "case001subregion-N1-DNA1-WES1",
+   "library_name": "FAM_case001subregion",
    "member": "case001subregionMother-N1-DNA1-WES1",
    "scatteritem": "2-of-2"
   },
   "wrapper": "file://<repo>/snappy_wrappers/wrappers/varlociraptor/preprocess"
  },
  {
-  "benchmark": "tasks/variant_calling_varlociraptor_germline/benchmarks/case001subregion-N1-DNA1-WES1/case001subregion-N1-DNA1-WES1.scatter.tsv",
+  "benchmark": "tasks/variant_calling_varlociraptor_germline/benchmarks/FAM_case001subregion/FAM_case001subregion.scatter.tsv",
   "input": [
-   "tasks/variant_calling_freebayes_germline/work/case001subregion-N1-DNA1-WES1/out/case001subregion-N1-DNA1-WES1.vcf.gz"
+   "tasks/variant_calling_freebayes_germline/work/FAM_case001subregion/out/FAM_case001subregion.vcf.gz"
   ],
   "log": [
-   "tasks/variant_calling_varlociraptor_germline/work/case001subregion-N1-DNA1-WES1/log/case001subregion-N1-DNA1-WES1.scatter.log"
+   "tasks/variant_calling_varlociraptor_germline/work/FAM_case001subregion/log/FAM_case001subregion.scatter.log"
   ],
   "output": [
-   "tasks/variant_calling_varlociraptor_germline/work/case001subregion-N1-DNA1-WES1/out/case001subregion-N1-DNA1-WES1/candidates/1-of-2.bcf",
-   "tasks/variant_calling_varlociraptor_germline/work/case001subregion-N1-DNA1-WES1/out/case001subregion-N1-DNA1-WES1/candidates/2-of-2.bcf"
+   "tasks/variant_calling_varlociraptor_germline/work/FAM_case001subregion/out/FAM_case001subregion/candidates/1-of-2.bcf",
+   "tasks/variant_calling_varlociraptor_germline/work/FAM_case001subregion/out/FAM_case001subregion/candidates/2-of-2.bcf"
   ],
   "params": {},
   "resources": {
@@ -970,12 +970,12 @@
   },
   "rule": "variant_calling_varlociraptor_germline_variant_calling_varlociraptor_scatter",
   "temp": [
-   "tasks/variant_calling_varlociraptor_germline/work/case001subregion-N1-DNA1-WES1/out/case001subregion-N1-DNA1-WES1/candidates/1-of-2.bcf",
-   "tasks/variant_calling_varlociraptor_germline/work/case001subregion-N1-DNA1-WES1/out/case001subregion-N1-DNA1-WES1/candidates/2-of-2.bcf"
+   "tasks/variant_calling_varlociraptor_germline/work/FAM_case001subregion/out/FAM_case001subregion/candidates/1-of-2.bcf",
+   "tasks/variant_calling_varlociraptor_germline/work/FAM_case001subregion/out/FAM_case001subregion/candidates/2-of-2.bcf"
   ],
   "threads": 1,
   "wildcards": {
-   "library_name": "case001subregion-N1-DNA1-WES1"
+   "library_name": "FAM_case001subregion"
   },
   "wrapper": "file://<repo>/snappy_wrappers/wrappers/varlociraptor/split_candidates"
  }
