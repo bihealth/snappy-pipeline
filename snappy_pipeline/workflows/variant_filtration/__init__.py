@@ -140,11 +140,11 @@ class VariantFiltrationStepPart(BaseStepPart):
         "run": ResourceUsage(threads=1, runtime="4h", mem=f"{8 * 1024}MB"),
     }
     result_keys = {"run": tuple(_OUTPUTS)}
-    entity_wildcard = "tumor_library"
+    entity_wildcard = "library_name"
 
     @dictify
     def _get_input_files_run(self, wildcards: Wildcards):
-        lib = wildcards.tumor_library
+        lib = wildcards.library_name
         variant = self.parent.get_upstream_paths("variants", library_name=lib)
         # Accept both typed schema and plain dict
         if isinstance(variant, dict):
@@ -156,12 +156,11 @@ class VariantFiltrationStepPart(BaseStepPart):
 
     def _get_output_files_run(self):
         return {
-            key: f"work/{{tumor_library}}/out/{{tumor_library}}{ext}"
-            for key, ext in _OUTPUTS.items()
+            key: f"work/{{library_name}}/out/{{library_name}}{ext}" for key, ext in _OUTPUTS.items()
         }
 
     def _get_log_file(self, action):
-        return {"log": "work/{tumor_library}/log/{tumor_library}.log"}
+        return {"log": "work/{library_name}/log/{library_name}.log"}
 
     def _get_params_run(self, wildcards: Wildcards) -> dict[str, Any]:
         cfg = getattr(self.config, self.config.tool)
@@ -191,7 +190,7 @@ class _BamAwareStepPart(VariantFiltrationStepPart):
 
         yield from self.parent.reference_inputs().items()
 
-        lib = self.parent.primary_library(wildcards.tumor_library)
+        lib = self.parent.primary_library(wildcards.library_name)
         tumor_aln: ExpectedAlignments = self.parent.get_upstream_paths(
             "alignments", library_name=lib
         )
@@ -378,7 +377,7 @@ class VarlociraptorCallsReportStepPart(BaseStepPart):
 
     name = "calls_report"
     actions = ("run",)
-    entity_wildcard = "tumor_library"
+    entity_wildcard = "library_name"
     result_keys = ("tsv", "tsv_md5")
     resource_usage = {"run": ResourceUsage(threads=1, runtime="2h", mem="4GB")}
 
@@ -393,7 +392,7 @@ class VarlociraptorCallsReportStepPart(BaseStepPart):
     }
 
     def _get_input_files_run(self, wildcards: Wildcards):
-        lib = wildcards.tumor_library
+        lib = wildcards.library_name
         return {
             "vcf": f"work/{lib}/out/{lib}.vcf.gz",
             "vcf_tbi": f"work/{lib}/out/{lib}.vcf.gz.tbi",
@@ -401,16 +400,16 @@ class VarlociraptorCallsReportStepPart(BaseStepPart):
 
     @dictify
     def _get_output_files_run(self):
-        tsv = "work/{tumor_library}/report/calls/{tumor_library}.calls.tsv"
+        tsv = "work/{library_name}/report/calls/{library_name}.calls.tsv"
         yield "tsv", tsv
         yield "tsv_md5", tsv + ".md5"
-        yield "html", directory("work/{tumor_library}/report/calls/html")
+        yield "html", directory("work/{library_name}/report/calls/html")
 
     def _get_log_file_run(self):
-        return {"log": "work/{tumor_library}/log/{tumor_library}.calls_report.log"}
+        return {"log": "work/{library_name}/log/{library_name}.calls_report.log"}
 
     def _get_params_run(self, wildcards: Wildcards) -> dict[str, Any]:
-        return {"title": f"{self.parent.task_name}: calls of {wildcards.tumor_library}"}
+        return {"title": f"{self.parent.task_name}: calls of {wildcards.library_name}"}
 
 
 _TOOL_STEP_PART: dict[str, type[VariantFiltrationStepPart]] = {

@@ -16,7 +16,7 @@ def _part():
 
 def test_the_report_reads_the_filtered_vcf_of_the_entity():
     part = _part()
-    wildcards = SimpleNamespace(tumor_library="P001-N1-DNA1-WES1")
+    wildcards = SimpleNamespace(library_name="P001-N1-DNA1-WES1")
 
     assert part._get_input_files_run(wildcards) == {
         "vcf": "work/P001-N1-DNA1-WES1/out/P001-N1-DNA1-WES1.vcf.gz",
@@ -28,10 +28,10 @@ def test_the_report_reads_the_filtered_vcf_of_the_entity():
 def test_the_report_writes_the_calls_table_and_the_site():
     outputs = _part()._get_output_files_run()
 
-    assert outputs["tsv"] == "work/{tumor_library}/report/calls/{tumor_library}.calls.tsv"
+    assert outputs["tsv"] == "work/{library_name}/report/calls/{library_name}.calls.tsv"
     assert outputs["tsv_md5"] == outputs["tsv"] + ".md5"
     assert is_flagged(outputs["html"], "directory")
-    assert str(outputs["html"]) == "work/{tumor_library}/report/calls/html"
+    assert str(outputs["html"]) == "work/{library_name}/report/calls/html"
     assert VarlociraptorCallsReportStepPart.result_keys == ("tsv", "tsv_md5")
     spec = VarlociraptorCallsReportStepPart.report_outputs["run"]["html"]
     assert (spec.subcategory, spec.htmlindex) == ("varlociraptor calls", "index.html")

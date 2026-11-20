@@ -3309,7 +3309,7 @@
   "temp": [],
   "threads": 1,
   "wildcards": {
-   "tumor_library": "PAT_case001subregion"
+   "library_name": "PAT_case001subregion"
   },
   "wrapper": "file://<repo>/snappy_wrappers/wrappers/bcftools/filter"
  }

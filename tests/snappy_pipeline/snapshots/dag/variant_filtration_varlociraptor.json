@@ -832,7 +832,7 @@
   "temp": [],
   "threads": 1,
   "wildcards": {
-   "tumor_library": "case001subregion-T1-DNA1-WES1"
+   "library_name": "case001subregion-T1-DNA1-WES1"
   },
   "wrapper": "file://<repo>/snappy_wrappers/wrappers/varlociraptor/report"
  },
@@ -884,7 +884,7 @@
   "temp": [],
   "threads": 1,
   "wildcards": {
-   "tumor_library": "case001subregion-T1-DNA1-WES1"
+   "library_name": "case001subregion-T1-DNA1-WES1"
   },
   "wrapper": "file://<repo>/snappy_wrappers/wrappers/varlociraptor/control_fdr"
  }
