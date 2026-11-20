@@ -53,9 +53,20 @@ def igv_js_path() -> Path:
     return Path(sys.prefix) / "share" / "igv-reports" / "igv.min.js"
 
 
+def chosen_views(views: Sequence[Table], names: Sequence[str]) -> list[Table]:
+    """The views that ``names`` select: by name, or by the kind of per-member events (``denovo`` for every ``denovo_<member>`` view); all views without names."""
+    if not names:
+        return list(views)
+    return [
+        view
+        for view in views
+        if view.name in names or any(view.name.startswith(f"{name}_") for name in names)
+    ]
+
+
 def select_sites(views: Sequence[Table], top: int, names: Sequence[str] = ()) -> pl.DataFrame:
     """The sites of the page: the first ``top`` calls of each view in ``names`` (all views if empty), interleaved by rank so that every view contributes, each call once."""
-    chosen = [view for view in views if not names or view.name in names]
+    chosen = chosen_views(views, names)
     heads = [view.frame.head(top).to_dicts() for view in chosen]
     rows: list[dict[str, Any]] = []
     seen: set[tuple] = set()

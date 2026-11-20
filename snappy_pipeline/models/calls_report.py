@@ -23,7 +23,7 @@ class IgvViews(ToolModel):
     """Calls per view that get an IGV view, from the top of the view's ranking; a call in several views counts once"""
 
     views: list[str] = []
-    """Views whose top calls get an IGV view (the events, or ``ranked``); empty takes every view"""
+    """Views whose top calls get an IGV view: events, kinds of per-member events (``denovo`` for every ``denovo_<member>``) or ``ranked``; empty takes every view"""
 
     flanking: int = 300
     """Width of the window around a call in base pairs, half on each side"""
