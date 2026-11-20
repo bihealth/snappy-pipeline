@@ -1,5 +1,7 @@
 # -*- coding: utf-8 -*-
-"""The per-sample columns of a VCF without varlociraptor's fields: genotype, allele frequency, alt reads, depth and genotype quality from the FORMAT fields the header declares."""
+"""The per-sample columns of a VCF without varlociraptor's fields:
+genotype, allele frequency, alt reads,
+depth and genotype quality from the FORMAT fields the header declares."""
 
 from __future__ import annotations
 

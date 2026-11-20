@@ -36,7 +36,9 @@ def _excluding(formula: str, exclusions: list[str]) -> str:
 
 
 def event_suffix(sample: dict[str, Any]) -> str:
-    """The member's part of a per-member event name such as ``denovo_<member>``: the donor name (else the library name) in lower case with letters, digits and ``_`` only, so that ``PROB_<EVENT>`` is a valid VCF INFO ID and the name comes back from the header unchanged."""
+    """The member's part of a per-member event name such as ``denovo_<member>``:
+    the donor name (else the library name) in lower case with letters, digits and ``_`` only,
+    so that ``PROB_<EVENT>`` is a valid VCF INFO ID and the name comes back from the header unchanged."""
     name = str(sample.get("donor_name") or sample["library_name"]).lower()
     return re.sub(r"[^a-z0-9]", "_", name)
 
@@ -46,27 +48,36 @@ def germline_scenario(samples: list[dict[str, Any]], species: dict[str, Any]) ->
 
     Every sample has its ``sex``, or is diploid everywhere when the sex is unknown.
     A sample whose parents are both samples inherits from them (mendelian).
-    A sample with ``observed: False`` is an unsequenced relative that connects members, or the unknown parent of a member;
+    A sample with ``observed: False`` is an unsequenced relative that connects members,
+    or the unknown parent of a member;
     its ``library_name`` is its donor name.
-    It has no observations, so the posteriors integrate over its genotype, and inheritance flows through it.
+    It has no observations, so the posteriors integrate over its genotype,
+    and inheritance flows through it.
 
-    The events partition the configurations in which an observed member carries the variant, by the sheet's ``isAffected``.
+    The events partition the configurations in which an observed member carries the variant,
+    by the sheet's ``isAffected``.
     ``disease_state`` 2 is affected, 1 unaffected, anything else unknown, which constrains nothing.
-    ``denovo_<member>``, one per observed child whose parents are both samples: the child carries a variant that its parents do not (a de novo mutation in that member, which its descendants inherit).
+    ``denovo_<member>``, one per observed child whose parents are both samples:
+    the child carries a variant that its parents do not (a de novo mutation in that member,
+    which its descendants inherit).
     ``<member>`` is the donor name in lower case (:func:`event_suffix`).
     ``recessive``: every affected member is homozygous, no unaffected member is (``!member:1.0``).
     ``dominant``: every affected member carries the variant, no unaffected member does.
     ``present``: the rest.
     Each event excludes the ones before it, so they are disjoint.
     ``dominant`` thus means inherited dominant; in a trio with unaffected parents it is empty.
-    Without an affected member, ``recessive`` and ``dominant`` are the impossible event ``false``, and a pedigree without a child has no de novo event,
-    so FDR control over ``denovo_*``, ``recessive``, ``dominant`` and ``present`` fits every pedigree.
+    Without an affected member, ``recessive`` and ``dominant`` are the impossible event ``false``,
+    and a pedigree without a child has no de novo event,
+    so FDR control over ``denovo_*``, ``recessive``,
+    ``dominant`` and ``present`` fits every pedigree.
 
-    The patterns of the events are ``expressions``, so that the events negate ``$`` references without a negation inside.
+    The patterns of the events are ``expressions``,
+    so that the events negate ``$`` references without a negation inside.
     varlociraptor 8.12.0 expands references one level deep and panics on a negated reference to an event that negates another.
 
     Varlociraptor models inheritance from both parents only.
-    A member with a parent outside the samples (one parent sequenced, or a parent the task does not take) raises ``ValueError``;
+    A member with a parent outside the samples (one parent sequenced,
+    or a parent the task does not take) raises ``ValueError``;
     the preset would otherwise treat related libraries as unrelated.
     """
     names = [sample["library_name"] for sample in samples]

@@ -100,8 +100,12 @@ CELL_CONFIG = {
 class Column:
     """Rendering of one table column: its label, precision, cell plot, visibility and links.
 
-    ``display`` is a datavzrd display mode: ``normal``, ``pinned`` (kept at the left when the table scrolls), ``available`` (hidden until the reader shows it), ``detail`` (in the details of a row) or ``hidden`` (kept for links, tooltips and the TSV).
-    ``links`` map a link name to a URL with ``{value}`` and ``{Other column}`` placeholders, which datavzrd fills without encoding, so only URL-safe columns feed them.
+    ``display`` is a datavzrd display mode:
+    ``normal``, ``pinned`` (kept at the left when the table scrolls),
+    ``available`` (hidden until the reader shows it),
+    ``detail`` (in the details of a row) or ``hidden`` (kept for links, tooltips and the TSV).
+    ``links`` map a link name to a URL with ``{value}`` and ``{Other column}`` placeholders,
+    which datavzrd fills without encoding, so only URL-safe columns feed them.
     """
 
     label: str | None = None
@@ -149,7 +153,9 @@ class Column:
         return spec
 
     def check(self) -> None:
-        """datavzrd takes one of ellipsis, links, a custom plot and a cell plot per column, plus the pairs heatmap with ellipsis or links and pills with links; a pills plot has its own ``ellipsis``."""
+        """datavzrd takes one of ellipsis, links, a custom plot and a cell plot per column,
+        plus the pairs heatmap with ellipsis or links and pills with links;
+        a pills plot has its own ``ellipsis``."""
         features = []
         if self.ellipsis:
             features.append("ellipsis")
@@ -174,7 +180,8 @@ def ticks(
     scale: str = "linear",
     display: str | None = None,
 ) -> Column:
-    """A fraction, rate or measure as a tick on the range of the column's values, so the libraries compare at a glance; the number stays beside it.
+    """A fraction, rate or measure as a tick on the range of the column's values,
+    so the libraries compare at a glance; the number stays beside it.
     ``domain`` fixes the range, so the cells of several tables compare."""
     plot: dict = {"ticks": {"scale": scale, "color": {"range": [INK]}}}
     if domain is not None:
@@ -206,7 +213,8 @@ def pills(
     links: dict[str, str] | None = None,
 ) -> Column:
     """Categories as colored pills, the text on the pill.
-    ``domain`` lists the categories and ``colors`` their colors in the same order, so a category keeps its color in every table; the values of a cell are split at ``separator``."""
+    ``domain`` lists the categories and ``colors`` their colors in the same order,
+    so a category keeps its color in every table; the values of a cell are split at ``separator``."""
     plot: dict = {"pills": {"separator": separator, "domain": list(domain), "range": list(colors)}}
     if ellipsis:
         plot["pills"]["ellipsis"] = ellipsis  # the pills' own ellipsis, which datavzrd allows
@@ -220,7 +228,8 @@ def heatmap(
     precision: int = 3,
     display: str | None = None,
 ) -> Column:
-    """A magnitude as the color of its cell, on a linear scale from the first to the last color over ``domain``."""
+    """A magnitude as the color of its cell,
+    on a linear scale from the first to the last color over ``domain``."""
     plot = {"heatmap": {"scale": "linear", "domain": list(domain), "range": list(colors)}}
     return Column(label=label, precision=precision, plot=plot, display=display)
 
@@ -238,7 +247,8 @@ class Table:
     pinned: tuple[str, ...] = ("library",)
     #: Rows per page
     page_size: int = 25
-    #: Rows up to which the view sorts and filters in the browser; datavzrd pages a larger view without sorting (``None``: datavzrd's default)
+    #: Rows up to which the view sorts and filters in the browser;
+    #: datavzrd pages a larger view without sorting (``None``: datavzrd's default)
     max_in_memory_rows: int | None = None
     #: Links from a row to the row of another table: name -> (column, ``"view/column"``, optional)
     links: dict[str, tuple[str, str, bool]] = field(default_factory=dict)

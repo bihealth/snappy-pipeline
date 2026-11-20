@@ -1,9 +1,18 @@
 # -*- coding: utf-8 -*-
-"""The columns of varlociraptor's calls: the posterior probability of every event of the scenario and, per sample, the allele frequency, the depth, the genotype and the observations.
+"""The columns of varlociraptor's calls:
+the posterior probability of every event of the scenario and, per sample, the allele frequency,
+the depth, the genotype and the observations.
 
-The observations are drawn in the cell: the reads for the alternative allele to the right and those for the reference (or a third allele) to the left, one bar per strength of evidence (``SAOBS`` and ``SROBS``), and the posterior density of the allele frequency (``AFD``) as a bar per sampled frequency, relative to the cell's maximum.
-The cells hold the compact strings of the VCF (``SAOBS|SROBS``, and ``AFD`` thinned to :data:`AFD_POINTS` frequencies), which the browser parses, so a row costs tens of bytes per sample.
-The biases that varlociraptor found (strand, read orientation, read position, softclip, homopolymer, alt locus, fragment end) are listed as text.
+The observations are drawn in the cell:
+the reads for the alternative allele to the right and those for the reference (or a third allele)
+to the left, one bar per strength of evidence (``SAOBS`` and ``SROBS``),
+and the posterior density of the allele frequency (``AFD``) as a bar per sampled frequency,
+relative to the cell's maximum.
+The cells hold the compact strings of the VCF (``SAOBS|SROBS``,
+and ``AFD`` thinned to :data:`AFD_POINTS` frequencies), which the browser parses,
+so a row costs tens of bytes per sample.
+The biases that varlociraptor found (strand, read orientation, read position, softclip, homopolymer,
+alt locus, fragment end) are listed as text.
 """
 
 from __future__ import annotations
@@ -61,7 +70,8 @@ AFD_POINTS = 24
 #: varlociraptor-inspect, which draws the observations of a record from the URL's parameters
 INSPECT_URL = "https://varlociraptor.github.io/varlociraptor-inspect/"
 
-#: The JS function that turns a cell ``SAOBS|SROBS`` into the records of the observations plot: one per allele, strength and mapping certainty, the count signed (alt to the right)
+#: The JS function that turns a cell ``SAOBS|SROBS`` into the records of the observations plot:
+#: one per allele, strength and mapping certainty, the count signed (alt to the right)
 OBSERVATIONS_DATA = """function(value, row) {
   const strengths = {E: "equal", B: "barely", P: "positive", S: "strong", V: "very strong"};
   const records = [];
@@ -79,7 +89,8 @@ OBSERVATIONS_DATA = """function(value, row) {
   return records;
 }"""
 
-#: The JS function that turns a cell ``af=phred,...`` into the records of the density plot, the density relative to the cell's maximum
+#: The JS function that turns a cell ``af=phred,...`` into the records of the density plot,
+#: the density relative to the cell's maximum
 AFD_DATA = """function(value, row) {
   if (!value) return [];
   const records = value.split(",").filter((entry) => entry.includes("=")).map((entry) => {
@@ -94,7 +105,9 @@ AFD_DATA = """function(value, row) {
 def observations_plot(max_reads: int) -> dict:
     """The in-cell plot of the observations: bars of the counts per strength, alt to the right.
 
-    Every strength has its row, filled or not, and the x axis spans ``max_reads`` both ways (the most reads of one strength in the column), so the cells of a column share their scales and the rows compare.
+    Every strength has its row, filled or not,
+    and the x axis spans ``max_reads`` both ways (the most reads of one strength in the column),
+    so the cells of a column share their scales and the rows compare.
     """
     limit = max(1, max_reads)
     return {
@@ -186,7 +199,10 @@ def phred_to_probability(text: str) -> float | None:
 
 
 def observations(saobs: str, srobs: str) -> list[dict[str, Any]]:
-    """The simplified observations of a sample as records: one per allele (``alt`` for the reads favoring the alternative allele, ``ref`` for those favoring the reference or a third allele), strength and mapping certainty, with the count and the signed ``reads`` of the plot (alt to the right, ref to the left)."""
+    """The simplified observations of a sample as records:
+    one per allele (``alt`` for the reads favoring the alternative allele,
+    ``ref`` for those favoring the reference or a third allele), strength and mapping certainty,
+    with the count and the signed ``reads`` of the plot (alt to the right, ref to the left)."""
     records = []
     for allele, text, sign in (("alt", saobs, 1), ("ref", srobs, -1)):
         for count, code in re.findall(r"(\d+)([A-Za-z])", text or ""):
@@ -206,7 +222,8 @@ def observations(saobs: str, srobs: str) -> list[dict[str, Any]]:
 
 
 def compact_afd(afd: str, points: int = AFD_POINTS) -> str:
-    """``AFD`` (``af=phred,...``) with at most ``points`` frequencies, the mode always among them, and short numbers; entries without density (``inf``) are dropped."""
+    """``AFD`` (``af=phred,...``) with at most ``points`` frequencies, the mode always among them,
+    and short numbers; entries without density (``inf``) are dropped."""
     entries = []
     for entry in (afd or "").split(","):
         if "=" not in entry:
@@ -249,7 +266,8 @@ def probabilities(record: Record, events: list[str]) -> dict[str, Any]:
 
 
 def sample_values(record: Record, samples: list[str]) -> dict[str, Any]:
-    """Per sample the allele frequency, depth, genotype, the compact observation and density strings and the biases."""
+    """Per sample the allele frequency, depth, genotype,
+    the compact observation and density strings and the biases."""
     row: dict[str, Any] = {}
     for sample in samples:
         fields = record.samples.get(sample, {})
@@ -266,7 +284,8 @@ def sample_values(record: Record, samples: list[str]) -> dict[str, Any]:
 
 
 def inspect_url(record: Record, events: list[str], samples: list[str]) -> str:
-    """The link that opens the record in varlociraptor-inspect: the event probabilities and per sample the observations and the allele frequency density, nothing else.
+    """The link that opens the record in varlociraptor-inspect:
+    the event probabilities and per sample the observations and the allele frequency density, nothing else.
     The samples are ``s1``, ``s2``, ...
     in the order of the VCF, so the URL carries no names."""
     params = [(f"PROB_{event}", record.info.get(f"PROB_{event}", "")) for event in events]

@@ -1,10 +1,17 @@
 # -*- coding: utf-8 -*-
 """The annotation columns of a VCF and the linkouts.
 
-The consequence of the picked annotation comes from ``ANN`` (mehari, Jannovar, SnpEff) or ``CSQ`` (VEP): the entries for the row's allele, the first of the highest impact.
-Population frequencies come from the fields mehari adds with ``--frequencies`` (``gnomad_exomes_*``, ``gnomad_genomes_*``, which hold gnomAD mtDNA on chrM, and ``helix_*``: allele numbers and carrier counts, from which the allele frequency is computed) or from VEP's ``gnomADe_AF`` and ``gnomADg_AF``; the ClinVar classification from mehari's ``clinvar_germline_classification`` and ``clinvar_vcv`` or VEP's ``CLIN_SIG``.
+The consequence of the picked annotation comes from ``ANN`` (mehari, Jannovar,
+SnpEff) or ``CSQ`` (VEP): the entries for the row's allele, the first of the highest impact.
+Population frequencies come from the fields mehari adds with ``--frequencies`` (``gnomad_exomes_*``,
+``gnomad_genomes_*``, which hold gnomAD mtDNA on chrM, and ``helix_*``:
+allele numbers and carrier counts,
+from which the allele frequency is computed) or from VEP's ``gnomADe_AF`` and ``gnomADg_AF``;
+the ClinVar classification from mehari's ``clinvar_germline_classification`` and ``clinvar_vcv`` or VEP's ``CLIN_SIG``.
 A VCF without a field gets no column.
-The linkouts are datavzrd ``link-to-url`` entries; the ones that depend on the genome build (gnomAD, ClinVar and dbSNP by position, Ensembl) need the assembly, which the annotation task tags its variants with.
+The linkouts are datavzrd ``link-to-url`` entries;
+the ones that depend on the genome build (gnomAD, ClinVar and dbSNP by position,
+Ensembl) need the assembly, which the annotation task tags its variants with.
 """
 
 from __future__ import annotations
@@ -22,7 +29,9 @@ from .vcf import Record, Vcf
 IMPACTS = ("HIGH", "MODERATE", "LOW", "MODIFIER")
 IMPACT_COLORS = (STATUS["critical"], STATUS["serious"], STATUS["warning"], MUTED)
 
-#: ClinVar's germline classifications and their colors: pathogenic on the status colors, benign in blue, conflicting in violet, so that no red/green pair carries the meaning
+#: ClinVar's germline classifications and their colors:
+#: pathogenic on the status colors, benign in blue, conflicting in violet,
+#: so that no red/green pair carries the meaning
 CLINVAR = (
     ("Pathogenic", STATUS["critical"]),
     ("Pathogenic/Likely pathogenic", STATUS["critical"]),
@@ -95,7 +104,8 @@ class Annotation:
         return result
 
     def entries(self, record: Record) -> list[list[str]]:
-        """The entries of ``record`` for its allele, percent-decoded; all entries when none names the allele (VEP minimises alleles)."""
+        """The entries of ``record`` for its allele, percent-decoded;
+        all entries when none names the allele (VEP minimises alleles)."""
         text = record.info.get(self.key, "")
         entries = [[unquote(v) for v in entry.split("|")] for entry in text.split(",") if entry]
         if self.allele is not None:
@@ -132,7 +142,9 @@ def pick(entries: list[list[str]], impact_index: int | None) -> list[str] | None
 
 
 def values(record: Record, annotation: Annotation) -> dict[str, Any]:
-    """The annotation values of ``record``: the picked entry's fields, the helper ids for the links and the other entries as ``transcript: consequence``."""
+    """The annotation values of ``record``:
+    the picked entry's fields,
+    the helper ids for the links and the other entries as ``transcript: consequence``."""
     fields = annotation.fields()
     entries = annotation.entries(record)
     chosen = pick(entries, fields.get("impact"))
@@ -251,7 +263,8 @@ def has_clinvar(vcf: Vcf, annotation: Annotation | None) -> bool:
 
 
 def clinvar_values(record: Record, annotation: Annotation | None) -> dict[str, Any]:
-    """``ClinVar``: the germline classifications; ``ClinVar VCV``: the accessions; ``clinvar_id``: the digits of the first accession, for the link."""
+    """``ClinVar``: the germline classifications; ``ClinVar VCV``: the accessions; ``clinvar_id``:
+    the digits of the first accession, for the link."""
     row: dict[str, Any] = {"ClinVar": "", "ClinVar VCV": "", "clinvar_id": ""}
     if "clinvar_germline_classification" in record.info:
         row["ClinVar"] = record.info["clinvar_germline_classification"].replace("%2C", ",")
@@ -284,7 +297,8 @@ def gnomad_chromosome(chromosome: str) -> str:
 
 
 def linkouts(selected: set[str], assembly: str | None) -> dict[str, dict[str, str]]:
-    """The linkouts by table column (``position``, ``gene``, ``id``, ``ClinVar``), for the ``selected`` names; the build-dependent ones only with a known ``assembly``."""
+    """The linkouts by table column (``position``, ``gene``, ``id``, ``ClinVar``),
+    for the ``selected`` names; the build-dependent ones only with a known ``assembly``."""
     build = assembly in ASSEMBLIES
     result: dict[str, dict[str, str]] = {"position": {}, "gene": {}, "id": {}, "ClinVar": {}}
     if "gnomad" in selected and build:

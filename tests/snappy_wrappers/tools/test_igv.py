@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
-"""Tests of the IGV views of the calls report: the sites, the tracks, the command, the size fit, the inlining of igv.js and the igv column.
+"""Tests of the IGV views of the calls report:
+the sites, the tracks, the command, the size fit, the inlining of igv.js and the igv column.
 ``create_report`` itself is not run."""
 
 import json

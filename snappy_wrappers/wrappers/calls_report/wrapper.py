@@ -1,8 +1,11 @@
 # -*- coding: utf-8 -*-
 """Render the calls of one VCF as a table for the report, with datavzrd.
 
-The outputs are the calls table as TSV (one row per call) and the directory of the site, which the Snakemake report shows.
-With ``igv`` set, igv-reports renders the top calls of the views into ``igv/top.html`` of the site first, so that the table can link to it.
+The outputs are the calls table as TSV (one row per call) and the directory of the site,
+which the Snakemake report shows.
+With ``igv`` set,
+igv-reports renders the top calls of the views into ``igv/top.html`` of the site first,
+so that the table can link to it.
 """
 
 import tempfile

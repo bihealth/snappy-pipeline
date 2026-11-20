@@ -230,7 +230,10 @@ def genotypes(variants: dict[str, dict[int, Variant]]) -> dict[int, dict[str, in
 
 
 def expected_event(genotype: dict[str, int]) -> str:
-    """The event of the germline scenario that should hold the posterior mass of a variant with these genotypes: ``denovo_<member>`` for a carrier whose parents are reference, ``recessive`` when the affected members are homozygous and no observed unaffected member is, ``dominant`` when the affected members carry it and no observed unaffected member does, else ``present``."""
+    """The event of the germline scenario that should hold the posterior mass of a variant with these genotypes:
+    ``denovo_<member>`` for a carrier whose parents are reference,
+    ``recessive`` when the affected members are homozygous and no observed unaffected member is,
+    ``dominant`` when the affected members carry it and no observed unaffected member does, else ``present``."""
     parents = {m.name: (m.father, m.mother) for m in MEMBERS}
     for member, count in genotype.items():
         father, mother = parents.get(member, ("0", "0"))

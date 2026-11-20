@@ -1,10 +1,19 @@
 # -*- coding: utf-8 -*-
 """The calls of one VCF as a datavzrd site for the report, and the same table as a result file.
 
-One row per call (per ALT allele); the views of the site are in :mod:`.views`: one per event of a varlociraptor scenario, ranked by posterior, rarity and impact, and all calls in genomic order.
-The columns follow what the VCF carries: with varlociraptor's ``PROB_*`` fields the posterior probability of every event and per sample the observations (:mod:`.varlociraptor`), otherwise the genotype, allele frequency, alt reads, depth and genotype quality of each sample (:mod:`.samples`); with an ``ANN`` or ``CSQ`` annotation the gene, consequence, impact and HGVS of the picked entry, and with mehari's frequency and ClinVar fields the gnomAD frequency and the ClinVar classification (:mod:`.annotation`).
+One row per call (per ALT allele); the views of the site are in :mod:`.views`:
+one per event of a varlociraptor scenario, ranked by posterior, rarity and impact,
+and all calls in genomic order.
+The columns follow what the VCF carries:
+with varlociraptor's ``PROB_*`` fields the posterior probability of every event and per sample the observations (:mod:`.varlociraptor`),
+otherwise the genotype, allele frequency, alt reads,
+depth and genotype quality of each sample (:mod:`.samples`);
+with an ``ANN`` or ``CSQ`` annotation the gene, consequence, impact and HGVS of the picked entry,
+and with mehari's frequency and ClinVar fields the gnomAD frequency and the ClinVar classification (:mod:`.annotation`).
 A field the VCF lacks gives no column; nothing is required.
-Linkouts (gnomAD, ClinVar, dbSNP, Ensembl, GeneCards, OMIM, varlociraptor-inspect) are datavzrd links on the position, gene, ID, ClinVar and inspect columns; the build-dependent ones need the assembly.
+Linkouts (gnomAD, ClinVar, dbSNP, Ensembl, GeneCards, OMIM,
+varlociraptor-inspect) are datavzrd links on the position, gene, ID, ClinVar and inspect columns;
+the build-dependent ones need the assembly.
 """
 
 from __future__ import annotations
@@ -69,7 +78,9 @@ def _trailing(record: Record, vcf: Vcf) -> dict[str, Any]:
 def rows_and_columns(
     vcf: Vcf, options: Options = Options()
 ) -> tuple[list[dict[str, Any]], dict[str, Column]]:
-    """The rows of the calls table and the rendering of its columns, in column order: the core, the event probabilities, the annotation, the frequencies and ClinVar, the samples, then ID, quality, filter, hints and the inspect link."""
+    """The rows of the calls table and the rendering of its columns, in column order:
+    the core, the event probabilities, the annotation, the frequencies and ClinVar, the samples,
+    then ID, quality, filter, hints and the inspect link."""
     events = varlociraptor.events(vcf)
     annotated = annotation.annotation_of(vcf)
     frequencies = annotation.frequency_columns(vcf, annotated)

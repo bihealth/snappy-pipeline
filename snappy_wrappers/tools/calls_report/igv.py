@@ -1,9 +1,14 @@
 # -*- coding: utf-8 -*-
 """IGV views of the top calls with igv-reports.
 
-The top calls of the chosen views, taken round-robin by rank so that every view contributes, become the sites of one ``create_report`` run: a page with an igv.js session per site, the reads of every library sliced around it, and a table of the sites.
+The top calls of the chosen views, taken round-robin by rank so that every view contributes,
+become the sites of one ``create_report`` run:
+a page with an igv.js session per site, the reads of every library sliced around it,
+and a table of the sites.
 The page is cut to a size limit by dropping the lowest-ranked sites and rerunning.
-igv.js is inlined from the copy that the environment's post-deploy script fetched, so no job needs network, and the calls table gets an ``igv`` column with the rank of a selected call, linked to the page.
+igv.js is inlined from the copy that the environment's post-deploy script fetched,
+so no job needs network,
+and the calls table gets an ``igv`` column with the rank of a selected call, linked to the page.
 """
 
 from __future__ import annotations
@@ -55,7 +60,9 @@ def igv_js_path() -> Path:
 
 
 def chosen_views(views: Sequence[Table], names: Sequence[str]) -> list[Table]:
-    """The views that ``names`` select: names, which must exist, or patterns such as ``denovo_*`` (:func:`select_names`); all views without names."""
+    """The views that ``names`` select:
+    names, which must exist, or patterns such as ``denovo_*`` (:func:`select_names`);
+    all views without names."""
     if not names:
         return list(views)
     selected = select_names(list(names), [view.name for view in views], what="view")
@@ -63,7 +70,9 @@ def chosen_views(views: Sequence[Table], names: Sequence[str]) -> list[Table]:
 
 
 def select_sites(views: Sequence[Table], top: int, names: Sequence[str] = ()) -> pl.DataFrame:
-    """The sites of the page: the first ``top`` calls of each view in ``names`` (all views if empty), interleaved by rank so that every view contributes, each call once."""
+    """The sites of the page:
+    the first ``top`` calls of each view in ``names`` (all views if empty),
+    interleaved by rank so that every view contributes, each call once."""
     chosen = chosen_views(views, names)
     heads = [view.frame.head(top).to_dicts() for view in chosen]
     rows: list[dict[str, Any]] = []
@@ -166,7 +175,8 @@ def create_report_command(
 
 
 def fit_to_size(sites: int, size: int, limit: int) -> int:
-    """How many of ``sites`` keep a page of ``size`` bytes under ``limit``: all if it fits, else the proportion with a tenth of margin, so that the next page fits."""
+    """How many of ``sites`` keep a page of ``size`` bytes under ``limit``:
+    all if it fits, else the proportion with a tenth of margin, so that the next page fits."""
     if size <= limit:
         return sites
     return max(0, math.floor(sites * 0.9 * limit / size))
@@ -194,7 +204,9 @@ def build_page(
     title: str,
     run: Callable[..., Any] = subprocess.run,
 ) -> tuple[str | None, pl.DataFrame, int]:
-    """Create the page in ``workdir``: the path (``None`` without sites), the sites it shows and the number of sites requested before the size limit cut them."""
+    """Create the page in ``workdir``:
+    the path (``None`` without sites),
+    the sites it shows and the number of sites requested before the size limit cut them."""
     sites = select_sites(summary.views, settings["top"], settings.get("views", ()))
     requested = sites.height
     limit = settings["max_size_mb"] * 1024 * 1024
@@ -230,7 +242,9 @@ def build_page(
 
 
 def annotate(summary: Summary, sites: pl.DataFrame, requested: int, limit_mb: int) -> None:
-    """Add the ``igv`` column (the rank of a selected call, linked to the page and to IGV desktop) to every table of ``summary`` and a sentence to the descriptions."""
+    """Add the ``igv`` column (the rank of a selected call,
+    linked to the page and to IGV desktop)
+    to every table of ``summary`` and a sentence to the descriptions."""
     ranks = sites.select(
         *KEY[:1], pl.col("begin").alias("position"), "ref", "alt", pl.col("rank").alias("igv")
     )

@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
-"""Tests of the event resolution of the FDR control: the events of a VCF header and the names or kinds a configuration means."""
+"""Tests of the event resolution of the FDR control:
+the events of a VCF header and the names or kinds a configuration means."""
 
 from pathlib import Path
 

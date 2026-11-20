@@ -119,7 +119,11 @@ class VarlociraptorFdr(ToolModel):
     ``extra_arguments`` go to that command (``--smart-retain-artifacts``, ``--minlen``, ...)"""
 
     events: Annotated[list[str], Field(min_length=1)]
-    """The events of the scenario to control the FDR for, jointly: names such as ``somatic_tumor_high`` and ``somatic_tumor_medium`` of the somatic preset or ``present``, ``recessive`` and ``dominant`` of the germline one, which must exist in the calls, and patterns such as ``denovo_*`` for the germline preset's per-member events ``denovo_<member>``, which may match none (a pedigree without a child has no de novo event)"""
+    """The events of the scenario to control the FDR for, jointly:
+    names such as ``somatic_tumor_high`` and ``somatic_tumor_medium`` of the somatic preset or ``present``,
+    ``recessive`` and ``dominant`` of the germline one, which must exist in the calls,
+    and patterns such as ``denovo_*`` for the germline preset's per-member events ``denovo_<member>``,
+    which may match none (a pedigree without a child has no de novo event)"""
 
     fdr: Annotated[float, Field(gt=0, le=1)] = 0.05
     """The false discovery rate (``--fdr``)"""

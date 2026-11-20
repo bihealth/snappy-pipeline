@@ -1,12 +1,26 @@
 # -*- coding: utf-8 -*-
-"""The fingerprint checks of an ``ngs_data_qc`` task with ``tool: ngs_chew``: the sex and the pedigree of the sample sheet against the data.
+"""The fingerprint checks of an ``ngs_data_qc`` task with ``tool: ngs_chew``:
+the sex and the pedigree of the sample sheet against the data.
 
-``ngs-chew compare`` writes the relatedness (peddy's estimate), the IBS0 count and the number of sites both libraries cover for every pair of libraries; ``ngs-chew stats`` writes per library the alt-carrying over homozygous ratio at chrX sites (``chrx_het_hom``) and the fractions of reads on chrX and chrY.
-The sample sheet facts come as options: ``libraries`` (library, donor, pedigree, sex) and ``donors`` (every donor of the pedigrees, sequenced or not, with its parents), so that the expected relatedness of a pair follows from the pedigree (kinship over the donor graph, unsequenced donors included) and each library's parents can be checked.
+``ngs-chew compare`` writes the relatedness (peddy's estimate),
+the IBS0 count and the number of sites both libraries cover for every pair of libraries;
+``ngs-chew stats`` writes per library the alt-carrying over homozygous ratio at chrX sites (``chrx_het_hom``)
+and the fractions of reads on chrX and chrY.
+The sample sheet facts come as options:
+``libraries`` (library, donor, pedigree, sex) and ``donors`` (every donor of the pedigrees,
+sequenced or not, with its parents),
+so that the expected relatedness of a pair follows from the pedigree (kinship over the donor graph,
+unsequenced donors included) and each library's parents can be checked.
 
-Sex is predicted without a fixed cutoff, since the ratio depends on the kit: a library gets the sheet sex whose cohort median ``chrx_het_hom`` is nearer, which needs libraries of both sexes with a known sheet sex; otherwise there is no prediction.
+Sex is predicted without a fixed cutoff, since the ratio depends on the kit:
+a library gets the sheet sex whose cohort median ``chrx_het_hom`` is nearer,
+which needs libraries of both sexes with a known sheet sex; otherwise there is no prediction.
 The chrY read fraction is shown next to it as the second evidence.
-A pair agrees with the sheet when its relatedness is within :data:`TOLERANCE` of the expected one; a parent and child must also share an allele at nearly every site (IBS0 rate at most :data:`PARENT_MAX_IBS0`), which only errors break; a pair of different pedigrees with a relatedness of at least :data:`UNEXPECTED_RELATEDNESS` is an unexpected relative (a swap, a duplicate, an undeclared relation).
+A pair agrees with the sheet when its relatedness is within :data:`TOLERANCE` of the expected one;
+a parent and child must also share an allele at nearly every site (IBS0 rate at most :data:`PARENT_MAX_IBS0`),
+which only errors break;
+a pair of different pedigrees with a relatedness of at least :data:`UNEXPECTED_RELATEDNESS` is an unexpected relative (a swap,
+a duplicate, an undeclared relation).
 """
 
 from __future__ import annotations
@@ -106,7 +120,8 @@ def read_stats(path: str) -> pl.DataFrame:
 
 
 def kinships(donors: list[dict[str, Any]]):
-    """A function ``(donor_a, donor_b) -> kinship coefficient`` over the donor graph of one pedigree; founders are unrelated, an unknown parent (``"0"``) is a founder of its own."""
+    """A function ``(donor_a, donor_b) -> kinship coefficient`` over the donor graph of one pedigree;
+    founders are unrelated, an unknown parent (``"0"``) is a founder of its own."""
     parents = {d["donor"]: (d.get("father") or "0", d.get("mother") or "0") for d in donors}
 
     @lru_cache(maxsize=None)
@@ -130,7 +145,8 @@ def kinships(donors: list[dict[str, Any]]):
 
 
 def predicted_sexes(stats: pl.DataFrame, sexes: dict[str, str]) -> dict[str, str]:
-    """Library -> the sheet sex whose cohort median ``chrx_het_hom`` is nearer; empty without libraries of both sexes with a known sheet sex."""
+    """Library -> the sheet sex whose cohort median ``chrx_het_hom`` is nearer;
+    empty without libraries of both sexes with a known sheet sex."""
     medians = {}
     for sex in ("female", "male"):
         values = [

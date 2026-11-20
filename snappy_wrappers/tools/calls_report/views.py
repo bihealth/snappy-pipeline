@@ -1,10 +1,16 @@
 # -*- coding: utf-8 -*-
 """The views of the calls site.
 
-With varlociraptor calls, one view per event of the scenario (not artifact and absent) holds the calls whose most probable event it is, ranked by that posterior, then by gnomAD frequency (unobserved first), then by impact; the site opens with the first event view that has calls.
+With varlociraptor calls,
+one view per event of the scenario (not artifact and absent)
+holds the calls whose most probable event it is, ranked by that posterior,
+then by gnomAD frequency (unobserved first), then by impact;
+the site opens with the first event view that has calls.
 The per-member events ``denovo_<member>`` share the color of their kind.
 Annotated calls without events get a ``ranked`` view by impact, frequency and quality.
-``all`` lists every call in genomic order, without the observation and density plots, the other annotations and the inspect link, which the event views and the result TSV keep; a row links to the same call in the other views.
+``all`` lists every call in genomic order, without the observation and density plots,
+the other annotations and the inspect link, which the event views and the result TSV keep;
+a row links to the same call in the other views.
 """
 
 from __future__ import annotations
@@ -32,7 +38,8 @@ EVENT_COLORS = {
     "absent": MUTED,
 }
 
-#: Columns that only the event views and the result TSV carry: the per-sample plots, the other annotations and the inspect link
+#: Columns that only the event views and the result TSV carry:
+#: the per-sample plots, the other annotations and the inspect link
 HEAVY = ("other annotations", "inspect", "inspect_url")
 
 #: The link from a row to the same call in another view, anchored on the position
@@ -44,19 +51,23 @@ def event_names(events: list[str]) -> list[str]:
 
 
 def event_kind(event: str) -> str:
-    """The kind of an event, for its color: ``denovo`` for the germline preset's per-member events ``denovo_<member>``, else the event itself."""
+    """The kind of an event, for its color:
+    ``denovo`` for the germline preset's per-member events ``denovo_<member>``,
+    else the event itself."""
     return "denovo" if event.startswith("denovo_") else event
 
 
 def event_label(event: str) -> str:
-    """The event with the member it names, for the germline preset's ``denovo_<member>``: ``denovo_idx (de novo in idx)``."""
+    """The event with the member it names, for the germline preset's ``denovo_<member>``:
+    ``denovo_idx (de novo in idx)``."""
     if event.startswith("denovo_"):
         return f"{event} (de novo in {event.removeprefix('denovo_')})"
     return event
 
 
 def event_colors(events: list[str]) -> tuple[list[str], list[str]]:
-    """The pills domain and colors of the events: the preset events and kinds keep their color, others take the next free categorical slot."""
+    """The pills domain and colors of the events:
+    the preset events and kinds keep their color, others take the next free categorical slot."""
     domain = event_names(events)
     used = {
         EVENT_COLORS[event_kind(event)] for event in domain if event_kind(event) in EVENT_COLORS
@@ -128,7 +139,8 @@ def genomic_order(frame: pl.DataFrame, contigs: list[str]) -> pl.DataFrame:
 
 
 def ranked(frame: pl.DataFrame, contigs: list[str], first: str | None = None) -> pl.DataFrame:
-    """``frame`` by ``first`` (a probability, descending), then gnomAD frequency (unobserved first), impact, quality (descending) and position."""
+    """``frame`` by ``first`` (a probability, descending), then gnomAD frequency (unobserved first),
+    impact, quality (descending) and position."""
     if frame.height == 0:
         return frame
     frame = _with_ranks(frame, contigs)

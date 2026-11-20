@@ -1,5 +1,7 @@
 # -*- coding: utf-8 -*-
-"""Tests of the calls report: the VCF reader, the varlociraptor and the generic sample columns, the compact cells and the datavzrd configuration."""
+"""Tests of the calls report:
+the VCF reader, the varlociraptor and the generic sample columns,
+the compact cells and the datavzrd configuration."""
 
 import json
 from pathlib import Path

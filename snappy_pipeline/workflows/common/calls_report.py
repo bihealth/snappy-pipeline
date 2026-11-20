@@ -2,9 +2,13 @@
 """The calls report of a task: one job per entity that renders the calls of its VCF as a table.
 
 A step that writes VCFs registers :class:`CallsReportStepPart` when its ``calls_report`` section is set.
-With ``calls_report.igv`` the job also reads the BAMs of the entity's libraries (``depends_on.alignments``) and the genome, and writes IGV views of the top calls into the site.
-The job reads the task's own output VCF of the entity, writes the calls table as the result file ``{library_name}/report/calls/{library_name}.calls.tsv`` and renders a datavzrd site below ``{library_name}/report/calls/html/``, which the Snakemake report shows (``snappy report``).
-The ``calls_report`` wrapper builds the table with ``snappy_wrappers.tools.calls_report``; the columns follow what the VCF carries.
+With ``calls_report.igv`` the job also reads the BAMs of the entity's libraries (``depends_on.alignments``)
+and the genome, and writes IGV views of the top calls into the site.
+The job reads the task's own output VCF of the entity,
+writes the calls table as the result file ``{library_name}/report/calls/{library_name}.calls.tsv`` and renders a datavzrd site below ``{library_name}/report/calls/html/``,
+which the Snakemake report shows (``snappy report``).
+The ``calls_report`` wrapper builds the table with ``snappy_wrappers.tools.calls_report``;
+the columns follow what the VCF carries.
 """
 
 from __future__ import annotations
@@ -40,7 +44,8 @@ class CallsReportStepPart(BaseStepPart):
     }
 
     def igv_libraries(self, entity: str) -> list[str]:
-        """The libraries whose BAMs the IGV views show: the members of the entity and, on cancer sheets, their matched normals."""
+        """The libraries whose BAMs the IGV views show:
+        the members of the entity and, on cancer sheets, their matched normals."""
         libraries = list(self.parent.member_libraries(entity))
         table = self.parent.libraries
         if "matched_normal_lib" in table.columns:
@@ -52,7 +57,8 @@ class CallsReportStepPart(BaseStepPart):
         return libraries
 
     def _get_input_files_run(self, wildcards: Wildcards) -> dict[str, Any]:
-        """The task's own output VCF of the entity (the PASS calls of mutect2); with IGV views the BAMs of its libraries and the genome."""
+        """The task's own output VCF of the entity (the PASS calls of mutect2);
+        with IGV views the BAMs of its libraries and the genome."""
         paths = self.parent.get_output_paths(
             self.parent.config, library_name=wildcards.library_name
         )
