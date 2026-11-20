@@ -226,6 +226,8 @@ class Table:
     links: dict[str, tuple[str, str, bool]] = field(default_factory=dict)
     #: Whether the site offers the table as an Excel download
     offer_excel: bool = True
+    #: Columns left out of the site's dataset (they stay in the frame, so in a result TSV)
+    exclude: tuple[str, ...] = ()
 
 
 @dataclass
@@ -474,7 +476,8 @@ def render(summary: Summary, title: str, tsv: str, site: str) -> None:
     with tempfile.TemporaryDirectory() as tmpdir:
         views = [summary.table, *summary.views]
         for view in views:
-            view.frame.write_csv(os.path.join(tmpdir, f"{view.name}.tsv"), separator="\t")
+            frame = view.frame.drop(getattr(view, "exclude", ()), strict=False)
+            frame.write_csv(os.path.join(tmpdir, f"{view.name}.tsv"), separator="\t")
         config_path = os.path.join(tmpdir, "config.json")
         with open(config_path, "wt") as f:
             json.dump(config(views, title, tmpdir, summary.default_view), f, indent=1)
@@ -525,11 +528,10 @@ def _view(view: Table | Chart) -> dict:
     if isinstance(view, Chart):
         spec["render-plot"] = {"spec": json.dumps(view.spec())}
         return spec
-    columns = {
-        name: {"display-mode": "pinned"} for name in view.pinned if name in view.frame.columns
-    }
+    present = [name for name in view.frame.columns if name not in view.exclude]
+    columns = {name: {"display-mode": "pinned"} for name in view.pinned if name in present}
     for name, column in view.columns.items():
-        if name in view.frame.columns:
+        if name in present:
             columns[name] = columns.get(name, {}) | column.spec()
     spec["page-size"] = view.page_size
     if view.max_in_memory_rows is not None:

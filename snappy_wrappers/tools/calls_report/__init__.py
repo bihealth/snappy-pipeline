@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 """The calls of one VCF as a datavzrd site for the report, and the same table as a result file.
 
-One row per call (per ALT allele).
+One row per call (per ALT allele); the views of the site are in :mod:`.views`: one per event of a varlociraptor scenario, ranked by posterior, rarity and impact, and all calls in genomic order.
 The columns follow what the VCF carries: with varlociraptor's ``PROB_*`` fields the posterior probability of every event and per sample the observations (:mod:`.varlociraptor`), otherwise the genotype, allele frequency, alt reads, depth and genotype quality of each sample (:mod:`.samples`); with an ``ANN`` or ``CSQ`` annotation the gene, consequence, impact and HGVS of the picked entry, and with mehari's frequency and ClinVar fields the gnomAD frequency and the ClinVar classification (:mod:`.annotation`).
 A field the VCF lacks gives no column; nothing is required.
 Linkouts (gnomAD, ClinVar, dbSNP, Ensembl, GeneCards, OMIM, varlociraptor-inspect) are datavzrd links on the position, gene, ID, ClinVar and inspect columns; the build-dependent ones need the assembly.
@@ -14,9 +14,9 @@ from typing import Any
 
 import polars as pl
 
-from snappy_wrappers.tools.qc_summary import Column, Summary, Table, ticks
+from snappy_wrappers.tools.qc_summary import Column, Summary, ticks
 
-from . import annotation, samples, varlociraptor
+from . import annotation, samples, varlociraptor, views
 from .vcf import Record, Vcf, read_vcf
 
 #: The first columns of every table
@@ -84,7 +84,9 @@ def rows_and_columns(
         if links["position"]:
             row["gnomad_chromosome"] = annotation.gnomad_chromosome(record.chromosome)
         if events:
+            row["event"] = ""
             row |= varlociraptor.probabilities(record, events)
+            row["event"] = views.event_of(row, events)
         if annotated:
             row |= annotation.values(record, annotated)
         row |= annotation.frequency_values(record, frequencies, annotated)
@@ -103,6 +105,7 @@ def rows_and_columns(
     if links["position"]:
         columns["gnomad_chromosome"] = Column(display="hidden")
     if events:
+        columns["event"] = views.event_column(events)
         columns |= varlociraptor.probability_columns(vcf)
     if annotated:
         columns |= annotation.columns(annotated, links["gene"])
@@ -139,7 +142,7 @@ def frame_of(rows: list[dict[str, Any]], columns: dict[str, Column]) -> pl.DataF
 
 
 def summarize(path: str, options: Options = Options()) -> Summary:
-    """The calls table of one VCF, ready to render."""
+    """The calls of one VCF as the views of a site, ready to render."""
     vcf = read_vcf(path)
     rows, columns = rows_and_columns(vcf, options)
     desc = "One row per call. "
@@ -168,14 +171,6 @@ def summarize(path: str, options: Options = Options()) -> Summary:
             "the samples numbered in the order of the VCF (the order of the sample columns). "
         )
     desc += "The ID, quality and filter columns are available on demand."
-    table = Table(
-        "all",
-        "all calls",
-        frame_of(rows, columns),
-        desc=desc,
-        columns=columns,
-        pinned=("chromosome", "position"),
-        page_size=options.page_size,
-        max_in_memory_rows=options.max_in_memory_rows,
+    return views.build(
+        vcf, frame_of(rows, columns), columns, options.page_size, options.max_in_memory_rows, desc
     )
-    return Summary(table=table, views=[])

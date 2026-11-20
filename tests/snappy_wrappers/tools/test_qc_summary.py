@@ -392,3 +392,29 @@ def test_columns_link_out_show_pills_and_hide_until_asked():
     assert qc_summary.Column(detail=True).spec() == {"display-mode": "detail"}
     assert qc_summary.ticks(domain=(0, 1)).spec()["plot"]["ticks"]["domain"] == [0, 1]
     _validate_config(cfg)
+
+
+def test_excluded_columns_stay_out_of_the_dataset_but_in_the_result_tsv(tmp_path):
+    frame = pl.DataFrame({"library": ["a"], "v": [1.0], "heavy": ["x" * 100]})
+    table = Table("summary", "T", frame, columns={"heavy": qc_summary.Column()}, exclude=("heavy",))
+
+    cfg = config([table], "T", "/data")
+
+    assert "heavy" not in cfg["views"]["summary"]["render-table"]["columns"]
+    assert "v" not in cfg["views"]["summary"]["render-table"]["columns"]  # no spec, no entry
+    assert cfg["views"]["summary"]["render-table"]["columns"]["library"] == {
+        "display-mode": "pinned"
+    }
+    _validate_config(cfg)
+    if shutil.which("datavzrd"):
+        qc_summary.render(
+            qc_summary.Summary(table, []),
+            "T",
+            str(tmp_path / "summary.tsv"),
+            str(tmp_path / "html"),
+        )
+        assert pl.read_csv(tmp_path / "summary.tsv", separator="\t").columns == [
+            "library",
+            "v",
+            "heavy",
+        ]

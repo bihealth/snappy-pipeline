@@ -6,6 +6,7 @@ import json
 from pathlib import Path
 
 import fastjsonschema
+import polars as pl
 import pytest
 
 from snappy_pipeline.models.calls_report import Linkout
@@ -150,12 +151,13 @@ def test_varlociraptor_calls_get_the_probabilities_and_the_per_sample_columns():
 
     assert table.name == "all" and table.pinned == ("chromosome", "position")
     assert (table.page_size, table.max_in_memory_rows) == (10, 1000)
-    assert frame.columns[:9] == [
+    assert frame.columns[:10] == [
         "chromosome",
         "position",
         "type",
         "ref",
         "alt",
+        "event",
         "P(denovo)",
         "P(present)",
         "P(artifact)",
@@ -205,7 +207,9 @@ def test_varlociraptor_calls_get_the_probabilities_and_the_per_sample_columns():
     assert table.columns[f"{sample}: biases"].display == "available"
 
     cfg = _validate(summary)
-    column = cfg["views"]["all"]["render-table"]["columns"][f"{sample}: observations"]
+    # The plots are in the event views; the all view leaves them out
+    column = cfg["views"]["present"]["render-table"]["columns"][f"{sample}: observations"]
+    assert f"{sample}: observations" not in cfg["views"]["all"]["render-table"]["columns"]
     assert json.loads(column["custom-plot"]["spec"])["width"] == 110
     assert cfg["views"]["all"]["max-in-memory-rows"] == 1000
 
@@ -277,7 +281,7 @@ def test_annotated_calls_get_gene_consequence_impact_hgvs_and_the_other_entries(
     frame = summary.table.frame
     columns = summary.table.columns
 
-    assert frame.columns[9:16] == [
+    assert frame.columns[10:17] == [
         "gene",
         "consequence",
         "impact",
@@ -379,4 +383,109 @@ def test_annotated_mutect2_calls_mix_the_generic_sample_columns_with_the_annotat
     assert "case001subregion-T1-DNA1-WES1: AF" in frame.columns
     assert frame["filter"].to_list() == ["PASS", "weak_evidence", "PASS"]
     assert "quality" not in frame.columns and "inspect" not in frame.columns
+    _validate(summary)
+
+
+def test_varlociraptor_calls_get_a_view_per_event_ranked_by_posterior_rarity_and_impact():
+    summary = summarize(str(ANNOTATED), Options(linkouts=LINKOUTS, assembly="GRCh37"))
+    table, views = summary.table, {view.name: view for view in summary.views}
+
+    # One view per event that is not artifact or absent; the site opens with the first that has calls
+    assert list(views) == ["denovo", "present"] and summary.default_view == "present"
+    assert views["denovo"].frame.height == 0 and views["present"].frame.height == 6
+    assert table.frame["event"].to_list() == ["present"] * 6
+    assert table.columns["event"].plot["pills"]["domain"] == [
+        "denovo",
+        "present",
+        "artifact",
+        "absent",
+    ]
+    assert table.columns["event"].plot["pills"]["range"] == [
+        "#eb6834",
+        "#2a78d6",
+        "#c3c2b7",
+        "#c3c2b7",
+    ]
+    # Equal posteriors: unobserved variants first, then by gnomAD frequency, then impact
+    present = views["present"].frame
+    assert present["gnomAD AF"].to_list()[:2] == [None, None]
+    assert present["gnomAD AF"].to_list()[2:] == pytest.approx([1e-5, 0.00015, 0.5, 0.8125])
+    assert present["position"].to_list()[:2] == [23737566, 24982726]  # genomic order among equals
+    assert "by that posterior, then gnomAD frequency (unobserved first), then impact" in (
+        views["present"].desc
+    )
+    # Cross-links on the position, the heavy columns only in the event views and the result TSV
+    assert views["present"].links == {"all calls": ("position", "all/position", False)}
+    assert table.links == {
+        "denovo": ("position", "denovo/position", True),
+        "present": ("position", "present/position", True),
+    }
+    assert "inspect_url" in table.exclude and "other annotations" in table.exclude
+    assert "case001subregion-N1-DNA1-WES1: observations" in table.exclude
+    assert "case001subregion-N1-DNA1-WES1: AF" not in table.exclude
+    assert table.frame["position"].to_list() == sorted(table.frame["position"].to_list())
+    assert (
+        "The observation and density plots and the other annotations and the inspect link are in the other views"
+        in table.desc
+    )
+    cfg = _validate(summary)
+    assert cfg["default-view"] == "present"
+    assert "inspect" not in cfg["views"]["all"]["render-table"]["columns"]
+    assert "inspect" in cfg["views"]["present"]["render-table"]["columns"]
+    link = cfg["datasets"]["all"]["links"]["present"]
+    assert (link["column"], link["table-row"], link["optional"]) == (
+        "position",
+        "present/position",
+        True,
+    )
+
+
+def test_the_all_view_names_the_in_memory_limit_when_the_calls_exceed_it():
+    summary = summarize(str(ANNOTATED), Options(max_in_memory_rows=5))
+
+    assert "With 6 rows, above the in-memory limit of 5" in summary.table.desc
+    assert "in-memory limit" not in summarize(str(ANNOTATED)).table.desc
+
+
+def test_annotated_calls_without_events_get_a_ranked_view():
+    summary = summarize(str(MUTECT2))
+    (view,) = summary.views
+
+    assert view.name == "ranked" and summary.default_view == "ranked"
+    assert view.frame["impact"].to_list() == ["MODERATE", "MODIFIER", "MODIFIER"]
+    assert view.frame["position"].to_list() == [25398284, 23893753, 26634226]
+    assert "by impact, then position" in view.desc
+    assert summary.table.exclude == ("other annotations",)
+    assert "The other annotations are in the other views" in summary.table.desc
+
+
+def test_event_of_takes_the_most_probable_event_and_contigs_sort_by_the_header(tmp_path):
+    from snappy_wrappers.tools.calls_report.views import contig_ranks, event_of, genomic_order
+
+    assert event_of({"P(a)": 0.2, "P(b)": 0.7, "P(c)": None}, ["A", "B", "C"]) == "b"
+    assert event_of({"P(a)": 0.5, "P(b)": 0.5}, ["A", "B"]) == "a"  # ties: header order
+    assert event_of({}, ["A"]) == ""
+
+    frame = pl.DataFrame({"chromosome": ["2", "X", "1", "10", "MT"], "position": [5, 1, 9, 2, 3]})
+    assert contig_ranks(frame, ["1", "2", "X"]) == {"1": 0, "2": 1, "X": 2, "10": 3, "MT": 4}
+    ordered = genomic_order(frame, ["1", "2", "X"])
+    assert ordered["chromosome"].to_list() == ["1", "2", "X", "10", "MT"]
+    natural = genomic_order(frame, [])
+    assert natural["chromosome"].to_list() == ["1", "2", "10", "MT", "X"]
+
+
+def test_a_vcf_without_calls_still_has_its_views():
+    header = "\n".join(
+        line for line in ANNOTATED.read_text(encoding="utf-8").splitlines() if line.startswith("#")
+    )
+    path = FIXTURES.parent / "empty_annotated.vcf"
+    try:
+        path.write_text(header + "\n", encoding="utf-8")
+        summary = summarize(str(path), Options(linkouts=LINKOUTS, assembly="GRCh38"))
+    finally:
+        path.unlink()
+
+    assert [view.name for view in summary.views] == ["denovo", "present"]
+    assert summary.default_view is None  # no view has calls, so the site opens with all calls
+    assert summary.table.frame.height == 0
     _validate(summary)
