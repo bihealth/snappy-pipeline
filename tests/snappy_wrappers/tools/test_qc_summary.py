@@ -434,3 +434,11 @@ def test_a_column_refuses_the_option_pairs_that_datavzrd_rejects():
     qc_summary.Column(ellipsis=8, plot={"heatmap": {}}).spec()
     pills = qc_summary.pills(("a",), ("#000000",), ellipsis=24, links={"x": "{value}"})
     assert pills.spec()["plot"]["pills"]["ellipsis"] == 24 and "ellipsis" not in pills.spec()
+
+
+def test_cell_ticks_and_bars_color_with_a_scale_that_vega_lite_accepts():
+    # A range of one color made datavzrd emit a color scale of type none, so the cells rendered
+    # as an empty axis line without the value (seen in datavzrd 2.78.1)
+    for column in (qc_summary.ticks(), qc_summary.bars()):
+        (plot,) = column.plot.values()
+        assert plot["color"] == {"scale": "linear", "range": [qc_summary.INK, qc_summary.INK]}

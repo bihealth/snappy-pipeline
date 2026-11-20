@@ -64,6 +64,11 @@ STATUS = {"good": "#0ca30c", "warning": "#fab219", "serious": "#ec835a", "critic
 #: The vega-lite schema of every chart and cell plot
 VEGA_LITE = "https://vega.github.io/schema/vega-lite/v6.json"
 
+#: The color of the ticks and bars of a table cell, as a datavzrd color scale: a linear scale
+#: between the ink and itself; a range of one color makes datavzrd emit a scale of type
+#: ``none``, which vega-lite rejects, and the cell shows neither the mark nor the value
+INK_SCALE = {"scale": "linear", "range": [INK, INK]}
+
 #: Vega-lite configuration of every chart: no grid, hairline axes, no frame, muted text
 CHART_CONFIG = {
     "view": {"stroke": None},
@@ -183,7 +188,7 @@ def ticks(
     """A fraction, rate or measure as a tick on the range of the column's values,
     so the libraries compare at a glance; the number stays beside it.
     ``domain`` fixes the range, so the cells of several tables compare."""
-    plot: dict = {"ticks": {"scale": scale, "color": {"range": [INK]}}}
+    plot: dict = {"ticks": {"scale": scale, "color": dict(INK_SCALE)}}
     if domain is not None:
         plot["ticks"]["domain"] = list(domain)
     return Column(label=label, precision=precision, plot=plot, detail=detail, display=display)
@@ -197,7 +202,7 @@ def bars(
     display: str | None = None,
 ) -> Column:
     """A count, with a bar proportional to its value."""
-    plot: dict = {"bars": {"scale": "linear", "color": {"range": [INK]}}}
+    plot: dict = {"bars": {"scale": "linear", "color": dict(INK_SCALE)}}
     if domain is not None:
         plot["bars"]["domain"] = list(domain)
     return Column(label=label, precision=precision, plot=plot, detail=detail, display=display)
