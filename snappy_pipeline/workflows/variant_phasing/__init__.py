@@ -325,6 +325,11 @@ class VariantPhasingWorkflow(BaseStep):
         )
 
     @classmethod
+    def default_group_by(cls, config):
+        """The tumor tools phase each tumor library; the pedigree tools declare the grouping of their variants task."""
+        return "library" if config.tool in _TUMOR_TOOLS else None
+
+    @classmethod
     def get_output_paths(cls, config, signature=None, **kwargs) -> dict[str, str]:
         """Return local phased-variant output paths for downstream consumers."""
         lib = kwargs.get("library_name", "{library_name}")

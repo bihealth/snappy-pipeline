@@ -128,6 +128,11 @@ class CombineVariantsWorkflow(BaseStep):
         common = upstream["somatic_variants"].tags & upstream["germline_variants"].tags
         return (cls.produces[0].with_tags(*common),)
 
+    @classmethod
+    def default_group_by(cls, config):
+        """One combined VCF per tumor library, whatever grouping the germline calls have."""
+        return "library"
+
     config_model_class = CombineVariantsConfigModel
 
     default_relationships = {

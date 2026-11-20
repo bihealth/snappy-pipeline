@@ -109,15 +109,20 @@ def test_group_by_comes_from_the_task_then_its_step_then_upstream():
         "calling": SimpleNamespace(group_by=None, tool="gatk4_hc_joint"),
         "annotation": SimpleNamespace(group_by=None, tool="vep"),
         "single": SimpleNamespace(group_by="library", tool="gatk4_hc_joint"),
+        "combine": SimpleNamespace(group_by=None),
+        "phasing": SimpleNamespace(group_by=None, tool="whatshap_tumor"),
     }
     steps = {"mapping": "ngs_mapping", "calling": "variant_calling"}
     steps |= {"annotation": "variant_annotation", "single": "variant_calling"}
+    steps |= {"combine": "combine_variants", "phasing": "variant_phasing"}
     project = SimpleNamespace(
         task_configs=configs,
         dependencies={
             "calling": {"alignments": "mapping"},
             "annotation": {"variants": "calling"},
             "single": {"alignments": "mapping"},
+            "combine": {"germline_variants": "calling", "somatic_variants": "single"},
+            "phasing": {"combined_variants": "combine"},
         },
         task=lambda name: SimpleNamespace(step=steps[name]),
     )
@@ -131,6 +136,8 @@ def test_group_by_comes_from_the_task_then_its_step_then_upstream():
     assert effective("calling") == "related"  # the step's default: joint calling
     assert effective("annotation") == "related"  # inherited from the calling task
     assert effective("single") == "library"  # the task's own choice wins
+    assert effective("combine") == "library"  # per tumor, not the germline calls' grouping
+    assert effective("phasing") == "library"  # the tumor tools phase per tumor
 
 
 def test_background_selection_narrows_only_the_background_libraries():
