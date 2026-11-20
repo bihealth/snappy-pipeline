@@ -29,7 +29,8 @@ Chain several tasks for a sequence of filters.
 
 ``varlociraptor``
     FDR control of the calls of a ``variant_calling`` task with ``tool: varlociraptor``: ``varlociraptor filter-calls control-fdr`` selects the records whose posterior probabilities for the ``events`` meet the ``fdr`` in the ``fdr_mode`` chosen, once per variant type.
-    Chain it right after the calling task, before annotation; the events are those of the calling task's scenario, such as ``somatic_tumor_high`` and ``somatic_tumor_medium``, or the germline events ``present``, ``denovo`` (the kind of the per-member events ``denovo_<member>``), ``recessive`` and ``dominant``, which partition the carried variants, so a record passes only for the events listed (in smart mode, when they hold at least half of its probability): list all four to keep every variant.
+    Chain it right after the calling task, before annotation; the events are those of the calling task's scenario, such as ``somatic_tumor_high`` and ``somatic_tumor_medium``, or the germline events ``present``, ``denovo_*`` (a pattern for the per-member events ``denovo_<member>``), ``recessive`` and ``dominant``, which partition the carried variants, so a record passes only for the events listed (in smart mode, when they hold at least half of its probability): list all four to keep every variant.
+    An entry is an event name, which must exist in the calls, or a shell-style pattern, which may match none; the names and patterns work the same for the events of a scenario ``template``.
     Its ``mode`` defaults to ``filter``, so the task after it reads a call set.
 
 Every filter has a ``mode``: ``tag`` marks variants in ``FILTER``, ``filter`` removes them.

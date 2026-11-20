@@ -26,20 +26,25 @@ def test_header_events_are_the_prob_fields_named_as_the_scenario_names_them(tmp_
     assert header_events(str(path)) == ["denovo_idx", "MyEvent", "artifact"]
 
 
-def test_resolve_events_takes_names_and_the_members_of_a_kind():
+def test_resolve_events_takes_names_and_patterns():
     available = ["present", "denovo_idx", "denovo_sib1", "recessive", "dominant", "artifact"]
 
-    assert resolve_events(["present", "denovo"], available) == [
+    assert resolve_events(["present", "denovo_*"], available) == [
         "present",
         "denovo_idx",
         "denovo_sib1",
     ]
-    assert resolve_events(["denovo_idx", "denovo"], available) == ["denovo_idx", "denovo_sib1"]
-    # A kind the scenario lacks is skipped: a pair without a child has no de novo event
-    assert resolve_events(["present", "denovo"], ["present", "artifact"]) == ["present"]
-    assert resolve_events(["somatic_tumor"], ["somatic_tumor_high", "somatic_tumor_low"]) == [
+    assert resolve_events(["denovo_idx", "denovo_*"], available) == ["denovo_idx", "denovo_sib1"]
+    assert resolve_events(
+        ["somatic_tumor_?igh", "*_low"], ["somatic_tumor_high", "somatic_tumor_low"]
+    ) == [
         "somatic_tumor_high",
         "somatic_tumor_low",
     ]
-    with pytest.raises(ValueError, match="none of the events denovo is in the VCF"):
-        resolve_events(["denovo"], ["present", "artifact"])
+    # A pattern may match nothing: a pair without a child has no de novo event
+    assert resolve_events(["present", "denovo_*"], ["present", "artifact"]) == ["present"]
+    # A name must exist, so a typo or the old kind fails instead of selecting nothing
+    with pytest.raises(ValueError, match="event 'denovo' is not one of present, denovo_idx"):
+        resolve_events(["denovo"], available)
+    with pytest.raises(ValueError, match="none of the events denovo_\\* is in the VCF"):
+        resolve_events(["denovo_*"], ["present", "artifact"])

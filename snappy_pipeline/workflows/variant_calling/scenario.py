@@ -60,7 +60,7 @@ def germline_scenario(samples: list[dict[str, Any]], species: dict[str, Any]) ->
     Each event excludes the ones before it, so they are disjoint.
     ``dominant`` thus means inherited dominant; in a trio with unaffected parents it is empty.
     Without an affected member, ``recessive`` and ``dominant`` are the impossible event ``false``, and a pedigree without a child has no de novo event,
-    so FDR control over the kinds ``denovo``, ``recessive``, ``dominant`` and ``present`` fits every pedigree.
+    so FDR control over ``denovo_*``, ``recessive``, ``dominant`` and ``present`` fits every pedigree.
 
     The patterns of the events are ``expressions``, so that the events negate ``$`` references without a negation inside.
     varlociraptor 8.12.0 expands references one level deep and panics on a negated reference to an event that negates another.

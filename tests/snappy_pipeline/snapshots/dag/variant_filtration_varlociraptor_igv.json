@@ -1076,7 +1076,7 @@
    "args": {
     "events": [
      "present",
-     "denovo",
+     "denovo_*",
      "recessive",
      "dominant"
     ],

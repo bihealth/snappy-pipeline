@@ -47,12 +47,14 @@ def test_select_sites_interleaves_the_views_by_rank_and_takes_each_call_once():
     # Only the named views, top above their rows takes all they have
     named = igv.select_sites(views, top=10, names=["present"])
     assert named["begin"].to_list() == [20, 40]
-    # A kind names every per-member view
+    # A pattern names every per-member view; a name must exist
     per_member = [_view("denovo_idx", [10]), _view("denovo_sib1", [20]), _view("present", [30])]
-    assert igv.select_sites(per_member, top=5, names=["denovo"])["view"].to_list() == [
+    assert igv.select_sites(per_member, top=5, names=["denovo_*"])["view"].to_list() == [
         "denovo_idx",
         "denovo_sib1",
     ]
+    with pytest.raises(ValueError, match="view 'denovo' is not one of"):
+        igv.select_sites(per_member, top=5, names=["denovo"])
     assert igv.select_sites(views, top=5, names=["dominant"]).height == 0
 
 

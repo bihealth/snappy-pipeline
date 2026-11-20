@@ -141,7 +141,7 @@ tasks:
       tool: varlociraptor
       calls_report: {}
       varlociraptor:
-        events: [present, denovo, recessive, dominant]
+        events: [present, denovo_*, recessive, dominant]
 
   - name: annotation_varlociraptor
     step: variant_annotation
@@ -184,7 +184,7 @@ tasks:
         variants: calling_varlociraptor_sv
       tool: varlociraptor
       varlociraptor:
-        events: [present, denovo, recessive, dominant]
+        events: [present, denovo_*, recessive, dominant]
 
   # The small variants and the structural variants of the trio in one VCF
   - name: concat_varlociraptor

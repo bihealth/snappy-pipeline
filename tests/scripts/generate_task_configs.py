@@ -577,7 +577,7 @@ EXTRA_TASKS: list[dict[str, Any]] = [
                 "reference": "genome",
             },
             "tool": "varlociraptor",
-            "varlociraptor": {"events": ["present", "denovo", "recessive", "dominant"]},
+            "varlociraptor": {"events": ["present", "denovo_*", "recessive", "dominant"]},
             "calls_report": {"igv": {}},
         },
     },

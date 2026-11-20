@@ -22,6 +22,7 @@ from typing import Any
 import polars as pl
 
 from snappy_wrappers.tools.qc_summary import Column, Summary, Table
+from snappy_wrappers.tools.vcf_events import select_names
 
 #: The page inside the site, relative to its root
 PAGE = "igv/top.html"
@@ -54,14 +55,11 @@ def igv_js_path() -> Path:
 
 
 def chosen_views(views: Sequence[Table], names: Sequence[str]) -> list[Table]:
-    """The views that ``names`` select: by name, or by the kind of per-member events (``denovo`` for every ``denovo_<member>`` view); all views without names."""
+    """The views that ``names`` select: names, which must exist, or patterns such as ``denovo_*`` (:func:`select_names`); all views without names."""
     if not names:
         return list(views)
-    return [
-        view
-        for view in views
-        if view.name in names or any(view.name.startswith(f"{name}_") for name in names)
-    ]
+    selected = select_names(list(names), [view.name for view in views], what="view")
+    return [view for view in views if view.name in selected]
 
 
 def select_sites(views: Sequence[Table], top: int, names: Sequence[str] = ()) -> pl.DataFrame:

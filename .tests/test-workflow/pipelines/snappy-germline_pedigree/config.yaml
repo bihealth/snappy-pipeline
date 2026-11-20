@@ -85,6 +85,6 @@ tasks:
       tool: varlociraptor
       # The calls report with IGV views of the top calls of the three event views
       calls_report:
-        igv: {top: 5, views: [denovo, recessive, dominant]}
+        igv: {top: 5, views: [denovo_*, recessive, dominant]}
       varlociraptor:
-        events: [present, denovo, recessive, dominant]
+        events: [present, denovo_*, recessive, dominant]

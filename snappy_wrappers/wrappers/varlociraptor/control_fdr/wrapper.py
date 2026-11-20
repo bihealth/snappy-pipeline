@@ -2,7 +2,7 @@
 """FDR control of varlociraptor calls, once per variant type, concatenated into one VCF.
 
 In ``tag`` mode, the records that fail the control stay in the VCF with the task name in ``FILTER``: the passing records are a site annotation that marks the others with a flag, which ``bcftools filter`` turns into the soft filter before the flag is dropped again.
-The configured ``events`` are event names or kinds of per-member events (``denovo`` for every ``denovo_<member>``), resolved against the VCF's header.
+The configured ``events`` are event names or patterns such as ``denovo_*``, resolved against the VCF's header.
 """
 
 from typing import TYPE_CHECKING

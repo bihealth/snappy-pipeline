@@ -44,12 +44,12 @@ def event_names(events: list[str]) -> list[str]:
 
 
 def event_kind(event: str) -> str:
-    """The kind of an event: ``denovo`` for the per-member events ``denovo_<member>``."""
+    """The kind of an event, for its color: ``denovo`` for the germline preset's per-member events ``denovo_<member>``, else the event itself."""
     return "denovo" if event.startswith("denovo_") else event
 
 
 def event_label(event: str) -> str:
-    """The event with the member it names: ``denovo_idx (de novo in idx)``."""
+    """The event with the member it names, for the germline preset's ``denovo_<member>``: ``denovo_idx (de novo in idx)``."""
     if event.startswith("denovo_"):
         return f"{event} (de novo in {event.removeprefix('denovo_')})"
     return event
