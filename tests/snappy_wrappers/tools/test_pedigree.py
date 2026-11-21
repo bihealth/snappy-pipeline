@@ -79,21 +79,20 @@ def test_generations_put_partners_in_one_row_and_children_below():
     assert rows["idx-N1"] == rows["sib1-N1"] == 2
 
 
-def test_layout_centers_children_under_their_parents_and_keeps_nodes_apart():
+def test_layout_keeps_couples_together_and_children_under_their_parents():
     members = members_of(PEDIGREE, SAMPLES)
 
     positions = layout(members)
 
     x = {name: value[0] for name, value in positions.items()}
-    assert x["pgf-N1"] + 1 == x["pgm"]  # the father left of the mother
-    assert x["fa-N1"] == (x["pgf-N1"] + x["pgm"]) / 2  # the child under its parents
-    assert (
-        x["mo-N1"] == (x["mgm-N1"] + x["mo-N1.father"]) / 2
-    )  # under her mother and unknown father
-    assert {x["idx-N1"], x["sib1-N1"]} == {
-        (x["fa-N1"] + x["mo-N1"]) / 2 - 0.5,
-        (x["fa-N1"] + x["mo-N1"]) / 2 + 0.5,
-    }
+    # Row 0: the paternal grandparents, then the unknown grandfather with the maternal
+    # grandmother, each couple adjacent with the father to the left
+    assert (x["pgf-N1"], x["pgm"], x["mo-N1.father"], x["mgm-N1"]) == (0, 1, 2, 3)
+    # Row 1: the father under his parents, the mother next to him
+    assert x["fa-N1"] == (x["pgf-N1"] + x["pgm"]) / 2 and x["mo-N1"] == x["fa-N1"] + 1
+    # Row 2: the children centered under their parents, in their order
+    center = (x["fa-N1"] + x["mo-N1"]) / 2
+    assert (x["idx-N1"], x["sib1-N1"]) == (center - 0.5, center + 0.5)
     assert min(x.values()) == 0
     for row in (0, 1, 2):
         values = sorted(v for name, (v, g) in positions.items() if g == row)
@@ -108,6 +107,35 @@ def test_layout_centers_children_under_their_parents_and_keeps_nodes_apart():
         )
     )
     assert trio["fa-N1"][0] + 1 == trio["mo-N1"][0] and trio["idx-N1"][0] == trio["fa-N1"][0] + 0.5
+
+
+def test_layout_of_a_sheet_in_any_order_puts_no_node_between_partners():
+    # A sheet that lists the grandmothers first put the maternal grandmother between the
+    # paternal grandparents, so their line ran through her node
+    sheet = [
+        ("FOO006", "0", "0", "female"),
+        ("FOO007", "0", "0", "female"),
+        ("FOO001", "FOO004", "FOO005", "female"),
+        ("FOO002", "FOO004", "FOO005", "female"),
+        ("FOO003", "0", "0", "male"),
+        ("FOO004", "FOO003", "FOO006", "male"),
+        ("FOO005", "0", "FOO007", "female"),
+    ]
+    pedigree = [
+        {"name": n, "label": n, "father": f, "mother": m, "sex": s, "sample": n}
+        for n, f, m, s in sheet
+    ]
+    members = members_of(pedigree, [n for n, *_ in sheet])
+
+    positions = layout(members)
+
+    x = {name: value[0] for name, value in positions.items()}
+    for father, mother in (("FOO003", "FOO006"), ("FOO004", "FOO005"), ("FOO005.father", "FOO007")):
+        assert x[mother] == x[father] + 1, (father, mother)
+        row = positions[father][1]
+        assert not [n for n, (v, g) in positions.items() if g == row and x[father] < v < x[mother]]
+    assert x["FOO004"] == (x["FOO003"] + x["FOO006"]) / 2
+    assert {x["FOO001"], x["FOO002"]} == {x["FOO004"], x["FOO005"]}  # under the couple's center
 
 
 def test_nodes_and_edges_carry_the_glyphs_and_link_couples_to_children():
@@ -135,7 +163,9 @@ def test_nodes_and_edges_carry_the_glyphs_and_link_couples_to_children():
     sibship_lines = [e for e in edges if e["y"] == e["y2"] and e["y"] % 1 != 0]
     assert len(partner_lines) == 3  # pgf-pgm, mo.father-mgm, fa-mo
     assert len(child_drops) == 4  # fa, mo, idx, sib1
-    assert len(sibship_lines) == 1  # idx and sib1 share one; the single children need none
+    # idx and sib1 share one; the mother, placed next to the father rather than under her own
+    # parents, gets one from their center to her position; the father needs none
+    assert len(sibship_lines) == 2
     assert all(e["y"] == e["y2"] + 1 - SIBSHIP for e in child_drops)
 
 

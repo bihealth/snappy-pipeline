@@ -136,55 +136,99 @@ def generations(members: list[Member]) -> dict[str, int]:
     return generation
 
 
+def couples_of(members: list[Member]) -> dict[str, list[str]]:
+    """Member -> its partners (the other parent of each of its children), in input order."""
+    partners: dict[str, list[str]] = {member.name: [] for member in members}
+    for member in members:
+        father, mother = member.father, member.mother
+        if father in partners and mother in partners:
+            if mother not in partners[father]:
+                partners[father].append(mother)
+            if father not in partners[mother]:
+                partners[mother].append(father)
+    return partners
+
+
 def layout(members: list[Member]) -> dict[str, tuple[float, int]]:
     """Member -> (x, generation): children centered under their parents in their order, a
-    founder next to its partner, nodes of a row at least one unit apart."""
+    couple side by side with the father to the left, and no node on another couple's line.
+
+    A row is laid out in blocks: a couple of the row is one block, any other member its own;
+    a child's block starts under the center of its parents, a founder's next to its partner,
+    and blocks that overlap move to the right in the order of their positions."""
     generation = generations(members)
     by_name = {member.name: member for member in members}
+    partners = couples_of(members)
     rows: dict[int, list[Member]] = {}
     for member in members:
         rows.setdefault(generation[member.name], []).append(member)
     x: dict[str, float] = {}
     for row in sorted(rows):
-        pending = list(rows[row])
-        # Children of each couple, under the couple's center
-        couples: dict[tuple[str, str], list[Member]] = {}
-        for member in pending:
-            if member.father in x and member.mother in x:
-                couples.setdefault((member.father, member.mother), []).append(member)
-        for (father, mother), kids in sorted(
-            couples.items(), key=lambda item: (x[item[0][0]] + x[item[0][1]]) / 2
-        ):
-            center = (x[father] + x[mother]) / 2
-            for index, kid in enumerate(kids):
-                x[kid.name] = center - (len(kids) - 1) / 2 + index
-        # Founders next to their partner, the father to the left of the mother
-        for member in pending:
-            if member.name in x:
+        names = [member.name for member in rows[row]]
+        in_row = set(names)
+        # Blocks: a couple of this row (father, mother), else one member
+        blocks: list[list[str]] = []
+        taken: set[str] = set()
+        for name in names:
+            if name in taken:
                 continue
-            partners = [
-                (other, member.name == other.father)
-                for other in members
-                if member.name in (other.father, other.mother)
-                for other in [
-                    by_name[other.father if member.name == other.mother else other.mother]
-                ]
-                if other.name in x
-            ]
-            if partners:
-                partner, is_father = partners[0]
-                x[member.name] = x[partner.name] + (-1 if is_father else 1)
-            else:
-                x[member.name] = (
-                    (max(x[m.name] for m in pending if m.name in x) + 1)
-                    if any(m.name in x for m in pending)
-                    else 0.0
+            partner = next((p for p in partners[name] if p in in_row and p not in taken), None)
+            if partner is None:
+                blocks.append([name])
+                taken.add(name)
+                continue
+            father = (
+                name
+                if any(by_name[c].father == name for c in by_name if by_name[c].mother == partner)
+                else partner
+            )
+            mother = partner if father == name else name
+            blocks.append([father, mother])
+            taken.update((father, mother))
+        # The start of a block: under the parents of its members, else after the last block
+        starts: list[float | None] = []
+        for block in blocks:
+            centers = []
+            for name in block:
+                member = by_name[name]
+                if member.father in x and member.mother in x:
+                    centers.append((x[member.father] + x[member.mother]) / 2)
+            if centers:
+                # Children of one couple spread around its center, in their order
+                siblings = (
+                    [
+                        c
+                        for c in names
+                        if by_name[c].father == by_name[block[0]].father
+                        and by_name[c].mother == by_name[block[0]].mother
+                    ]
+                    if by_name[block[0]].father in x
+                    else [block[0]]
                 )
-        # No two nodes of a row closer than one unit
-        ordered = sorted(pending, key=lambda member: x[member.name])
-        for previous, member in zip(ordered, ordered[1:]):
-            if x[member.name] < x[previous.name] + 1:
-                x[member.name] = x[previous.name] + 1
+                index = siblings.index(block[0]) if block[0] in siblings else 0
+                starts.append(centers[0] - (len(siblings) - 1) / 2 + index)
+            else:
+                starts.append(None)
+        # Children first (their start is known), then the others after the rightmost block
+        order = sorted(range(len(blocks)), key=lambda i: (starts[i] is None, starts[i] or 0))
+        right = None
+        for i in order:
+            if starts[i] is None:
+                starts[i] = 0.0 if right is None else right + 1
+            right = (
+                starts[i] + len(blocks[i]) - 1
+                if right is None
+                else max(right, starts[i] + len(blocks[i]) - 1)
+            )
+        # Blocks never overlap: shift to the right in the order of their starts
+        placed = sorted(range(len(blocks)), key=lambda i: starts[i])
+        edge = None
+        for i in placed:
+            if edge is not None and starts[i] < edge + 1:
+                starts[i] = edge + 1
+            edge = starts[i] + len(blocks[i]) - 1
+            for offset, name in enumerate(blocks[i]):
+                x[name] = starts[i] + offset
     offset = min(x.values()) if x else 0
     return {name: (value - offset, generation[name]) for name, value in x.items()}
 
