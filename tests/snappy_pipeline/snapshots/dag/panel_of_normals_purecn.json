@@ -54,6 +54,7 @@
    "args": {
     "aln_max_read_length": 75,
     "bases_per_batch": 100000000,
+    "code": "<hash>",
     "extra_arguments": [],
     "mask_duplicates": true,
     "memory_bam_sort": "4G",
@@ -114,6 +115,7 @@
   ],
   "params": {
    "args": {
+    "code": "<hash>",
     "extra_arguments": [],
     "java_options": "-Xms16g -Xmx32g"
    }
@@ -228,6 +230,7 @@
   ],
   "params": {
    "args": {
+    "code": "<hash>",
     "extra_arguments": [],
     "java_options": "",
     "max_mnp_distance": 0
@@ -271,6 +274,7 @@
   ],
   "params": {
    "args": {
+    "code": "<hash>",
     "extra_arguments": [],
     "java_options": "",
     "max_mnp_distance": 0
@@ -314,6 +318,7 @@
   ],
   "params": {
    "args": {
+    "code": "<hash>",
     "extra_arguments": [],
     "java_options": "",
     "max_mnp_distance": 0
@@ -357,6 +362,7 @@
   ],
   "params": {
    "args": {
+    "code": "<hash>",
     "extra_arguments": [],
     "java_options": "",
     "max_mnp_distance": 0
@@ -400,6 +406,7 @@
   ],
   "params": {
    "args": {
+    "code": "<hash>",
     "extra_arguments": [],
     "java_options": "",
     "max_mnp_distance": 0
@@ -443,6 +450,7 @@
   ],
   "params": {
    "args": {
+    "code": "<hash>",
     "extra_arguments": [],
     "java_options": "",
     "max_mnp_distance": 0
@@ -486,6 +494,7 @@
   ],
   "params": {
    "args": {
+    "code": "<hash>",
     "extra_arguments": [],
     "java_options": "",
     "max_mnp_distance": 0
@@ -529,6 +538,7 @@
   ],
   "params": {
    "args": {
+    "code": "<hash>",
     "extra_arguments": [],
     "java_options": "",
     "max_mnp_distance": 0
@@ -572,6 +582,7 @@
   ],
   "params": {
    "args": {
+    "code": "<hash>",
     "extra_arguments": [],
     "java_options": "",
     "max_mnp_distance": 0
@@ -615,6 +626,7 @@
   ],
   "params": {
    "args": {
+    "code": "<hash>",
     "extra_arguments": [],
     "java_options": "",
     "max_mnp_distance": 0
@@ -658,6 +670,7 @@
   ],
   "params": {
    "args": {
+    "code": "<hash>",
     "extra_arguments": [],
     "java_options": "",
     "max_mnp_distance": 0
@@ -701,6 +714,7 @@
   ],
   "params": {
    "args": {
+    "code": "<hash>",
     "extra_arguments": [],
     "java_options": "",
     "max_mnp_distance": 0
@@ -744,6 +758,7 @@
   ],
   "params": {
    "args": {
+    "code": "<hash>",
     "extra_arguments": [],
     "java_options": "",
     "max_mnp_distance": 0
@@ -787,6 +802,7 @@
   ],
   "params": {
    "args": {
+    "code": "<hash>",
     "extra_arguments": [],
     "java_options": "",
     "max_mnp_distance": 0
@@ -830,6 +846,7 @@
   ],
   "params": {
    "args": {
+    "code": "<hash>",
     "extra_arguments": [],
     "java_options": "",
     "max_mnp_distance": 0
@@ -873,6 +890,7 @@
   ],
   "params": {
    "args": {
+    "code": "<hash>",
     "extra_arguments": [],
     "java_options": "",
     "max_mnp_distance": 0
@@ -916,6 +934,7 @@
   ],
   "params": {
    "args": {
+    "code": "<hash>",
     "extra_arguments": [],
     "java_options": "",
     "max_mnp_distance": 0
@@ -959,6 +978,7 @@
   ],
   "params": {
    "args": {
+    "code": "<hash>",
     "extra_arguments": [],
     "java_options": "",
     "max_mnp_distance": 0
@@ -1002,6 +1022,7 @@
   ],
   "params": {
    "args": {
+    "code": "<hash>",
     "extra_arguments": [],
     "java_options": "",
     "max_mnp_distance": 0
@@ -1045,6 +1066,7 @@
   ],
   "params": {
    "args": {
+    "code": "<hash>",
     "extra_arguments": [],
     "java_options": "",
     "max_mnp_distance": 0
@@ -1088,6 +1110,7 @@
   ],
   "params": {
    "args": {
+    "code": "<hash>",
     "extra_arguments": [],
     "java_options": "",
     "max_mnp_distance": 0
@@ -1131,6 +1154,7 @@
   ],
   "params": {
    "args": {
+    "code": "<hash>",
     "extra_arguments": [],
     "java_options": "",
     "max_mnp_distance": 0
@@ -1174,6 +1198,7 @@
   ],
   "params": {
    "args": {
+    "code": "<hash>",
     "extra_arguments": [],
     "java_options": "",
     "max_mnp_distance": 0
@@ -1217,6 +1242,7 @@
   ],
   "params": {
    "args": {
+    "code": "<hash>",
     "extra_arguments": [],
     "java_options": "",
     "max_mnp_distance": 0
@@ -1278,6 +1304,7 @@
   ],
   "params": {
    "args": {
+    "code": "<hash>",
     "ignore_contigs": [],
     "padding": 5000
    }
@@ -1337,6 +1364,7 @@
   ],
   "params": {
    "args": {
+    "code": "<hash>",
     "config": {
      "container": "docker://markusriester/purecn@sha256:5d676079969281d343199e291cfbc529bf1b2c69c70342311998f90386acddce",
      "enrichment_kit_name": "unknown",
@@ -1384,6 +1412,7 @@
   ],
   "params": {
    "args": {
+    "code": "<hash>",
     "config": {
      "container": "docker://markusriester/purecn@sha256:5d676079969281d343199e291cfbc529bf1b2c69c70342311998f90386acddce",
      "enrichment_kit_name": "unknown",
@@ -1432,6 +1461,7 @@
   ],
   "params": {
    "args": {
+    "code": "<hash>",
     "config": {
      "container": "docker://markusriester/purecn@sha256:5d676079969281d343199e291cfbc529bf1b2c69c70342311998f90386acddce",
      "enrichment_kit_name": "unknown",
@@ -1504,6 +1534,7 @@
   "params": {
    "args": {
     "algorithm": "bwtsw",
+    "code": "<hash>",
     "extra_arguments": []
    }
   },

@@ -20,6 +20,7 @@
   ],
   "params": {
    "args": {
+    "code": "<hash>",
     "config": {
      "average_qual": 0,
      "complexity_threshold": 30,

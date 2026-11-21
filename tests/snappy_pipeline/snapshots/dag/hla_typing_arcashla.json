@@ -59,6 +59,7 @@
   ],
   "params": {
    "args": {
+    "code": "<hash>",
     "drop_threshold": 0.1,
     "extra_arguments": [],
     "max_iterations": 1000,
@@ -143,6 +144,7 @@
     "align_mates_gap_max": 1000000,
     "align_sj_overhang_min": 8,
     "align_sjdb_overhang_min": 1,
+    "code": "<hash>",
     "extra_arguments": [],
     "genome_load": "NoSharedMemory",
     "include_unmapped": true,
@@ -246,6 +248,7 @@
   ],
   "params": {
    "args": {
+    "code": "<hash>",
     "extra_arguments": []
    }
   },

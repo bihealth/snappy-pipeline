@@ -56,6 +56,7 @@
    "args": {
     "aln_max_read_length": 75,
     "bases_per_batch": 100000000,
+    "code": "<hash>",
     "extra_arguments": [],
     "mask_duplicates": true,
     "memory_bam_sort": "4G",
@@ -122,6 +123,7 @@
    "args": {
     "aln_max_read_length": 75,
     "bases_per_batch": 100000000,
+    "code": "<hash>",
     "extra_arguments": [],
     "mask_duplicates": true,
     "memory_bam_sort": "4G",
@@ -188,6 +190,7 @@
    "args": {
     "aln_max_read_length": 75,
     "bases_per_batch": 100000000,
+    "code": "<hash>",
     "extra_arguments": [],
     "mask_duplicates": true,
     "memory_bam_sort": "4G",
@@ -245,6 +248,7 @@
   "params": {
    "args": {
     "algorithm": "bwtsw",
+    "code": "<hash>",
     "extra_arguments": []
    }
   },
@@ -334,6 +338,7 @@
   ],
   "params": {
    "args": {
+    "code": "<hash>",
     "donor_library_name": "case001subregion-N1-DNA1-WES1",
     "extra_arguments": []
    }
@@ -371,6 +376,7 @@
   ],
   "params": {
    "args": {
+    "code": "<hash>",
     "donor_library_name": "case001subregionFather-N1-DNA1-WES1",
     "extra_arguments": []
    }
@@ -408,6 +414,7 @@
   ],
   "params": {
    "args": {
+    "code": "<hash>",
     "donor_library_name": "case001subregionMother-N1-DNA1-WES1",
     "extra_arguments": []
    }
@@ -460,6 +467,7 @@
      "StandardAnnotation",
      "StandardHCAnnotation"
     ],
+    "code": "<hash>",
     "extra_arguments": [],
     "ignore_contigs": [
      "^NC_007605$",
@@ -508,6 +516,7 @@
   ],
   "params": {
    "args": {
+    "code": "<hash>",
     "format": "bcftools_stats",
     "labels": [
      "case001subregion-N1-DNA1-WES1",

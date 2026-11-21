@@ -56,6 +56,7 @@
    "args": {
     "aln_max_read_length": 75,
     "bases_per_batch": 100000000,
+    "code": "<hash>",
     "extra_arguments": [],
     "mask_duplicates": true,
     "memory_bam_sort": "4G",
@@ -122,6 +123,7 @@
    "args": {
     "aln_max_read_length": 75,
     "bases_per_batch": 100000000,
+    "code": "<hash>",
     "extra_arguments": [],
     "mask_duplicates": true,
     "memory_bam_sort": "4G",
@@ -179,6 +181,7 @@
   "params": {
    "args": {
     "algorithm": "bwtsw",
+    "code": "<hash>",
     "extra_arguments": []
    }
   },
@@ -274,6 +277,7 @@
   ],
   "params": {
    "args": {
+    "code": "<hash>",
     "min_probes": 3,
     "shift_xy": true,
     "threshold": 0.5
@@ -317,6 +321,7 @@
   "params": {
    "args": {
     "break_point_threshold": 0.8,
+    "code": "<hash>",
     "coefficient_of_variation": 0.05,
     "contamination": 0.4,
     "contamination_adjustment": true,
@@ -368,6 +373,7 @@
    "args": {
     "amplification": 6,
     "bs_obj": "BSgenome.Hsapiens.1000genomes.hs37d5::hs37d5",
+    "code": "<hash>",
     "org_obj": "org.Hs.eg.db::org.Hs.eg.db",
     "tumor_library": "case001subregion-T1-DNA1-WES1",
     "tx_obj": "TxDb.Hsapiens.UCSC.hg19.knownGene::TxDb.Hsapiens.UCSC.hg19.knownGene"

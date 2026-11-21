@@ -73,6 +73,7 @@
   ],
   "params": {
    "args": {
+    "code": "<hash>",
     "config": {
      "extra_arguments": [],
      "strand": -1,
@@ -117,6 +118,7 @@
   ],
   "params": {
    "args": {
+    "code": "<hash>",
     "format": "samtools",
     "labels": [
      "case001subregion-T1-RNA1-mRNA_seq1"
@@ -177,6 +179,7 @@
     "align_mates_gap_max": 1000000,
     "align_sj_overhang_min": 8,
     "align_sjdb_overhang_min": 1,
+    "code": "<hash>",
     "extra_arguments": [],
     "genome_load": "NoSharedMemory",
     "include_unmapped": true,
@@ -319,6 +322,7 @@
   ],
   "params": {
    "args": {
+    "code": "<hash>",
     "extra_arguments": []
    }
   },

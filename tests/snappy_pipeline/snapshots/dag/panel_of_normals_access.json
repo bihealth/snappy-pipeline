@@ -32,6 +32,7 @@
   ],
   "params": {
    "args": {
+    "code": "<hash>",
     "extra_arguments": [],
     "min_gap_size": 0
    }

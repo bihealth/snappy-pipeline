@@ -36,6 +36,7 @@
     "branch": "",
     "build": "GRCh38",
     "chromosome": [],
+    "code": "<hash>",
     "contigs": [],
     "contigs_regex": "",
     "datatype": "dna",

@@ -50,6 +50,7 @@
    "args": {
     "aln_max_read_length": 75,
     "bases_per_batch": 100000000,
+    "code": "<hash>",
     "extra_arguments": [],
     "mask_duplicates": true,
     "memory_bam_sort": "4G",
@@ -116,6 +117,7 @@
    "args": {
     "aln_max_read_length": 75,
     "bases_per_batch": 100000000,
+    "code": "<hash>",
     "extra_arguments": [],
     "mask_duplicates": true,
     "memory_bam_sort": "4G",
@@ -182,6 +184,7 @@
    "args": {
     "aln_max_read_length": 75,
     "bases_per_batch": 100000000,
+    "code": "<hash>",
     "extra_arguments": [],
     "mask_duplicates": true,
     "memory_bam_sort": "4G",
@@ -239,6 +242,7 @@
   "params": {
    "args": {
     "algorithm": "bwtsw",
+    "code": "<hash>",
     "extra_arguments": []
    }
   },
@@ -340,6 +344,7 @@
   "params": {
    "args": {
     "atomize": true,
+    "code": "<hash>",
     "extra_arguments": [],
     "min_alternate_count": 2,
     "min_alternate_fraction": 0.05
@@ -388,6 +393,7 @@
   "params": {
    "args": {
     "atomize": true,
+    "code": "<hash>",
     "extra_arguments": [],
     "min_alternate_count": 2,
     "min_alternate_fraction": 0.05
@@ -427,6 +433,7 @@
   ],
   "params": {
    "args": {
+    "code": "<hash>",
     "ignore_contigs": [
      "^HLA-",
      "^NC_007605$",
@@ -568,6 +575,7 @@
   ],
   "params": {
    "args": {
+    "code": "<hash>",
     "extra_arguments": [],
     "full_prior": true,
     "obs_names": [
@@ -613,6 +621,7 @@
   ],
   "params": {
    "args": {
+    "code": "<hash>",
     "extra_arguments": [],
     "full_prior": true,
     "obs_names": [
@@ -694,6 +703,7 @@
   ],
   "params": {
    "args": {
+    "code": "<hash>",
     "extra_arguments": [],
     "max_depth": 200
    }
@@ -736,6 +746,7 @@
   ],
   "params": {
    "args": {
+    "code": "<hash>",
     "extra_arguments": [],
     "max_depth": 200
    }
@@ -778,6 +789,7 @@
   ],
   "params": {
    "args": {
+    "code": "<hash>",
     "extra_arguments": [],
     "max_depth": 200
    }
@@ -820,6 +832,7 @@
   ],
   "params": {
    "args": {
+    "code": "<hash>",
     "extra_arguments": [],
     "max_depth": 200
    }
@@ -862,6 +875,7 @@
   ],
   "params": {
    "args": {
+    "code": "<hash>",
     "extra_arguments": [],
     "max_depth": 200
    }
@@ -904,6 +918,7 @@
   ],
   "params": {
    "args": {
+    "code": "<hash>",
     "extra_arguments": [],
     "max_depth": 200
    }
@@ -1012,6 +1027,7 @@
   "params": {
    "args": {
     "assembly": null,
+    "code": "<hash>",
     "igv": {
      "extra_arguments": [],
      "flanking": 300,
@@ -1103,6 +1119,7 @@
   ],
   "params": {
    "args": {
+    "code": "<hash>",
     "events": [
      "present",
      "denovo_*",

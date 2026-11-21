@@ -40,6 +40,7 @@ from snappy_pipeline.models import (
     SnappyStepModel,
     ToolModel,
 )
+from snappy_pipeline.wrapper_code import code_of, snakefile_of
 from snappy_pipeline.utils import listify
 from snappy_pipeline.reads import ReadGroup
 from snappy_pipeline.workflows.abstract.protocol import (
@@ -1500,7 +1501,18 @@ class BaseStep:
         of the tool section
         """
         params = self._require_function(sub_step, "get_params", action)
-        return self._get_sub_step(sub_step).with_extra_arguments(action, params)
+        with_arguments = self._get_sub_step(sub_step).with_extra_arguments(action, params)
+        code = code_of(snakefile_of(inspect.getfile(type(self))), sub_step, action)
+        if code is None:
+            return with_arguments
+
+        @wraps(with_arguments)  # Snakemake reads the signature to pick the arguments
+        def with_code(*args, **kwargs):
+            # The hash of what the rule's wrappers import from snappy_wrappers, so that a
+            # changed tool reruns the job (Snakemake hashes the wrapper script only)
+            return {**with_arguments(*args, **kwargs), "code": code}
+
+        return with_code
 
     def _require_function(self, sub_step: str, method: str, action: str) -> Callable[..., Any]:
         """Call ``method`` of the sub step and check that it returned a function of wildcards"""

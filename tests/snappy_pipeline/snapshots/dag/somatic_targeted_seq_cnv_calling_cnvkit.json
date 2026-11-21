@@ -120,6 +120,7 @@
    "args": {
     "aln_max_read_length": 75,
     "bases_per_batch": 100000000,
+    "code": "<hash>",
     "extra_arguments": [],
     "mask_duplicates": true,
     "memory_bam_sort": "4G",
@@ -186,6 +187,7 @@
    "args": {
     "aln_max_read_length": 75,
     "bases_per_batch": 100000000,
+    "code": "<hash>",
     "extra_arguments": [],
     "mask_duplicates": true,
     "memory_bam_sort": "4G",
@@ -238,6 +240,7 @@
   ],
   "params": {
    "args": {
+    "code": "<hash>",
     "extra_arguments": [],
     "min_gap_size": 0
    }
@@ -268,6 +271,7 @@
   "params": {
    "args": {
     "avg_size": 150000,
+    "code": "<hash>",
     "min_size": null
    }
   },
@@ -304,6 +308,7 @@
   ],
   "params": {
    "args": {
+    "code": "<hash>",
     "count": false,
     "min_mapq": 0
    }
@@ -344,6 +349,7 @@
   ],
   "params": {
    "args": {
+    "code": "<hash>",
     "edge_correction": false,
     "extra_arguments": [],
     "flat": false,
@@ -386,6 +392,7 @@
    "args": {
     "avg_size": null,
     "bp_per_bin": 100000.0,
+    "code": "<hash>",
     "default_avg_size": 5000,
     "split": false
    }
@@ -424,6 +431,7 @@
   "params": {
    "args": {
     "algorithm": "bwtsw",
+    "code": "<hash>",
     "extra_arguments": []
    }
   },

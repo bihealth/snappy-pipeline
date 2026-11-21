@@ -394,6 +394,8 @@ def test_generated_config_task_closure_passes(
         assert targets, f"{task_name} targets no files, so its snapshot would check nothing"
     for path, placeholder in ((str(tmp_path), "<project>"), (str(root), "<repo>")):
         actual = actual.replace(path, placeholder)
+    # The code hash of a rule's wrappers changes with every edit of the tools they import
+    actual = re.sub(r'"code": "[0-9a-f]{16}"', '"code": "<hash>"', actual)
     _check_snapshot(task_name, actual)
 
 

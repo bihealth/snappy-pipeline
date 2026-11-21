@@ -58,6 +58,7 @@
   ],
   "params": {
    "args": {
+    "code": "<hash>",
     "sample_names": [
      "case001subregion"
     ]
@@ -107,6 +108,7 @@
   ],
   "params": {
    "args": {
+    "code": "<hash>",
     "config": {
      "background_selection": null,
      "bam_available_flag": false,

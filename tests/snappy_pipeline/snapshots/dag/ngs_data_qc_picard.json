@@ -48,6 +48,7 @@
   "params": {
    "args": {
     "bait_name": "MedExome",
+    "code": "<hash>",
     "extra_arguments": [],
     "prefix": "case001subregion-N1-DNA1-WES1.",
     "programs": [
@@ -99,6 +100,7 @@
   "params": {
    "args": {
     "bait_name": "MedExome",
+    "code": "<hash>",
     "extra_arguments": [],
     "prefix": "case001subregion-T1-DNA1-WES1.",
     "programs": [
@@ -182,6 +184,7 @@
   ],
   "params": {
    "args": {
+    "code": "<hash>",
     "format": "picard",
     "labels": [
      "case001subregion-N1-DNA1-WES1",
@@ -265,6 +268,7 @@
    "args": {
     "aln_max_read_length": 75,
     "bases_per_batch": 100000000,
+    "code": "<hash>",
     "extra_arguments": [],
     "mask_duplicates": true,
     "memory_bam_sort": "4G",
@@ -331,6 +335,7 @@
    "args": {
     "aln_max_read_length": 75,
     "bases_per_batch": 100000000,
+    "code": "<hash>",
     "extra_arguments": [],
     "mask_duplicates": true,
     "memory_bam_sort": "4G",
@@ -388,6 +393,7 @@
   "params": {
    "args": {
     "algorithm": "bwtsw",
+    "code": "<hash>",
     "extra_arguments": []
    }
   },

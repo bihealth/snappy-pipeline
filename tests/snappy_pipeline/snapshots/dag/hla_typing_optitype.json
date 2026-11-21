@@ -43,6 +43,7 @@
   ],
   "params": {
    "args": {
+    "code": "<hash>",
     "extra_arguments": [],
     "max_reads": 5000,
     "num_mapping_threads": 4,

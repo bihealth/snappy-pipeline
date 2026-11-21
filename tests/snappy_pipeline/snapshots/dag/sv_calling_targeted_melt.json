@@ -48,6 +48,7 @@
    "args": {
     "aln_max_read_length": 75,
     "bases_per_batch": 100000000,
+    "code": "<hash>",
     "extra_arguments": [],
     "mask_duplicates": true,
     "memory_bam_sort": "4G",
@@ -105,6 +106,7 @@
   "params": {
    "args": {
     "algorithm": "bwtsw",
+    "code": "<hash>",
     "extra_arguments": []
    }
   },
@@ -194,6 +196,7 @@
   ],
   "params": {
    "args": {
+    "code": "<hash>",
     "me_refs_infix": "AUTO",
     "me_type": "ALU"
    }
@@ -239,6 +242,7 @@
   ],
   "params": {
    "args": {
+    "code": "<hash>",
     "me_refs_infix": "AUTO",
     "me_type": "LINE1"
    }
@@ -284,6 +288,7 @@
   ],
   "params": {
    "args": {
+    "code": "<hash>",
     "me_refs_infix": "AUTO",
     "me_type": "SVA"
    }
@@ -331,6 +336,7 @@
   ],
   "params": {
    "args": {
+    "code": "<hash>",
     "me_refs_infix": "AUTO",
     "me_type": "ALU",
     "read_length": 150
@@ -378,6 +384,7 @@
   ],
   "params": {
    "args": {
+    "code": "<hash>",
     "me_refs_infix": "AUTO",
     "me_type": "LINE1",
     "read_length": 150
@@ -425,6 +432,7 @@
   ],
   "params": {
    "args": {
+    "code": "<hash>",
     "me_refs_infix": "AUTO",
     "me_type": "SVA",
     "read_length": 150
@@ -472,6 +480,7 @@
   ],
   "params": {
    "args": {
+    "code": "<hash>",
     "exclude_contigs": [
      "hs37d5",
      "NC_007605"
@@ -525,6 +534,7 @@
   ],
   "params": {
    "args": {
+    "code": "<hash>",
     "exclude_contigs": [
      "hs37d5",
      "NC_007605"
@@ -578,6 +588,7 @@
   ],
   "params": {
    "args": {
+    "code": "<hash>",
     "exclude_contigs": [
      "hs37d5",
      "NC_007605"
@@ -628,6 +639,7 @@
   ],
   "params": {
    "args": {
+    "code": "<hash>",
     "max_no_call_percent": 100,
     "me_refs_infix": "AUTO",
     "me_type": "ALU"
@@ -673,6 +685,7 @@
   ],
   "params": {
    "args": {
+    "code": "<hash>",
     "max_no_call_percent": 100,
     "me_refs_infix": "AUTO",
     "me_type": "LINE1"
@@ -718,6 +731,7 @@
   ],
   "params": {
    "args": {
+    "code": "<hash>",
     "max_no_call_percent": 100,
     "me_refs_infix": "AUTO",
     "me_type": "SVA"

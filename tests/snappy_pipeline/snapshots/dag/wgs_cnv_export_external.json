@@ -71,6 +71,7 @@
   ],
   "params": {
    "args": {
+    "code": "<hash>",
     "config": {
      "background_selection": null,
      "delete_intermediates": [
@@ -122,6 +123,7 @@
   ],
   "params": {
    "args": {
+    "code": "<hash>",
     "gvcf_option": false,
     "merge_option": "id",
     "sample_names": [

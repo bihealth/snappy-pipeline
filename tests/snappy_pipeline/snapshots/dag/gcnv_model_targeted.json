@@ -74,7 +74,8 @@
      "X",
      "Y"
     ],
-    "autosomal_ref_copy_number": 2
+    "autosomal_ref_copy_number": 2,
+    "code": "<hash>"
    }
   },
   "resources": {
@@ -110,6 +111,7 @@
   ],
   "params": {
    "args": {
+    "code": "<hash>",
     "interval_merging_rule": "OVERLAPPING_ONLY"
    }
   },
@@ -145,6 +147,7 @@
   ],
   "params": {
    "args": {
+    "code": "<hash>",
     "interval_merging_rule": "OVERLAPPING_ONLY",
     "maximum_gc_content": 0.9,
     "maximum_mappability": 1.0,
@@ -220,6 +223,7 @@
   ],
   "params": {
    "args": {
+    "code": "<hash>",
     "intervals_per_shard": 5000
    }
   },
@@ -290,6 +294,7 @@
    "args": {
     "aln_max_read_length": 75,
     "bases_per_batch": 100000000,
+    "code": "<hash>",
     "extra_arguments": [],
     "mask_duplicates": true,
     "memory_bam_sort": "4G",
@@ -347,6 +352,7 @@
   "params": {
    "args": {
     "algorithm": "bwtsw",
+    "code": "<hash>",
     "extra_arguments": []
    }
   },

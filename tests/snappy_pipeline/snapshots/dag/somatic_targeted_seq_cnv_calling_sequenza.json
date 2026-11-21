@@ -49,6 +49,7 @@
    "args": {
     "aln_max_read_length": 75,
     "bases_per_batch": 100000000,
+    "code": "<hash>",
     "extra_arguments": [],
     "mask_duplicates": true,
     "memory_bam_sort": "4G",
@@ -115,6 +116,7 @@
    "args": {
     "aln_max_read_length": 75,
     "bases_per_batch": 100000000,
+    "code": "<hash>",
     "extra_arguments": [],
     "mask_duplicates": true,
     "memory_bam_sort": "4G",
@@ -172,6 +174,7 @@
   "params": {
    "args": {
     "algorithm": "bwtsw",
+    "code": "<hash>",
     "extra_arguments": []
    }
   },
@@ -267,6 +270,7 @@
      "qformat": "sanger",
      "qlimit": 20.0
     },
+    "code": "<hash>",
     "extra_arguments": [],
     "ignore_contigs": [
      "^X$",
@@ -312,6 +316,7 @@
   ],
   "params": {
    "args": {
+    "code": "<hash>",
     "length": 50
    }
   },
@@ -350,6 +355,7 @@
   "params": {
    "args": {
     "assembly": "hg19",
+    "code": "<hash>",
     "extra_args_extract": {
      "gamma": 60,
      "kmin": 50

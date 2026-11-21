@@ -38,6 +38,7 @@
   ],
   "params": {
    "args": {
+    "code": "<hash>",
     "extra_arguments": [],
     "tumor_library": "case001subregion-T1-DNA1-WES1"
    }
@@ -110,6 +111,7 @@
    "args": {
     "aln_max_read_length": 75,
     "bases_per_batch": 100000000,
+    "code": "<hash>",
     "extra_arguments": [],
     "mask_duplicates": true,
     "memory_bam_sort": "4G",
@@ -176,6 +178,7 @@
    "args": {
     "aln_max_read_length": 75,
     "bases_per_batch": 100000000,
+    "code": "<hash>",
     "extra_arguments": [],
     "mask_duplicates": true,
     "memory_bam_sort": "4G",
@@ -236,6 +239,7 @@
   ],
   "params": {
    "args": {
+    "code": "<hash>",
     "extra_arguments": [],
     "java_options": "-Xms16g -Xmx32g"
    }
@@ -350,6 +354,7 @@
   ],
   "params": {
    "args": {
+    "code": "<hash>",
     "extra_arguments": [],
     "java_options": "",
     "max_mnp_distance": 0
@@ -393,6 +398,7 @@
   ],
   "params": {
    "args": {
+    "code": "<hash>",
     "extra_arguments": [],
     "java_options": "",
     "max_mnp_distance": 0
@@ -436,6 +442,7 @@
   ],
   "params": {
    "args": {
+    "code": "<hash>",
     "extra_arguments": [],
     "java_options": "",
     "max_mnp_distance": 0
@@ -479,6 +486,7 @@
   ],
   "params": {
    "args": {
+    "code": "<hash>",
     "extra_arguments": [],
     "java_options": "",
     "max_mnp_distance": 0
@@ -522,6 +530,7 @@
   ],
   "params": {
    "args": {
+    "code": "<hash>",
     "extra_arguments": [],
     "java_options": "",
     "max_mnp_distance": 0
@@ -565,6 +574,7 @@
   ],
   "params": {
    "args": {
+    "code": "<hash>",
     "extra_arguments": [],
     "java_options": "",
     "max_mnp_distance": 0
@@ -608,6 +618,7 @@
   ],
   "params": {
    "args": {
+    "code": "<hash>",
     "extra_arguments": [],
     "java_options": "",
     "max_mnp_distance": 0
@@ -651,6 +662,7 @@
   ],
   "params": {
    "args": {
+    "code": "<hash>",
     "extra_arguments": [],
     "java_options": "",
     "max_mnp_distance": 0
@@ -694,6 +706,7 @@
   ],
   "params": {
    "args": {
+    "code": "<hash>",
     "extra_arguments": [],
     "java_options": "",
     "max_mnp_distance": 0
@@ -737,6 +750,7 @@
   ],
   "params": {
    "args": {
+    "code": "<hash>",
     "extra_arguments": [],
     "java_options": "",
     "max_mnp_distance": 0
@@ -780,6 +794,7 @@
   ],
   "params": {
    "args": {
+    "code": "<hash>",
     "extra_arguments": [],
     "java_options": "",
     "max_mnp_distance": 0
@@ -823,6 +838,7 @@
   ],
   "params": {
    "args": {
+    "code": "<hash>",
     "extra_arguments": [],
     "java_options": "",
     "max_mnp_distance": 0
@@ -866,6 +882,7 @@
   ],
   "params": {
    "args": {
+    "code": "<hash>",
     "extra_arguments": [],
     "java_options": "",
     "max_mnp_distance": 0
@@ -909,6 +926,7 @@
   ],
   "params": {
    "args": {
+    "code": "<hash>",
     "extra_arguments": [],
     "java_options": "",
     "max_mnp_distance": 0
@@ -952,6 +970,7 @@
   ],
   "params": {
    "args": {
+    "code": "<hash>",
     "extra_arguments": [],
     "java_options": "",
     "max_mnp_distance": 0
@@ -995,6 +1014,7 @@
   ],
   "params": {
    "args": {
+    "code": "<hash>",
     "extra_arguments": [],
     "java_options": "",
     "max_mnp_distance": 0
@@ -1038,6 +1058,7 @@
   ],
   "params": {
    "args": {
+    "code": "<hash>",
     "extra_arguments": [],
     "java_options": "",
     "max_mnp_distance": 0
@@ -1081,6 +1102,7 @@
   ],
   "params": {
    "args": {
+    "code": "<hash>",
     "extra_arguments": [],
     "java_options": "",
     "max_mnp_distance": 0
@@ -1124,6 +1146,7 @@
   ],
   "params": {
    "args": {
+    "code": "<hash>",
     "extra_arguments": [],
     "java_options": "",
     "max_mnp_distance": 0
@@ -1167,6 +1190,7 @@
   ],
   "params": {
    "args": {
+    "code": "<hash>",
     "extra_arguments": [],
     "java_options": "",
     "max_mnp_distance": 0
@@ -1210,6 +1234,7 @@
   ],
   "params": {
    "args": {
+    "code": "<hash>",
     "extra_arguments": [],
     "java_options": "",
     "max_mnp_distance": 0
@@ -1253,6 +1278,7 @@
   ],
   "params": {
    "args": {
+    "code": "<hash>",
     "extra_arguments": [],
     "java_options": "",
     "max_mnp_distance": 0
@@ -1296,6 +1322,7 @@
   ],
   "params": {
    "args": {
+    "code": "<hash>",
     "extra_arguments": [],
     "java_options": "",
     "max_mnp_distance": 0
@@ -1339,6 +1366,7 @@
   ],
   "params": {
    "args": {
+    "code": "<hash>",
     "extra_arguments": [],
     "java_options": "",
     "max_mnp_distance": 0
@@ -1400,6 +1428,7 @@
   ],
   "params": {
    "args": {
+    "code": "<hash>",
     "ignore_contigs": [],
     "padding": 5000
    }
@@ -1465,6 +1494,7 @@
   "params": {
    "args": {
     "algorithm": "bwtsw",
+    "code": "<hash>",
     "extra_arguments": []
    }
   },
@@ -1533,6 +1563,7 @@
   ],
   "params": {
    "args": {
+    "code": "<hash>",
     "config": {
      "assembly": "GRCh38",
      "buffer_size": 1000,
@@ -1603,6 +1634,7 @@
   ],
   "params": {
    "args": {
+    "code": "<hash>",
     "config": {
      "assembly": "GRCh38",
      "buffer_size": 1000,
@@ -1673,6 +1705,7 @@
      "StandardHCAnnotation",
      "AlleleSpecificAnnotation"
     ],
+    "code": "<hash>",
     "ignore_contigs": [
      "^NC_007605$",
      "^hs37d5$",
@@ -1726,6 +1759,7 @@
      "StandardHCAnnotation",
      "AlleleSpecificAnnotation"
     ],
+    "code": "<hash>",
     "extra_arguments": [],
     "ignore_contigs": [
      "^NC_007605$",
@@ -1787,6 +1821,7 @@
      "AS_StandardAnnotation",
      "StandardHCAnnotation"
     ],
+    "code": "<hash>",
     "ignore_contigs": [
      "^NC_007605$",
      "^hs37d5$",
@@ -1838,6 +1873,7 @@
   ],
   "params": {
    "args": {
+    "code": "<hash>",
     "extra_arguments": [],
     "java_options": ""
    }
@@ -2014,6 +2050,7 @@
   ],
   "params": {
    "args": {
+    "code": "<hash>",
     "extra_arguments": [],
     "java_options": "",
     "normal_lib_name": "case001subregion-N1-DNA1-WES1"
@@ -2067,6 +2104,7 @@
   ],
   "params": {
    "args": {
+    "code": "<hash>",
     "extra_arguments": [],
     "java_options": "",
     "normal_lib_name": "case001subregion-N1-DNA1-WES1"
@@ -2120,6 +2158,7 @@
   ],
   "params": {
    "args": {
+    "code": "<hash>",
     "extra_arguments": [],
     "java_options": "",
     "normal_lib_name": "case001subregion-N1-DNA1-WES1"
@@ -2173,6 +2212,7 @@
   ],
   "params": {
    "args": {
+    "code": "<hash>",
     "extra_arguments": [],
     "java_options": "",
     "normal_lib_name": "case001subregion-N1-DNA1-WES1"
@@ -2226,6 +2266,7 @@
   ],
   "params": {
    "args": {
+    "code": "<hash>",
     "extra_arguments": [],
     "java_options": "",
     "normal_lib_name": "case001subregion-N1-DNA1-WES1"
@@ -2279,6 +2320,7 @@
   ],
   "params": {
    "args": {
+    "code": "<hash>",
     "extra_arguments": [],
     "java_options": "",
     "normal_lib_name": "case001subregion-N1-DNA1-WES1"
@@ -2332,6 +2374,7 @@
   ],
   "params": {
    "args": {
+    "code": "<hash>",
     "extra_arguments": [],
     "java_options": "",
     "normal_lib_name": "case001subregion-N1-DNA1-WES1"
@@ -2385,6 +2428,7 @@
   ],
   "params": {
    "args": {
+    "code": "<hash>",
     "extra_arguments": [],
     "java_options": "",
     "normal_lib_name": "case001subregion-N1-DNA1-WES1"
@@ -2438,6 +2482,7 @@
   ],
   "params": {
    "args": {
+    "code": "<hash>",
     "extra_arguments": [],
     "java_options": "",
     "normal_lib_name": "case001subregion-N1-DNA1-WES1"
@@ -2491,6 +2536,7 @@
   ],
   "params": {
    "args": {
+    "code": "<hash>",
     "extra_arguments": [],
     "java_options": "",
     "normal_lib_name": "case001subregion-N1-DNA1-WES1"
@@ -2544,6 +2590,7 @@
   ],
   "params": {
    "args": {
+    "code": "<hash>",
     "extra_arguments": [],
     "java_options": "",
     "normal_lib_name": "case001subregion-N1-DNA1-WES1"
@@ -2597,6 +2644,7 @@
   ],
   "params": {
    "args": {
+    "code": "<hash>",
     "extra_arguments": [],
     "java_options": "",
     "normal_lib_name": "case001subregion-N1-DNA1-WES1"
@@ -2650,6 +2698,7 @@
   ],
   "params": {
    "args": {
+    "code": "<hash>",
     "extra_arguments": [],
     "java_options": "",
     "normal_lib_name": "case001subregion-N1-DNA1-WES1"
@@ -2703,6 +2752,7 @@
   ],
   "params": {
    "args": {
+    "code": "<hash>",
     "extra_arguments": [],
     "java_options": "",
     "normal_lib_name": "case001subregion-N1-DNA1-WES1"
@@ -2756,6 +2806,7 @@
   ],
   "params": {
    "args": {
+    "code": "<hash>",
     "extra_arguments": [],
     "java_options": "",
     "normal_lib_name": "case001subregion-N1-DNA1-WES1"
@@ -2809,6 +2860,7 @@
   ],
   "params": {
    "args": {
+    "code": "<hash>",
     "extra_arguments": [],
     "java_options": "",
     "normal_lib_name": "case001subregion-N1-DNA1-WES1"
@@ -2862,6 +2914,7 @@
   ],
   "params": {
    "args": {
+    "code": "<hash>",
     "extra_arguments": [],
     "java_options": "",
     "normal_lib_name": "case001subregion-N1-DNA1-WES1"
@@ -2915,6 +2968,7 @@
   ],
   "params": {
    "args": {
+    "code": "<hash>",
     "extra_arguments": [],
     "java_options": "",
     "normal_lib_name": "case001subregion-N1-DNA1-WES1"
@@ -2968,6 +3022,7 @@
   ],
   "params": {
    "args": {
+    "code": "<hash>",
     "extra_arguments": [],
     "java_options": "",
     "normal_lib_name": "case001subregion-N1-DNA1-WES1"
@@ -3021,6 +3076,7 @@
   ],
   "params": {
    "args": {
+    "code": "<hash>",
     "extra_arguments": [],
     "java_options": "",
     "normal_lib_name": "case001subregion-N1-DNA1-WES1"
@@ -3074,6 +3130,7 @@
   ],
   "params": {
    "args": {
+    "code": "<hash>",
     "extra_arguments": [],
     "java_options": "",
     "normal_lib_name": "case001subregion-N1-DNA1-WES1"
@@ -3127,6 +3184,7 @@
   ],
   "params": {
    "args": {
+    "code": "<hash>",
     "extra_arguments": [],
     "java_options": "",
     "normal_lib_name": "case001subregion-N1-DNA1-WES1"
@@ -3180,6 +3238,7 @@
   ],
   "params": {
    "args": {
+    "code": "<hash>",
     "extra_arguments": [],
     "java_options": "",
     "normal_lib_name": "case001subregion-N1-DNA1-WES1"
@@ -3233,6 +3292,7 @@
   ],
   "params": {
    "args": {
+    "code": "<hash>",
     "extra_arguments": [],
     "java_options": "",
     "normal_lib_name": "case001subregion-N1-DNA1-WES1"
@@ -3296,6 +3356,7 @@
   ],
   "params": {
    "args": {
+    "code": "<hash>",
     "ignore_contigs": [
      "^HLA-",
      "^NC_007605$",
@@ -3363,6 +3424,7 @@
   ],
   "params": {
    "args": {
+    "code": "<hash>",
     "exclude": "FILTER ~ 'low_depth'",
     "extra_arguments": [],
     "filter_name": "variant_filtration_bcftools",

@@ -461,8 +461,10 @@ def test_wrappers_read_the_params_they_get():
         paths = (REPO / "snappy_wrappers" / "wrappers" / wrapper).glob("*.py")
         text = "\n".join(path.read_text(encoding="utf-8") for path in paths)
         args = params.get("args", {})
-        keys = (
-            {key for key in args if key != "extra_arguments"} if isinstance(args, dict) else set()
+        keys = (  # extra_arguments: the base class; code: the rerun trigger of the step
+            {key for key in args if key not in ("extra_arguments", "code")}
+            if isinstance(args, dict)
+            else set()
         )
         keys |= {f"params.{key}" for key in params if key != "args"}
         for key in keys:

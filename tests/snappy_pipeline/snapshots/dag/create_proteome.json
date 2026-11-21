@@ -127,7 +127,8 @@
   ],
   "params": {
    "args": {
-    "add_reference": false
+    "add_reference": false,
+    "code": "<hash>"
    }
   },
   "resources": {
@@ -175,6 +176,7 @@
    "args": {
     "aln_max_read_length": 75,
     "bases_per_batch": 100000000,
+    "code": "<hash>",
     "extra_arguments": [],
     "mask_duplicates": true,
     "memory_bam_sort": "4G",
@@ -232,6 +234,7 @@
   "params": {
    "args": {
     "algorithm": "bwtsw",
+    "code": "<hash>",
     "extra_arguments": []
    }
   },
@@ -298,6 +301,7 @@
   ],
   "params": {
    "args": {
+    "code": "<hash>",
     "config": {
      "assembly": "GRCh38",
      "buffer_size": 1000,
@@ -368,6 +372,7 @@
      "StandardHCAnnotation",
      "AlleleSpecificAnnotation"
     ],
+    "code": "<hash>",
     "ignore_contigs": [
      "^NC_007605$",
      "^hs37d5$",
@@ -421,6 +426,7 @@
      "StandardHCAnnotation",
      "AlleleSpecificAnnotation"
     ],
+    "code": "<hash>",
     "extra_arguments": [],
     "ignore_contigs": [
      "^NC_007605$",
@@ -482,6 +488,7 @@
      "AS_StandardAnnotation",
      "StandardHCAnnotation"
     ],
+    "code": "<hash>",
     "ignore_contigs": [
      "^NC_007605$",
      "^hs37d5$",

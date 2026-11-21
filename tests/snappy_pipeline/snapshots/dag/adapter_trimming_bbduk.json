@@ -21,6 +21,7 @@
   ],
   "params": {
    "args": {
+    "code": "<hash>",
     "config": {
      "barcodefilter": "f",
      "builtin_references": [],
