@@ -14,12 +14,6 @@ wf = task_instance(config["__task_name__"])
 # Rules =======================================================================
 
 
-rule homologous_recombination_deficiency_all:
-    default_target: True
-    input:
-        wf.get_result_files(),
-
-
 # House-Keeping ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 # Homologous Recombination Deficiency score ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~

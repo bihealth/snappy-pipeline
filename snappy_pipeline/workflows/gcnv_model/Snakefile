@@ -13,12 +13,6 @@ wgs = "_wgs" if wf.config.intervals == "wgs" else ""
 # Rules =======================================================================
 
 
-rule gcnv_model_all:
-    default_target: True
-    input:
-        wf.get_result_files(),
-
-
 rule gcnv_model_write_pedigree_run:
     output:
         wf.get_output_files("write_pedigree", "run"),

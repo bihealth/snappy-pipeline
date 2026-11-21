@@ -33,12 +33,6 @@ if wf.config.tool == "ebfilter":
             wf.substep_getattr("filter", "write_panel_of_normals_file")(wildcards)
 
 
-rule variant_filtration_all:
-    default_target: True
-    input:
-        wf.get_result_files(),
-
-
 # Variant Filtration ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 if wf.config.tool == "bcftools":

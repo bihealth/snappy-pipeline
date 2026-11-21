@@ -19,12 +19,6 @@ wildcard_constraints:
     member="[^/.]+",
 
 
-rule variant_calling_all:
-    default_target: True
-    input:
-        wf.get_result_files(),
-
-
 # Variant Calling ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 # Write out pedigree file -----------------------------------------------------

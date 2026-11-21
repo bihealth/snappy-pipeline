@@ -8,12 +8,6 @@ from snappy_pipeline.orchestration import task_instance
 wf = task_instance(config["__task_name__"])
 
 
-rule reference_download_all:
-    default_target: True
-    input:
-        wf.get_result_files(),
-
-
 source = str(wf.config.source)
 if source == "ensembl":
 

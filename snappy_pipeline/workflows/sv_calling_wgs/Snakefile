@@ -18,12 +18,6 @@ tool = str(wf.config.tool)
 # Rules =======================================================================
 
 
-rule sv_calling_wgs_all:
-    default_target: True
-    input:
-        wf.get_result_files(),
-
-
 # House-Keeping ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 # Write out pedigree file -----------------------------------------------------

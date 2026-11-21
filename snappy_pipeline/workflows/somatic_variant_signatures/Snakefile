@@ -14,12 +14,6 @@ wf = task_instance(config["__task_name__"])
 # Rules =======================================================================
 
 
-rule somatic_variant_signatures_all:
-    default_target: True
-    input:
-        wf.get_result_files(),
-
-
 # House-Keeping ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 # Somatic variant signatures ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~

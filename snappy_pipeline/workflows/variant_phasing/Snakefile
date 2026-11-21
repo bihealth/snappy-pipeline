@@ -15,12 +15,6 @@ wf = task_instance(config["__task_name__"])
 # Rules =======================================================================
 
 
-rule variant_phasing_all:
-    default_target: True
-    input:
-        wf.get_result_files(),
-
-
 # Variant Phasing ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 # Write out trio pedigree file ------------------------------------------------

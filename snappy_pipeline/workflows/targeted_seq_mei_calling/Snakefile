@@ -11,12 +11,6 @@ wf = task_instance(config["__task_name__"])
 # Rules =======================================================================
 
 
-rule targeted_seq_mei_calling_all:
-    default_target: True
-    input:
-        wf.get_result_files(),
-
-
 rule mobile_element_insertion_scramble_cluster:
     input:
         wf.get_input_files("scramble", "cluster"),

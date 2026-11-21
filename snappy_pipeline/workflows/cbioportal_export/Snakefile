@@ -17,12 +17,6 @@ exclude_flag = step_config.exclude_variant_with_flag
 # Rules =======================================================================
 
 
-rule cbioportal_all:
-    default_target: True
-    input:
-        wf.get_result_files(),
-
-
 # cbioportal study metadata ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 

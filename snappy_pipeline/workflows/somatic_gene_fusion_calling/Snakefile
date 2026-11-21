@@ -13,12 +13,6 @@ wf = task_instance(config["__task_name__"])
 # Rules =======================================================================
 
 
-rule somatic_gene_fusion_calling_all:
-    default_target: True
-    input:
-        wf.get_result_files(),
-
-
 # House-Keeping ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 # Somatic Gene Fusion Calling ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~

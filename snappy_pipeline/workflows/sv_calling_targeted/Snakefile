@@ -12,12 +12,6 @@ tool = str(wf.config.tool)
 # Rules =======================================================================
 
 
-rule sv_calling_targeted_all:
-    default_target: True
-    input:
-        wf.get_result_files(),
-
-
 # House-Keeping ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 # Germline CNV Calling ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~

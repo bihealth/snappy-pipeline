@@ -16,12 +16,6 @@ tools = wf.config.pvactools
 # Rules =======================================================================
 
 
-rule somatic_neoepitope_prediction_all:
-    default_target: True
-    input:
-        wf.get_result_files(),
-
-
 # Preparation ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 if tools.pvacseq.enabled or tools.pvacsplice.enabled:

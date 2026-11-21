@@ -14,12 +14,6 @@ wf = task_instance(config["__task_name__"])
 # Rules =======================================================================
 
 
-rule gene_expression_quantification_all:
-    default_target: True
-    input:
-        wf.get_result_files(),
-
-
 # Gene Expression Strandedness ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 # Run RseQC infer_experiment.py ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~

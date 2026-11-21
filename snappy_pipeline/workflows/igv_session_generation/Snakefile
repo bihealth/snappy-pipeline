@@ -14,12 +14,6 @@ wf = task_instance(config["__task_name__"])
 # Rules =======================================================================
 
 
-rule igv_session_generation_all:
-    default_target: True
-    input:
-        wf.get_result_files(),
-
-
 # IGV Session Generation ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 

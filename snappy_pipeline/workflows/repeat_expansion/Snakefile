@@ -11,12 +11,6 @@ wf = task_instance(config["__task_name__"])
 # Rules =======================================================================
 
 
-rule repeat_expansion_all:
-    default_target: True
-    input:
-        wf.get_result_files(),
-
-
 rule repeat_expansion_run_expansionhunter:
     input:
         unpack(wf.get_input_files("expansionhunter", "run")),

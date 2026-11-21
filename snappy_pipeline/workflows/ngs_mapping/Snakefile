@@ -13,12 +13,6 @@ wf = task_instance(config["__task_name__"])
 # Rules =======================================================================
 
 
-rule ngs_mapping_all:
-    default_target: True
-    input:
-        wf.get_result_files(),
-
-
 # Alignment ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 if wf.config.tool == "bwa":
