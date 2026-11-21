@@ -5,7 +5,7 @@ The members of the entity's pedigree, from the sample sheet, are laid out once p
 generations as rows, children below their parents, partners side by side, with the unsequenced donors that connect members and the unknown parents of members with one parent drawn hollow.
 Per call, the plot reads the per-sample columns of the row: the allele frequency as a bar under the node with the 90 % credible interval from the allele frequency density, below it the reads as a diverging bar (for the alternative allele to the right in blue, for the reference to the left in gray, darker for stronger evidence, pale for uncertain mapping, scaled to the member with the most reads), the depth and the genotype as text, and the call's event with its posterior as the title.
 The glyphs follow the pedigree convention: square for male, circle for female, diamond for unknown sex, filled when affected;
-    the stroke carries the sex color (blue, magenta) and the fill of an affected member repeats it.
+    the stroke carries the sex color (aqua, orange) and the fill of an affected member repeats it; a legend sits under the pedigree.
 """
 
 from __future__ import annotations
@@ -30,8 +30,22 @@ X_STEP, Y_STEP = 96, 104
 #: Characters of a member's label under its node; longer labels are cut, the tooltip has them
 LABEL_LENGTH = 14
 
-#: The stroke of a node by sex: blue for male, magenta for female (the shape says it as well)
-SEX_COLORS = {"male": COLORS[0], "female": COLORS[4], "unknown": MUTED}
+#: The stroke of a node by sex: aqua for male, orange for female (the shape says it as well),
+#: neither the blue of the evidence nor the usual blue and pink
+SEX_COLORS = {"male": COLORS[2], "female": COLORS[1], "unknown": MUTED}
+
+#: The legend under the pedigree: (shape, sex, status, observed, label), in two rows
+LEGEND = (
+    ("male", "unknown", True, "male"),
+    ("female", "unknown", True, "female"),
+    ("unknown", "unknown", True, "unknown sex"),
+    ("male", "affected", True, "affected"),
+    ("male", "unaffected", True, "unaffected"),
+    ("male", "unknown", False, "no data"),
+)
+
+#: Width in rows that the legend needs
+LEGEND_WIDTH = 3.3
 
 #: The fill of a node by affected status: the sex color when affected, white when unaffected,
 #: a light gray when unknown
@@ -316,14 +330,52 @@ DATA_FUNCTION = """function(value, row) {
 }"""
 
 
+def legend_records(x_min: float, y_min: float) -> list[dict[str, Any]]:
+    """The glyphs of the legend with their labels: sex in the first row, status in the second,
+    and the reading of the bars as a line of text."""
+    records = []
+    for index, (sex, status, observed, label) in enumerate(LEGEND):
+        row, column = divmod(index, 3)
+        fills = {
+            "affected": SEX_COLORS[sex],
+            "unaffected": UNAFFECTED_FILL,
+            "unknown": UNKNOWN_FILL,
+        }
+        records.append(
+            {
+                "kind": "legend",
+                "x": x_min + 0.25 + column * 1.05,
+                "y": y_min - 0.25 - row * 0.3,
+                "sex": sex,
+                "stroke_color": SEX_COLORS[sex]
+                if status == "unknown" or sex != "male"
+                else SEX_COLORS["male"],
+                "fill_color": fills[status],
+                "observed": observed,
+                "text": label,
+            }
+        )
+    records.append(
+        {
+            "kind": "note",
+            "x": x_min + 0.1,
+            "y": y_min - 0.9,
+            "text": "bars: allele frequency with its 90 % interval; reads ← reference · alternative →, darker = stronger evidence",
+        }
+    )
+    return records
+
+
 def plot(members: list[Member]) -> dict[str, Any]:
     """The custom plot of the pedigree: the vega-lite spec and the data function that fills
     the layout with the row's values."""
     nodes, edges = nodes_and_edges(members)
     xs = [node["x"] for node in nodes]
     ys = [node["y"] for node in nodes]
-    x_min, x_max = min(xs) - 0.5, max(xs) + 0.5
+    x_min, x_max = min(xs) - 0.5, max(max(xs) + 0.5, min(xs) - 0.5 + LEGEND_WIDTH)
     y_min, y_max = min(ys) - 0.9, max(ys) + 0.95
+    legend = legend_records(x_min, y_min)
+    y_min -= 1.1
     layers = [
         {
             "transform": [{"filter": "datum.kind == 'edge'"}],
@@ -447,6 +499,49 @@ def plot(members: list[Member]) -> dict[str, Any]:
                 "text": {"field": "text"},
             },
         },
+        {
+            "transform": [{"filter": "datum.kind == 'legend'"}],
+            "mark": {"type": "point", "size": 110, "strokeWidth": 1.5},
+            "encoding": {
+                "x": {"field": "x", "type": "quantitative"},
+                "y": {"field": "y", "type": "quantitative"},
+                "shape": {
+                    "field": "sex",
+                    "type": "nominal",
+                    "scale": {
+                        "domain": ["male", "female", "unknown"],
+                        "range": ["square", "circle", "diamond"],
+                    },
+                    "legend": None,
+                },
+                "fill": {"field": "fill_color", "type": "nominal", "scale": None},
+                "stroke": {"field": "stroke_color", "type": "nominal", "scale": None},
+                "strokeDash": {
+                    "field": "observed",
+                    "type": "nominal",
+                    "scale": {"domain": [True, False], "range": [[1, 0], [3, 2]]},
+                    "legend": None,
+                },
+            },
+        },
+        {
+            "transform": [{"filter": "datum.kind == 'legend'"}],
+            "mark": {"type": "text", "fontSize": 9, "color": TEXT, "align": "left", "dx": 10},
+            "encoding": {
+                "x": {"field": "x", "type": "quantitative"},
+                "y": {"field": "y", "type": "quantitative"},
+                "text": {"field": "text"},
+            },
+        },
+        {
+            "transform": [{"filter": "datum.kind == 'note'"}],
+            "mark": {"type": "text", "fontSize": 8, "color": MUTED, "align": "left"},
+            "encoding": {
+                "x": {"field": "x", "type": "quantitative"},
+                "y": {"field": "y", "type": "quantitative"},
+                "text": {"field": "text"},
+            },
+        },
     ]
     spec = {
         "$schema": VEGA_LITE,
@@ -461,7 +556,7 @@ def plot(members: list[Member]) -> dict[str, Any]:
     }
     data = DATA_FUNCTION % {
         "nodes": json.dumps(nodes),
-        "edges": json.dumps(edges),
+        "edges": json.dumps(edges + legend),
         "center": (x_min + x_max) / 2,
         "alt_ramp": json.dumps(list(ALT_RAMP)),
         "ref_ramp": json.dumps(list(REF_RAMP)),

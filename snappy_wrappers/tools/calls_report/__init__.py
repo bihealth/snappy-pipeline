@@ -197,9 +197,10 @@ def describe(vcf: Vcf, columns: dict[str, Column], options: Options) -> Descript
             "alternative allele to the right in blue, for the reference to the left in gray, "
             "darker for stronger evidence, pale for uncertain mapping, scaled to the member "
             "with the most reads), the depth and the genotype. "
-            "Squares in blue are male, circles in magenta female, diamonds in gray of unknown "
+            "Squares in aqua are male, circles in orange female, diamonds in gray of unknown "
             "sex; an affected member is filled in its color, an unaffected one white, one of "
-            "unknown status light gray; a dashed outline has no data. "
+            "unknown status light gray; a dashed outline has no data (the legend under the "
+            "pedigree). "
             "The per-sample `AF`, `DP` and `GT` columns are on demand.",
         )
     else:

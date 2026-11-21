@@ -119,9 +119,9 @@ def test_nodes_and_edges_carry_the_glyphs_and_link_couples_to_children():
     assert by_name["idx-N1"]["sex"] == "female" and by_name["idx-N1"]["status"] == "affected"
     assert by_name["pgm"]["observed"] is False and by_name["pgm"]["status"] == "unknown"
     # The stroke carries the sex, the fill the status: an affected member in its sex color
-    assert by_name["idx-N1"]["stroke_color"] == by_name["idx-N1"]["fill_color"] == "#e87ba4"
+    assert by_name["idx-N1"]["stroke_color"] == by_name["idx-N1"]["fill_color"] == "#eb6834"
     assert (
-        by_name["fa-N1"]["stroke_color"] == "#2a78d6"
+        by_name["fa-N1"]["stroke_color"] == "#1baf7a"
         and by_name["fa-N1"]["fill_color"] == "#ffffff"
     )
     assert by_name["pgm"]["fill_color"] == "#f0efec"
@@ -149,6 +149,8 @@ def test_the_plot_is_a_layered_spec_whose_data_function_reads_the_sample_columns
     assert spec["width"] > 0 and spec["height"] > 0
     assert '"sample": "idx-N1"' in data and 'row[node.sample + ": AF"]' in data
     assert 'row[node.sample + ": observations"]' in data  # the reads by strength
+    assert data.count('"kind": "legend"') == 6 and '"kind": "note"' in data  # the legend
+    assert spec["width"] >= 3.3 * 96  # room for the legend's three entries per row
     assert [layer["mark"]["type"] for layer in spec["layer"]].count(
         "rect"
     ) == 3  # AF bars and reads
