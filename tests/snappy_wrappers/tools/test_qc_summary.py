@@ -442,3 +442,27 @@ def test_cell_ticks_and_bars_color_with_a_scale_that_vega_lite_accepts():
     for column in (qc_summary.ticks(), qc_summary.bars()):
         (plot,) = column.plot.values()
         assert plot["color"] == {"scale": "linear", "range": [qc_summary.INK, qc_summary.INK]}
+
+
+def test_bars_without_a_domain_start_at_zero_in_the_configuration():
+    # datavzrd takes the column's [min, max]; a bar starts at zero, so with a high minimum it
+    # ran out of its cell and widened the column of a view with few rows
+    frame = pl.DataFrame({"library": ["a", "b"], "depth": [80, 100], "fixed": [80, 100]})
+    table = Table(
+        "t",
+        "T",
+        frame,
+        columns={"depth": qc_summary.bars(), "fixed": qc_summary.bars(domain=(50, 200))},
+    )
+
+    columns = config([table], "T", "/data")["views"]["t"]["render-table"]["columns"]
+
+    assert columns["depth"]["plot"]["bars"]["domain"] == [0, 100.0]
+    assert columns["fixed"]["plot"]["bars"]["domain"] == [50, 200]
+    assert qc_summary.bars().plot["bars"].get("domain") is None  # the frame sets it
+    empty = Table(
+        "e", "E", pl.DataFrame({"library": [], "depth": []}), columns={"depth": qc_summary.bars()}
+    )
+    assert config([empty], "E", "/data")["views"]["e"]["render-table"]["columns"]["depth"]["plot"][
+        "bars"
+    ]["domain"] == [0, 1]

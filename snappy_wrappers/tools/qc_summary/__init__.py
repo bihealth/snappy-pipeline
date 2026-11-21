@@ -565,11 +565,27 @@ def _view(view: Table | Chart) -> dict:
     columns = {name: {"display-mode": "pinned"} for name in view.pinned if name in present}
     for name, column in view.columns.items():
         if name in present:
-            columns[name] = columns.get(name, {}) | column.spec()
+            columns[name] = columns.get(name, {}) | _with_bar_domain(
+                column.spec(), view.frame, name
+            )
     spec["page-size"] = view.page_size
     if view.max_in_memory_rows is not None:
         spec["max-in-memory-rows"] = view.max_in_memory_rows
     spec["render-table"] = {"columns": columns}
+    return spec
+
+
+def _with_bar_domain(spec: dict, frame: pl.DataFrame, name: str) -> dict:
+    """A bar plot without a domain gets ``[0, max]`` of its column: datavzrd would take the
+    column's ``[min, max]``, and a bar starts at zero, so with few rows (a high minimum) the bar
+    runs far out of its cell and widens the column."""
+    bars = (spec.get("plot") or {}).get("bars")
+    if not bars or bars.get("domain") is not None:
+        return spec
+    values = frame[name] if frame.height else None
+    maximum = values.max() if values is not None and values.dtype.is_numeric() else None
+    spec = dict(spec)
+    spec["plot"] = {"bars": {**bars, "domain": [0, float(maximum) if maximum else 1]}}
     return spec
 
 
