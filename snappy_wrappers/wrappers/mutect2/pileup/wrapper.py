@@ -13,25 +13,17 @@ common_variants = snakemake.input.common_variants
 if java_options := args.get("java_options", None):
     java_options = f"--java-options '{java_options}'"
 
-extra_arguments = " ".join(args.get("extra_arguments", []))
-
 ShellWrapper(snakemake).run(
     r"""
-set -x
-
 # export JAVA_HOME=$(dirname $(which gatk))/..
 export LD_LIBRARY_PATH=$(dirname $(which bgzip))/../lib
-
-out_base=$TMPDIR/$(basename {snakemake.output.pileup} .pileup)
 
 gatk {java_options} GetPileupSummaries \
     --input {snakemake.input.bam} \
     --reference {reference} \
     --variant {common_variants} \
     --intervals {common_variants} \
-    --output $out_base.pileup \
+    --output {snakemake.output.pileup} \
     {extra_arguments}
-
-mv $out_base.* $(dirname {snakemake.output.pileup})
 """
 )

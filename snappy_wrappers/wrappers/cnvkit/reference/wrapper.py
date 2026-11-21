@@ -25,8 +25,6 @@ no_rmask = " --no-rmask" if not args["rmask_correction"] else ""
 
 ShellWrapper(snakemake).run(
     r"""
-set -x
-
 # -----------------------------------------------------------------------------
 
 if [[ "{args[flat]}" = "True" ]]; then

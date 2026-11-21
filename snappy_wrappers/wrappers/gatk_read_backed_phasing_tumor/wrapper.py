@@ -9,7 +9,6 @@ __email__ = "eric.blanc@bih-charite.de"
 ShellWrapper(snakemake).run(
     r"""
 export TMPDIR=$(realpath $TMPDIR)
-trap "rm -rf $TMPDIR" EXIT
 
 jar=$(find $CONDA_PREFIX -name GenomeAnalysisTK.jar)
 

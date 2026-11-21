@@ -15,7 +15,6 @@ __author__ = "Eric Blanc <eric.blanc@bih-charite.de>"
 # params list the files. Params also name the trimmed files, in the order of the inputs.
 args = getattr(snakemake.params, "args", {})
 
-library_name = args["library_name"]
 reads = args.get("input", {})
 input_path_left = list(snakemake.input.get("reads_left") or reads["reads_left"])
 input_path_right = list(snakemake.input.get("reads_right") or reads.get("reads_right", []))
@@ -42,8 +41,6 @@ barcodes = snakemake.input.get("barcodes", "")
 
 ShellWrapper(snakemake).run(
     r"""
-set -x
-
 mkdir -p $TMPDIR/out $TMPDIR/rejected $TMPDIR/report
 
 # Define left and right reads as Bash arrays

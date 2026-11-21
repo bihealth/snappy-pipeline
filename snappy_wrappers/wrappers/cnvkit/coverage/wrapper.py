@@ -12,8 +12,6 @@ count = "--count" if args["count"] else ""
 
 ShellWrapper(snakemake).run(
     r"""
-set -x
-
 # Function definitions ---------------------------------------------------------
 
 coverage() {{

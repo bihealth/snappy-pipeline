@@ -7,15 +7,12 @@ __author__ = "Manuel Holtgrewe <manuel.holtgrewe@bih-charite.de>"
 
 reference = snakemake.input.reference
 args = getattr(snakemake.params, "args", {})
-log = snakemake.log
 
 intervals = getattr(snakemake.input, "region", None)
 if intervals:
     interval_params = f"--intervals {intervals}"
 else:
     interval_params = ""
-
-vcf_output = snakemake.output.vcf
 
 input_param_list = []
 if "normal_bam" in snakemake.input.keys():
@@ -32,14 +29,12 @@ if (max_mnp_distance := args.get("max_mnp_distance", -1)) >= 0:
 else:
     max_mnp_distance = ""
 
-if getattr(snakemake.output, "f1r2", None):
-    out_base = str(vcf_output).removesuffix(".vcf.gz")
-    assert str(snakemake.output.f1r2) == out_base + ".f1r2.tar.gz"
-    with_f1r2_tar_gz = "yes"
-    # f1r2_param = f"--f1r2-tar-gz {snakemake.output.f1r2}"
+# The read orientation counts and the stats of the calls, which variant calling declares
+if f1r2 := getattr(snakemake.output, "f1r2", None):
+    f1r2_param = f"--f1r2-tar-gz {f1r2}"
 else:
-    # f1r2_param = ""
-    with_f1r2_tar_gz = ""
+    f1r2_param = ""
+stats = getattr(snakemake.output, "stats", "")
 
 if germline_resource := getattr(snakemake.input, "germline_resource", ""):
     germline_resource_param = f"--germline-resource {germline_resource}"
@@ -54,36 +49,29 @@ else:
 if java_options := args.get("java_options", ""):
     java_options = f'--java-options "{java_options}"'
 
-extra_arguments = " ".join(args.get("extra_arguments", []))
-
 ShellWrapper(snakemake).run(
     r"""
-set -x
-
 # export JAVA_HOME=$(dirname $(which gatk))/..
 export LD_LIBRARY_PATH=$(dirname $(which bgzip))/../lib
-
-out_base=$TMPDIR/$(basename {vcf_output} .vcf.gz)
 
 gatk {java_options} Mutect2 \
     --tmp-dir $TMPDIR \
     --reference {reference} \
     {input_params} \
-    --output $out_base.vcf \
+    --output $TMPDIR/calls.vcf \
     {max_mnp_distance} \
-    $(if [[ -n "{with_f1r2_tar_gz}" ]]; then
-        echo --f1r2-tar-gz ${{out_base}}.f1r2.tar.gz
-    fi) \
+    {f1r2_param} \
     {germline_resource_param} \
     {panel_of_normals_param} \
     {interval_params} \
     {extra_arguments}
 
-rm -f $out_base.vcf.idx
+# Mutect2 writes the stats next to the calls
+if [[ -n "{stats}" ]]; then
+    mv $TMPDIR/calls.vcf.stats {stats}
+fi
 
-bgzip $out_base.vcf
-tabix -f $out_base.vcf.gz
-
-mv $out_base.* $(dirname {vcf_output})
+bgzip -c $TMPDIR/calls.vcf > {snakemake.output.vcf}
+tabix -f {snakemake.output.vcf}
 """
 )

@@ -18,8 +18,6 @@ args["avg_size"] = args["avg_size"] if args.get("avg_size", None) else 0
 
 ShellWrapper(snakemake).run(
     r"""
-set -x
-
 # -----------------------------------------------------------------------------
 
 if [[ -n "{target}" ]]; then

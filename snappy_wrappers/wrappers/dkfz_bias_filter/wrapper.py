@@ -10,14 +10,10 @@ mode = args.get("mode", "tag")
 
 ShellWrapper(snakemake).run(
     r"""
-set -euo pipefail
-
-set -x
-
 # "Local" TMPDIR as the scripts try to do "rename" across file sests otherwise
 export TMPDIR=$(dirname $(dirname {snakemake.output.vcf}))/tmp
 mkdir -p $TMPDIR
-trap "rm -rf $TMPDIR" EXIT KILL TERM INT HUP
+trap "rm -rf $TMPDIR" EXIT TERM INT HUP
 
 out={snakemake.output.vcf}
 

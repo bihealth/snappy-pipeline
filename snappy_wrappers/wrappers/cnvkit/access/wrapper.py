@@ -14,8 +14,6 @@ exclude = " --exclude " + " -x ".join(exclude_files) if exclude_files else ""
 
 ShellWrapper(snakemake).run(
     r"""
-set -x
-
 # -----------------------------------------------------------------------------
 
 cnvkit.py access \

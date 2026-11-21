@@ -1,110 +1,22 @@
-import gzip
-import os
-import re
-import shutil
-import subprocess
-import tempfile
+"""Download a genome FASTA from RefSeq"""
+
 from typing import TYPE_CHECKING
-from urllib.parse import urlparse
-from urllib.request import url2pathname
 
 from snappy_wrappers.snappy_wrapper import PythonWrapper
+from snappy_wrappers.tools import reference_download
 
 if TYPE_CHECKING:
     from snakemake.iocontainers import snakemake
 
 
-def _download(url: str, path_out: str) -> None:
-    parsed = urlparse(url)
-    if parsed.scheme == "file":
-        local_path = url2pathname(parsed.path)
-        if not os.path.exists(local_path):
-            raise FileNotFoundError(f"Local file not found: {local_path}")
-        shutil.copy(local_path, path_out)
-        return
-
-    cmd = [
-        "curl",
-        "--location",
-        "--fail",
-        "--silent",
-        "--show-error",
-        "--retry",
-        "3",
-        "--retry-all-errors",
-        "--output",
-        path_out,
-        url,
-    ]
-    proc = subprocess.run(cmd, check=False, text=True, capture_output=True)
-    if proc.returncode != 0:
-        raise RuntimeError(f"curl download failed for {url}: {proc.stderr.strip()}")
-
-
-def _filter_fasta(path_in: str, path_out: str, contigs: list[str], contigs_regex: str) -> None:
-    contig_set = set(contigs)
-    rx = re.compile(contigs_regex) if contigs_regex else None
-
-    with open(path_in, "rt") as fin, open(path_out, "wt") as fout:
-        keep = True
-        for line in fin:
-            if line.startswith(">"):
-                contig = line[1:].split()[0]
-                keep = True
-                if contig_set:
-                    keep = contig in contig_set
-                if keep and rx is not None:
-                    keep = bool(rx.search(contig))
-            if keep:
-                fout.write(line)
-
-
-def _resolve_refseq_url(params: dict) -> str:
-    if params.get("url"):
-        return params["url"]
-
-    accession = params.get("assembly_accession") or ""
-    assembly_name = params.get("assembly_name") or ""
-    if not accession or not assembly_name:
-        raise ValueError(
-            "refseq download requires either explicit url or both assembly_accession and assembly_name"
-        )
-
-    prefix, rest = accession.split("_", 1)
-    numeric = rest.split(".", 1)[0]
-    chunks = [numeric[0:3], numeric[3:6], numeric[6:9]]
-    dir_name = f"{accession}_{assembly_name}"
-    file_name = params.get("file_name") or f"{dir_name}_genomic.fna.gz"
-    return (
-        f"https://ftp.ncbi.nlm.nih.gov/genomes/all/{prefix}/"
-        f"{chunks[0]}/{chunks[1]}/{chunks[2]}/{dir_name}/{file_name}"
-    )
-
-
 def main() -> None:
-    params = dict(snakemake.params.args)
-
-    url = _resolve_refseq_url(params)
-    contigs = list(params.get("contigs") or [])
-    contigs_regex = params.get("contigs_regex") or ""
-
-    os.makedirs(os.path.dirname(str(snakemake.output.fasta)), exist_ok=True)
-    with tempfile.TemporaryDirectory() as tmpdir:
-        path_dl = os.path.join(tmpdir, "download.fa.gz" if url.endswith(".gz") else "download.fa")
-        path_raw = os.path.join(tmpdir, "raw.fa")
-        _download(url, path_dl)
-
-        if path_dl.endswith(".gz"):
-            with gzip.open(path_dl, "rt") as fin, open(path_raw, "wt") as fout:
-                shutil.copyfileobj(fin, fout)
-        else:
-            shutil.copy(path_dl, path_raw)
-
-        _filter_fasta(path_raw, str(snakemake.output.fasta), contigs, contigs_regex)
-
-    print(f"Downloaded: {url}")
-    print(f"Contigs: {contigs}")
-    print(f"Regex: {contigs_regex}")
+    args = snakemake.params.args
+    url = reference_download.refseq_url(
+        args["url"], args["assembly_accession"], args["assembly_name"], args["file_name"]
+    )
+    reference_download.fetch(
+        url, str(snakemake.output.fasta), args["contigs"], args["contigs_regex"]
+    )
 
 
 if __name__ == "__main__":

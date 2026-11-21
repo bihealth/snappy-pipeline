@@ -25,8 +25,6 @@ path_index = os.path.dirname(snakemake.input.index[0])
 
 ShellWrapper(snakemake).run(
     r"""
-set -x
-
 # Some More Preparation ---------------------------------------------------------------------------
 
 mkdir -p $TMPDIR/tmp.d $TMPDIR/pre.d

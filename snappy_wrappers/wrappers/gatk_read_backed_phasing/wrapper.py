@@ -1,10 +1,10 @@
 # -*- coding: utf-8 -*-
 """Wrapper for running GATK ReadBackedPhasing on one chunk (``input.region``) of the genome"""
 
-from math import ceil
 from typing import TYPE_CHECKING
 
 from snappy_wrappers.snappy_wrapper import ShellWrapper
+from snappy_wrappers.tools.java import java_heap_mb
 
 if TYPE_CHECKING:
     from snakemake.iocontainers import snakemake
@@ -13,7 +13,7 @@ __author__ = "Manuel Holtgrewe <manuel.holtgrewe@bih-charite.de>"
 
 args = getattr(snakemake.params, "args", {})
 
-java_mem_mb = ceil(snakemake.resources.mem_mb * 0.75)
+java_mem_mb = java_heap_mb(snakemake)
 
 ShellWrapper(snakemake).run(
     r"""

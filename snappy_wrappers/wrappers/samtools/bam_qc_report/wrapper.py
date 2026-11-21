@@ -5,8 +5,6 @@ from snappy_wrappers.snappy_wrapper import ShellWrapper
 
 ShellWrapper(snakemake).run(
     r"""
-set -x
-
 mkdir -p $TMPDIR/tmp.d
 
 # QC Report

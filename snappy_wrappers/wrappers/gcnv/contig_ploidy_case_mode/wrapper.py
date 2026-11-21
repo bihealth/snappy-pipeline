@@ -1,5 +1,3 @@
-import pathlib
-import sys
 from typing import TYPE_CHECKING
 
 from snappy_wrappers.snappy_wrapper import ShellWrapper
@@ -7,36 +5,12 @@ from snappy_wrappers.snappy_wrapper import ShellWrapper
 if TYPE_CHECKING:
     from snakemake.iocontainers import snakemake
 
-# We will first call the GATK tool.  However, there are issues with the reliability of the contig
-# ploidy calls.  This causes an exception in the  JointGermlineCNVSegmentation further downstream.
-# We thus rewrite the genotype calls based on the ones from the PED files as a workaround.
-#
-# cf. https://github.com/broadinstitute/gatk/issues/8164
-
-out_path = pathlib.Path(snakemake.output.ploidy)
-
-MALE = "male"
-FEMALE = "female"
-
-sex_map = {}
-for ped_path in snakemake.input.ped:
-    with open(ped_path, "rt") as inputf:
-        for line in inputf:
-            arr = line.strip().split("\t")
-            sex_map[arr[1]] = {"1": MALE, "2": FEMALE}[arr[4]]
-
-ploidy_x = {MALE: 1, FEMALE: 2}
-ploidy_y = {MALE: 1, FEMALE: 0}
-
 paths_tsv = " ".join(snakemake.input.tsv)
-
 
 ShellWrapper(snakemake).run(
     r"""
 export THEANO_FLAGS="base_compiledir=$TMPDIR/theano_compile_dir"
 export PYTENSOR_FLAGS="base_compiledir=$TMPDIR/pytensor_compile_dir"
-
-set -x
 
 mkdir -p {snakemake.output.ploidy}
 
@@ -45,46 +19,11 @@ gatk DetermineGermlineContigPloidy \
     $(for tsv in {paths_tsv}; do echo -I $tsv; done) \
     --output {snakemake.output.ploidy} \
     --output-prefix ploidy
+
+# The ploidy calls follow the PED files: X and Y their sex, the autosomes 2
+python $(dirname {__file__})/../../../tools/gcnv_ploidy.py \
+    --autosomes-diploid \
+    {snakemake.output.ploidy} \
+    {snakemake.input.ped}
 """
 )
-
-ploidy_calls = out_path / "ploidy-calls"
-for sample_dir in ploidy_calls.glob("SAMPLE_*"):
-    path_name = sample_dir / "sample_name.txt"
-    with path_name.open("rt") as inputf:
-        sample_name = inputf.read().strip()
-    if sample_name not in sex_map:
-        msg = f"Encountered an unexpected sample {sample_name} (undefined in samplesheet)."
-        print(msg, file=sys.stderr)  # for slurm log
-        with open(snakemake.log[0], "a") as log:
-            log.write(msg)
-        sys.exit(0)
-    sample_sex = sex_map[sample_name]
-    path_call = sample_dir / "contig_ploidy.tsv"
-    with path_call.open("rt") as inputf:
-        call_lines = inputf.readlines()
-    for i in range(len(call_lines)):
-        line = call_lines[i]
-        arr = line.split("\t")
-        chrom = arr[0].lower()
-        if chrom.startswith("@") or chrom == "contig":
-            pass  # noop
-        elif "x" in chrom or "y" in chrom:
-            ploidy = int(arr[1])
-            if "x" in arr[0].lower():
-                if ploidy != ploidy_x[sample_sex]:
-                    arr[1] = str(ploidy_x[sample_sex])
-                    arr[2] = f"42.000{ploidy}"  # magic marker
-            elif "y" in arr[0].lower():
-                if ploidy != ploidy_y[sample_sex]:
-                    arr[1] = str(ploidy_y[sample_sex])
-                    arr[2] = f"42.000{ploidy}"  # magic marker
-        else:
-            ploidy = int(arr[1])
-            if ploidy != 2:
-                arr[1] = "2"
-                arr[2] = f"42.000{ploidy}"  # magic marker
-        call_lines[i] = "\t".join(arr)
-    with path_call.open("wt") as outputf:
-        for line in call_lines:
-            print(line.strip(), file=outputf)

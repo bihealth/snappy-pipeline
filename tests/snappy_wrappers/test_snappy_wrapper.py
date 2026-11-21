@@ -178,3 +178,10 @@ def test_shell_wrapper_removes_its_exported_temp_directory(tmp_path):
     tmpdir = seen.read_text().strip()
     assert tmpdir
     assert not os.path.exists(tmpdir)
+
+
+def test_python_wrapper_requires_a_log_named_log(tmp_path):
+    snakemake = _FakeSnakemake(str(tmp_path / "rule.log"))
+    snakemake.log = [str(tmp_path / "rule.log")]  # an unnamed log
+    with pytest.raises(AttributeError, match="snakemake.log.log is not defined"):
+        PythonWrapper(snakemake)

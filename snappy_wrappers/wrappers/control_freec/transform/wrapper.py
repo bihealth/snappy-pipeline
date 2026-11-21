@@ -17,8 +17,6 @@ rscript = os.path.join(
 
 ShellWrapper(snakemake).run(
     r"""
-set -x
-
 R --vanilla -e "source(\"{rscript}\") ; library(magrittr) ; \
     control_freec_write_files( \
     sample_name = \"{args[tumor_library]}\", \

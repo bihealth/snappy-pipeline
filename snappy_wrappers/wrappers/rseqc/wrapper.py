@@ -70,7 +70,7 @@ cat << __EOF > {snakemake.output.decision}
     "bed_file_md5": "{bed_file_md5}",
     "bam_path": "{snakemake.input.bam}",
     "strand_from_user": "{config[strand]}",
-    "strand_from_infer": "$decision",
+    "strand_from_infer": "$infer",
     "decision_threshold": {config[threshold]},
     "endedness": "$endedness",
     "fraction_forward": $forward,

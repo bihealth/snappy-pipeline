@@ -42,7 +42,7 @@ scramble.sh {mei_ref_argument} \
 mv {prefix}_MEIs.txt {snakemake.output.txt}
 
 # Post-process VCF
-bgzip --stdout {snakemake.output.vcf} > {snakemake.output.vcf_gz}
-tabix {snakemake.output.vcf_gz}
+bgzip --stdout {snakemake.output.plain_vcf} > {snakemake.output.vcf}
+tabix {snakemake.output.vcf}
 """
 )

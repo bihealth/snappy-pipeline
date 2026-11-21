@@ -1,6 +1,1 @@
-channels:
-  - conda-forge
-  - bioconda
-  - nodefaults
-dependencies:
-  - ngs-chew==0.9.4
+../fingerprint/environment.yaml

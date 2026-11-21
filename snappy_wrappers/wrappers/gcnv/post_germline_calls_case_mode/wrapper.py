@@ -14,11 +14,6 @@ paths_models = " ".join(snakemake.input.model)
 
 ShellWrapper(snakemake).run(
     r"""
-set -x
-
-export TMPDIR=$(mktemp -d)
-trap "rm -rf $TMPDIR" ERR EXIT
-
 export THEANO_FLAGS="base_compiledir=$TMPDIR/theano_compile_dir"
 export PYTENSOR_FLAGS="base_compiledir=$TMPDIR/pytensor_compile_dir"
 

@@ -47,8 +47,6 @@ protein_domains_param = f"-p {protein_domains}" if protein_domains else ""
 
 ShellWrapper(snakemake).run(
     r"""
-set -x
-
 mkdir -p $TMPDIR
 
 # Define left and right reads as Bash arrays

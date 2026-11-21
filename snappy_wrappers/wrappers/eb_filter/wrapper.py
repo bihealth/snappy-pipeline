@@ -19,11 +19,6 @@ else:
 
 ShellWrapper(snakemake).run(
     r"""
-set -x
-
-export TMPDIR=$HOME/scratch/tmp
-mkdir -p $TMPDIR
-
 # Setup auto-cleaned TMPDIR
 export TMPDIR=$(mktemp -d)
 trap "rm -rf $TMPDIR" EXIT

@@ -9,8 +9,6 @@ args = getattr(snakemake.params, "args", {})
 
 ShellWrapper(snakemake).run(
     r"""
-set -x
-
 REF={snakemake.input.reference}
 
 cnvetti cmd coverage \

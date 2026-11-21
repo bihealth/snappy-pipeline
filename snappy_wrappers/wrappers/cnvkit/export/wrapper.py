@@ -8,8 +8,6 @@ __email__ = "manuel.holtgrewe@bih-charite.de"
 
 ShellWrapper(snakemake).run(
     r"""
-set -x
-
 export TMPDIR=$(mktemp -d)
 
 cnvkit.py export bed {snakemake.input} -o $TMPDIR/out.bed

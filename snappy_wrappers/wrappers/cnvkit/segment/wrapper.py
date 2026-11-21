@@ -19,8 +19,6 @@ else:
 
 ShellWrapper(snakemake).run(
     r"""
-set -x
-
 # -----------------------------------------------------------------------------
 
 cnvkit.py segment \

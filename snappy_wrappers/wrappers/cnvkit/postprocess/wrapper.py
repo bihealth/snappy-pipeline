@@ -10,8 +10,6 @@ args = getattr(snakemake.params, "args", {})
 
 ShellWrapper(snakemake).run(
     r"""
-set -x
-
 # -----------------------------------------------------------------------------
 
 cat << _EOF | R --vanilla --slave

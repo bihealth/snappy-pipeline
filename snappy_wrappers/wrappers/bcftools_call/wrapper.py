@@ -1,6 +1,7 @@
 from typing import TYPE_CHECKING
 
 from snappy_wrappers.snappy_wrapper import ShellWrapper
+from snappy_wrappers.tools import shards
 
 if TYPE_CHECKING:
     from snakemake.iocontainers import snakemake
@@ -26,43 +27,17 @@ redo_baq = "--redo-BAQ" if args["redo_baq"] else ""
 variants_only = "--variants-only" if args["variants_only"] else ""
 num_threads = args["num_threads"]
 
+shard_intervals = shards.intervals(
+    reference_path, reference_index_path, window_length, padding, ignore_contigs
+)
+run_shards = shards.run_shards(num_threads)
+gather_shards = shards.gather(reference_path, snakemake.output.vcf)
+
 ShellWrapper(snakemake).run(
     r"""
-set -x
-
 # Run actual tools --------------------------------------------------------------------------------
 
-# Create binning of the reference into windows of roughly the same size.
-gatk PreprocessIntervals \
-    --reference {reference_path} \
-    --bin-length {window_length} \
-    --output $TMPDIR/raw.interval_list \
-    --interval-merging-rule OVERLAPPING_ONLY \
-    $(for ignore_contig in {ignore_contigs}; do
-        awk "(\$1 ~ /$ignore_contig/) {{ printf(\"--exclude-intervals %s:1-%d\\n\", \$1, \$2) }}" \
-            {reference_index_path}
-    done)
-
-# Postprocess the Picard-style interval list into properly padded interval strings suitable for
-# passing to ``--intervals``.
-awk -v PADDING={padding} '
-    (!/^@/) {{
-        chrom=$1;
-        start=$2;
-        if (start > PADDING) {{
-            start = start - PADDING
-        }} else {{
-            start = 1
-        }}
-        end=$3;
-        printf("%s:%d-%d\n", chrom, start, end);
-    }}
-' $TMPDIR/raw.interval_list \
-    > $TMPDIR/final_intervals.txt
-wc -l $TMPDIR/final_intervals.txt
-
-# Create per-shard output directory
-mkdir -p $TMPDIR/shards-output
+{shard_intervals}
 
 # Function to run "bcftools call"
 run-shard() {{
@@ -95,30 +70,8 @@ run-shard() {{
 }}
 export -f run-shard
 
-# Perform parallel execution
-(
-    set -x
-    sleep $(echo "scale=3; $RANDOM/32767*10" | bc)s
-) # sleep up to 10s to work around bug
-num_threads={num_threads}
-cat $TMPDIR/final_intervals.txt \
-    | parallel --plain -j $num_threads 'run-shard {{#}} {{}}'
+{run_shards}
 
-# Merge the individual shards' output VCF
-bcftools concat \
-    --allow-overlaps \
-    -d none \
-    -O u \
-    $TMPDIR/shards-output/*.vcf.gz \
-    | bcftools sort \
-        -T $TMPDIR/bcftools.sort.XXXXXX \
-        -O u \
-        /dev/stdin \
-    | bcftools norm \
-        -d exact \
-        -f {reference_path} \
-        -O z \
-        -o {snakemake.output.vcf}
-tabix {snakemake.output.vcf}
+{gather_shards}
 """
 )

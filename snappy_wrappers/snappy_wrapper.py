@@ -11,7 +11,6 @@ import sys
 import tempfile
 import textwrap
 from abc import ABCMeta, abstractmethod
-from typing import Optional
 
 from snakemake.shell import shell
 from snakemake.utils import format as snakemake_format
@@ -94,17 +93,11 @@ class SnappyWrapper(metaclass=ABCMeta):
     def run(self, cmd: str) -> None:
         pass
 
-    def _run(self, cmd: str, filename: Optional[str]) -> None:
+    def _run(self, cmd: str) -> None:
         """
         Creates a temp file for the script, executes it & writes the declared md5 files
 
-        The shell script is first created as a temporary file, and then copied over to
-        the log directory.
-        This allows R scripts to be saved in the log directory, rather than the uninformative
-        shell script starting R.
-
         :param cmd: The command string (after snakemake input/output/params expansion)
-        :param filename: the path where to save the script
         """
         tempfilename = None
         tmpdir = tempfile.mkdtemp()
@@ -143,12 +136,9 @@ class SnappyWrapper(metaclass=ABCMeta):
                 f.flush()
                 # Exiting the 'with' context manager safely closes the file.
 
-            # Since the file is closed, we can reliably adjust permissions, copy, and run it.
+            # Since the file is closed, we can reliably adjust permissions and run it.
             current_permissions = stat.S_IMODE(os.lstat(tempfilename).st_mode)
             os.chmod(tempfilename, current_permissions | stat.S_IXUSR)
-
-            if filename is not None:
-                shutil.copy(tempfilename, filename)
 
             shell(tempfilename)
 
@@ -166,28 +156,10 @@ class SnappyWrapper(metaclass=ABCMeta):
 
 class ShellWrapper(SnappyWrapper):
     def _run_bash(self, cmd: str) -> None:
-        self._run(cmd, getattr(self._snakemake.log, "script", None))
+        self._run(cmd)
 
     def run(self, cmd: str) -> None:
         self._run_bash(cmd)
-
-
-class RWrapper(SnappyWrapper):
-    def _check_snakemake_attributes(self) -> None:
-        super()._check_snakemake_attributes()
-        if not getattr(self._snakemake.log, "script", None):
-            raise AttributeError("snakemake.log.script is not defined")
-
-    def _run_R(self, cmd: str) -> None:
-        with open(self._snakemake.log.script, "wt") as f:
-            script = snakemake_format(
-                cmd, stepout=4, snakemake=self._snakemake, extra_arguments=self.extra_arguments
-            )
-            print(script, file=f)
-        self._run(f"Rscript --vanilla {self._snakemake.log.script}", None)
-
-    def run(self, cmd: str) -> None:
-        self._run_R(cmd)
 
 
 class PythonWrapper:
@@ -212,12 +184,9 @@ class PythonWrapper:
 
     def _log_path(self) -> str:
         log = getattr(self.snakemake, "log", None)
-        if log is not None:
-            if getattr(log, "log", None):
-                return os.path.realpath(str(log.log))
-            if str(log):
-                return os.path.realpath(str(log))
-        raise AttributeError("snakemake.log.log is not defined")
+        if not getattr(log, "log", None):
+            raise AttributeError("snakemake.log.log is not defined")
+        return os.path.realpath(str(log.log))
 
     @contextlib.contextmanager
     def logging_context(self):

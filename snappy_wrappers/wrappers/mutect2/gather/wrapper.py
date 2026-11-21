@@ -25,8 +25,6 @@ else:
     output_orientation = ""
 
 ShellWrapper(snakemake).run(r"""
-set -x
-
 # Concatenate vcfs & index result ----------------------
 bcftools concat \
     --allow-overlaps --rm-dups none \

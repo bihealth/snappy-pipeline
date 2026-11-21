@@ -11,8 +11,6 @@ if TYPE_CHECKING:
 __author__ = "Manuel Holtgrewe"
 __email__ = "manuel.holtgrewe@bih-charite.de"
 
-this_file = __file__
-
 args = getattr(snakemake.params, "args", {})
 # The reads are inputs. If another task wrote them, the input is that task's out directory and
 # params list the files.
@@ -27,7 +25,6 @@ output_md_tag = "--MD" if args["output_md_tag"] else ""
 
 ShellWrapper(snakemake).run(
     r"""
-set -x
 mkdir -p $TMPDIR/{{out,sorted,sort.tmp}}
 
 if [[ "{library_kit}" == "PacBio HiFi" ]]; then

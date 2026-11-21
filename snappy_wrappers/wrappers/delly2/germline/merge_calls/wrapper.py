@@ -4,8 +4,6 @@ __author__ = "Manuel Holtgrewe <manuel.holtgrewe@bih-charite.de>"
 
 ShellWrapper(snakemake).run(
     r"""
-set -x
-
 delly merge \
     --outfile $TMPDIR/tmp.bcf \
     {snakemake.input.bcf}

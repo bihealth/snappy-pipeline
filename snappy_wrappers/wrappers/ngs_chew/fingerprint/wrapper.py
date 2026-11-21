@@ -8,8 +8,6 @@ __email__ = "manuel.holtgrewe@bih-charite.de"
 
 ShellWrapper(snakemake).run(
     r"""
-set -x
-
 mkdir -p $TMPDIR/{{out,sorted,sort.tmp}}
 
 ngs-chew fingerprint \

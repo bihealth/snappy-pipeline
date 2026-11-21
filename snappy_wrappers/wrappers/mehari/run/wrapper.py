@@ -31,8 +31,6 @@ clinvar_arg = f"--clinvar {clinvar_db}" if clinvar_db else ""
 
 ShellWrapper(snakemake).run(
     r"""
-set -x
-
 # using --force here because GATK sometimes produces incorrect VCF headers;
 # should probably introduce a GATK cleanup rule instead.
 bcftools norm --multiallelics -any {snakemake.input.vcf} --threads {num_threads} --force \

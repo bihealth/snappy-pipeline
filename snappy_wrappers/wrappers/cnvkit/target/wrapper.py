@@ -22,8 +22,6 @@ target_avg_size = args["avg_size"] if args.get("avg_size", None) else ""
 
 ShellWrapper(snakemake).run(
     r"""
-set -x
-
 # -----------------------------------------------------------------------------
 
 access() {{

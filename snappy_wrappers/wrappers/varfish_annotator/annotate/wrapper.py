@@ -8,8 +8,6 @@ path_exon_bed = snakemake.input.get("exon_bed", "")
 
 ShellWrapper(snakemake).run(
     r"""
-set -x
-
 # Extract around BED file, if given.
 if [[ -n "{path_exon_bed}" ]]; then
     set -e

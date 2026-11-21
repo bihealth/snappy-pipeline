@@ -9,8 +9,6 @@ args = getattr(snakemake.params, "args", {})
 
 ShellWrapper(snakemake).run(
     r"""
-set -x
-
 cnvetti cmd segment \
     -vvv \
     --segmentation {args[segmentation]} \

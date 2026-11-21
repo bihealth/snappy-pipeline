@@ -120,8 +120,6 @@ else:
 
 ShellWrapper(snakemake).run(
     r"""
-set -x
-
 {breaks}
 
 {genemetrics}

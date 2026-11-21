@@ -15,7 +15,6 @@ args = getattr(snakemake.params, "args", {})
 
 # The reads are inputs. If another task wrote them, the input is that task's out directory and
 # params list the files. Params also name the trimmed files, in the order of the inputs.
-library_name = args["library_name"]
 reads = args.get("input", {})
 input_path_left = list(snakemake.input.get("reads_left") or reads["reads_left"])
 input_path_right = list(snakemake.input.get("reads_right") or reads.get("reads_right", []))
@@ -40,8 +39,6 @@ filter_by_index2 = snakemake.input.get("filter_by_index2", "")
 
 ShellWrapper(snakemake).run(
     r"""
-set -x
-
 mkdir -p $TMPDIR/out $TMPDIR/report
 
 # Define left and right reads as Bash arrays

@@ -37,3 +37,16 @@ def test_templates_become_bash_and_back():
         "{threads:>4}",
     }
     assert module.from_bash(script, placeholders) == TEMPLATE
+
+
+def test_the_shell_text_of_the_tool_modules_is_checked():
+    module = _module()
+    root = SCRIPT.parents[2]
+    found = {
+        str(path): [t.node.lineno for t in module._module_templates(root / path)[0]]
+        for path in module.SHELL_MODULES
+    }
+    assert {path: len(lines) for path, lines in found.items()} == {
+        "snappy_wrappers/tools/bwa_mem.py": 2,  # READ_FUNCTIONS, MAPPING_PIPELINE
+        "snappy_wrappers/tools/shards.py": 3,  # INTERVALS, RUN_SHARDS, GATHER
+    }

@@ -23,8 +23,6 @@ shell.executable("/bin/bash")
 
 ShellWrapper(snakemake).run(
     r"""
-set -x
-
 # write out configuration -------------------------------------------------------------------------
 export output_dir=$TMPDIR/freec_out
 

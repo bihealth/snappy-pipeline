@@ -33,8 +33,6 @@ name = args.get("bait_name", "null")
 
 ShellWrapper(snakemake).run(
     r"""
-set -x
-
 d=$(ls $CONDA_PREFIX/share | grep picard)
 picard_jar="$CONDA_PREFIX/share/$d/picard.jar"
 if [[ ! -r $picard_jar ]]; then

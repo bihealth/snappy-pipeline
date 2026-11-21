@@ -5,10 +5,13 @@ A wrapper's template is the literal string it passes to ``ShellWrapper(snakemake
 placeholders (``{snakemake.input.bam}``) become words and its doubled braces single ones, so that
 shfmt parses it as Bash; formatting writes it back the other way. A template that is no raw string
 is only checked.
+The string constants with upper-case names of ``SHELL_MODULES``, the shell text that wrappers paste
+into their templates, are templates, too.
 """
 
 import argparse
 import ast
+import re
 import string
 import subprocess
 import sys
@@ -31,6 +34,13 @@ SHFMT = [
 ]
 
 
+#: The preamble that the header of ``ShellWrapper`` already runs
+REDUNDANT_PREAMBLE = re.compile(r"^set (-x|-euo pipefail)[ \t]*$", re.MULTILINE)
+
+#: Modules with shell text that wrappers paste into their templates
+SHELL_MODULES = ("snappy_wrappers/tools/bwa_mem.py", "snappy_wrappers/tools/shards.py")
+
+
 @dataclass
 class Template:
     path: Path
@@ -38,6 +48,8 @@ class Template:
     #: The template as Bash, and the placeholder words with their original text
     script: str
     placeholders: dict[str, str]
+    #: Whether ``ShellWrapper`` runs it, and so adds its header
+    shell_wrapper: bool = False
 
     @property
     def raw(self) -> bool:
@@ -103,9 +115,30 @@ def _templates(path: Path) -> tuple[list[Template], list[str]]:
                 skipped.append(f"{path.relative_to(ROOT)}:{node.lineno}: template is not a literal")
                 continue
             try:
-                found.append(Template(path, arg, *to_bash(arg.value)))
+                found.append(Template(path, arg, *to_bash(arg.value), shell_wrapper=is_run))
             except ValueError as e:
                 skipped.append(f"{path.relative_to(ROOT)}:{node.lineno}: no format template ({e})")
+    return found, skipped
+
+
+def _module_templates(path: Path) -> tuple[list[Template], list[str]]:
+    """The templates of a module of ``SHELL_MODULES``: its string constants with upper-case
+    names, and the constants that are no format template."""
+    found, skipped = [], []
+    for node in ast.parse(path.read_text()).body:
+        if not (
+            isinstance(node, ast.Assign)
+            and len(node.targets) == 1
+            and isinstance(node.targets[0], ast.Name)
+            and node.targets[0].id.isupper()
+            and isinstance(node.value, ast.Constant)
+            and isinstance(node.value.value, str)
+        ):
+            continue
+        try:  # the wrappers paste the text into the templates that ShellWrapper runs
+            found.append(Template(path, node.value, *to_bash(node.value.value), shell_wrapper=True))
+        except ValueError as e:
+            skipped.append(f"{path.relative_to(ROOT)}:{node.lineno}: no format template ({e})")
     return found, skipped
 
 
@@ -128,21 +161,32 @@ def main() -> int:
             text=True,
             check=True,
         ).stdout.split()
+        + list(SHELL_MODULES)
     ]
     problems = []
     for path in paths:
         name = path.relative_to(ROOT)
+        if not path.exists():  # deleted in the working tree
+            continue
         if path.suffix == ".sh":
             result = subprocess.run(SHFMT + ["--write" if args.write else "--diff", str(path)])
             if result.returncode:
                 problems.append(f"{name}: shfmt")
             continue
-        if path.suffix != ".py" or not path.is_relative_to(ROOT / "snappy_wrappers" / "wrappers"):
+        if str(name) in SHELL_MODULES:
+            templates, skipped = _module_templates(path)
+        elif path.suffix == ".py" and path.is_relative_to(ROOT / "snappy_wrappers" / "wrappers"):
+            templates, skipped = _templates(path)
+        else:
             continue
-        templates, skipped = _templates(path)
         problems += skipped
         replacements = []
         for template in templates:
+            if template.shell_wrapper and REDUNDANT_PREAMBLE.search(template.node.value):
+                problems.append(
+                    f"{name}:{template.node.lineno}: top-level `set -x` or `set -euo pipefail`"
+                    " repeats the ShellWrapper header"
+                )
             result = shfmt(template.script)
             if result.returncode:
                 line = template.node.lineno

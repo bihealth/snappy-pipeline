@@ -4,8 +4,6 @@ __author__ = "Manuel Holtgrewe <manuel.holtgrewe@bih-charite.de>"
 
 ShellWrapper(snakemake).run(
     r"""
-set -x
-
 sample_count=$(echo {snakemake.input.bcf} | tr ' ' '\n' | wc -l)
 
 if [[ $sample_count -eq 1 ]]; then

@@ -1,5 +1,6 @@
 import gzip
 import json
+import shlex
 import tempfile
 
 from snappy_wrappers.snappy_wrapper import ShellWrapper
@@ -8,23 +9,10 @@ __author__ = "Manuel Holtgrewe <manuel.holtgrewe@bih-charite.de>"
 
 COV_THRESHOLDS = [5, 15, 20, 30, 50, 100, 200, 300, 400, 500, 1000]
 
-args = getattr(snakemake.params, "args", {})
+# The name of each library in the table, in the order of the samtools reports
+sample_names = " ".join(shlex.quote(str(name)) for name in snakemake.params.args["sample_names"])
 
-with tempfile.TemporaryDirectory() as tmpdir, tempfile.NamedTemporaryFile("wt") as json_tmpf:
-    # Write library name to identifier that should be used in output file into a JSON file.
-    # Dictionary expected structure. Key: library name; Value: identifier to be used in file.
-    # For snappy-based analysis, both keys and values will be the library name. For analysis using
-    # externally generated data, the values will be the sample name as provided by the external
-    # source.
-    # {
-    #    "P001-N1-DNA1-WGS1": "P001",
-    #    "P002-N1-DNA1-WGS1": "P002",
-    #    "P003-N1-DNA1-WGS1": "P003",
-    #  }
-    for library_name, identifier in args.items():
-        print(f"{library_name} {identifier}", file=json_tmpf)
-        json_tmpf.flush()
-
+with tempfile.TemporaryDirectory() as tmpdir:
     # Extract the coverage data from the alfred qc files.
     result = {}
     for alfred_qc in snakemake.input.alfred_qc:
@@ -54,51 +42,32 @@ with tempfile.TemporaryDirectory() as tmpdir, tempfile.NamedTemporaryFile("wt") 
             else:
                 raise RuntimeError("Could not find targetCoverage metric")
 
-        with open(f"{tmpdir}/alfred_qc.{sample_name}", "wt") as outputf:
-            json.dump(
-                {
-                    sample_name: {
-                        "summary": {
-                            "mean coverage": total_aligned_in_target / total_target_size,
-                            "total target size": total_target_size,
-                        },
-                        "min_cov_target": cov_to_frac,
-                    }
-                },
-                outputf,
-            )
+            with open(f"{tmpdir}/alfred_qc.{sample_name}", "wt") as outputf:
+                json.dump(
+                    {
+                        sample_name: {
+                            "summary": {
+                                "mean coverage": total_aligned_in_target / total_target_size,
+                                "total target size": total_target_size,
+                            },
+                            "min_cov_target": cov_to_frac,
+                        }
+                    },
+                    outputf,
+                )
 
     # Actually run the script.
     ShellWrapper(snakemake).run(
         r"""
-set -x
-
-# --------------------- #
-# Get output identifier #
-# --------------------- #
-get_output_identifier() {{
-    # Parameters:
-    # $1: file being processed
-    # $2: path to temporary file with identifiers hash
-    # The reports are named {{library_name}}.bam.{{report}}.txt
-    library_name=$(basename $1)
-    library_name=${{library_name%%.bam.*}}
-    sample=$(grep $library_name $2 | cut -f2 -d' ')
-    if [[ -z "$sample" ]]; then
-        echo "Could not find '$1' in $2"
-        cat $2
-        exit 1
-    fi
-    echo $sample
-    return 0
-}}
+samples=({sample_names})
+bamstats=({snakemake.input.bamstats})
+idxstats=({snakemake.input.idxstats})
 
 # Extract "samtools stats" outputs into JSON
-for bamstats in {snakemake.input.bamstats}; do
-    # Define identifier to be used in output
-    sample=$(get_output_identifier $bamstats {json_tmpf.name})
+for i in "${{!samples[@]}}"; do
+    sample=${{samples[$i]}}
 
-    grep '^SN' $bamstats \
+    grep '^SN' ${{bamstats[$i]}} \
         | cut -f 2-3 \
         | sed -e 's/:\t/\t/g' \
         | awk -F $'\t' -v sample=$sample 'BEGIN {{ print "{{ \"" sample "\": {{ \"bamstats\": {{"; }}
@@ -109,11 +78,10 @@ for bamstats in {snakemake.input.bamstats}; do
 done
 
 # Extract "samtools idxstats" into JSON
-for idxstats in {snakemake.input.idxstats}; do
-    # Define identifier to be used in output
-    sample=$(get_output_identifier $idxstats {json_tmpf.name})
+for i in "${{!samples[@]}}"; do
+    sample=${{samples[$i]}}
 
-    cat $idxstats \
+    cat ${{idxstats[$i]}} \
         | cut -f 1,3,4 \
         | awk -F $'\t' -v sample=$sample 'BEGIN {{ print "{{ \"" sample "\": {{ \"idxstats\": {{"; }}
             {{ if (NR > 1) print ","; print "\"" $1 "\":{{\"mapped\":" $2 ",\"unmapped\":" $3 "}}" }}

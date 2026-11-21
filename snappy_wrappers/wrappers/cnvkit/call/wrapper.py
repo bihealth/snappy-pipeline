@@ -23,8 +23,6 @@ drop_low_coverage = " --drop-low-coverage" if args["drop_low_coverage"] else ""
 
 ShellWrapper(snakemake).run(
     r"""
-set -x
-
 # -----------------------------------------------------------------------------
 
 cnvkit.py call \

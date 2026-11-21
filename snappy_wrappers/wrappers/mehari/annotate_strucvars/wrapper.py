@@ -5,7 +5,6 @@ The callers' VCFs are prepared as before (Manta inversions, the SVLEN header of 
 the MELT header, a GT header, normalisation), then ``mehari annotate strucvars`` writes the table.
 """
 
-import os
 from typing import TYPE_CHECKING
 
 from snappy_wrappers.snappy_wrapper import ShellWrapper
@@ -15,9 +14,6 @@ if TYPE_CHECKING:
 
 args = snakemake.params.args
 
-# Get shortcut to "fix_manta_invs.py" postprocessing script
-fix_manta_invs = os.path.join(os.path.dirname(__file__), "fix_manta_invs.py")
-
 ShellWrapper(snakemake).run(
     r"""
 # Fix the Manta inversions
@@ -26,7 +22,7 @@ for vcf in {snakemake.input.vcf}; do
     let "i=$i+1"
     num=$(printf %03d $i)
 
-    python3 {fix_manta_invs} \
+    python3 $(dirname {__file__})/../../../tools/fix_manta_invs.py \
         --reference-fasta {snakemake.input.reference} \
         --input-vcf $vcf \
         --output-vcf $TMPDIR/fixed_bnd_to_inv_unsorted.$num.vcf

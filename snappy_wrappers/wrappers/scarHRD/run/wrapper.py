@@ -16,18 +16,8 @@ args = getattr(snakemake.params, "args", {})
 seqz = os.path.abspath(snakemake.input.seqz)
 hrd = os.path.abspath(snakemake.output.hrd)
 
-genome = snakemake.input.reference
-length = args["length"]
 genome_name = args["genome_name"]
-
 chr_in_name = "TRUE" if args["chr_prefix"] else "FALSE"
-prefix = "chr" if args["chr_prefix"] else ""
-if genome_name == "grch37" or genome_name == "grch38":
-    chromosomes = " ".join([prefix + str(x) for x in list(range(1, 23)) + ["X", "Y"]])
-elif genome_name == "mouse":
-    chromosomes = " ".join([prefix + str(x) for x in list(range(1, 21)) + ["X", "Y"]])
-else:
-    raise Exception("Invalid configuration")
 
 ShellWrapper(snakemake).run(
     r"""

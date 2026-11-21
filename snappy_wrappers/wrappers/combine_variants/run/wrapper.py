@@ -1,9 +1,8 @@
 # -*- coding: utf-8 -*-
 """Wrapper for combining germline & somatic variants"""
 
-from math import ceil
-
 from snappy_wrappers.snappy_wrapper import ShellWrapper
+from snappy_wrappers.tools.java import java_heap_mb
 
 __author__ = "Eric Blanc"
 __email__ = "eric.blanc@bih-charite.de"
@@ -11,12 +10,8 @@ __email__ = "eric.blanc@bih-charite.de"
 args = getattr(snakemake.params, "args", {})
 sample_name = args.get("sample_name", "")
 
-if mem_mb := snakemake.resources.get("mem_gb", None):
-    mem_mb *= 1024
-else:
-    mem_mb = snakemake.resources.get("mem_mb", 2048)
-
-java_mem_mb = ceil(mem_mb * 0.75)
+mem_mb = snakemake.resources.mem_mb
+java_mem_mb = java_heap_mb(snakemake)
 
 ShellWrapper(snakemake).run(
     r"""

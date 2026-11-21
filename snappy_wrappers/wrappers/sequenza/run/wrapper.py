@@ -1,18 +1,10 @@
 """CUBI+Snakemake wrapper code for sequenza (coverage analysis in R)"""
 
-import os
-import sys
 from typing import TYPE_CHECKING
 
-# The following is required for being able to import snappy_wrappers modules
-# inside wrappers.  These run in an "inner" snakemake process which uses its
-# own conda environment which cannot see the snappy_pipeline installation.
-base_dir = os.path.normpath(os.path.join(os.path.dirname(__file__), "..", "..", "..", ".."))
-sys.path.insert(0, base_dir)
+from snappy_wrappers.snappy_wrapper import ShellWrapper
 
-from snappy_wrappers.snappy_wrapper import ShellWrapper  # noqa: E402
-
-from snappy_wrappers.tools.genome_windows import yield_contigs  # noqa: E402
+from snappy_wrappers.tools.genome_windows import yield_contigs
 
 __author__ = "Eric Blanc <eric.blanc@bih-charite.de>"
 
@@ -38,8 +30,6 @@ def config_to_r(x):
         )
     return str(x)
 
-
-genome = snakemake.input.reference
 
 f = open(snakemake.input.reference_fai, "rt")
 contigs = config_to_r(list(yield_contigs(f, args.get("ignore_contigs"))))

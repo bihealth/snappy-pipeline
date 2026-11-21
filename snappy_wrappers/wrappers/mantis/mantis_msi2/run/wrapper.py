@@ -10,8 +10,6 @@ args = getattr(snakemake.params, "args", {})
 
 ShellWrapper(snakemake).run(
     r"""
-set -x
-
 mkdir -p $TMPDIR/out
 
 # The default thresholds are those that the authors recommend for WES,

@@ -15,8 +15,6 @@ ignore_read_groups = "--ignore" if args["ignore_read_groups"] else ""
 
 ShellWrapper(snakemake).run(
     r"""
-set -x
-
 # Get sorted targets BED file.
 zcat --force {targets_bed} \
     | awk -F $'\t' 'BEGIN {{ OFS = FS; }} ($2 < $3) {{ print; }}' \

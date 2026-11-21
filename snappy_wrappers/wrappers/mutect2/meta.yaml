@@ -1,4 +1,0 @@
-name: mutect
-description: Somatic SNV calling using GATK MuTect 2 (GATK 3.7)
-authors:
-  - Manuel Holtgrewe

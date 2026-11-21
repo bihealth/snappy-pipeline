@@ -14,8 +14,6 @@ normal_bcf = getattr(snakemake.input, "normal_bcf", None)
 
 ShellWrapper(snakemake).run(
     r"""
-set -x
-
 if [[ "{normal_bcf}" == "None" ]]; then
     cp {tumor_bcf} {snakemake.output.bcf}
     cp {tumor_bcf}.csi {snakemake.output.bcf}.csi

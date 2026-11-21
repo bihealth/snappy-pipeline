@@ -1,6 +1,7 @@
 from typing import TYPE_CHECKING
 
 from snappy_wrappers.snappy_wrapper import ShellWrapper
+from snappy_wrappers.tools import bwa_mem
 
 if TYPE_CHECKING:
     from snakemake.iocontainers import snakemake
@@ -29,57 +30,20 @@ split_as_secondary = args["split_as_secondary"]
 # The read group IDs, one per read group (file pair) of the library
 read_groups = " ".join(args["read_groups"])
 
+read_functions = bwa_mem.read_functions(
+    input_left, input_right, read_groups, trim_adapters, num_threads_trimming, mask_duplicates
+)
+mapping_pipeline = bwa_mem.mapping_pipeline(
+    "run_bwa_mem2",
+    snakemake.output,
+    num_threads_bam_view,
+    memory_bam_sort,
+    num_threads_bam_sort,
+)
+
 ShellWrapper(snakemake).run(
     r"""
-set -x
-
-declare -a reads_left=({input_left})
-declare -a reads_right=({input_right})
-declare -a read_groups=({read_groups})
-
-# Function Definitions ----------------------------------------------------------------------------
-
-# The reads of read group $1, paired reads interleaved with seqtk
-#
-# In the case of paired reads, write out line counts to temporary files so we can check for problems
-# later. A failing zcat in a process substitution does not fail the pipeline, so it leaves a marker.
-input_files() {{
-    set -x
-    i=$1
-
-    if [[ ${{#reads_right[@]}} -eq 0 ]]; then
-        zcat ${{reads_left[$i]}}
-    else
-        seqtk mergepe \
-            <({{ zcat ${{reads_left[$i]}} || touch $TMPDIR/zcat_failed; }} | tee >(wc -l > $TMPDIR/count_left.$i)) \
-            <({{ zcat ${{reads_right[$i]}} || touch $TMPDIR/zcat_failed; }} | tee >(wc -l > $TMPDIR/count_right.$i))
-    fi
-}}
-
-# Adapter trimming
-trim_adapters() {{
-    set -x
-
-    if [[ "{trim_adapters}" == "True" ]]; then
-        trimadap-mt -p {num_threads_trimming}
-    else
-        cat
-    fi
-}}
-
-# Duplicate masking
-mask_duplicates() {{
-    set -x
-
-    if [[ "{mask_duplicates}" == "True" ]] && [[ ${{#reads_right[@]}} -gt 0 ]]; then
-        samblaster --addMateTags
-    elif [[ "{mask_duplicates}" == "True" ]]; then
-        # samblaster aborts on reads without mates, unless they are single-end reads by design
-        samblaster --addMateTags --ignoreUnmated
-    else
-        cat
-    fi
-}}
+{read_functions}
 
 # Run BWA-MEM2 on the reads of read group $1
 run_bwa_mem2() {{
@@ -109,103 +73,6 @@ run_bwa_mem2() {{
         /dev/stdin
 }}
 
-# The alignments of all read groups, still grouped by read name, under one header
-merge_read_groups() {{
-    set -x
-
-    for f in $TMPDIR/out.d/*.bam; do
-        samtools view -H $f > ${{f%.bam}}.hdr.sam
-    done
-    samtools merge $TMPDIR/merged.hdr.bam $TMPDIR/out.d/*.hdr.sam
-    samtools cat -h $TMPDIR/merged.hdr.bam $TMPDIR/out.d/*.bam \
-        | samtools view -h -@ {num_threads_bam_view}
-}}
-
-# Alignment postprocessing
-#
-# This function makes extensive use of tee-piping to prevent the BAM to be read from the disk
-# again for statistics.
-postproc_bam() {{
-    set -x
-
-    samtools sort \
-        -T $TMPDIR/sort_bam \
-        -m {memory_bam_sort} \
-        -@ {num_threads_bam_sort} \
-        -O BAM \
-        -o /dev/stdout \
-        /dev/stdin \
-        | tee >(samtools stats /dev/stdin > {snakemake.output.report_bamstats_txt}) \
-        | tee >(samtools flagstat /dev/stdin > {snakemake.output.report_flagstats_txt}) \
-        | tee >(stdbuf -o0 samtools index /dev/stdin -o /dev/stdout > {snakemake.output.bam_bai}) \
-            > {snakemake.output.bam}
-
-    touch \
-        {snakemake.output.bam} \
-        {snakemake.output.bam_bai}
-
-    # We use stdbuf on samtools index above toether with stdout redirection.  We have seen
-    # some interesting timing issues with clustered/distributed file systems and the small
-    # index file not having been written by the time that samtools idxstats uses it.  In
-    # addition we attempt to run it 5 times with incremental waits to make things more
-    # robust.
-    for i in {{1..5}}; do
-        set +e
-        samtools idxstats {snakemake.output.bam} > {snakemake.output.report_idxstats_txt}
-        ret=$?
-        set -e
-        if [[ "$ret" -eq 0 ]]; then
-            break
-        elif [[ "$i" -lt 5 ]]; then
-            sleep "${{i}}m"
-        fi
-    done
-    if [[ "$ret" -ne 0 ]]; then
-        >&2 echo "samtools idxstats failed 5 times - something wrong with the index?"
-        exit 1
-    fi
-}}
-
-# Check the decompression and the input line counts written out in input_files()
-check_input_line_counts() {{
-    if [[ -e $TMPDIR/zcat_failed ]]; then
-        >&2 echo "Could not decompress the reads."
-        exit 1
-    fi
-    for ((i = 0; i < ${{#reads_left[@]}}; i++)); do
-        if [[ -e $TMPDIR/count_left.$i ]]; then
-            if ! diff $TMPDIR/count_left.$i $TMPDIR/count_right.$i > /dev/null; then
-                >&2 echo "Different number of lines in left/right file of read group ${{read_groups[$i]}}."
-                >&2 cat $TMPDIR/count_left.$i
-                >&2 cat $TMPDIR/count_right.$i
-                exit 1
-            fi
-        fi
-    done
-}}
-
-# Run actual tools --------------------------------------------------------------------------------
-
-# Map each read group with its own read group ID; several are concatenated for duplicate masking
-if [[ ${{#reads_left[@]}} -eq 1 ]]; then
-    input_files 0 \
-        | trim_adapters \
-        | run_bwa_mem2 0 \
-        | mask_duplicates \
-        | postproc_bam
-else
-    mkdir -p $TMPDIR/out.d
-    for ((i = 0; i < ${{#reads_left[@]}}; i++)); do
-        input_files $i \
-            | trim_adapters \
-            | run_bwa_mem2 $i \
-            | samtools view -b -@ {num_threads_bam_view} -o $TMPDIR/out.d/$(printf %05d $i).bam
-    done
-    merge_read_groups \
-        | mask_duplicates \
-        | postproc_bam
-fi
-
-check_input_line_counts
+{mapping_pipeline}
 """
 )

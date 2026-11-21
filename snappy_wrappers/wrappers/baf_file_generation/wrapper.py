@@ -13,7 +13,6 @@ reference_index_path = snakemake.input.reference_index
 
 ShellWrapper(snakemake).run(
     r"""
-set -x
 bcftools query \
     -s {snakemake.wildcards.donor_library_name} \
     -f '%CHROM\t%POS[\t%DP\t%AD]\n' \

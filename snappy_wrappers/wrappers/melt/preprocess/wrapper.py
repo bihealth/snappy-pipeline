@@ -1,11 +1,9 @@
-from math import ceil
-
 from snappy_wrappers.snappy_wrapper import ShellWrapper
+from snappy_wrappers.tools.java import java_heap_mb
 
 __author__ = "Manuel Holtgrewe <manuel.holtgrewe@bih-charite.de>"
 
-# As an estimate, give 75% of total memory as usable to JVM
-mem_jvm = ceil(snakemake.resources.mem_mb * 0.75)
+mem_jvm = java_heap_mb(snakemake)
 
 ShellWrapper(snakemake).run(
     r"""

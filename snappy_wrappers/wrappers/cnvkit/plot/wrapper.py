@@ -21,8 +21,6 @@ scatters = [
 
 ShellWrapper(snakemake).run(
     r"""
-set -x
-
 # -----------------------------------------------------------------------------
 
 unset DISPLAY

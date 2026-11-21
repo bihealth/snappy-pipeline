@@ -10,8 +10,6 @@ if TYPE_CHECKING:
 
 __author__ = "Clemens Messerschmidt <clemens.messerschmidt@bih-charite.de>"
 
-args = getattr(snakemake.params, "args", {})
-
 ShellWrapper(snakemake).run(
     r"""
 # Find out single or paired ended

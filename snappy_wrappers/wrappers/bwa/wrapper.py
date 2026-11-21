@@ -35,7 +35,6 @@ read_groups = " ".join(args["read_groups"])
 
 ShellWrapper(snakemake).run(
     r"""
-set -x
 mkdir -p $TMPDIR/tmp.d
 
 # Define some global shortcuts

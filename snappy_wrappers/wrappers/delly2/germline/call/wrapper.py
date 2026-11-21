@@ -12,8 +12,6 @@ else:
 
 ShellWrapper(snakemake).run(
     r"""
-set -x
-
 delly call \
     --map-qual {delly2_config[map_qual]} \
     --qual-tra {delly2_config[qual_tra]} \

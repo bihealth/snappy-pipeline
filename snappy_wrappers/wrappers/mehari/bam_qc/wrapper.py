@@ -4,19 +4,14 @@
 One row with a JSON object per library: the ``SN`` section of ``samtools stats``, ``samtools
 idxstats``, and the target coverage of alfred (mean coverage, target size, the fraction of the
 targets at the coverage thresholds). The quotes of the JSON are tripled, as varfish-cli reads it.
+The param ``libraries`` names the library of each ``bamstats`` and ``idxstats`` input, in their order.
 """
 
 import gzip
 import json
-import os
 
 #: The coverage thresholds of the target coverage fractions
 COV_THRESHOLDS = [5, 15, 20, 30, 50, 100, 200, 300, 400, 500, 1000]
-
-
-def library_name(path):
-    """The library of a ``samtools`` report named ``<library>.bam.<report>.txt``."""
-    return os.path.basename(path).split(".bam.", 1)[0]
 
 
 def number(text):
@@ -81,13 +76,13 @@ def parse_alfred_qc(path):
     return result
 
 
-def bam_qc_table(bamstats, idxstats, alfred_qc):
+def bam_qc_table(libraries, bamstats, idxstats, alfred_qc):
     """The table: a header and one row whose ``bam_stats`` is the JSON of all libraries."""
     stats = {}
-    for path in bamstats:
-        stats.setdefault(library_name(path), {})["bamstats"] = parse_bamstats(path)
-    for path in idxstats:
-        stats.setdefault(library_name(path), {})["idxstats"] = parse_idxstats(path)
+    for library, path in zip(libraries, bamstats, strict=True):
+        stats.setdefault(library, {})["bamstats"] = parse_bamstats(path)
+    for library, path in zip(libraries, idxstats, strict=True):
+        stats.setdefault(library, {})["idxstats"] = parse_idxstats(path)
     for path in alfred_qc:
         for sample, coverage in parse_alfred_qc(path).items():
             stats.setdefault(sample, {}).update(coverage)
@@ -95,9 +90,9 @@ def bam_qc_table(bamstats, idxstats, alfred_qc):
     return "case_id\tset_id\tbam_stats\n.\t.\t{}\n".format(bam_stats)
 
 
-def main(bamstats, idxstats, alfred_qc, output):
+def main(libraries, bamstats, idxstats, alfred_qc, output):
     with gzip.open(output, "wt") as f:
-        f.write(bam_qc_table(bamstats, idxstats, alfred_qc))
+        f.write(bam_qc_table(libraries, bamstats, idxstats, alfred_qc))
 
 
 if __name__ == "__main__":
@@ -106,6 +101,7 @@ if __name__ == "__main__":
 
         PythonWrapper(snakemake).run(
             lambda: main(
+                snakemake.params.args["libraries"],
                 list(snakemake.input.bamstats),
                 list(snakemake.input.idxstats),
                 list(snakemake.input.get("alfred_qc", [])),

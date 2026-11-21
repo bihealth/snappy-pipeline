@@ -23,12 +23,8 @@ table = (
 if java_options := args.get("java_options", ""):
     java_options = f"--java-options '{java_options}'"
 
-extra_arguments = " ".join(args.get("extra_arguments", []))
-
 ShellWrapper(snakemake).run(
     r"""
-set -x
-
 # export JAVA_HOME=$(dirname $(which gatk))/..
 export LD_LIBRARY_PATH=$(dirname $(which bgzip))/../lib
 
