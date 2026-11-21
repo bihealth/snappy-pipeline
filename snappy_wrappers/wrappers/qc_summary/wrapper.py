@@ -21,8 +21,11 @@ args = getattr(snakemake.params, "args", {})
 
 def main():
     files = {kind: list(paths) for kind, paths in snakemake.input.items()}
+    # Everything but the wrapper's own params and the step's rerun trigger are the options
     options = {
-        key: value for key, value in args.items() if key not in ("format", "labels", "title")
+        key: value
+        for key, value in args.items()
+        if key not in ("format", "labels", "title", "code")
     }
     summary = summarize(args["format"], files, list(args["labels"]), **options)
     render(summary, args["title"], snakemake.output.tsv, snakemake.output.html)
