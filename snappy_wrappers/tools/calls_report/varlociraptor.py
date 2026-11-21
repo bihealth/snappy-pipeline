@@ -42,10 +42,10 @@ COLUMN_NOTES = [
     "`event`: the most probable event of the call; `P(...)`: the posterior probability of "
     "every event of the scenario, artifact and absent on the red ramp.",
     "Per sample: `AF` (allele frequency), `DP` (depth) and `GT` (genotype).",
-    "Row details, per sample: the observations as bars per strength of evidence, reads for the "
-    "alternative allele to the right, for the reference or another allele to the left, pale "
-    "from reads with uncertain mapping; and the posterior density of the allele frequency, "
-    "relative to the cell's maximum.",
+    "Per sample, in the row details or on demand with a pedigree: the observations as bars "
+    "per strength of evidence, reads for the alternative allele to the right, for the "
+    "reference or another allele to the left, pale from reads with uncertain mapping; and the "
+    "posterior density of the allele frequency, relative to the cell's maximum.",
     "`biases` (on demand): the biases varlociraptor found.",
 ]
 
@@ -322,8 +322,8 @@ def sample_columns(
     vcf: Vcf, rows: list[dict[str, Any]], on_demand: bool = False
 ) -> dict[str, Column]:
     """The rendering of the per-sample columns, in order, labelled with the short sample names;
-    ``on_demand`` hides the allele frequency, depth and genotype until the reader shows them
-    (the pedigree plot of the row details has them)."""
+    ``on_demand`` hides the allele frequency, depth, genotype, observations and density until
+    the reader shows them (the pedigree plot of the row details has them)."""
     result: dict[str, Column] = {}
     labels = short_labels(vcf.samples)
     display = "available" if on_demand else None
@@ -344,10 +344,12 @@ def sample_columns(
             default=0,
         )
         result[f"{sample}: observations"] = Column(
-            label=f"{short}: observations", custom_plot=observations_plot(most), display="detail"
+            label=f"{short}: observations",
+            custom_plot=observations_plot(most),
+            display=display or "detail",
         )
         result[f"{sample}: AFD"] = Column(
-            label=f"{short}: AFD", custom_plot=AFD_PLOT, display="detail"
+            label=f"{short}: AFD", custom_plot=AFD_PLOT, display=display or "detail"
         )
         result[f"{sample}: biases"] = Column(label=f"{short}: biases", display="available")
     return result

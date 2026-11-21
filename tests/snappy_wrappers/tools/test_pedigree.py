@@ -181,9 +181,19 @@ def test_the_plot_is_a_layered_spec_whose_data_function_reads_the_sample_columns
     assert 'row[node.sample + ": observations"]' in data  # the reads by strength
     assert data.count('"kind": "legend"') == 6 and '"kind": "note"' in data  # the legend
     assert spec["width"] >= 3.3 * 96  # room for the legend's three entries per row
-    assert [layer["mark"]["type"] for layer in spec["layer"]].count(
-        "rect"
-    ) == 3  # AF bars and reads
+    marks = [layer["mark"]["type"] for layer in spec["layer"]]
+    assert marks.count("rect") == 4  # AF bar and reads, each on a background
+    # A rule without an end runs to the zero line of the y scale: the first row of the
+    # pedigree, which drew a line from every member up to its grandparents
+    for layer in spec["layer"]:
+        if layer["mark"]["type"] == "rule":
+            assert "x2" in layer["encoding"] or "y2" in layer["encoding"], layer
+    # The marks are opaque, so the lines do not show through the glyphs
+    assert all(
+        layer["mark"].get("opacity") == 1
+        for layer in spec["layer"]
+        if layer["mark"]["type"] in ("rule", "rect", "point")
+    )
     assert "data-value" in data  # values that datavzrd renders as HTML still parse
     assert 'row["P(" + event + ")"]' in data
 
@@ -222,10 +232,12 @@ def test_the_calls_report_adds_the_pedigree_column_in_the_row_details():
     assert "pedigree" in table.exclude  # a custom plot: in the event views only
     order = list(table.columns)
     assert order.index("pedigree") == order.index("P(absent)") + 1  # first of the row details
-    assert order[-1] == "hints"  # the hints last
+    assert order[-1] == "hints"  # the hints last among the columns
     # The per-sample columns step back behind the pedigree
     assert table.columns["case001subregion-N1-DNA1-WES1: AF"].display == "available"
     assert table.columns["case001subregion-N1-DNA1-WES1: GT"].display == "available"
+    assert table.columns["case001subregion-N1-DNA1-WES1: observations"].display == "available"
+    assert table.columns["case001subregion-N1-DNA1-WES1: AFD"].display == "available"
     assert (
         summarize(str(FIXTURES / "calls.vcf"))
         .table.columns["case001subregion-N1-DNA1-WES1: AF"]

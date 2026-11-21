@@ -138,10 +138,10 @@ def rows_and_columns(
     filters = {row["filter"] for row in rows} - {"PASS", "."}
     columns["filter"] = Column(display=None if filters else "available")
     if "HINTS" in vcf.info:
-        columns["hints"] = Column(display="detail")
+        columns["hints"] = Column(display="available")
     if inspect:
         columns |= varlociraptor.inspect_columns()
-    for name in ("other annotations", "hints"):  # last in the row details
+    for name in ("other annotations", "hints"):  # last among the columns
         if name in columns:
             columns[name] = columns.pop(name)
     for name in ("id", "quality", "filter"):  # a column the VCF does not fill is left out
@@ -196,12 +196,13 @@ def describe(vcf: Vcf, columns: dict[str, Column], options: Options) -> Descript
             "frequency as a bar with its 90 % credible interval, below it the reads (for the "
             "alternative allele to the right in blue, for the reference to the left in gray, "
             "darker for stronger evidence, pale for uncertain mapping, scaled to the member "
-            "with the most reads), the depth and the genotype. "
+            "with the most reads, whose width the gray background shows), the depth and the "
+            "genotype. "
             "Squares in aqua are male, circles in orange female, diamonds in gray of unknown "
             "sex; an affected member is filled in its color, an unaffected one white, one of "
             "unknown status light gray; a dashed outline has no data (the legend under the "
             "pedigree). "
-            "The per-sample `AF`, `DP` and `GT` columns are on demand.",
+            "The per-sample `AF`, `DP`, `GT`, observations and density columns are on demand.",
         )
     else:
         column_notes.append(
@@ -211,8 +212,8 @@ def describe(vcf: Vcf, columns: dict[str, Column], options: Options) -> Descript
     if "gene" in columns:
         column_notes.append(
             "`gene`, `consequence`, `impact`, `hgvs.c`, `hgvs.p`: the picked annotation, "
-            "the first of the highest impact for the allele; transcript, biotype and exon on "
-            "demand, the other annotations in the row details."
+            "the first of the highest impact for the allele; transcript, biotype, exon and the "
+            "other annotations on demand."
         )
     if "gnomAD AF" in columns:
         column_notes.append(
@@ -225,7 +226,7 @@ def describe(vcf: Vcf, columns: dict[str, Column], options: Options) -> Descript
     if on_demand:
         column_notes.append(", ".join(f"`{name}`" for name in on_demand) + ": on demand.")
     if "hints" in columns:
-        column_notes.append("`hints`: varlociraptor's hints, in the row details.")
+        column_notes.append("`hints`: varlociraptor's hints, on demand.")
     links: list[str] = []
     for name in ("position", "gene", "id", "ClinVar"):
         if name in columns and columns[name].links:

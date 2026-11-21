@@ -183,7 +183,7 @@ def columns(annotation: Annotation, links: dict[str, str]) -> dict[str, Column]:
         if name in fields:
             result[name] = Column(display="available")
     if "other annotations" in result or ("transcript" in fields and "consequence" in fields):
-        result["other annotations"] = Column(display="detail")
+        result["other annotations"] = Column(display="available")
     for name in ("gene_id", "hgnc_id"):
         if name in fields:
             result[name] = Column(display="hidden")

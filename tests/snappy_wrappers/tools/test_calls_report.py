@@ -176,7 +176,7 @@ def test_varlociraptor_calls_get_the_probabilities_and_the_per_sample_columns():
     assert row[f"{index}: AFD"] == "0=924.7,0.5=0.0,1=915.3"
     # The VCF fills neither ID, QUAL nor FILTER, so there are no such columns
     assert not {"id", "quality", "filter"} & set(frame.columns)
-    assert table.columns["hints"].display == "detail"
+    assert table.columns["hints"].display == "available"
 
     assert table.columns["P(present)"].plot["heatmap"]["range"] == list(SEQUENTIAL)
     assert table.columns["P(artifact)"].plot["heatmap"]["range"] == list(AGAINST)
@@ -202,7 +202,7 @@ def test_varlociraptor_calls_get_the_probabilities_and_the_per_sample_columns():
         for record in observations(*value.split("|"))
     )
     assert encoding["x"]["scale"]["domain"] == [-most, most]
-    assert table.columns[f"{sample}: observations"].display == "detail"
+    assert table.columns[f"{sample}: observations"].display == "detail"  # no pedigree
     assert table.columns[f"{sample}: AFD"].custom_plot["spec"]["mark"]["type"] == "bar"
     assert table.columns[f"{sample}: AFD"].display == "detail"
     assert table.columns[f"{sample}: biases"].display == "available"
@@ -301,7 +301,7 @@ def test_annotated_calls_get_gene_consequence_impact_hgvs_and_the_other_entries(
     assert columns["impact"].plot["pills"]["domain"] == ["HIGH", "MODERATE", "LOW", "MODIFIER"]
     assert columns["consequence"].ellipsis == 32 and columns["hgvs.p"].ellipsis == 28
     assert columns["transcript"].display == "available"
-    assert columns["other annotations"].display == "detail"
+    assert columns["other annotations"].display == "available"
     assert list(columns)[-2:] == ["other annotations", "hints"]  # last in the row details
     assert columns["gene_id"].display == "hidden"
     _validate(summary)

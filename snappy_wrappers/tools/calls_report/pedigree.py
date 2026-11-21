@@ -3,7 +3,7 @@
 
 The members of the entity's pedigree, from the sample sheet, are laid out once per table:
 generations as rows, children below their parents, partners side by side, with the unsequenced donors that connect members and the unknown parents of members with one parent drawn hollow.
-Per call, the plot reads the per-sample columns of the row: the allele frequency as a bar under the node with the 90 % credible interval from the allele frequency density, below it the reads as a diverging bar (for the alternative allele to the right in blue, for the reference to the left in gray, darker for stronger evidence, pale for uncertain mapping, scaled to the member with the most reads), the depth and the genotype as text, and the call's event with its posterior as the title.
+Per call, the plot reads the per-sample columns of the row: the allele frequency as a bar under the node with the 90 % credible interval from the allele frequency density, below it the reads as a diverging bar (for the alternative allele to the right in blue, for the reference to the left in gray, darker for stronger evidence, pale for uncertain mapping, scaled to the member with the most reads, on a gray background of that width), the depth and the genotype as text, and the call's event with its posterior as the title.
 The glyphs follow the pedigree convention: square for male, circle for female, diamond for unknown sex, filled when affected;
     the stroke carries the sex color (aqua, orange) and the fill of an affected member repeats it; a legend sits under the pedigree.
 """
@@ -25,7 +25,7 @@ from snappy_wrappers.tools.qc_summary import (
 )
 
 #: Pixels per unit of the layout, sideways and downwards
-X_STEP, Y_STEP = 96, 104
+X_STEP, Y_STEP = 96, 124
 
 #: Characters of a member's label under its node; longer labels are cut, the tooltip has them
 LABEL_LENGTH = 14
@@ -56,8 +56,9 @@ UNAFFECTED_FILL, UNKNOWN_FILL = "#ffffff", "#f0efec"
 ALT_RAMP = ("#cde2fb", "#9ec5f4", "#5598e7", "#2a78d6", "#0d366b")
 REF_RAMP = ("#f0efec", "#e1e0d9", "#c3c2b7", "#898781", "#52514e")
 
-#: How far below a couple the sibship line runs (in rows): below the labels of the couple
-SIBSHIP = 0.76
+#: How far below a couple the sibship line runs (in rows): just above the children, so that
+#: the drop from the couple's center is the one long line and the children hang on stubs
+SIBSHIP = 0.82
 
 #: The sex of the unknown parent that fills the other slot
 OPPOSITE = {"father": "male", "mother": "female"}
@@ -423,7 +424,7 @@ def plot(members: list[Member]) -> dict[str, Any]:
     layers = [
         {
             "transform": [{"filter": "datum.kind == 'edge'"}],
-            "mark": {"type": "rule", "stroke": MUTED, "strokeWidth": 1},
+            "mark": {"type": "rule", "stroke": MUTED, "strokeWidth": 1, "opacity": 1},
             "encoding": {
                 "x": {"field": "x", "type": "quantitative"},
                 "y": {"field": "y", "type": "quantitative"},
@@ -433,7 +434,7 @@ def plot(members: list[Member]) -> dict[str, Any]:
         },
         {
             "transform": [{"filter": "datum.kind == 'node'"}],
-            "mark": {"type": "rect", "fill": "#e1e0d9", "height": 5},
+            "mark": {"type": "rect", "fill": "#e1e0d9", "height": 5, "opacity": 1},
             "encoding": {
                 "x": {"field": "bar_x", "type": "quantitative"},
                 "x2": {"field": "bar_end"},
@@ -443,7 +444,7 @@ def plot(members: list[Member]) -> dict[str, Any]:
         },
         {
             "transform": [{"filter": "datum.kind == 'node' && isValid(datum.af)"}],
-            "mark": {"type": "rect", "fill": INK, "height": 5},
+            "mark": {"type": "rect", "fill": INK, "height": 5, "opacity": 1},
             "encoding": {
                 "x": {"field": "bar_x", "type": "quantitative"},
                 "x2": {"field": "bar_x2"},
@@ -453,7 +454,7 @@ def plot(members: list[Member]) -> dict[str, Any]:
         },
         {
             "transform": [{"filter": "datum.kind == 'node' && isValid(datum.lo_x)"}],
-            "mark": {"type": "rule", "stroke": "#0d366b", "strokeWidth": 2},
+            "mark": {"type": "rule", "stroke": "#0d366b", "strokeWidth": 2, "opacity": 1},
             "encoding": {
                 "x": {"field": "lo_x", "type": "quantitative"},
                 "x2": {"field": "hi_x"},
@@ -462,8 +463,18 @@ def plot(members: list[Member]) -> dict[str, Any]:
             },
         },
         {
+            "transform": [{"filter": "datum.kind == 'node' && datum.sample"}],
+            "mark": {"type": "rect", "fill": "#e1e0d9", "height": 6, "opacity": 1},
+            "encoding": {
+                "x": {"field": "bar_x", "type": "quantitative"},
+                "x2": {"field": "bar_end"},
+                "y": {"field": "y", "type": "quantitative"},
+                "yOffset": {"value": 35},
+            },
+        },
+        {
             "transform": [{"filter": "datum.kind == 'obs'"}],
-            "mark": {"type": "rect", "height": 6, "tooltip": True},
+            "mark": {"type": "rect", "height": 6, "tooltip": True, "opacity": 1},
             "encoding": {
                 "x": {"field": "x", "type": "quantitative"},
                 "x2": {"field": "x2"},
@@ -475,18 +486,31 @@ def plot(members: list[Member]) -> dict[str, Any]:
             },
         },
         {
+            # The center of the reads; a rule needs its y2, or it runs to the zero line
             "transform": [{"filter": "datum.kind == 'node' && datum.sample"}],
-            "mark": {"type": "rule", "stroke": TEXT, "strokeWidth": 1},
+            "mark": {
+                "type": "rule",
+                "stroke": TEXT,
+                "strokeWidth": 1,
+                "opacity": 1,
+                "yOffset": 31,
+                "y2Offset": 39,
+            },
             "encoding": {
                 "x": {"field": "x", "type": "quantitative"},
                 "y": {"field": "y", "type": "quantitative"},
-                "yOffset": {"value": 31},
-                "y2Offset": {"value": 39},
+                "y2": {"field": "y"},
             },
         },
         {
             "transform": [{"filter": "datum.kind == 'node'"}],
-            "mark": {"type": "point", "size": 420, "strokeWidth": 1.5, "tooltip": True},
+            "mark": {
+                "type": "point",
+                "size": 420,
+                "strokeWidth": 1.5,
+                "tooltip": True,
+                "opacity": 1,
+            },
             "encoding": {
                 "x": {"field": "x", "type": "quantitative"},
                 "y": {"field": "y", "type": "quantitative"},
@@ -545,7 +569,7 @@ def plot(members: list[Member]) -> dict[str, Any]:
         },
         {
             "transform": [{"filter": "datum.kind == 'legend'"}],
-            "mark": {"type": "point", "size": 110, "strokeWidth": 1.5},
+            "mark": {"type": "point", "size": 110, "strokeWidth": 1.5, "opacity": 1},
             "encoding": {
                 "x": {"field": "x", "type": "quantitative"},
                 "y": {"field": "y", "type": "quantitative"},
