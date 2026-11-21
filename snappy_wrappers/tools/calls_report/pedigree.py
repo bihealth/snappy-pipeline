@@ -4,6 +4,7 @@
 The members of the entity's pedigree, from the sample sheet, are laid out once per table:
 generations as rows, children below their parents, partners side by side, with the unsequenced donors that connect members and the unknown parents of members with one parent drawn hollow.
 Per call, the plot reads the per-sample columns of the row: the allele frequency as a bar under the node with the 90 % credible interval from the allele frequency density, below it the reads as a diverging bar (for the alternative allele to the right in blue, for the reference to the left in gray, darker for stronger evidence, pale for uncertain mapping, scaled to the member with the most reads, on a gray background of that width), the depth and the genotype as text, and the call's event with its posterior as the title.
+For a per-member event (``denovo_<member>``), a ring marks that member.
 The glyphs follow the pedigree convention: square for male, circle for female, diamond for unknown sex, filled when affected;
     the stroke carries the sex color (aqua, orange) and the fill of an affected member repeats it; a legend sits under the pedigree.
 """
@@ -36,12 +37,13 @@ SEX_COLORS = {"male": COLORS[2], "female": COLORS[1], "unknown": MUTED}
 
 #: The legend under the pedigree: (shape, sex, status, observed, label), in two rows
 LEGEND = (
-    ("male", "unknown", True, "male"),
-    ("female", "unknown", True, "female"),
-    ("unknown", "unknown", True, "unknown sex"),
-    ("male", "affected", True, "affected"),
-    ("male", "unaffected", True, "unaffected"),
-    ("male", "unknown", False, "no data"),
+    ("male", "unknown", True, False, "male"),
+    ("female", "unknown", True, False, "female"),
+    ("unknown", "unknown", True, False, "unknown sex"),
+    ("male", "affected", True, False, "affected"),
+    ("male", "unaffected", True, False, "unaffected"),
+    ("male", "unknown", False, False, "no data"),
+    ("male", "unknown", True, True, "the event's member"),
 )
 
 #: Width in rows that the legend needs
@@ -77,6 +79,8 @@ class Member:
     affected: bool | None = None
     #: The VCF sample of the member, ``None`` without one
     sample: str | None = None
+    #: The member's part of a per-member event name (``denovo_<member>``), ``None`` without one
+    event_suffix: str | None = None
 
 
 def members_of(pedigree: list[dict[str, Any]], samples: list[str]) -> list[Member]:
@@ -92,6 +96,7 @@ def members_of(pedigree: list[dict[str, Any]], samples: list[str]) -> list[Membe
             sex=entry.get("sex") or "unknown",
             affected=entry.get("affected"),
             sample=entry.get("sample") if entry.get("sample") in samples else None,
+            event_suffix=entry.get("event_suffix") or None,
         )
         for entry in pedigree
     ]
@@ -262,6 +267,7 @@ def nodes_and_edges(members: list[Member]) -> tuple[list[dict[str, Any]], list[d
                 "stroke_color": SEX_COLORS[sex],
                 "fill_color": fills[status],
                 "observed": member.sample is not None,
+                "event_suffix": member.event_suffix,
             }
         )
     # Orthogonal lines, as pedigrees are drawn: the partners joined, a drop from the middle of
@@ -370,6 +376,9 @@ DATA_FUNCTION = """function(value, row) {
   }
   const event = text(row["event"]);
   const p = num(row["P(" + event + ")"]);
+  const named = nodes.filter((n) => n.event_suffix && event.endsWith("_" + n.event_suffix))
+    .sort((a, b) => b.event_suffix.length - a.event_suffix.length)[0];
+  if (named) records.push({kind: "focus", x: named.x, y: named.y, sex: named.sex});
   records.push({kind: "title", x: %(center)s, y: 0.75, text: event + (p === null ? "" : " · P = " + p.toFixed(3))});
   return records;
 }"""
@@ -377,9 +386,9 @@ DATA_FUNCTION = """function(value, row) {
 
 def legend_records(x_min: float, y_min: float) -> list[dict[str, Any]]:
     """The glyphs of the legend with their labels: sex in the first row, status in the second,
-    and the reading of the bars as a line of text."""
+    the ring of the event's member in the third, and the reading of the bars as a line of text."""
     records = []
-    for index, (sex, status, observed, label) in enumerate(LEGEND):
+    for index, (sex, status, observed, focus, label) in enumerate(LEGEND):
         row, column = divmod(index, 3)
         fills = {
             "affected": SEX_COLORS[sex],
@@ -397,6 +406,7 @@ def legend_records(x_min: float, y_min: float) -> list[dict[str, Any]]:
                 else SEX_COLORS["male"],
                 "fill_color": fills[status],
                 "observed": observed,
+                "focus": focus,
                 "text": label,
             }
         )
@@ -404,7 +414,7 @@ def legend_records(x_min: float, y_min: float) -> list[dict[str, Any]]:
         {
             "kind": "note",
             "x": x_min + 0.1,
-            "y": y_min - 0.9,
+            "y": y_min - 1.2,
             "text": "bars: allele frequency with its 90 % interval; reads ← reference · alternative →, darker = stronger evidence",
         }
     )
@@ -420,7 +430,7 @@ def plot(members: list[Member]) -> dict[str, Any]:
     x_min, x_max = min(xs) - 0.5, max(max(xs) + 0.5, min(xs) - 0.5 + LEGEND_WIDTH)
     y_min, y_max = min(ys) - 0.9, max(ys) + 0.95
     legend = legend_records(x_min, y_min)
-    y_min -= 1.1
+    y_min -= 1.4
     layers = [
         {
             "transform": [{"filter": "datum.kind == 'edge'"}],
@@ -503,6 +513,24 @@ def plot(members: list[Member]) -> dict[str, Any]:
             },
         },
         {
+            # The member that a per-member event names: a ring in its shape around the node
+            "transform": [{"filter": "datum.kind == 'focus'"}],
+            "mark": {"type": "point", "size": 980, "strokeWidth": 2, "stroke": TEXT, "opacity": 1},
+            "encoding": {
+                "x": {"field": "x", "type": "quantitative"},
+                "y": {"field": "y", "type": "quantitative"},
+                "shape": {
+                    "field": "sex",
+                    "type": "nominal",
+                    "scale": {
+                        "domain": ["male", "female", "unknown"],
+                        "range": ["square", "circle", "diamond"],
+                    },
+                    "legend": None,
+                },
+            },
+        },
+        {
             "transform": [{"filter": "datum.kind == 'node'"}],
             "mark": {
                 "type": "point",
@@ -565,6 +593,21 @@ def plot(members: list[Member]) -> dict[str, Any]:
                 "x": {"field": "x", "type": "quantitative"},
                 "y": {"field": "y", "type": "quantitative"},
                 "text": {"field": "text"},
+            },
+        },
+        {
+            "transform": [{"filter": "datum.kind == 'legend' && datum.focus"}],
+            "mark": {
+                "type": "point",
+                "size": 250,
+                "strokeWidth": 1.5,
+                "stroke": TEXT,
+                "opacity": 1,
+            },
+            "encoding": {
+                "x": {"field": "x", "type": "quantitative"},
+                "y": {"field": "y", "type": "quantitative"},
+                "shape": {"value": "square"},
             },
         },
         {

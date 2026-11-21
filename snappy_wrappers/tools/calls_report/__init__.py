@@ -200,8 +200,8 @@ def describe(vcf: Vcf, columns: dict[str, Column], options: Options) -> Descript
             "genotype. "
             "Squares in aqua are male, circles in orange female, diamonds in gray of unknown "
             "sex; an affected member is filled in its color, an unaffected one white, one of "
-            "unknown status light gray; a dashed outline has no data (the legend under the "
-            "pedigree). "
+            "unknown status light gray; a dashed outline has no data; a ring marks the member "
+            "of a per-member event such as `denovo_<member>` (the legend under the pedigree). "
             "The per-sample `AF`, `DP`, `GT`, observations and density columns are on demand.",
         )
     else:

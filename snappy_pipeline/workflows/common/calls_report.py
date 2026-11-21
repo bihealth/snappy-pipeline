@@ -106,8 +106,12 @@ class CallsReportStepPart(BaseStepPart):
     def pedigree(self, entity: str) -> list[dict[str, Any]]:
         """The members of the entity's pedigree for the pedigree plot: every donor of the
         sample sheet's pedigree, named after its library (the VCF sample) or, unsequenced,
-        after the donor, with its parents, sex and affected status; empty for an entity that
-        is no pedigree."""
+        after the donor, with its parents, sex and affected status, and for a sequenced one
+        its part of a per-member event name (``denovo_<member>``), so the plot marks the member
+        of such an event; empty for an entity that is no pedigree."""
+        # Imported here: the variant_calling package imports this module
+        from snappy_pipeline.workflows.variant_calling.scenario import event_suffix
+
         if self.parent.effective_group_by != "related":
             return []
         donors = self.parent.pedigree_donors(entity)
@@ -131,6 +135,7 @@ class CallsReportStepPart(BaseStepPart):
                     "sex": row.sex,
                     "affected": affected,
                     "sample": row.library_name or None,
+                    "event_suffix": event_suffix(row._asdict()) if row.library_name else None,
                 }
             )
         return members

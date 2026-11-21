@@ -113,6 +113,7 @@ def test_the_pedigree_of_a_related_entity_names_every_donor_with_parents_and_sta
             "sex": "female",
             "affected": True,
             "sample": "idx-N1-DNA1-WES1",
+            "event_suffix": "idx",
         },
         {
             "name": "fa-N1-DNA1-WES1",
@@ -122,6 +123,7 @@ def test_the_pedigree_of_a_related_entity_names_every_donor_with_parents_and_sta
             "sex": "male",
             "affected": False,
             "sample": "fa-N1-DNA1-WES1",
+            "event_suffix": "fa",
         },
         {
             "name": "mo-N1-DNA1-WES1",
@@ -131,6 +133,7 @@ def test_the_pedigree_of_a_related_entity_names_every_donor_with_parents_and_sta
             "sex": "female",
             "affected": None,
             "sample": "mo-N1-DNA1-WES1",
+            "event_suffix": "mo",
         },
         {
             "name": "gm",
@@ -140,6 +143,7 @@ def test_the_pedigree_of_a_related_entity_names_every_donor_with_parents_and_sta
             "sex": "female",
             "affected": None,
             "sample": None,
+            "event_suffix": None,
         },
     ]
     assert part._get_params_run(SimpleNamespace(library_name="FAM_idx"))["pedigree"] == members

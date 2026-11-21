@@ -44,6 +44,7 @@ PEDIGREE = [
         "sex": "female",
         "affected": True,
         "sample": "idx-N1",
+        "event_suffix": "idx",
     },
     {
         "name": "sib1-N1",
@@ -53,6 +54,7 @@ PEDIGREE = [
         "sex": "male",
         "affected": False,
         "sample": "sib1-N1",
+        "event_suffix": "sib1",
     },
 ]
 SAMPLES = ["pgf-N1", "fa-N1", "mgm-N1", "mo-N1", "idx-N1", "sib1-N1"]
@@ -67,6 +69,7 @@ def test_members_get_an_unknown_parent_and_lose_samples_the_vcf_lacks():
     assert by_name["pgm"].sample is None and by_name["fa-N1"].sample == "fa-N1"
     assert by_name["sib1-N1"].sample is None  # not in the VCF
     assert by_name["idx-N1"].affected is True and by_name["pgf-N1"].affected is None
+    assert by_name["idx-N1"].event_suffix == "idx" and by_name["fa-N1"].event_suffix is None
 
 
 def test_generations_put_partners_in_one_row_and_children_below():
@@ -179,7 +182,14 @@ def test_the_plot_is_a_layered_spec_whose_data_function_reads_the_sample_columns
     assert spec["width"] > 0 and spec["height"] > 0
     assert '"sample": "idx-N1"' in data and 'row[node.sample + ": AF"]' in data
     assert 'row[node.sample + ": observations"]' in data  # the reads by strength
-    assert data.count('"kind": "legend"') == 6 and '"kind": "note"' in data  # the legend
+    assert data.count('"kind": "legend"') == 7 and '"kind": "note"' in data  # the legend
+    # The member of a per-member event (denovo_idx) gets a ring: the longest matching suffix
+    assert '"event_suffix": "idx"' in data and 'event.endsWith("_" + n.event_suffix)' in data
+    assert 'kind: "focus"' in data
+    glyphs = [(layer["transform"][0]["filter"], layer["mark"]["type"]) for layer in spec["layer"]]
+    assert glyphs.index(("datum.kind == 'focus'", "point")) < glyphs.index(
+        ("datum.kind == 'node'", "point")
+    )  # the ring below the glyph
     assert spec["width"] >= 3.3 * 96  # room for the legend's three entries per row
     marks = [layer["mark"]["type"] for layer in spec["layer"]]
     assert marks.count("rect") == 4  # AF bar and reads, each on a background
