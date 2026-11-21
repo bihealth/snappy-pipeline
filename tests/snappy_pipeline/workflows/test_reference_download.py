@@ -30,3 +30,42 @@ def test_a_protein_download_is_no_dna_reference():
     (produced,) = ReferenceDownloadWorkflow.task_produces(config, {})
 
     assert not produced.satisfies(DNA_REFERENCE)
+
+
+REFSEQ = {"assembly_accession": "GCF_000001405.40", "assembly_name": "GRCh38.p14"}
+
+
+def test_refseq_needs_its_section():
+    with pytest.raises(ValidationError, match="requires explicit 'refseq' config section"):
+        ReferenceDownload(source="refseq")
+
+
+@pytest.mark.parametrize("missing", ["assembly_accession", "assembly_name"])
+def test_refseq_needs_the_assembly_without_url(missing):
+    refseq = {key: value for key, value in REFSEQ.items() if key != missing}
+    with pytest.raises(ValidationError, match="needs assembly_accession and assembly_name"):
+        ReferenceDownload(source="refseq", refseq=refseq)
+
+
+def test_refseq_rejects_a_malformed_accession():
+    with pytest.raises(ValidationError, match="no NCBI assembly accession"):
+        ReferenceDownload(source="refseq", refseq={**REFSEQ, "assembly_accession": "GRCh38"})
+
+
+def test_a_url_replaces_the_refseq_assembly():
+    config = ReferenceDownload(source="refseq", refseq={"url": "https://example.org/genome.fa.gz"})
+    assert config.refseq.assembly_accession == ""
+
+
+def test_ucsc_has_no_build():
+    with pytest.raises(ValidationError, match="build"):
+        ReferenceDownload(source="ucsc", ucsc={"build": "hg19"})
+
+
+@pytest.mark.parametrize(
+    "source, section",
+    [("ensembl", {"species": "mus_musculus"}), ("refseq", REFSEQ), ("ucsc", {"db": "hg19"})],
+)
+def test_a_url_warns_about_the_fields_it_overrides(source, section):
+    with pytest.warns(UserWarning, match=f"ignored: {', '.join(sorted(section))}"):
+        ReferenceDownload(source=source, **{source: {"url": "https://example.org/x.fa", **section}})

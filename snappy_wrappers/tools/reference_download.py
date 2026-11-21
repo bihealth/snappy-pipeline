@@ -132,13 +132,12 @@ def refseq_url(url: str, assembly_accession: str, assembly_name: str, file_name:
     )
 
 
-def ucsc_url(url: str, db: str, build: str, file_name: str) -> str:
+def ucsc_url(url: str, db: str, file_name: str) -> str:
     if url:
         return url
 
-    db = db or build
     if not db:
-        raise ValueError("ucsc download requires either explicit url or db/build")
+        raise ValueError("ucsc download requires either explicit url or db")
 
     file_name = file_name or f"{db}.fa.gz"
     return f"https://hgdownload.soe.ucsc.edu/goldenPath/{db}/bigZips/{file_name}"

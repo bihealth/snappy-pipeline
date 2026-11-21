@@ -2,8 +2,13 @@
 """Download of a reference sequence
 
 Downloads one FASTA file from Ensembl, RefSeq or UCSC.
-The required ``source`` field selects the source.
-The source section (``ensembl``, ``refseq`` or ``ucsc``) selects the species, build and file, or gives a ``url`` that replaces the generated URL.
+The required ``source`` field selects the source, and the section of the same name selects the file:
+
+- ``ensembl``: species, build, release (``version``) and ``datatype``, optionally single chromosomes (``chromosome``).
+- ``refseq``: the NCBI assembly, by ``assembly_accession`` and ``assembly_name``, such as ``GCF_000001405.40`` and ``GRCh38.p14``; both are required, so ``source: refseq`` needs the section.
+- ``ucsc``: the UCSC genome database ``db``, such as ``hg38``.
+
+``file_name`` picks another file of the release, assembly or database, and ``url`` replaces the generated URL.
 ``contigs`` and ``contigs_regex`` keep only some contigs of the file.
 The task has one result per project, not per library.
 
@@ -16,10 +21,27 @@ Below ``tasks/<task>/output/``:
 
 Downstream tasks read the FASTA file through the key ``fasta`` of their ``reference`` field, and find the ``.fai`` and ``.dict`` next to it.
 The task produces data of type ``raw`` with the tags ``reference``, its source and the ``molecule`` of the source section (``dna``, ``rna`` or ``protein``).
+
+Examples
+--------
+
+GRCh38 from RefSeq, with the chromosomes and the mitochondrial genome (accessions ``NC_*``) only:
+
+.. code-block:: yaml
+
+    tasks:
+      - step: reference_download
+        name: genome
+        config:
+          source: refseq
+          refseq:
+            assembly_accession: GCF_000001405.40
+            assembly_name: GRCh38.p14
+            contigs_regex: '^NC_'
 """
 
-from snappy_pipeline.utils import dictify, listify
-from snappy_pipeline.workflows.abstract import BaseStep, BaseStepPart, ResourceUsage
+from snappy_pipeline.utils import listify
+from snappy_pipeline.workflows.abstract import RuleOptions, BaseStep, BaseStepPart, ResourceUsage
 from snappy_pipeline.workflows.abstract.protocol import DataSignature, DataType
 
 from .model import ReferenceDownload as ReferenceDownloadConfigModel
@@ -39,67 +61,33 @@ class _ReferenceDownloadStepPart(BaseStepPart):
         work_fasta = "work/reference_download/out/reference.fa"
         return {"fasta": work_fasta, "fasta_md5": work_fasta + ".md5"}
 
-    def _base_args(self) -> dict:
-        source_cfg = getattr(self.config, self.name)
-        return {
-            "url": source_cfg.url,
-            "species": source_cfg.species,
-            "build": source_cfg.build,
-            "assembly": source_cfg.assembly,
-            "version": source_cfg.version,
-            "contigs": source_cfg.contigs,
-            "contigs_regex": source_cfg.contigs_regex,
-        }
-
     def _get_log_file_run(self):
         return {"log": f"work/reference_download/log/reference_download.{self.name}.log"}
 
-    @dictify
     def _get_params_run(self, wildcards):
-        yield from self._base_args().items()
+        # The molecule only tags the task's output; the wrapper does not read it
+        return getattr(self.config, self.name).model_dump(exclude={"molecule"})
 
 
 class EnsemblReferenceDownloadStepPart(_ReferenceDownloadStepPart):
     name = "ensembl"
     wrappers = {"run": "reference_download/ensembl"}
+    rule_options = {"run": RuleOptions(retries=2, cache=True)}
     source = Source.ensembl
-
-    @dictify
-    def _get_params_run(self, wildcards):
-        yield from self._base_args().items()
-        cfg = self.config.ensembl
-        yield "subset", cfg.subset
-        yield "file_name", cfg.file_name
-        yield "datatype", cfg.datatype
-        yield "chromosome", cfg.chromosome
-        yield "branch", cfg.branch
 
 
 class RefseqReferenceDownloadStepPart(_ReferenceDownloadStepPart):
     name = "refseq"
     wrappers = {"run": "reference_download/refseq"}
+    rule_options = {"run": RuleOptions(retries=2, cache=True)}
     source = Source.refseq
-
-    @dictify
-    def _get_params_run(self, wildcards):
-        yield from self._base_args().items()
-        cfg = self.config.refseq
-        yield "assembly_accession", cfg.assembly_accession
-        yield "assembly_name", cfg.assembly_name
-        yield "file_name", cfg.file_name
 
 
 class UcscReferenceDownloadStepPart(_ReferenceDownloadStepPart):
     name = "ucsc"
     wrappers = {"run": "reference_download/ucsc"}
+    rule_options = {"run": RuleOptions(retries=2, cache=True)}
     source = Source.ucsc
-
-    @dictify
-    def _get_params_run(self, wildcards):
-        yield from self._base_args().items()
-        cfg = self.config.ucsc
-        yield "db", cfg.db
-        yield "file_name", cfg.file_name
 
 
 class SidecarsStepPart(BaseStepPart):
@@ -108,6 +96,7 @@ class SidecarsStepPart(BaseStepPart):
     name = "sidecars"
     actions = ("run",)
     wrappers = {"run": "reference_download/sidecars"}
+    rule_options = {"run": RuleOptions(local=True)}
 
     default_resource_usage = ResourceUsage(threads=1, runtime="1h", mem="2GB")
 

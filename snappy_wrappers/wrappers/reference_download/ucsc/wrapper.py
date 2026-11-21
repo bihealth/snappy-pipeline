@@ -11,7 +11,7 @@ if TYPE_CHECKING:
 
 def main() -> None:
     args = snakemake.params.args
-    url = reference_download.ucsc_url(args["url"], args["db"], args["build"], args["file_name"])
+    url = reference_download.ucsc_url(args["url"], args["db"], args["file_name"])
     reference_download.fetch(
         url, str(snakemake.output.fasta), args["contigs"], args["contigs_regex"]
     )

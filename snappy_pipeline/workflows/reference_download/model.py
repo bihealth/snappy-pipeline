@@ -1,3 +1,4 @@
+import re
 import warnings
 from enum import StrEnum
 from typing import Annotated
@@ -33,6 +34,10 @@ class EnsemblDataType(StrEnum):
     pep = "pep"
 
 
+#: An NCBI assembly accession, whose digits name the directories of its files
+ASSEMBLY_ACCESSION = re.compile(r"GC[AF]_\d{9}\.\d+")
+
+
 def validate_url_or_empty(v: str) -> str:
     """Validate that the string is either empty or a syntactically valid URL."""
     if not v:
@@ -45,18 +50,6 @@ def validate_url_or_empty(v: str) -> str:
 class DownloadCommon(SnappyModel):
     url: Annotated[str, BeforeValidator(validate_url_or_empty)] = ""
     """Optional explicit URL override. When set, source-specific URL construction is skipped."""
-
-    species: str = "homo_sapiens"
-    """Species identifier, usually lowercase with underscore for Ensembl."""
-
-    build: str = "GRCh38"
-    """Genome build identifier (e.g., GRCh38, hg38)."""
-
-    assembly: str = "primary_assembly"
-    """Assembly/subset indicator, source-specific semantics."""
-
-    version: str = ""
-    """Release/version string, source-specific semantics (e.g., Ensembl release)."""
 
     contigs: list[str] = []
     """Optional explicit list of contigs to keep."""
@@ -86,6 +79,15 @@ class DownloadCommon(SnappyModel):
 
 
 class Ensembl(DownloadCommon):
+    species: str = "homo_sapiens"
+    """Species identifier, usually lowercase with underscore for Ensembl."""
+
+    build: str = "GRCh38"
+    """Genome build identifier (e.g., GRCh38, GRCh37)."""
+
+    assembly: str = "primary_assembly"
+    """Assembly subset used when ``subset`` is empty."""
+
     version: str = "113"
     subset: str = "primary_assembly"
     file_name: str = ""
@@ -120,13 +122,34 @@ class Ensembl(DownloadCommon):
 
 class Refseq(DownloadCommon):
     assembly_accession: str = ""
+    """Accession of the NCBI assembly, such as ``GCF_000001405.40``; required without ``url``."""
+
     assembly_name: str = ""
+    """Name of the NCBI assembly, such as ``GRCh38.p14``; required without ``url``."""
+
     file_name: str = ""
+    """File in the assembly's directory; empty: ``<assembly_accession>_<assembly_name>_genomic.fna.gz``."""
+
+    @model_validator(mode="after")
+    def validate_assembly(self) -> "Refseq":
+        if self.url:
+            return self
+        if not self.assembly_accession or not self.assembly_name:
+            raise ValueError("refseq needs assembly_accession and assembly_name, or a url")
+        if not ASSEMBLY_ACCESSION.fullmatch(self.assembly_accession):
+            raise ValueError(
+                f"refseq assembly_accession {self.assembly_accession!r} is no NCBI assembly "
+                "accession such as GCF_000001405.40"
+            )
+        return self
 
 
 class Ucsc(DownloadCommon):
     db: str = "hg38"
+    """UCSC genome database, such as ``hg38`` or ``mm39``."""
+
     file_name: str = ""
+    """File in the database's ``bigZips`` directory; empty: ``<db>.fa.gz``."""
 
 
 class ReferenceDownload(SnappyStepModel):
@@ -134,5 +157,18 @@ class ReferenceDownload(SnappyStepModel):
     """Source of the download; its section selects the file."""
 
     ensembl: Ensembl = Ensembl()
-    refseq: Refseq = Refseq()
+    """The Ensembl FASTA file, by species, build, release (``version``) and ``datatype``."""
+
+    refseq: Refseq | None = None
+    """The genomic FASTA file of an NCBI assembly; required for ``source: refseq``."""
+
     ucsc: Ucsc = Ucsc()
+    """The FASTA file of a UCSC genome database."""
+
+    @model_validator(mode="after")
+    def validate_source_section(self) -> "ReferenceDownload":
+        if getattr(self, self.source) is None:
+            raise ValueError(
+                f"source={self.source} requires explicit '{self.source}' config section"
+            )
+        return self
