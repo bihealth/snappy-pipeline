@@ -3,7 +3,7 @@
 
 import sys
 
-from termcolor import colored
+import click
 
 #: Message level: ERROR
 LVL_ERROR = "ERROR"
@@ -23,17 +23,18 @@ def log(msg, args=None, level=None, file=sys.stderr):
 
     For LVL_ERROR, LVL_INFO, LVL_SUCCESS, the message will be prefixed with a colored keyword
     identifying the level.  For IMPORTANT, the message itself will be colored.
+    Colors are left out if ``file`` is not a terminal.
     """
     args = args or {}
     if level == LVL_IMPORTANT:
-        print(colored(msg.format(**args), "yellow"), file=file)
+        click.echo(click.style(msg.format(**args), fg="yellow"), file=file)
     else:
         if level == LVL_ERROR:
-            prefix = colored("ERROR: ", "red", attrs=["bold"])
+            prefix = click.style("ERROR: ", fg="red", bold=True)
         elif level == LVL_INFO:
-            prefix = colored("INFO: ", "yellow", attrs=["bold"])
+            prefix = click.style("INFO: ", fg="yellow", bold=True)
         elif level == LVL_SUCCESS:
-            prefix = colored("SUCCESS: ", "green", attrs=["bold"])
+            prefix = click.style("SUCCESS: ", fg="green", bold=True)
         else:
             prefix = ""
-        print(prefix, msg.format(**args), sep="", file=file)
+        click.echo(prefix + msg.format(**args), file=file)

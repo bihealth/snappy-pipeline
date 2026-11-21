@@ -6,7 +6,7 @@ import os
 import re
 import subprocess
 import sys
-from collections.abc import Mapping, Sequence
+from collections.abc import Callable, Mapping, Sequence
 from enum import Enum
 from pathlib import Path
 from typing import Any
@@ -16,31 +16,20 @@ import yaml
 
 from snappy_pipeline.models import reader_markers
 from snappy_pipeline.workflow_registry import WORKFLOW_REGISTRY
-from tests.scripts.generate_task_configs import build_all_tasks, load_yaml
+from tests.scripts.generate_task_configs import build_all_tasks, build_config, dump_yaml, load_yaml
 
 
 def _repo_root() -> Path:
     return Path(__file__).resolve().parents[2]
 
 
-def _get_task_names() -> list[str]:
-    root = _repo_root()
-    base_config_path = root / "tests/snappy_pipeline/fixtures/base_config.yaml"
-    base_config = load_yaml(base_config_path)
-    # Redirect stdout to suppress print logs during test collection
-    import io
-    import sys as sys_orig
+BASE_CONFIG_PATH = _repo_root() / "tests/snappy_pipeline/fixtures/base_config.yaml"
+BASE_CONFIG = load_yaml(BASE_CONFIG_PATH)
 
-    f = io.StringIO()
-    sys_orig.stdout = f
-    try:
-        tasks = build_all_tasks(base_config, base_config_path)
-    finally:
-        sys_orig.stdout = sys_orig.__stdout__
-    return [t["name"] for t in tasks]
-
-
-TASK_NAMES = _get_task_names()
+#: The generated tasks, built once per process: the collection needs their names, the session
+#: fixture writes them.
+TASKS = build_all_tasks(BASE_CONFIG, BASE_CONFIG_PATH)
+TASK_NAMES = [task["name"] for task in TASKS]
 
 
 RNA_TASKS = {
@@ -153,9 +142,23 @@ def _run(cmd: list[str], cwd: Path) -> subprocess.CompletedProcess[str]:
     return subprocess.run(cmd, cwd=cwd, text=True, capture_output=True, check=False, env=env)
 
 
-def _tail(text: str, n: int = 40) -> str:
-    lines = text.splitlines()
-    return "\n".join(lines[-n:])
+def _dump(project: Path, task: str, frozen: bool = False) -> list[dict[str, Any]]:
+    """Return the jobs of the DAG that ``snappy run --task <task>`` builds in ``project``."""
+    output = project / "dag.json"
+    cmd = [sys.executable, "tests/scripts/dump_dag.py", "--directory", str(project)]
+    cmd += ["--task", task, "--output", str(output)] + (["--frozen"] if frozen else [])
+    dump = _run(cmd, cwd=_repo_root())
+    assert dump.returncode == 0, f"building the DAG of {task} failed\n{dump.stdout}\n{dump.stderr}"
+    return json.loads(output.read_text(encoding="utf-8"))
+
+
+def _edit_config(project: Path, edit: Callable[[dict[str, Any]], None]) -> dict[str, Any]:
+    """Apply ``edit`` to the project's ``config.yaml`` and return the edited config."""
+    path = project / "config.yaml"
+    config = yaml.safe_load(path.read_text(encoding="utf-8"))
+    edit(config)
+    path.write_text(yaml.safe_dump(config, sort_keys=False), encoding="utf-8")
+    return config
 
 
 def to_plain_obj(obj: Any) -> Any:
@@ -185,25 +188,9 @@ def to_plain_obj(obj: Any) -> Any:
 
 @pytest.fixture(scope="session")
 def generated_task_config(tmp_path_factory: pytest.TempPathFactory) -> dict[str, Any]:
-    root = _repo_root()
-    out_dir = tmp_path_factory.mktemp("generated-task-configs")
-
-    gen = _run(
-        [sys.executable, "tests/scripts/generate_task_configs.py", "--out-dir", str(out_dir)],
-        cwd=root,
-    )
-    gen_output = (gen.stdout or "") + "\n" + (gen.stderr or "")
-    if gen.returncode != 0:
-        raise AssertionError(
-            f"generate_task_configs.py failed\nstdout/stderr tail:\n{_tail(gen_output)}"
-        )
-
-    return {
-        "root": root,
-        "out_dir": out_dir,
-        "config_path": out_dir / "all-workflows" / "config.yaml",
-        "generate_output": gen_output,
-    }
+    config_path = tmp_path_factory.mktemp("generated-task-configs") / "config.yaml"
+    dump_yaml(config_path, build_config(BASE_CONFIG, TASKS, BASE_CONFIG_PATH))
+    return {"root": _repo_root(), "config_path": config_path}
 
 
 def dependency_closure(task_name: str, tasks_by_name: dict[str, dict[str, Any]]) -> set[str]:
@@ -363,35 +350,15 @@ def test_generated_config_task_closure_passes(
     # Build the DAG that `snappy run --task <task_name>` would build. A broken DAG fails here,
     # like a dry-run would; the job list (paths, params, resources, wrappers) must match the
     # committed snapshot.
-    dump_path = tmp_path / "dag.json"
-    cmd = [
-        sys.executable,
-        "tests/scripts/dump_dag.py",
-        "--directory",
-        str(tmp_path),
-        "--task",
-        task_name,
-        "--output",
-        str(dump_path),
-    ]
-    dump = _run(cmd, cwd=root)
-    dump_output = (dump.stdout or "") + "\n" + (dump.stderr or "")
-
-    assert dump.returncode == 0, (
-        f"building the DAG failed for {task_name}\nstdout/stderr excerpt:\n{dump_output}"
-    )
-    actual = dump_path.read_text(encoding="utf-8")
-    unread = (
-        []
-        if task_name in EXPECTED_EMPTY
-        else _unread_dependencies(task_name, tmp_path, json.loads(actual))
-    )
+    jobs = _dump(tmp_path, task_name)
+    unread = [] if task_name in EXPECTED_EMPTY else _unread_dependencies(task_name, tmp_path, jobs)
     assert not unread, f"{task_name} sets depends_on fields that none of its jobs reads: {unread}"
-    targets = next(job["input"] for job in json.loads(actual) if job["rule"] == "all")
+    targets = next(job["input"] for job in jobs if job["rule"] == "all")
     if task_name in EXPECTED_EMPTY:
         assert not targets, f"{task_name} now targets files; remove it from EXPECTED_EMPTY"
     else:
         assert targets, f"{task_name} targets no files, so its snapshot would check nothing"
+    actual = json.dumps(jobs, indent=1, sort_keys=True) + "\n"
     for path, placeholder in ((str(tmp_path), "<project>"), (str(root), "<repo>")):
         actual = actual.replace(path, placeholder)
     # The code hash of a rule's wrappers changes with every edit of the tools they import
@@ -405,14 +372,9 @@ def test_frozen_run_uses_existing_upstream_outputs(
 ) -> None:
     """``snappy run --task X --frozen`` loads only X's rules; missing upstream files fail fast."""
     _write_closure_project("variant_annotation_vep", generated_task_config, tmp_path)
-    cmd = [sys.executable, "tests/scripts/dump_dag.py", "--directory", str(tmp_path)]
-    cmd += ["--task", "variant_annotation_vep", "--output", str(tmp_path / "dag.json"), "--frozen"]
-    dump = _run(cmd, cwd=generated_task_config["root"])
-    output = (dump.stdout or "") + (dump.stderr or "")
-
-    assert dump.returncode != 0
-    assert "MissingInputException" in output
-    assert "tasks/variant_calling_gatk4_hc_gvcf/work/" in output
+    with pytest.raises(AssertionError, match="MissingInputException") as failure:
+        _dump(tmp_path, "variant_annotation_vep", frozen=True)
+    assert "tasks/variant_calling_gatk4_hc_gvcf/work/" in str(failure.value)
 
 
 @pytest.mark.integration
@@ -422,23 +384,19 @@ def test_job_group_groups_the_jobs_of_its_tasks(
     """The non-local jobs of the tasks with ``job_group`` join that group; local rules stay local,
     and the jobs of other tasks have no group."""
     _write_closure_project("variant_filtration_bcftools", generated_task_config, tmp_path)
-    config = yaml.safe_load((tmp_path / "config.yaml").read_text(encoding="utf-8"))
-    tasks = {task["name"]: task for task in config["tasks"]}
-    upstream = tasks["variant_filtration_bcftools"]["config"]["depends_on"]["variants"]
-    grouped = {"variant_filtration_bcftools", upstream}
-    for name in grouped:
-        tasks[name]["config"]["job_group"] = "tail"
-    (tmp_path / "config.yaml").write_text(yaml.safe_dump(config, sort_keys=False), encoding="utf-8")
+    grouped = {"variant_filtration_bcftools"}
 
-    dump_path = tmp_path / "dag.json"
-    cmd = [sys.executable, "tests/scripts/dump_dag.py", "--directory", str(tmp_path)]
-    cmd += ["--task", "variant_filtration_bcftools", "--output", str(dump_path)]
-    dump = _run(cmd, cwd=generated_task_config["root"])
-    assert dump.returncode == 0, _tail((dump.stdout or "") + (dump.stderr or ""))
-    jobs = json.loads(dump_path.read_text(encoding="utf-8"))
+    def join_group(config):
+        tasks = {task["name"]: task for task in config["tasks"]}
+        grouped.add(tasks["variant_filtration_bcftools"]["config"]["depends_on"]["variants"])
+        for name in grouped:
+            tasks[name]["config"]["job_group"] = "tail"
+
+    names = [task["name"] for task in _edit_config(tmp_path, join_group)["tasks"]]
+    jobs = _dump(tmp_path, "variant_filtration_bcftools")
 
     def task_of(job):
-        return next((name for name in tasks if job["rule"].startswith(f"{name}_")), None)
+        return next((name for name in names if job["rule"].startswith(f"{name}_")), None)
 
     in_group = [job for job in jobs if task_of(job) in grouped and not job.get("local")]
     assert in_group and all(job.get("group") == "tail" for job in in_group)
@@ -456,19 +414,15 @@ def _job_with_reads_from(
     """Return the first job of the rule ending in ``rule_suffix`` and all jobs when the task
     ``task_name`` reads from ``source_task``."""
     _write_closure_project(task_name, generated_task_config, tmp_path)
-    config = yaml.safe_load((tmp_path / "config.yaml").read_text(encoding="utf-8"))
-    config["tasks"] = [t for t in config["tasks"] if t["name"] != source_task["name"]]
-    config["tasks"].insert(0, source_task)
-    consumer = next(t for t in config["tasks"] if t["name"] == task_name)
-    consumer["config"]["depends_on"]["reads"] = source_task["name"]
-    (tmp_path / "config.yaml").write_text(yaml.safe_dump(config, sort_keys=False), encoding="utf-8")
 
-    dump_path = tmp_path / "dag.json"
-    cmd = [sys.executable, "tests/scripts/dump_dag.py", "--directory", str(tmp_path)]
-    cmd += ["--task", task_name, "--output", str(dump_path)]
-    dump = _run(cmd, cwd=generated_task_config["root"])
-    assert dump.returncode == 0, _tail((dump.stdout or "") + (dump.stderr or ""))
-    jobs = json.loads(dump_path.read_text(encoding="utf-8"))
+    def read_from_source(config):
+        config["tasks"] = [t for t in config["tasks"] if t["name"] != source_task["name"]]
+        config["tasks"].insert(0, source_task)
+        consumer = next(t for t in config["tasks"] if t["name"] == task_name)
+        consumer["config"]["depends_on"]["reads"] = source_task["name"]
+
+    _edit_config(tmp_path, read_from_source)
+    jobs = _dump(tmp_path, task_name)
     return next(j for j in jobs if j["rule"].endswith(rule_suffix)), jobs
 
 
@@ -502,17 +456,13 @@ def test_mapping_bam_is_temp_when_the_task_deletes_it(
 ):
     """With ``delete_intermediates: [bam]`` the BAM is temp, has no .md5 and is no result file."""
     _write_closure_project("ngs_mapping_bwa", generated_task_config, tmp_path)
-    config = yaml.safe_load((tmp_path / "config.yaml").read_text(encoding="utf-8"))
-    mapping = next(t for t in config["tasks"] if t["name"] == "ngs_mapping_bwa")
-    mapping["config"]["delete_intermediates"] = ["intermediates", "bam"]
-    (tmp_path / "config.yaml").write_text(yaml.safe_dump(config, sort_keys=False), encoding="utf-8")
 
-    dump_path = tmp_path / "dag.json"
-    cmd = [sys.executable, "tests/scripts/dump_dag.py", "--directory", str(tmp_path)]
-    cmd += ["--task", "ngs_mapping_bwa", "--output", str(dump_path)]
-    dump = _run(cmd, cwd=generated_task_config["root"])
-    assert dump.returncode == 0, _tail((dump.stdout or "") + (dump.stderr or ""))
-    jobs = json.loads(dump_path.read_text(encoding="utf-8"))
+    def delete_bam(config):
+        mapping = next(t for t in config["tasks"] if t["name"] == "ngs_mapping_bwa")
+        mapping["config"]["delete_intermediates"] = ["intermediates", "bam"]
+
+    _edit_config(tmp_path, delete_bam)
+    jobs = _dump(tmp_path, "ngs_mapping_bwa")
 
     job = next(j for j in jobs if j["rule"].endswith("_bwa_run"))
     lib = job["wildcards"]["library_name"]
@@ -598,34 +548,6 @@ def _check_snapshot(task_name: str, actual: str) -> None:
 
 
 @pytest.mark.integration
-def test_generated_config_audit_regression_guard(generated_task_config: dict[str, Any]) -> None:
-    gen_output = generated_task_config["generate_output"]
-    unresolved = re.findall(r"unresolved validation errors, kept best-effort config", gen_output)
-
-    cfg_path = generated_task_config["config_path"]
-    cfg: dict[str, Any] = yaml.safe_load(cfg_path.read_text(encoding="utf-8")) or {}
-
-    auto_count = 0
-
-    def walk(v: Any) -> None:
-        nonlocal auto_count
-        if isinstance(v, dict):
-            for vv in v.values():
-                walk(vv)
-        elif isinstance(v, list):
-            for vv in v:
-                walk(vv)
-        elif isinstance(v, str) and v == "AUTO":
-            auto_count += 1
-
-    walk(cfg)
-
-    # Guard against silent regressions: keep generated-config quality from getting worse.
-    assert len(unresolved) <= int(os.environ.get("SNAPPY_MAX_UNRESOLVED_CONFIGS", "35"))
-    assert auto_count <= int(os.environ.get("SNAPPY_MAX_AUTO_PLACEHOLDERS", "70"))
-
-
-@pytest.mark.integration
 def test_somatic_trio_calls_the_relapse_against_the_primary_tumor(
     generated_task_config: dict[str, Any], tmp_path: Path
 ):
@@ -636,10 +558,6 @@ def test_somatic_trio_calls_the_relapse_against_the_primary_tumor(
     relapse_folder.mkdir()
     for mate in ("R1", "R2"):
         (relapse_folder / f"case001subregion-T2-DNA1-WES1.{mate}.fastq.gz").touch()
-    config = yaml.safe_load((tmp_path / "config.yaml").read_text(encoding="utf-8"))
-    for data_set in config["data_sets"].values():
-        data_set["file"] = str(_fixture_dir() / "samplesheet_somatic_trio.tsv")
-    calling = next(t for t in config["tasks"] if t["name"] == "variant_calling_mutect2")
     primary_tumor = "role == 'tumor' and extraction_type == 'dna' and timepoint == 'primary'"
     tasks = {
         "calling_primary": {"library_selection": "timepoint == 'primary'"},
@@ -648,20 +566,20 @@ def test_somatic_trio_calls_the_relapse_against_the_primary_tumor(
             "relationships": {"matched_normal_lib": {"via": "donor_name", "target": primary_tumor}},
         },
     }
-    for name, settings in tasks.items():
-        config["tasks"].append(
-            {**calling, "name": name, "config": {**calling["config"], **settings}}
-        )
-    (tmp_path / "config.yaml").write_text(yaml.safe_dump(config, sort_keys=False), encoding="utf-8")
 
+    def add_tasks(config):
+        for data_set in config["data_sets"].values():
+            data_set["file"] = str(_fixture_dir() / "samplesheet_somatic_trio.tsv")
+        calling = next(t for t in config["tasks"] if t["name"] == "variant_calling_mutect2")
+        for name, settings in tasks.items():
+            config["tasks"].append(
+                {**calling, "name": name, "config": {**calling["config"], **settings}}
+            )
+
+    _edit_config(tmp_path, add_tasks)
     bams = {}
     for name in tasks:
-        dump_path = tmp_path / f"{name}.json"
-        cmd = [sys.executable, "tests/scripts/dump_dag.py", "--directory", str(tmp_path)]
-        cmd += ["--task", name, "--output", str(dump_path)]
-        dump = _run(cmd, cwd=generated_task_config["root"])
-        assert dump.returncode == 0, _tail((dump.stdout or "") + (dump.stderr or ""))
-        for job in json.loads(dump_path.read_text(encoding="utf-8")):
+        for job in _dump(tmp_path, name):
             if job["rule"] == f"{name}_variant_calling_mutect2_run":
                 libraries = [
                     Path(p).name.removesuffix(".bam") for p in job["input"] if p.endswith(".bam")

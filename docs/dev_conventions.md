@@ -73,11 +73,11 @@ Only inputs order the jobs that produce them first and trigger reruns when they 
 `test_wrappers_get_the_params_they_read` checks that the jobs in the DAG snapshots pass every `args` key their wrapper reads.
 A changed param also triggers a rerun, so every value a wrapper uses is a config field passed as a param, never a constant in the wrapper or the Snakefile; rules with a `run:` block need params for the config values their output depends on, too.
 `test_wrappers_read_the_params_they_get` checks the other direction: every param of a wrapper job occurs in its wrapper (`WRAPPERS_READING_PARAMS_DYNAMICALLY` lists the exceptions with a reason).
-`test_files_are_inputs_not_params` flags params that hold file paths, against a baseline that only shrinks.
+`test_files_are_inputs_not_params` fails for params that hold file paths.
 
 The config section of a tool inherits `ToolModel` (`snappy_pipeline/models`), whose `extra_arguments` are additional arguments for the tool's command line.
 `BaseStep.get_params` adds them to the params of the step part's `tool_section()` (by default `config.<name>`), for its `extra_arguments_action` or else its only action, unless the getter returns them itself.
-The wrapper puts `{extra_arguments}` on the tool's command; `ShellWrapper` and `RWrapper` fill it in, and an f-string writes `{{extra_arguments}}` to leave it to them.
+The wrapper puts `{extra_arguments}` on the tool's command; `ShellWrapper` fills it in, and an f-string writes `{{extra_arguments}}` to leave it to the base class.
 A single-tool step without a tool section takes `extra_arguments` on its step model, and its step part's `tool_section()` returns `self.config`.
 `test_tool_wrappers_get_extra_arguments` requires them for every wrapper, except those that `WRAPPERS_WITHOUT_EXTRA_ARGUMENTS` lists with a reason (Python and R code, installers, helpers, secondary actions).
 `test_wrappers_use_the_extra_arguments_they_get` and `test_wrappers_leave_extra_arguments_to_the_base_class` check that wrappers use them.
@@ -89,8 +89,8 @@ These files calibrate the resource requests.
 Rules cached between workflows (`cache:`) cannot have a benchmark.
 `test_wrapper_rules_write_a_benchmark` and `test_logs_and_benchmarks_are_unique_per_job` check this.
 
-A rule's log holds only its log file (plus a copy of the script, if the wrapper writes one).
-The log file is named `log`, because the wrapper base classes write to `snakemake.log.log` (`RWrapper` also needs `script`); building the DAG in the snapshot tests fails for a wrapper rule without it.
+A rule's log holds only its log file.
+The log file is named `log`, because the wrapper base classes write to `snakemake.log.log`; building the DAG in the snapshot tests fails for a wrapper rule without it.
 Snakemake's metadata in `.snakemake/` records the code, params, inputs and conda environment of every output.
 The pinned environments (`environment.linux-64.pin.txt`) fix the package versions.
 Logs are no result files, and `snappy run` archives them per run.
@@ -297,8 +297,8 @@ A task's outputs are described by `DataSignature` objects: a data type plus tags
 - Files are named `{entity}.{suffix}`, with a dot after the wildcard, for example `{tumor_library}.gene_log2.txt`.
   Underscores stay inside multi-word suffixes.
 
-`test_path_conventions_only_improve` checks the last two rules on all DAG snapshots against a baseline of existing violations (`tests/snappy_pipeline/snapshots/path_convention_violations.json`).
-New violations fail the test, and fixed ones must be removed from the baseline.
+`test_paths_follow_the_conventions` checks the last two rules on all DAG snapshots.
+A value of the step's `tool` field counts as a tool name if it equals a run of whole path parts between `/`, `.`, `_` and `-`, compared without these separators, so `eb_filter` counts as the tool `ebfilter`.
 
 ## I/O footprint on HPC
 

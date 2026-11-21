@@ -121,7 +121,7 @@ from snappy_pipeline import step_overview
 from snappy_pipeline.models import RequiredBy, reader_markers
 from snappy_pipeline.orchestration import ON_HOLD_STEPS
 from snappy_pipeline.workflow_registry import WORKFLOW_REGISTRY
-from snappy_pipeline.workflows.abstract.protocol import DataSignature
+from snappy_pipeline.workflows.abstract.protocol import TOOL, field_contract
 
 STEP_DIR = "step"
 
@@ -137,7 +137,7 @@ def _inputs_section(model_cls) -> str:
         return "Inputs\n------\n\nThis step reads no other task.\n"
     rows = []
     for key, info in field.annotation.model_fields.items():
-        signature = next(m for m in info.metadata if isinstance(m, DataSignature))
+        signature = field_contract(info, TOOL).signature
         markers = reader_markers(info)
         read_by = "; ".join(str(marker) for marker in markers) or "all"
         required_by = [str(marker) for marker in markers if isinstance(marker, RequiredBy)]
@@ -218,3 +218,52 @@ for path, page in pages.items():
     if not os.path.exists(path) or open(path).read() != page:
         with open(path, "wt") as f:
             f.write(page)
+
+
+# -- Command table -------------------------------------------------------------
+# The ``snappy-commands`` directive renders the commands of ``snappy`` with the short help of each,
+# so that the docs list what the CLI has (usage.md)
+
+from docutils import nodes
+from docutils.parsers.rst import Directive
+
+from snappy_pipeline.apps import snappy_cli
+
+
+def _commands(group, prefix="snappy"):
+    """Yield (command line, short help) of the commands below ``group`` in definition order."""
+    for name, command in group.commands.items():
+        if hasattr(command, "commands"):
+            yield from _commands(command, f"{prefix} {name}")
+        elif not command.hidden:
+            yield f"{prefix} {name}", command.get_short_help_str(limit=1000)
+
+
+def _help(text):
+    """The help text with its options as literals, which Sphinx's smart quotes leave alone."""
+    parts = re.split(r"(--[\w-]+)", text)
+    return [nodes.literal(text=p) if i % 2 else nodes.Text(p) for i, p in enumerate(parts) if p]
+
+
+def _row(*cells):
+    row = nodes.row()
+    for cell in cells:
+        row += nodes.entry("", nodes.paragraph("", "", *cell))
+    return row
+
+
+class SnappyCommands(Directive):
+    def run(self):
+        # Sphinx reads the page again when the CLI changes
+        self.state.document.settings.env.note_dependency(snappy_cli.__file__)
+        tgroup = nodes.tgroup(cols=2)
+        tgroup += [nodes.colspec(colwidth=1), nodes.colspec(colwidth=3)]
+        tgroup += nodes.thead("", _row([nodes.Text("Command")], [nodes.Text("Purpose")]))
+        tgroup += nodes.tbody(
+            "", *(_row([nodes.literal(text=c)], _help(h)) for c, h in _commands(snappy_cli.main))
+        )
+        return [nodes.table("", tgroup)]
+
+
+def setup(app):
+    app.add_directive("snappy-commands", SnappyCommands)

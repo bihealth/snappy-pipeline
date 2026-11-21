@@ -11,20 +11,10 @@ import pytest
 from click.testing import CliRunner
 
 from snappy_pipeline.apps import snappy_cli
-from snappy_pipeline.workflow_registry import WORKFLOW_REGISTRY
-from tests.snappy_pipeline.workflows.conftest import patch_module_fs
 
 
-def test_steps_match_workflow_registry():
-    """STEPS used by the CLI must match the WORKFLOW_REGISTRY keys."""
-    assert set(snappy_cli.STEPS) == set(WORKFLOW_REGISTRY)
-
-
-def test_snappy_run_help(germline_sheet_fake_project_ngs_mapping_fs, mocker):
+def test_snappy_run_help(mocker):
     """Check whether the call to ``snappy run --help`` works."""
-    fake_fs = germline_sheet_fake_project_ngs_mapping_fs
-    patch_module_fs("snappy_pipeline.apps.snappy_cli", fake_fs, mocker)
-    patch_module_fs("snappy_pipeline.apps.impl.fsmanip", fake_fs, mocker)
     m = mocker.MagicMock()
     mocker.patch("snappy_pipeline.apps.snappy_cli.snakemake_main", m)
 
@@ -44,15 +34,6 @@ def test_snappy_completion():
     result_bash = runner.invoke(snappy_cli.main, ["completion", "bash"])
     assert result_bash.exit_code == 0
     assert "_SNAPPY_COMPLETE" in result_bash.output
-
-
-def test_snappy_task_steps():
-    """Check whether ``snappy task steps`` lists available workflow steps."""
-    runner = CliRunner()
-    result = runner.invoke(snappy_cli.main, ["task", "steps"])
-    assert result.exit_code == 0
-    assert "Available Workflow Steps in SNAPPY" in result.output
-    assert "ngs_mapping" in result.output
 
 
 def test_snappy_task_list_available():
@@ -76,17 +57,21 @@ def test_task_param_type_shell_complete():
     assert "my_custom_task=ngs_mapping" in names_prefix
 
 
-def test_complete_task_names(germline_sheet_fake_project_ngs_mapping_fs, mocker):
-    """Check task name completion from project config.yaml."""
-    fake_fs = germline_sheet_fake_project_ngs_mapping_fs
-    patch_module_fs("snappy_pipeline.apps.snappy_cli", fake_fs, mocker)
-
+def test_complete_task_names(tmp_path, mocker):
+    """The task names of config.yaml complete ``--task``; without a config, the step names."""
     ctx = mocker.MagicMock()
-    ctx.params = {"directory": "/project-dir/ngs_mapping"}
+    ctx.params = {"directory": str(tmp_path)}
+    assert [c.value for c in snappy_cli._complete_task_names(ctx, None, "")] == list(
+        snappy_cli.STEPS
+    )
 
-    completions = snappy_cli._complete_task_names(ctx, None, "")
-    names = [c.value for c in completions]
-    assert "ngs_mapping" in names
+    (tmp_path / "config.yaml").write_text(CHECK_FILES_CONFIG)
+    assert [c.value for c in snappy_cli._complete_task_names(ctx, None, "")] == [
+        "bwa_index",
+        "genome",
+        "mapping",
+    ]
+    assert [c.value for c in snappy_cli._complete_task_names(ctx, None, "ma")] == ["mapping"]
 
 
 #: A mapping task reading the FASTQ files of one germline library
@@ -160,7 +145,7 @@ FDR_OF_BCFTOOLS_CALLS = """
     config:
       depends_on: {alignments: mapping, reference: genome}
       tool: bcftools_call
-      bcftools_call: {}
+      bcftools_call: {assembly: GRCh38}
   - name: fdr
     step: variant_filtration
     config:
@@ -260,6 +245,28 @@ def test_task_add_keeps_the_style_of_the_config_and_comments_the_new_task(tmp_pa
         "mapping",
         "qc",
     ]
+
+
+def test_task_add_full_writes_every_field_active(tmp_path):
+    (tmp_path / "config.yaml").write_text("tasks: []\n")
+    result = CliRunner().invoke(
+        snappy_cli.main,
+        ["task", "add", "--directory", str(tmp_path), "--config-mode", "full", "ngs_mapping"],
+    )
+    assert result.exit_code == 0, result.output
+    lines = (tmp_path / "config.yaml").read_text().splitlines()
+    assert "  - name: ngs_mapping" in lines and "    step: ngs_mapping" in lines
+    # The optional fields are set, not commented out
+    assert "      library_selection:" in lines and "      bwa:" in lines
+    assert not any(line.lstrip().startswith("#library_selection") for line in lines)
+
+
+def test_task_add_without_a_config_fails_with_a_hint(tmp_path):
+    result = CliRunner().invoke(
+        snappy_cli.main, ["task", "add", "--directory", str(tmp_path), "ngs_mapping"]
+    )
+    assert result.exit_code == 2
+    assert "createaprojectwithsnappyinit" in "".join(result.output.replace("│", "").split())
 
 
 def test_task_add_minimal_writes_the_required_fields_only(tmp_path):

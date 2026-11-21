@@ -122,15 +122,12 @@ A step part names the wrapper of each action in `wrappers`, and `wf.get_wrapper(
 A wrapper derives from a base class in `snappy_wrappers/snappy_wrapper.py`:
 
 `ShellWrapper`
-: Runs a Bash script.
-
-`RWrapper`
-: Runs an R script.
+: Runs a Bash script; R code runs from a heredoc in it.
 
 `PythonWrapper`
 : Runs a Python function.
 
-All three write the log, and they write the `<file>.md5` of every output that declares one.
+Both write the log, and they write the `<file>.md5` of every output that declares one.
 A wrapper reads the values from `snakemake.params.args` and the files from `snakemake.input`.
 It never reads `snakemake.config`.
 
@@ -138,26 +135,10 @@ It never reads `snakemake.config`.
 
 `snappy` is a Click application (`snappy_pipeline/apps/snappy_cli.py`).
 It wraps Snakemake and reads the project configuration from `config.yaml` in the project directory.
+{ref}`usage_commands` lists its commands; `docs/conf.py` generates that table from the help of each command.
+`snappy run` calls Snakemake with snappy's workflow profile; the executor, such as SLURM, comes from a profile of the system or the user.
+Other arguments go to Snakemake.
 
-`snappy init`
-: Creates a project directory.
-
-`snappy task add`
-: Adds a task of a step to the config with the default values of its step.
-
-`snappy task list`, `snappy task steps`
-: List the tasks of the project and the available steps.
-
-`snappy run`
-: Calls Snakemake with snappy's workflow profile; the executor, such as SLURM, comes from a profile of the system or the user.
-    Other arguments go to Snakemake.
-
-`snappy watch`, `snappy logs`, `snappy report`
-: Monitor a run, archive the logs of a run and build the Snakemake report.
-
-`snappy check-files`, `snappy pull-sheet`, `snappy completion`
-: List missing files of the configuration, pull a sample sheet from SODAR and print the shell completion script; {ref}`usage` describes every command.
-
-`snappy run` prints the Snakemake command line at the start of every run.
+`snappy run --verbose` prints the Snakemake command line at the start of the run.
 The generally useful `snakemake` parameters are available through `snappy run`.
 If one is missing, please create a ticket.

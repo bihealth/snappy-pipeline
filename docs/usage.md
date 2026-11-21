@@ -5,21 +5,14 @@
 The `snappy` command is the interface to the pipeline.
 `snappy --help` lists the subcommands.
 
+(usage_commands)=
+
 ## Subcommands
 
-| Subcommand           | Purpose                                                                                     |
-| -------------------- | ------------------------------------------------------------------------------------------- |
-| `snappy init`        | Create a project directory with `config.yaml` and `README.md`.                              |
-| `snappy task add`    | Add tasks to the `config.yaml` of a project.                                                |
-| `snappy task list`   | List the tasks of a project, or the available steps with `--available`.                     |
-| `snappy task steps`  | List the available steps.                                                                   |
-| `snappy check-files` | List the files that `config.yaml` names but that do not exist, and libraries without reads. |
-| `snappy run`         | Run the pipeline with Snakemake.                                                            |
-| `snappy report`      | Build the Snakemake report of the QC outputs (`report.zip` in the project directory).       |
-| `snappy watch`       | Open the `snkmt` TUI to monitor a running workflow.                                         |
-| `snappy logs`        | Archive the logs of a run whose Snakemake process was killed.                               |
-| `snappy pull-sheet`  | Pull a sample sheet from the SODAR API.                                                     |
-| `snappy completion`  | Print the shell completion script for bash, zsh or fish.                                    |
+The table is generated from the help of each command, which `snappy <command> --help` prints in full.
+
+```{snappy-commands}
+```
 
 `snappy init` and `snappy task add` take `[task_name=]step_type` arguments, for example `mapping=ngs_mapping`.
 `snappy init` also writes an empty sample sheet (`--sheet-type generic|germline|cancer`) that `config.yaml` names, records the project name, external id and description, and makes the project a git repository that tracks only `.gitignore`, `config.yaml` and `README.md` (`--track-sheet` adds the sheet; `--remote <url>` adds `origin` without pushing; `--no-git` skips it).

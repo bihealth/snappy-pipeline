@@ -29,14 +29,13 @@ dependencies = [
     # We're trying to keep the PyPi package up to date, you might have to install
     # from source, though.
     "biomedsheets @ git+https://github.com/bihealth/biomedsheets.git@8a86f4c0b94b2c0bde14a22acf552387958ad688",
-    # Helpful for CLIs
-    "termcolor >=1.1.0,<3",
     # Snakemake is used for providing the actual wrapper calling functionality; its development
     # version, for the software deployment plugins (software: directive, post-deploy scripts).
-    # Until they are merged, the heads of open pull requests: snakemake#4357 (snakemake.params
-    # in scripts with Python < 3.11), snakemake-interface-common#101 (no enum.StrEnum on
-    # Python < 3.11, as in the gCNV environment), and the container plugin's #31 (apptainer
-    # runs the pulled image)
+    # Commits of upstream main with the merged fixes snakemake#4357 (snakemake.params and
+    # makedirs in scripts with Python < 3.11), snakemake-interface-common#101 (no enum.StrEnum
+    # on Python < 3.11, as in the gCNV environment) and #102 (--sdm-container-mountpoints); the
+    # container plugin from the head of its open pull request #31 (apptainer runs the pulled
+    # image)
     "snakemake @ git+https://github.com/snakemake/snakemake.git@619fa242b231f31a17989f513db2f355ea9d8ab7",
     "snakemake-interface-common @ git+https://github.com/snakemake/snakemake-interface-common.git@8afe08d830a6647b5192e1cdda74f0eca50cf5a2",
     "snakemake-software-deployment-plugin-conda >=0.8.4,<0.9",
@@ -64,6 +63,8 @@ dependencies = [
     # Rich colored help formatting for Click CLIs
     "rich-click >=1.7.0,<2",
     "rich >=13.0.0",
+    # The SODAR API of snappy pull-sheet
+    "requests >=2.32,<3",
 ]
 
 [project.urls]

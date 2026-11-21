@@ -10,33 +10,24 @@ from snakemake.common.configfile import load_configfile
 
 from snappy_pipeline.apps import snappy_cli
 from snappy_pipeline.orchestration import load_project
-from tests.snappy_pipeline.workflows.conftest import patch_module_fs
 
 
-def test_init_with_positional_directory(germline_sheet_fake_noproject_fs, mocker):
-    patch_module_fs("snappy_pipeline.apps.snappy_cli", germline_sheet_fake_noproject_fs, mocker)
-    patch_module_fs("snappy_pipeline.apps.impl.fsmanip", germline_sheet_fake_noproject_fs, mocker)
-    patch_module_fs("shutil", germline_sheet_fake_noproject_fs, mocker)
-
-    runner = CliRunner()
-    result = runner.invoke(snappy_cli.main, ["init", "project"])
-    assert result.exit_code == 0
-
-    assert germline_sheet_fake_noproject_fs.os.path.exists("/projects/project/README.md")
-    assert germline_sheet_fake_noproject_fs.os.path.exists("/projects/project/config.yaml")
+def test_init_default_cwd(tmp_path, monkeypatch):
+    monkeypatch.chdir(tmp_path)
+    result = CliRunner().invoke(snappy_cli.main, ["init", "--no-git"])
+    assert result.exit_code == 0, result.output
+    assert (tmp_path / "README.md").exists() and (tmp_path / "config.yaml").exists()
 
 
-def test_init_default_cwd(germline_sheet_fake_noproject_fs, mocker):
-    patch_module_fs("snappy_pipeline.apps.snappy_cli", germline_sheet_fake_noproject_fs, mocker)
-    patch_module_fs("snappy_pipeline.apps.impl.fsmanip", germline_sheet_fake_noproject_fs, mocker)
-    patch_module_fs("shutil", germline_sheet_fake_noproject_fs, mocker)
-
-    runner = CliRunner()
-    result = runner.invoke(snappy_cli.main, ["init"])
-    assert result.exit_code == 0
-
-    assert germline_sheet_fake_noproject_fs.os.path.exists("/projects/README.md")
-    assert germline_sheet_fake_noproject_fs.os.path.exists("/projects/config.yaml")
+def test_init_fails_on_a_duplicate_task_but_keeps_the_others(tmp_path):
+    project = tmp_path / "project"
+    result = CliRunner().invoke(
+        snappy_cli.main,
+        ["init", str(project), "--no-git", "--task", "ngs_mapping", "--task", "ngs_mapping"],
+    )
+    assert result.exit_code == 1
+    config = load_configfile(str(project / "config.yaml"))
+    assert [task["name"] for task in config["tasks"]] == ["ngs_mapping"]
 
 
 needs_git = pytest.mark.skipif(shutil.which("git") is None, reason="git is not installed")

@@ -9,43 +9,13 @@ import datetime
 import difflib
 import os
 
-from .logging import LVL_ERROR, LVL_INFO, log
+from .logging import LVL_INFO, log
 
 
 def file_mtime(path):
     """Return mtime of file at ``path``"""
     t = datetime.datetime.fromtimestamp(os.stat(path).st_mtime)
     return t.isoformat()
-
-
-def assume_path_nonexisting(path, msg_lvl=LVL_ERROR):
-    """Check whether path does exist or not, print message if it does
-
-    Return ``True`` if it does not exist and ``False`` otherwise.
-
-    Switch off messaging by setting msg_lvl to ``None``
-    """
-    if os.path.exists(path):
-        if msg_lvl:
-            log("directory {path} already exists", {"path": path}, level=msg_lvl)
-        return False
-    else:
-        return True
-
-
-def assume_path_existing(path, msg_lvl=LVL_ERROR):
-    """Check whether path does exist or not, print message if it does not.
-
-    Return ``True`` if it does exist and ``False`` otherwise.
-
-    Switch off messaging by setting msg_lvl to ``None``
-    """
-    if not os.path.exists(path):
-        if msg_lvl:
-            log("directory {path} does not exist yet", {"path": path}, level=msg_lvl)
-        return False
-    else:
-        return True
 
 
 def create_directory(path, msg_lvl=LVL_INFO, exist_ok=False):

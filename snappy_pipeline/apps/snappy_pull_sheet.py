@@ -1,16 +1,15 @@
-#!/usr/bin/env python
 """Pull biomedsheet sample sheet from SODAR API."""
 
-import argparse
 import re
 import sys
 
 import requests
 
-from snappy_wrappers.tools import open_file
-
-#: The URL template to use.
+#: The URL template to use; it holds the API key, so it is never printed.
 URL_TPL = "https://%(sodar_host)s/samplesheets/api/remote/get/%(project_uuid)s/%(api_key)s"
+
+#: Seconds to wait for the SODAR server to connect and to send data.
+TIMEOUT = 60
 
 #: Template for the to-be-generated file.
 HEADER_TPL = (
@@ -51,10 +50,17 @@ def strip(x):
 
 def run(args):  # noqa: C901
     # Query investigation JSON from API.
-    url = URL_TPL % vars(args)
-    print("Fetching %s" % url, file=sys.stderr)
-    r = requests.get(url)
-    r.raise_for_status()
+    print(
+        "Fetching the sample sheet of project %s from %s" % (args.project_uuid, args.sodar_host),
+        file=sys.stderr,
+    )
+    try:
+        r = requests.get(URL_TPL % vars(args), timeout=TIMEOUT)
+        r.raise_for_status()
+    except requests.RequestException as e:
+        # The messages of requests name the URL, and with it the API key
+        status = f" {e.response.status_code}" if e.response is not None else ""
+        raise SystemExit(f"Fetching the sample sheet failed: {type(e).__name__}{status}") from None
     all_data = r.json()
     if len(all_data["studies"]) > 1:
         raise Exception("More than one study found!")
@@ -184,39 +190,3 @@ def run(args):  # noqa: C901
             library_kit,
         ]
         print("\t".join(row), file=args.output)
-
-
-def main(argv=None):
-    """Main entry point after parsing command line arguments."""
-    parser = argparse.ArgumentParser(description="Process some integers.")
-    parser.add_argument(
-        "-o",
-        "--output",
-        default="-",
-        help="Destination file, default is stdout.",
-    )
-    parser.add_argument("--api-key", required=True, help="API key to use.")
-    parser.add_argument("--sodar-host", required=True, help="SODAR host to use.")
-    parser.add_argument("--project-uuid", required=True, help="UUID of project to query")
-    parser.add_argument(
-        "--project-name", required=True, help="Name of the project for output (machine-readable)."
-    )
-    parser.add_argument(
-        "--project-title", default=".", help="Title of the project (human-readable)."
-    )
-    parser.add_argument(
-        "--project-description", default=".", help="Description of the project (human-readable)."
-    )
-    parser.add_argument("--library-types", help="Library type(s) to use, comma-separated")
-
-    args = parser.parse_args(argv)
-    if args.library_types:
-        args.library_types = args.library_types.split(",")
-    else:
-        args.library_types = []
-    with open_file(args.output, "wt") as args.output:
-        return run(args)
-
-
-if __name__ == "__main__":
-    sys.exit(main())

@@ -5,7 +5,6 @@ Replaces the previous multi-script CLI entry points with a single `snappy` comma
 """
 
 import datetime
-import enum
 import importlib
 import io
 import json
@@ -15,6 +14,7 @@ import shutil
 import subprocess
 import sys
 import textwrap
+from types import SimpleNamespace
 
 import rich_click as click
 from click.core import ParameterSource
@@ -40,23 +40,6 @@ from .impl.fsmanip import (
 )
 from .impl.logging import LVL_ERROR, LVL_IMPORTANT, LVL_INFO, LVL_SUCCESS, log
 
-
-class ShellType(str, enum.Enum):
-    """Supported shells for autocompletion."""
-
-    BASH = "bash"
-    ZSH = "zsh"
-    FISH = "fish"
-
-
-class JobStatus(str, enum.Enum):
-    """SLURM job status strings."""
-
-    SUCCESS = "success"
-    RUNNING = "running"
-    FAILED = "failed"
-
-
 logger = logging.getLogger(__name__)
 
 # Configure rich-click settings for formatting
@@ -66,6 +49,23 @@ click.rich_click.GROUP_ARGUMENTS_OPTIONS = True
 
 def _get_cwd():
     return os.getcwd()
+
+
+#: The project directory of the commands that work on a project
+directory_option = click.option(
+    "--directory",
+    type=click.Path(),
+    default=_get_cwd,
+    help="Project directory, defaults to current working directory",
+)
+
+#: The style of the task configurations that init and task add write
+config_mode_option = click.option(
+    "--config-mode",
+    type=click.Choice([mode.value for mode in ConfigMode]),
+    default=ConfigMode.COMMENTED.value,
+    help="Style of the task configuration: 'commented' (every field with its description, the optional ones commented out), 'full' (every field active), 'minimal' (the required fields only, without descriptions).",
+)
 
 
 #: Allowed steps
@@ -105,28 +105,19 @@ class TaskParamType(click.ParamType):
 def _complete_task_names(ctx, param, incomplete):
     from click.shell_completion import CompletionItem
 
-    directory = ctx.params.get("directory")
-    if callable(directory):
-        directory = directory()
-    directory = directory or _get_cwd()
+    directory = ctx.params.get("directory") or _get_cwd()
 
-    config_filename = os.path.join(directory, CONFIG_SUBDIR, CONFIG_FILENAME)
     task_names = set()
-    if os.path.exists(config_filename):
-        try:
-            with open(config_filename, "rt") as f:
-                yaml = ruamel_yaml.YAML()
-                config_yaml = yaml.load(f.read())
-                if (
-                    config_yaml
-                    and "tasks" in config_yaml
-                    and isinstance(config_yaml["tasks"], list)
-                ):
-                    for task_item in config_yaml["tasks"]:
-                        if isinstance(task_item, dict) and "name" in task_item:
-                            task_names.add(task_item["name"])
-        except Exception:
-            pass
+    try:
+        with open(_project_config(directory), "rt") as f:
+            yaml = ruamel_yaml.YAML()
+            config_yaml = yaml.load(f.read())
+            if config_yaml and "tasks" in config_yaml and isinstance(config_yaml["tasks"], list):
+                for task_item in config_yaml["tasks"]:
+                    if isinstance(task_item, dict) and "name" in task_item:
+                        task_names.add(task_item["name"])
+    except Exception:  # also without a config file
+        pass
     if not task_names:
         task_names = set(STEPS)
 
@@ -165,15 +156,8 @@ SHEET_FILENAME = "samplesheet.tsv"
 #: The sample sheet formats of ``snappy init --sheet-type`` and the data set type of each
 SHEET_TYPES = {"generic": "generic", "germline": "germline_variants", "cancer": "matched_cancer"}
 
-#: Configuration sub directory
-CONFIG_SUBDIR = ""
-
 #: Configuration file name
 CONFIG_FILENAME = "config.yaml"
-
-
-class AddTaskAppException(Exception):
-    """Raised in case of problem with adding a task."""
 
 
 class AddTaskApp:
@@ -184,13 +168,11 @@ class AddTaskApp:
         step: str,
         task_name: str,
         project_directory: str,
-        manage_config: bool = True,
         config_mode: ConfigMode | str = ConfigMode.COMMENTED,
     ):
         self.step = step
         self.task_name = task_name
         self.project_directory = project_directory
-        self.manage_config = manage_config
         self.config_mode = ConfigMode(config_mode)
 
     def run(self):
@@ -204,10 +186,7 @@ class AddTaskApp:
             },
         )
 
-        try:
-            config_yaml = self._load_config_yaml()
-        except AddTaskAppException:
-            return 1
+        config_yaml = self._load_config_yaml()
 
         # Check if the task name already exists in the tasks list
         if "tasks" in config_yaml and isinstance(config_yaml["tasks"], list):
@@ -221,8 +200,7 @@ class AddTaskApp:
                     return 1
 
         # Setup the configuration by appending the task
-        if self.manage_config:
-            self._setup_configuration(config_yaml)
+        self._setup_configuration(config_yaml)
 
         log(
             "\nDo not forget to fill out the REQUIRED fields in the project configuration file!\n",
@@ -238,10 +216,8 @@ class AddTaskApp:
     def _load_config_yaml(self):
         """Load ``config.yaml``, keeping its comments and remembering its indentation of
         sequences (``- name`` or ``  - name``), so that the file is written back in its style."""
-        config_filename = os.path.join(self.project_directory, CONFIG_SUBDIR, CONFIG_FILENAME)
-        if not os.path.exists(config_filename):
-            raise AddTaskAppException(f"Configuration file does not exist at {config_filename}")
-        with open(config_filename, "rt") as f:
+        self.config_filename = _project_config(self.project_directory)
+        with open(self.config_filename, "rt") as f:
             text = f.read()
         _, sequence, offset = load_yaml_guess_indent(text)
         # A file without sequences (``tasks: []``) gets the style of the docs
@@ -285,13 +261,12 @@ class AddTaskApp:
 
         config_yaml["tasks"].append(task_block)
 
-        config_filename = os.path.join(self.project_directory, CONFIG_SUBDIR, CONFIG_FILENAME)
         buf = io.StringIO()
         yaml.dump(config_yaml, stream=buf)
         buf.seek(0)
         contents = buf.read()
         update_file(
-            path=config_filename,
+            path=self.config_filename,
             contents=contents,
             message="Updating project config with required default config for task {task_name} (step {step})",
             message_args={"task_name": self.task_name, "step": self.step},
@@ -364,17 +339,7 @@ def main():
     default=False,
     help="Track samplesheet.tsv in git. Only if it holds no personal data, or the remote is approved for such data (such as the internal GitLab).",
 )
-@click.option(
-    "--manage-config/--no-manage-config",
-    default=True,
-    help="Manage the project config.yaml file automatically",
-)
-@click.option(
-    "--config-mode",
-    type=click.Choice(["commented", "full", "minimal"]),
-    default="commented",
-    help="Style of the task configuration: 'commented' (every field with its description, the optional ones commented out), 'full' (every field active), 'minimal' (the required fields only, without descriptions).",
-)
+@config_mode_option
 @click.option(
     "--git/--no-git",
     default=True,
@@ -401,7 +366,6 @@ def init(
     tasks,
     sheet_type,
     track_sheet,
-    manage_config,
     config_mode,
     git,
     remote,
@@ -412,7 +376,7 @@ def init(
     Creates config.yaml, README.md and the sample sheet samplesheet.tsv, and puts the
     configuration under git. On a terminal, asks for what no option gives.
     """
-    project_directory = directory() if callable(directory) else directory
+    project_directory = directory
     default_name = os.path.basename(os.path.abspath(project_directory))
     if interactive is None:
         interactive = sys.stdin.isatty() and sys.stdout.isatty()
@@ -461,7 +425,7 @@ def init(
     log("")
 
     # Check if config file already exists - do not overwrite existing project
-    config_dest_path = os.path.join(project_directory, CONFIG_SUBDIR, CONFIG_FILENAME)
+    config_dest_path = os.path.join(project_directory, CONFIG_FILENAME)
     if os.path.exists(config_dest_path):
         log(
             "Project already initialized at {path} ({config} exists)",
@@ -470,12 +434,7 @@ def init(
         )
         sys.exit(1)
 
-    # Create project directory and subdirectory for configuration files
-    paths = [project_directory]
-    if CONFIG_SUBDIR:
-        paths.append(os.path.join(project_directory, CONFIG_SUBDIR))
-    for path in paths:
-        create_directory(path, exist_ok=True)
+    create_directory(project_directory, exist_ok=True)
 
     tpls = os.path.join(os.path.dirname(__file__), "tpls")
     format_args = {
@@ -529,19 +488,21 @@ def init(
             message_args={"sheet_type": sheet_type, "path": sheet_path},
         )
 
-    # Create additional tasks if any was provided
+    # Add the tasks; one that fails (a duplicate name) fails init once the others are added
+    failed = 0
     for task_name, step in tasks:
         app = AddTaskApp(
             step=step,
             task_name=task_name,
             project_directory=project_directory,
-            manage_config=manage_config,
             config_mode=config_mode,
         )
-        app.run()
+        failed = failed or app.run()
 
     if git:
         init_git(project_directory, remote or None, track_sheet)
+    if failed:
+        sys.exit(failed)
 
     log(
         "\nDo not forget to review config.yaml and to fill out README.md and the sample sheet!\n",
@@ -637,41 +598,18 @@ def task():
 @click.argument(
     "tasks", nargs=-1, required=True, type=TaskParamType(), metavar="[NAME=]STEP_TYPE..."
 )
-@click.option(
-    "--directory",
-    type=click.Path(),
-    default=_get_cwd,
-    help="Project directory, defaults to current working directory",
-)
-@click.option(
-    "--manage-config/--no-manage-config",
-    default=True,
-    help="Manage the project config.yaml file automatically",
-)
-@click.option(
-    "--config-mode",
-    type=click.Choice(["commented", "full", "minimal"]),
-    default="commented",
-    help="Style of the task configuration: 'commented' (every field with its description, the optional ones commented out), 'full' (every field active), 'minimal' (the required fields only, without descriptions).",
-)
-def task_add(
-    tasks,
-    directory,
-    manage_config,
-    config_mode,
-):
+@directory_option
+@config_mode_option
+def task_add(tasks, directory, config_mode):
     """Add tasks to the project configuration.
 
     TASKS is a list of tasks to add, formatted as [task_name=]step_type.
     """
-    project_directory = directory() if callable(directory) else directory
-
     for task_name, step in tasks:
         app = AddTaskApp(
             step=step,
             task_name=task_name,
-            project_directory=project_directory,
-            manage_config=manage_config,
+            project_directory=directory,
             config_mode=config_mode,
         )
         res = app.run()
@@ -680,12 +618,7 @@ def task_add(
 
 
 @task.command(name="list")
-@click.option(
-    "--directory",
-    type=click.Path(),
-    default=_get_cwd,
-    help="Project directory, defaults to current working directory",
-)
+@directory_option
 @click.option(
     "--available",
     is_flag=True,
@@ -698,8 +631,7 @@ def task_list(directory, available):
         _print_steps_table()
         return
 
-    project_directory = directory() if callable(directory) else directory
-    config_filename = _project_config(project_directory)
+    config_filename = _project_config(directory)
 
     with open(config_filename, "rt") as f:
         yaml = ruamel_yaml.YAML()
@@ -718,24 +650,13 @@ def task_list(directory, available):
             click.echo(f"  - {name} ({step})")
 
 
-@task.command(name="steps")
-def task_steps():
-    """List all available workflow steps registered in SNAPPY."""
-    _print_steps_table()
-
-
 @main.command(
     context_settings=dict(
         ignore_unknown_options=True,
         allow_extra_args=True,
     )
 )
-@click.option(
-    "--directory",
-    type=click.Path(),
-    default=_get_cwd,
-    help="Path to directory to run in, default is current working directory",
-)
+@directory_option
 @click.option(
     "--task",
     "task_name",
@@ -764,7 +685,6 @@ def run(ctx, directory, task_name, frozen, verbose):
     the user (``--profile`` after ``--``, or ``SNAKEMAKE_PROFILE``)."""
     if frozen and not task_name:
         raise click.UsageError("--frozen requires --task")
-    directory_path = directory() if callable(directory) else directory
     setup_logging(verbose)
 
     snakemake_args = list(ctx.args)
@@ -775,7 +695,7 @@ def run(ctx, directory, task_name, frozen, verbose):
     if frozen:
         config_args.append("frozen=True")
 
-    snakemake_argv = _snakemake_argv(directory_path, tuple(config_args))
+    snakemake_argv = _snakemake_argv(directory, tuple(config_args))
 
     # Append all user-provided snakemake arguments directly
     snakemake_argv += snakemake_args
@@ -787,12 +707,7 @@ def run(ctx, directory, task_name, frozen, verbose):
 
 
 @main.command()
-@click.option(
-    "--directory",
-    type=click.Path(),
-    default=_get_cwd,
-    help="Project directory, defaults to current working directory",
-)
+@directory_option
 @click.option(
     "--db-path",
     type=click.Path(),
@@ -807,8 +722,7 @@ def watch(directory, db_path):
     Snakemake when the profile has ``logger: snkmt`` (the default in
     snappy's workflow profile).
     """
-    directory_path = directory() if callable(directory) else directory
-    path = db_path or _snkmt_db_path(directory_path)
+    path = db_path or _snkmt_db_path(directory)
     if not os.path.exists(path):
         log(
             "snkmt database not found at {path}.\n\n"
@@ -832,12 +746,7 @@ def watch(directory, db_path):
 
 
 @main.command()
-@click.option(
-    "--directory",
-    type=click.Path(),
-    default=_get_cwd,
-    help="Project directory, defaults to current working directory",
-)
+@directory_option
 @click.argument("snakemake_log", required=False, type=click.Path(exists=True, dir_okay=False))
 def logs(directory, snakemake_log):
     """Archive the logs of a run in logs/<run start>.tar.gz.
@@ -846,22 +755,16 @@ def logs(directory, snakemake_log):
     killed (walltime, scancel), so that its hooks did not run. Without SNAKEMAKE_LOG, the
     newest log in <directory>/.snakemake/log is used.
     """
-    directory_path = directory() if callable(directory) else directory
-    snakemake_log = snakemake_log or latest_snakemake_log(directory_path)
+    snakemake_log = snakemake_log or latest_snakemake_log(directory)
     if snakemake_log is None:
-        log("No Snakemake log found below {path}", {"path": directory_path}, level=LVL_ERROR)
+        log("No Snakemake log found below {path}", {"path": directory}, level=LVL_ERROR)
         sys.exit(1)
-    archive = build_archive(directory_path, snakemake_log)
+    archive = build_archive(directory, snakemake_log)
     log("Logs archived in {path}", {"path": str(archive)}, level=LVL_IMPORTANT)
 
 
 @main.command(name="check-files")
-@click.option(
-    "--directory",
-    type=click.Path(),
-    default=_get_cwd,
-    help="Project directory, defaults to current working directory",
-)
+@directory_option
 def check_files(directory):
     """List the files that config.yaml names but that do not exist, and the libraries whose
     reads are not found.
@@ -873,8 +776,7 @@ def check_files(directory):
     anyway; this command checks all of them, for example after moving a project to another
     machine. It exits with 1 if a file is missing.
     """
-    directory_path = directory() if callable(directory) else directory
-    config_path = _project_config(directory_path)
+    config_path = _project_config(directory)
     try:
         project = load_project(load_configfile(config_path), os.path.dirname(config_path))
         missing = missing_files(project)
@@ -896,7 +798,7 @@ def check_files(directory):
 def _project_config(directory_path: str) -> str:
     """Return the absolute path of the project's config file.
     Without one, fail with the usage and a hint instead of a traceback from Snakemake."""
-    path = os.path.abspath(os.path.join(directory_path, CONFIG_SUBDIR, CONFIG_FILENAME))
+    path = os.path.abspath(os.path.join(directory_path, CONFIG_FILENAME))
     if not os.path.isfile(path):
         raise click.UsageError(
             f"No {CONFIG_FILENAME} in {os.path.dirname(path)}. Change into the project directory, "
@@ -935,12 +837,7 @@ def _snakemake_argv(directory_path: str, config: tuple = ()) -> list[str]:
         allow_extra_args=True,
     )
 )
-@click.option(
-    "--directory",
-    type=click.Path(),
-    default=_get_cwd,
-    help="Project directory, defaults to current working directory",
-)
+@directory_option
 @click.option(
     "--output",
     default="report.zip",
@@ -954,9 +851,8 @@ def report(ctx, directory, output):
 
     Arguments after -- go to Snakemake, as with snappy run.
     """
-    directory_path = directory() if callable(directory) else directory
-    target = os.path.join(os.path.abspath(directory_path), output)
-    argv = _snakemake_argv(directory_path) + ["--report", target] + list(ctx.args)
+    target = os.path.join(os.path.abspath(directory), output)
+    argv = _snakemake_argv(directory) + ["--report", target] + list(ctx.args)
     setup_logging(verbose=False)
     logger.debug("Executing snakemake %s", " ".join(map(repr, argv)))
     res = snakemake_main(argv)
@@ -1027,42 +923,20 @@ def pull_sheet(
     library_types,
 ):
     """Pull biomedsheet sample sheet from SODAR API."""
-    library_types_list = library_types.split(",") if library_types else []
-
-    class PullSheetArgs:
-        def __init__(
-            self,
-            output,
-            api_key,
-            sodar_host,
-            project_uuid,
-            project_name,
-            project_title,
-            project_description,
-            library_types,
-        ):
-            self.output = output
-            self.api_key = api_key
-            self.sodar_host = sodar_host
-            self.project_uuid = project_uuid
-            self.project_name = project_name
-            self.project_title = project_title
-            self.project_description = project_description
-            self.library_types = library_types
-
-    args = PullSheetArgs(
-        output,
-        api_key,
-        sodar_host,
-        project_uuid,
-        project_name,
-        project_title,
-        project_description,
-        library_types_list,
-    )
     from .snappy_pull_sheet import run as run_pull_sheet
 
-    run_pull_sheet(args)
+    run_pull_sheet(
+        SimpleNamespace(
+            output=output,
+            api_key=api_key,
+            sodar_host=sodar_host,
+            project_uuid=project_uuid,
+            project_name=project_name,
+            project_title=project_title,
+            project_description=project_description,
+            library_types=library_types.split(",") if library_types else [],
+        )
+    )
 
 
 @main.command()

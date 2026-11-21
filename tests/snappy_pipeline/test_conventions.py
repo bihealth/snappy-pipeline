@@ -5,10 +5,7 @@ from __future__ import annotations
 
 import ast
 import collections
-import enum
-import importlib
 import json
-import os
 import re
 import typing
 from collections.abc import Iterator
@@ -18,14 +15,11 @@ from pydantic import BaseModel
 
 from snappy_pipeline.models import RequiredBy, reader_markers
 from snappy_pipeline.workflow_registry import WORKFLOW_REGISTRY
+from tests.scripts.generate_task_configs import tool_values
 
 REPO = Path(__file__).resolve().parents[2]
 WORKFLOWS = REPO / "snappy_pipeline" / "workflows"
 SNAPSHOTS = Path(__file__).resolve().parent / "snapshots"
-
-#: Path convention violations that already exist. The test fails for new ones and
-#: for fixed ones, so the list only shrinks.
-PATH_BASELINE = SNAPSHOTS / "path_convention_violations.json"
 
 #: Input functions that a Snakefile calls with Snakemake's ``checkpoints`` object.
 CHECKPOINT_INPUT_FUNCTIONS = {
@@ -97,28 +91,25 @@ def test_snakefiles_pass_input_and_params_functions():
 # Path conventions ---------------------------------------------------------------------------------
 
 
-def _tool_names_by_step() -> dict[str, set[str]]:
-    """Return the lower-case values of each step's ``Tool`` enums."""
-    result = {}
-    for step in WORKFLOW_REGISTRY:
-        module = importlib.import_module(f"snappy_pipeline.workflows.{step}.model")
-        result[step] = {
-            str(member.value).lower()
-            for name, obj in vars(module).items()
-            if isinstance(obj, type) and issubclass(obj, enum.Enum) and "Tool" in name
-            for member in obj
-        }
-    return result
+#: Separators between the parts of a path
+_SEPARATORS = re.compile(r"[/._-]")
 
 
-def _path_violations() -> dict[str, list[str]]:
-    """Return step -> violations of the path conventions in all DAG snapshots.
+def _path_violations() -> list[str]:
+    """Return the violations of the path conventions in all DAG snapshots.
 
     Paths are normalized back to templates by replacing wildcard values with ``{name}``.
+    A tool value of the step matches a run of whole parts, compared without separators.
+    So ``eb_filter`` is the tool ``ebfilter``, but ``accessible`` is not the tool ``access``.
     """
-    tools = _tool_names_by_step()
+    tools = {
+        step: {
+            _SEPARATORS.sub("", tool.lower()): tool for tool in tool_values(cls.config_model_class)
+        }
+        for step, cls in WORKFLOW_REGISTRY.items()
+    }
     steps = sorted(WORKFLOW_REGISTRY, key=len, reverse=True)
-    found: dict[str, set[str]] = {}
+    found = set()
     for snapshot in sorted((SNAPSHOTS / "dag").glob("*.json")):
         for job in json.loads(snapshot.read_text(encoding="utf-8")):
             if job["rule"] == "all" or job["rule"].endswith("_results"):
@@ -129,30 +120,26 @@ def _path_violations() -> dict[str, list[str]]:
                 template = re.sub(r"^tasks/[^/]+/", "", path)
                 for name, value in values:
                     template = template.replace(str(value), "{%s}" % name)
-                tokens = set(re.split(r"[/._\-]", re.sub(r"\{\w+\}", "", template)))
-                if tokens & tools[step]:
-                    found.setdefault(step, set()).add(f"tool name: {template}")
+                parts = _SEPARATORS.split(re.sub(r"\{\w+\}", "/", template).lower())
+                runs = {
+                    "".join(parts[i:j])
+                    for i in range(len(parts))
+                    for j in range(i + 1, len(parts) + 1)
+                }
+                found |= {
+                    f"{step}: tool {tool} in {template}"
+                    for key, tool in tools[step].items()
+                    if key in runs
+                }
                 if re.search(r"\}_", template):
-                    found.setdefault(step, set()).add(f"underscore after wildcard: {template}")
-    return {step: sorted(violations) for step, violations in sorted(found.items())}
+                    found.add(f"{step}: underscore after wildcard in {template}")
+    return sorted(found)
 
 
-def test_path_conventions_only_improve():
+def test_paths_follow_the_conventions():
     """No tool names in paths and ``{entity}.{suffix}`` naming."""
-    current = _path_violations()
-    if os.environ.get("SNAPPY_UPDATE_SNAPSHOTS"):
-        PATH_BASELINE.write_text(json.dumps(current, indent=1) + "\n", encoding="utf-8")
-        return
-
-    baseline = json.loads(PATH_BASELINE.read_text(encoding="utf-8"))
-    flat_current = {(step, v) for step, vs in current.items() for v in vs}
-    flat_baseline = {(step, v) for step, vs in baseline.items() for v in vs}
-    new = sorted(flat_current - flat_baseline)
-    fixed = sorted(flat_baseline - flat_current)
-    assert not new, f"new path convention violations: {new}"
-    assert not fixed, (
-        f"{len(fixed)} violations are fixed; shrink the baseline with SNAPPY_UPDATE_SNAPSHOTS=1"
-    )
+    found = _path_violations()
+    assert not found, f"path convention violations: {found}"
 
 
 def test_step_snakefiles_fetch_their_workflow_object():
@@ -267,19 +254,6 @@ def test_tool_is_required():
     assert not found, f"tool must be set explicitly, without a default: {found}"
 
 
-def _tool_values(model) -> frozenset[str]:
-    """Return the values of a step model's ``tool`` field (an enum or a ``Literal``)."""
-    tool = model.model_fields.get("tool")
-    if tool is None:
-        return frozenset()
-    if typing.get_origin(tool.annotation) is typing.Literal:
-        return frozenset(typing.get_args(tool.annotation))
-    for arg in (tool.annotation, *typing.get_args(tool.annotation)):
-        if isinstance(arg, type) and issubclass(arg, enum.Enum):
-            return frozenset(str(member.value) for member in arg)
-    return frozenset()
-
-
 def _setting_exists(model: type[BaseModel], path: str) -> bool:
     """Whether the dotted ``path`` names a setting of the step config ``model``."""
     *sections, last = path.split(".")
@@ -305,7 +279,7 @@ def test_tool_readers_name_tools_and_settings_of_the_step():
         depends_on = model.model_fields.get("depends_on")
         if depends_on is None:
             continue
-        tools = _tool_values(model)
+        tools = frozenset(tool_values(model))
         for name, field in depends_on.annotation.model_fields.items():
             markers = reader_markers(field)
             for marker in markers:
@@ -541,11 +515,6 @@ def test_plots_and_diagnostic_outputs_are_in_the_report():
     assert not stale, f"remove these entries from OUTPUTS_NOT_IN_REPORT: {stale}"
 
 
-#: Params that hold file paths. The test fails for new ones and for fixed ones, so
-#: the list only shrinks.
-PARAMS_FILES_BASELINE = SNAPSHOTS / "params_file_violations.json"
-
-
 def _flat_params(value, key=""):
     if isinstance(value, dict):
         for name, item in value.items():
@@ -576,18 +545,8 @@ def _params_file_violations() -> list[str]:
 
 def test_files_are_inputs_not_params():
     """Wrappers get the files they read as inputs, so the DAG and rerun triggers see them."""
-    current = _params_file_violations()
-    if os.environ.get("SNAPPY_UPDATE_SNAPSHOTS"):
-        PARAMS_FILES_BASELINE.write_text(json.dumps(current, indent=1) + "\n", encoding="utf-8")
-        return
-
-    baseline = json.loads(PARAMS_FILES_BASELINE.read_text(encoding="utf-8"))
-    new = sorted(set(current) - set(baseline))
-    fixed = sorted(set(baseline) - set(current))
-    assert not new, f"params that hold file paths; pass these files as inputs: {new}"
-    assert not fixed, (
-        f"{len(fixed)} file params are fixed; shrink the baseline with SNAPPY_UPDATE_SNAPSHOTS=1"
-    )
+    found = _params_file_violations()
+    assert not found, f"params that hold file paths; pass these files as inputs: {found}"
 
 
 #: Wrappers that do not run through a base class yet, with the reason
@@ -595,9 +554,9 @@ WRAPPERS_WITHOUT_BASE_CLASS = {"pvactools/create_proteome": "on hold with create
 
 
 def test_wrappers_use_a_base_class():
-    """Wrappers run through ShellWrapper, RWrapper or PythonWrapper (log, conda info, md5)."""
+    """Wrappers run through ShellWrapper or PythonWrapper (log, md5)."""
     wrappers = REPO / "snappy_wrappers" / "wrappers"
-    found, base = [], re.compile(r"\b(ShellWrapper|RWrapper|PythonWrapper)\(")
+    found, base = [], re.compile(r"\b(ShellWrapper|PythonWrapper)\(")
     for path in sorted(wrappers.rglob("wrapper.py")):
         name = str(path.parent.relative_to(wrappers))
         if not base.search(path.read_text(encoding="utf-8")):
@@ -608,11 +567,12 @@ def test_wrappers_use_a_base_class():
 
 
 def _rule_blocks(path: Path) -> Iterator[tuple[str, str]]:
-    """Yield (rule name, rule text) for the rules of a Snakefile."""
+    """Yield (rule name, rule text) for the rules of a Snakefile; an anonymous ``rule:`` block
+    (the shared rules files) is named by its ``name:`` line."""
     lines = path.read_text(encoding="utf-8").splitlines()
     i = 0
     while i < len(lines):
-        m = re.match(r"^(\s*)(?:rule|checkpoint) (\w+):", lines[i])
+        m = re.match(r"^(\s*)(?:rule|checkpoint)\s*(\w*):", lines[i])
         if not m:
             i += 1
             continue
@@ -621,7 +581,9 @@ def _rule_blocks(path: Path) -> Iterator[tuple[str, str]]:
             not lines[j].strip() or len(lines[j]) - len(lines[j].lstrip()) > indent
         ):
             j += 1
-        yield m.group(2), "\n".join(lines[i:j])
+        text = "\n".join(lines[i:j])
+        name = m.group(2) or re.search(r"^\s*name:\s*\n?\s*(.+)$", text, re.M).group(1).strip()
+        yield name, text
         i = j
 
 
@@ -646,6 +608,7 @@ WRAPPERS_WITHOUT_EXTRA_ARGUMENTS = {
     for reason, wrappers in {
         "Python code, no command line": (
             "cbioportal/case_lists",
+            "strandedness/counts",
             "cbioportal/clinical_data",
             "cbioportal/meta_files",
             "mehari/bam_qc",
@@ -684,7 +647,6 @@ WRAPPERS_WITHOUT_EXTRA_ARGUMENTS = {
             "popdel/reorder_vcf",
             "pvactools/normalize",
             "reference_download/sidecars",
-            "reference_index/common",
             "rnaqc/stats",
             "sequenza/gcreference",
             "split_regions",
@@ -872,7 +834,7 @@ def test_no_job_reads_from_output():
 
 
 def test_logs_hold_only_logs():
-    """A rule's log is its log (plus a script copy); Snakemake records the rest."""
+    """A rule's log is its log; Snakemake records the rest."""
     found = {
         f"{name}: {path}"
         for name, job in _snapshot_jobs()
@@ -942,7 +904,7 @@ NOT_TEMP = {
     r"\.scatter_intervals$": "checkpoint output that is globbed while the DAG is built",
     r"\.shards\.txt$": "checkpoint output that is read while the DAG is built",
     r"^tasks/gcnv_model\w*/work/[^/]+/out/[^/.]+\.interval_list$": "the callers read it",
-    r"gatk4_hc_gvcf_combine_gvcfs\.[^/]+/out/[^/]+\.g\.vcf\.gz(\.tbi)?$": (
+    r"/out/[^/]+\.combine_gvcfs\.g\.vcf\.gz(\.tbi)?$": (
         "the result file {library}.g.vcf.gz of the genotype rule links to it"
     ),
 }
