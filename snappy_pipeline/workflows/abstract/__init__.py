@@ -50,7 +50,7 @@ from snappy_pipeline.workflows.abstract.protocol import (
 
 if typing.TYPE_CHECKING:
     from snappy_pipeline.orchestration import Project
-from snappy_wrappers.resource_usage import ResourceUsage, mem_mb, runtime_minutes
+from snappy_pipeline.resource_usage import ResourceUsage, mem_mb, runtime_minutes
 
 
 Inputs: typing.TypeAlias = InputFiles | dict[str, Any]
@@ -270,9 +270,9 @@ class BaseStepPart:
         return self._get_log_file(action)
 
     def get_result_files(self) -> list[str]:
-        """Return the result files below ``output/``: the outputs of ``result_keys`` for
-        each output entity, at their mirror path; a static path (a file of the whole task, such
-        as a panel of normals) once."""
+        """Return the result files, ``work/`` paths that the task's results job links into
+        ``output/``: the outputs of ``result_keys`` for each output entity; a static path (a file
+        of the whole task, such as a panel of normals) once."""
         result = []
         for action in self.actions:
             keys = self.result_keys
@@ -286,8 +286,7 @@ class BaseStepPart:
                 if key not in keys:
                     continue
                 for path in paths if isinstance(paths, list) else [paths]:
-                    unconstrained = re.sub(r"\{(\w+),[^}]*\}", r"{\1}", str(path))
-                    template = "output/" + unconstrained.removeprefix("work/")
+                    template = re.sub(r"\{(\w+),[^}]*\}", r"{\1}", str(path))
                     if "{" not in template:
                         result.append(template)
                         continue
@@ -1001,7 +1000,7 @@ class BaseStep:
         index = members[members["is_primary"]]
         return None if index.empty else index.iloc[0]["library_name"]
 
-    def pedigree_donors(self, pedigree: str, include_background: bool = True):
+    def pedigree_donors(self, pedigree: str, include_background: bool = False):
         """Return the donor table rows of the pedigree named ``pedigree``: every donor of the
         pedigree, sequenced or not, with its parents as donor names, its sex and its DNA
         library (``""`` without one); see :func:`build_donor_dataframe`."""
@@ -1490,7 +1489,7 @@ class BaseStep:
         return self.wrapper_path(part.wrappers[action])
 
     def get_result_files(self) -> list[str]:
-        """Return the result files below ``output/``: those of all step parts."""
+        """Return the result files (``work/`` paths) of all step parts."""
         return [path for part in self.sub_steps.values() for path in part.get_result_files()]
 
     def _get_sub_step(self, sub_step: str) -> BaseStepPart:
@@ -1510,11 +1509,6 @@ class BaseStep:
 # ---------------------------------------------------------------------------
 # Upstream group_by resolution
 # ---------------------------------------------------------------------------
-
-
-def _declared_group_by(project, task_name: str, visited: frozenset[str] = frozenset()) -> str:
-    """The level a task writes its results at, resolved once by ``load_project`` (``Project.group_by``)."""
-    return project.group_by[task_name]
 
 
 # ---------------------------------------------------------------------------

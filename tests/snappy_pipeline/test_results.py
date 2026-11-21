@@ -3,9 +3,8 @@
 
 import os
 
-import pytest
 
-from snappy_pipeline.results import link_results, work_paths
+from snappy_pipeline.results import link_results
 
 
 def _task(tmp_path):
@@ -14,12 +13,6 @@ def _task(tmp_path):
     for name, text in (("L1.vcf.gz", "vcf"), ("L1.vcf.gz.md5", "md5"), ("L1.txt", "text")):
         (work / name).write_text(text)
     return tmp_path
-
-
-def test_work_paths_mirror_the_result_files():
-    assert work_paths(["output/L1/out/L1.vcf.gz"]) == ["work/L1/out/L1.vcf.gz"]
-    with pytest.raises(ValueError, match="outside output/"):
-        work_paths(["work/L1/out/L1.vcf.gz"])
 
 
 def test_results_job_links_the_files_and_writes_the_manifest(tmp_path):

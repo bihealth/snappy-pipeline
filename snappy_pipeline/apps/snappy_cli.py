@@ -28,9 +28,9 @@ from snakemake.common.configfile import load_configfile
 
 from .. import __version__
 from ..base import ConfigError
-from ..log_archive import build_archive, latest_snakemake_log
+from ..log_archive import SNKMT_DB, build_archive, latest_snakemake_log
 from ..models import ConfigMode
-from ..orchestration import create_task_instances, load_project, missing_files
+from ..orchestration import CONFIG_FILE, create_task_instances, load_project, missing_files
 from ..sheet_summary import missing_reads
 from ..workflow_registry import WORKFLOW_REGISTRY
 from .impl.fsmanip import (
@@ -157,7 +157,7 @@ SHEET_FILENAME = "samplesheet.tsv"
 SHEET_TYPES = {"generic": "generic", "germline": "germline_variants", "cancer": "matched_cancer"}
 
 #: Configuration file name
-CONFIG_FILENAME = "config.yaml"
+CONFIG_FILENAME = CONFIG_FILE
 
 
 class AddTaskApp:
@@ -862,7 +862,7 @@ def report(ctx, directory, output):
 
 def _snkmt_db_path(directory_path: str) -> str:
     """Return the absolute path of the project's snkmt database."""
-    return os.path.join(os.path.abspath(directory_path), ".snakemake", "log", "snkmt.sqlite")
+    return os.path.join(os.path.abspath(directory_path), SNKMT_DB)
 
 
 def _snkmt_console_cmd(db_path: str) -> list[str]:

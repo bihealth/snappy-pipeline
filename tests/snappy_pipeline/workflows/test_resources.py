@@ -7,7 +7,7 @@ import pytest
 
 from snappy_pipeline.workflow_model import Resources
 from snappy_pipeline.workflows.abstract import BaseStepPart
-from snappy_wrappers.resource_usage import ResourceUsage, mem_mb, runtime_minutes
+from snappy_pipeline.resource_usage import ResourceUsage, mem_mb, runtime_minutes
 
 
 @pytest.mark.parametrize(

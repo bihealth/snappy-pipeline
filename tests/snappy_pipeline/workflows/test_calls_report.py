@@ -62,7 +62,7 @@ def test_the_pedigree_of_a_related_entity_names_every_donor_with_parents_and_sta
 
     part = _part()
     part.parent.effective_group_by = "related"
-    part.parent.pedigree_donors = lambda entity: pd.DataFrame(
+    part.parent.pedigree_donors = lambda entity, include_background=False: pd.DataFrame(
         [
             {
                 "donor_name": "idx",

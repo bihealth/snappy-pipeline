@@ -1127,7 +1127,7 @@ class VarlociraptorStepPart(ScatteredCallerStepPart):
         samples = [self.sample(name) for name in members]
         if self.parent.effective_group_by != "related":
             return samples
-        donors = self.parent.pedigree_donors(library_name)
+        donors = self.parent.pedigree_donors(library_name, include_background=True)
         if donors.empty:
             return samples
         rows = {row["donor_name"]: row for row in donors.to_dict("records")}

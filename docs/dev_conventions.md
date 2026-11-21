@@ -51,6 +51,7 @@ On the workflow object (`wf`), each method takes the step part name before the a
 | `get_wrapper(action)`        | the `file://` URL of the action's wrapper, from the part's `wrappers`      | `wrapper: wf.get_wrapper(...)`                                                          |
 
 `BaseStep` raises a `TypeError` at parse time if `get_input_files` or `get_params` returns anything but a function.
+A step names the part of each tool in `tool_parts` and its structural parts (`write_pedigree`) in `helper_parts`; `BaseStep.__init__` registers the helpers and the selected tool's part, so only a step whose parts depend on more than the tool registers them itself.
 A step part names the wrapper of each action that runs one in `wrappers`, as a path below `snappy_wrappers/wrappers` (a property where the config picks it, such as the whole-genome variants of the gCNV wrappers or the tool of a filtration task).
 Every rule that runs a wrapper passes `params: args=wf.get_params(...)`; an action without params of its own gets an empty dict, to which `BaseStep.get_params` adds `extra_arguments` and `code`.
 
@@ -60,7 +61,7 @@ One `_get_log_file(action)` can replace the log methods of all actions.
 Resource usage is declared, not computed.
 `default_resource_usage` holds it for all actions and `resource_usage` per action, each as a property when it depends on the config.
 `result_keys` names the output keys whose files are result files, for all actions or by action.
-`BaseStepPart.get_result_files` derives their `output/` paths for each output entity (`entity_wildcard`, other wildcards via `_result_wildcards`).
+`BaseStepPart.get_result_files` derives their `work/` paths for each output entity (`entity_wildcard`, other wildcards via `_result_wildcards`); a static path, such as a panel of normals, once.
 `BaseStep.get_result_files` collects them from all step parts.
 Override these only where the derivation does not fit.
 
@@ -81,6 +82,7 @@ The wrapper puts `{extra_arguments}` on the tool's command; `ShellWrapper` fills
 A single-tool step without a tool section takes `extra_arguments` on its step model, and its step part's `tool_section()` returns `self.config`.
 `test_tool_wrappers_get_extra_arguments` requires them for every wrapper, except those that `WRAPPERS_WITHOUT_EXTRA_ARGUMENTS` lists with a reason (Python and R code, installers, helpers, secondary actions).
 `test_wrappers_use_the_extra_arguments_they_get` and `test_wrappers_leave_extra_arguments_to_the_base_class` check that wrappers use them.
+Shell text that several wrappers share (the GNU parallel sharding of the GATK callers, the bwa-mem pipeline, the JVM heap) comes from functions in `snappy_wrappers/tools` that return finished shell, which the wrapper pastes into its template; `tests/scripts/shell_templates.py` checks that text with shfmt as well, and flags a `set -x` or `set -euo pipefail` at the top of a template, which the `ShellWrapper` header already sets.
 
 Rules that run a wrapper declare `benchmark: wf.get_benchmark_file(part, action)`.
 This is the path of the rule's log below `benchmarks/` (`tasks/<task>/benchmarks/` in a project).
@@ -98,9 +100,8 @@ Only result files, those linked into `output/`, have an md5 file, and every resu
 SODAR needs one per uploaded file.
 A step declares `<file>.md5` next to `<file>` in the outputs, and the wrapper base classes write it.
 Wrappers never read md5 files.
-A step's `get_result_files` lists the result files below `output/`, each with its md5 file.
+A step's `get_result_files` lists the result files as `work/` paths, each with its md5 file; only the results job derives their `output/` links.
 Bgzipped VCF and BED files also come with `.tbi` and `.tbi.md5`.
-They mirror files below `work/`.
 One local job per task with result files, `<task>_results` (`snappy_pipeline/results.py`), links them and writes `output/.manifest.tsv`.
 The result files in `work/` are targets of `rule all` as well: Snakemake does not rerun a job whose output exists because an input is missing, so a manifest alone would hide result files that a failed rerun deleted (`test_result_files_are_targets`).
 No other rule writes into `output/`.
@@ -197,7 +198,7 @@ It declares a local checkpoint instead, whose input is the upstream checkpoint o
 
 Step parts read the sample sheets only through the library DataFrame of the workflow object, never through the biomedsheets objects.
 `build_library_dataframe()` has one row per library, with its role, donor, group of related libraries (`related_group`), parents, sex and the extra sample sheet columns; `include_background=True` adds the libraries of background data sets.
-The table without relationships is built once per run and shared by all tasks (`Project.library_tables`); each task adds its `relationships`.
+The project loads each sample sheet once (`Project.data_set_infos`); the table without relationships is built once per run and shared by all tasks (`BaseStep.library_table()`, `Project.library_tables`), and each task adds its `relationships`.
 Germline and generic sheets list all their libraries, with the pedigree columns of the biomedsheets germline view (joined by the data set's `pedigree_field`).
 `library_row(name)` returns the row of one library, which `library_selection` picks if several data sets have a library of that name; read per-library facts (data set, folder, kit) through it, not by indexing the dataframe by name.
 `libraries` is the one selection of the libraries a task takes: the library table (with background data sets if the step sets `background_results`), restricted to the step's `library_requirement`, and filtered by `library_selection` or else by the step's `library_default` (`None`: the default of each library's sheet kind, cancer tumor DNA and germline DNA; `""`: all libraries).
@@ -244,7 +245,8 @@ A task's outputs are described by `DataSignature` objects: a data type plus tags
 - A rule that reads the genome adds `self.parent.reference_inputs()` to its inputs: the FASTA (`reference`) with its `.fai` (`reference_fai`) and `.dict` (`reference_dict`), named by the convention in `ExpectedReference`.
   A rule that reads a VCF resource (`dbsnp`, `germline_resource`, `common_variants`) adds `self.parent.vcf_inputs(field)`: the VCF (`<field>`) and its index (`<field>_index`), named by the convention in `ExpectedVcf`.
   A BED file that GATK queries by interval (the mappable regions of gCNV) uses the schema `ExpectedIndexedRegions`, and the rule reads its `index` as well.
-- `reference` (genome FASTA), `features` (gene annotation GTF), `dbsnp`, `germline_resource` (tag `population`) and `common_variants` (tag `common`) use the shared field types `Reference`, `Features`, `Dbsnp`, `GermlineResource` and `CommonVariants` from `snappy_pipeline.workflows.abstract.protocol`.
+- `reference` (genome FASTA), `features` (gene annotation GTF), `dbsnp`, `germline_resource` (tag `population`), `common_variants` (tag `common`) and the DNA alignments of a library use the shared field types `Reference`, `Features`, `Dbsnp`, `GermlineResource`, `CommonVariants` and `DnaAlignments` from `snappy_pipeline.workflows.abstract.protocol`, which also holds the shared schemas `ExpectedAlignments` (`bam`, `bai`) and `ExpectedVariants` (`vcf`, `vcf_tbi`).
+  A step whose result is a bgzipped VCF declares its four output keys with `vcf_outputs(prefix)` from `snappy_pipeline.workflows.common`, and its `get_output_paths` formats the same table as its parts.
   Tags compose: one task with `tags: [population, common]` can serve both.
   They usually name `external_data` tasks.
 - A tool's own database comes from `depends_on.database`: type `database`, tagged with the tool.

@@ -112,7 +112,7 @@ class CallsReportStepPart(BaseStepPart):
 
         if self.parent.effective_group_by != "related":
             return []
-        donors = self.parent.pedigree_donors(entity)
+        donors = self.parent.pedigree_donors(entity, include_background=True)
         if donors.empty:
             return []
         table = self.parent.build_library_dataframe()

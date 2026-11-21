@@ -1,7 +1,5 @@
 """Code shared by steps in ``sv_calling_{targeted,wgs}``"""
 
-import re
-
 from snakemake.io import expand
 
 from snappy_pipeline.utils import dictify, flatten, listify
@@ -52,14 +50,11 @@ class SvCallingGetResultFilesMixin:
 
     @listify
     def get_result_files(self):
-        """Return the outputs of the last action below ``output/``, for each pedigree.
+        """Return the outputs of the last action, the result files, for each pedigree.
 
         ``skip_libraries`` of the tool skips the whole pedigree of a listed library.
         """
-        templates = [
-            re.sub(r"^work/", "output/", path)
-            for path in flatten(self.get_output_files(self.actions[-1]).values())
-        ]
+        templates = list(flatten(self.get_output_files(self.actions[-1]).values()))
         skipped = set(self.config.get(self.name).skip_libraries)
         pedigrees = self.parent.pedigrees(self.pedigrees_include_background)
         for pedigree, library_names in pedigrees.items():

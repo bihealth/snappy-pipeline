@@ -102,7 +102,7 @@ class CombineVariantsStepPart(BaseStepPart):
         for tumor_library in self.parent.libraries["library_name"].unique():
             self.get_normal_lib_name(tumor_library)
             for path in self.get_output_files("run").values():
-                result += expand(path.replace("work/", "output/", 1), tumor_library=[tumor_library])
+                result += expand(path, tumor_library=[tumor_library])
         return result
 
     def _get_log_file_run(self) -> dict[str, str]:

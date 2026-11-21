@@ -142,6 +142,8 @@ class IgvSessionGenerationWorkflow(BaseStep):
     name = "igv_session_generation"
     produces = [DataSignature(DataType.EXPORTS, frozenset({"igv"}))]
 
+    #: The pedigrees include the members of background data sets
+    uses_background = True
     config_model_class = IgvSessionGenerationConfigModel
 
     @classmethod

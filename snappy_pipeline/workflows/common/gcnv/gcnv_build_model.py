@@ -1,8 +1,6 @@
 # -*- coding: utf-8 -*-
 """Implementation of the gCNV COHORT mode methods - used to build models."""
 
-import re
-
 from snakemake.io import directory, expand, touch
 
 from snappy_pipeline.utils import dictify, listify
@@ -243,8 +241,7 @@ class BuildGcnvModelStepPart(
         #
         # NB: the conversion to ``str`` is necessary here as we use ``touch()`` above.
         result_path_tpls = [
-            re.sub(r"^work/", "output/", str(path))
-            for path in self._get_output_files_post_germline_calls().values()
+            str(path) for path in self._get_output_files_post_germline_calls().values()
         ]
 
         # Generate output files for all mappers and library names.

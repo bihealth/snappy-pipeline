@@ -110,4 +110,4 @@ class QcSummaryStepPart(BaseStepPart):
         """The summary table, if the task has libraries with QC files."""
         if not self.source_files:
             return []
-        return ["output/qc_summary/out/qc_summary.tsv", "output/qc_summary/out/qc_summary.tsv.md5"]
+        return ["work/qc_summary/out/qc_summary.tsv", "work/qc_summary/out/qc_summary.tsv.md5"]

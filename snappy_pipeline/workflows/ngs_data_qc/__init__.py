@@ -367,7 +367,9 @@ class NgsChewSummaryStepPart(QcSummaryStepPart):
             )
         donors = []
         for pedigree in dict.fromkeys(entry["pedigree"] for entry in libraries):
-            for row in self.parent.pedigree_donors(pedigree).itertuples(index=False):
+            for row in self.parent.pedigree_donors(pedigree, include_background=True).itertuples(
+                index=False
+            ):
                 donors.append(
                     {
                         "donor": row.donor_name,
@@ -404,7 +406,7 @@ class AlfredStepPart(BaseStepPart):
 
     def get_result_files(self) -> list[str]:
         """The report of each library with a kit"""
-        json = "output/{library_name}/out/{library_name}.target_coverage.json.gz"
+        json = "work/{library_name}/out/{library_name}.target_coverage.json.gz"
         libraries = self.parent.kit_libraries()
         return [
             path.format(library_name=lib) for lib in libraries for path in (json, json + ".md5")

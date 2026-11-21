@@ -119,7 +119,7 @@ class MeltStepPart(SvCallingGetResultFilesMixin, BaseStepPart):
     def _get_input_files_group_analysis(self, wildcards):
         yield from self.parent.reference_inputs().items()
         indiv_analysis = []
-        for library_name in self.parent.pedigrees()[wildcards.related_group]:
+        for library_name in self.parent.pedigrees(include_background=True)[wildcards.related_group]:
             indiv_analysis.append(f"work/indiv_analysis.{library_name}.{wildcards.me_type}/out")
         yield "indiv_analysis", indiv_analysis
         yield from self._melt_files("jar", "me_refs", "genes").items()
@@ -177,7 +177,9 @@ class MeltStepPart(SvCallingGetResultFilesMixin, BaseStepPart):
         infix = f"genotype.{wildcards.related_group}.{wildcards.me_type}"
         paths = [
             f"work/{infix}/out/{library_name}.{wildcards.me_type}.tsv"
-            for library_name in self.parent.pedigrees()[wildcards.related_group]
+            for library_name in self.parent.pedigrees(include_background=True)[
+                wildcards.related_group
+            ]
         ]
         yield "genotype", paths
         yield from self.parent.reference_inputs().items()

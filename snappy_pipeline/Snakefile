@@ -8,7 +8,7 @@ from snappy_pipeline.orchestration import (
     register_hooks,
     select_target_tasks,
 )
-from snappy_pipeline.results import MANIFEST, link_results, work_paths
+from snappy_pipeline.results import MANIFEST, link_results
 from snappy_pipeline.sheet_summary import print_library_summary
 from snappy_pipeline.workflows.abstract import BaseStep
 
@@ -83,7 +83,7 @@ for t_name in target_task_names:
         continue
     if not result_files:
         continue
-    work_files = [f"{task_root}/{path}" for path in work_paths(result_files)]
+    work_files = [f"{task_root}/{path}" for path in result_files]
     manifest = f"{task_root}/output/{MANIFEST}"
     targets += [*work_files, manifest]
 

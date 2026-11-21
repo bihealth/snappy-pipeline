@@ -10,7 +10,7 @@ from snappy_pipeline.workflows.common.sv_calling import (
     SvCallingGetLogFileMixin,
     SvCallingGetResultFilesMixin,
 )
-from snappy_wrappers.resource_usage import ResourceUsage
+from snappy_pipeline.resource_usage import ResourceUsage
 
 
 class MantaStepPart(

@@ -306,7 +306,7 @@ def _part(group_by="library", libraries=TUMORS, **settings):
         matched_normal=lambda name: ROWS[name].get("matched_normal_lib") or "",
         get_upstream_paths=_upstream,
         reference_inputs=lambda: {"reference": "ref.fa"},
-        pedigree_donors=lambda index: pd.DataFrame(),
+        pedigree_donors=lambda index, include_background=False: pd.DataFrame(),
     )
     part._scenarios = {}
     return part
@@ -618,7 +618,7 @@ def _donors(*rows):
 
 def _pedigree_part(donors, members):
     part = _part("related", scenario="germline")
-    part.parent.pedigree_donors = lambda index: donors
+    part.parent.pedigree_donors = lambda index, include_background=False: donors
     rows = {
         row["library_name"]: _row(row["library_name"], row["sex"])
         for row in donors.to_dict("records")

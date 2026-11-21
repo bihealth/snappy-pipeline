@@ -8,9 +8,8 @@ from dataclasses import dataclass
 
 @dataclass
 class ResourceUsage:
-    """Resource usage specification to be used in ``BaseStepPart.default_resource_usage`` and
-    ``BaseStepPart.resource_usage.values()``; as well as in the parallel wrappers classes.
-    """
+    """The resources of an action: ``BaseStepPart.default_resource_usage`` and the values of
+    ``BaseStepPart.resource_usage``."""
 
     threads: int
     runtime: str

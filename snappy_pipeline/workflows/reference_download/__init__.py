@@ -168,8 +168,8 @@ class ReferenceDownloadWorkflow(BaseStep):
 
     @listify
     def get_result_files(self):
-        yield "output/reference_download/out/reference.fa"
-        yield "output/reference_download/out/reference.fa.md5"
+        yield "work/reference_download/out/reference.fa"
+        yield "work/reference_download/out/reference.fa.md5"
         for name in ("reference.fa.fai", "reference.dict"):
-            yield f"output/reference_download/out/{name}"
-            yield f"output/reference_download/out/{name}.md5"
+            yield f"work/reference_download/out/{name}"
+            yield f"work/reference_download/out/{name}.md5"

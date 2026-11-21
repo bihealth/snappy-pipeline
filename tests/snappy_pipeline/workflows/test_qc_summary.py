@@ -78,8 +78,8 @@ def test_outputs_are_the_summary_tsv_and_the_site_directory():
 
 def test_result_files_are_the_tsv_once_or_nothing_without_entities():
     assert _part(["a", "b"], {"a": {"donor": ["a"]}, "b": {"donor": ["b"]}}).get_result_files() == [
-        "output/qc_summary/out/qc_summary.tsv",
-        "output/qc_summary/out/qc_summary.tsv.md5",
+        "work/qc_summary/out/qc_summary.tsv",
+        "work/qc_summary/out/qc_summary.tsv.md5",
     ]
     assert _part([]).get_result_files() == []
 
@@ -154,7 +154,7 @@ def test_the_fingerprint_checks_pass_the_sheet_facts_as_options():
     )
     part.parent = SimpleNamespace(
         library_row=lambda name: table.set_index("library_name", drop=False).loc[name].to_dict(),
-        pedigree_donors=lambda pedigree: donors,
+        pedigree_donors=lambda pedigree, include_background=False: donors,
         output_entities=["idx-N1-DNA1-WES1", "mo-N1-DNA1-WES1"],
         sub_steps={},
     )

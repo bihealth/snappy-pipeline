@@ -95,7 +95,7 @@ class MehariStepPart(BaseStepPart):
         result = []
         for action in filter(self._has_result_files, self.actions):
             for path in self.get_output_files(action).values():
-                result += expand(path.replace("work/", "output/", 1), library_name=pedigrees)
+                result += expand(path, library_name=pedigrees)
         return result
 
     def _pedigrees_with_index(self) -> list[str]:
@@ -225,6 +225,8 @@ class VarfishExportWorkflow(BaseStep):
 
     name = "varfish_export"
     produces = [DataSignature(DataType.EXPORTS, frozenset({"varfish"}))]
+    #: The pedigrees include the members of background data sets
+    uses_background = True
     config_model_class = VarfishExportConfigModel
 
     @cached_property

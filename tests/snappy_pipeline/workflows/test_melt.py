@@ -61,7 +61,7 @@ def _part():
     part = object.__new__(MeltStepPart)
     part.config = SimpleNamespace(melt=SimpleNamespace(jar_file="melt.jar", me_refs_path="refs"))
     part.parent = SimpleNamespace(
-        pedigrees=lambda: {"P1": ["P1", "F1"]},
+        pedigrees=lambda include_background=False: {"P1": ["P1", "F1"]},
         reference_inputs=lambda: {},
         get_upstream_paths=lambda field: SimpleNamespace(bed="genes.bed"),
     )
@@ -85,7 +85,7 @@ def test_group_analysis_reads_the_directories_of_all_pedigree_members():
 
 def test_genotype_and_make_vcf_read_the_sites_of_group_analysis():
     part = _part()
-    part.parent.pedigrees = lambda: {"P1": ["P1"]}
+    part.parent.pedigrees = lambda include_background=False: {"P1": ["P1"]}
     wildcards = SimpleNamespace(related_group="P1", library_name="P1", me_type="ALU")
     pre_geno = "work/group_analysis.P1.ALU/out/ALU.pre_geno.tsv"
     assert part._get_output_files_group_analysis()["pre_geno"] == (

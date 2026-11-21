@@ -271,6 +271,8 @@ class VariantPhasingWorkflow(BaseStep):
         DataSignature(DataType.VARIANTS, frozenset({"germline", "phased"})),
         DataSignature(DataType.VARIANTS, frozenset({"combined", "phased"})),
     ]
+    #: The pedigrees include the members of background data sets
+    uses_background = True
     config_model_class = VariantPhasingConfigModel
 
     tool_parts = {

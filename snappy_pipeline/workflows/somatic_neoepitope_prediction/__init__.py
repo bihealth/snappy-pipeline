@@ -626,7 +626,7 @@ class SomaticNeoepitopePredictionWorkflow(BaseStep):
                     continue
                 outputs = part._get_output_files_run()
                 for key in part.result_keys["run"]:
-                    yield outputs[key].replace("work/", "output/", 1).format(tumor_library=tumor)
+                    yield outputs[key].format(tumor_library=tumor)
                 classes = part.mhc_classes()
                 post_processed = [
                     _post_processed("netchop", prediction, MHC_CLASSES[name][1])
@@ -636,5 +636,5 @@ class SomaticNeoepitopePredictionWorkflow(BaseStep):
                 if part.cfg.netmhc_stab.enabled and "class_i" in classes:
                     post_processed.append(_post_processed("netstab", prediction, "MHC_I"))
                 for path in post_processed:
-                    path = path.replace("work/", "output/", 1).format(tumor_library=tumor)
+                    path = path.format(tumor_library=tumor)
                     yield from (path, path + ".md5")

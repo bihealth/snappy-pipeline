@@ -133,7 +133,7 @@ class MeiWorkflow(BaseStep):
         # Initialise variable
         name_pattern = "{library_name}"
         yield from self._yield_result_files(
-            os.path.join("output", name_pattern, "out", name_pattern + "{ext}"),
+            os.path.join("work", name_pattern, "out", name_pattern + "{ext}"),
             ext=EXT_VALUES,
         )
 

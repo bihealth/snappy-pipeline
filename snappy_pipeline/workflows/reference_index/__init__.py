@@ -176,4 +176,4 @@ class ReferenceIndexWorkflow(BaseStep):
     @listify
     def get_result_files(self):
         for path in self.get_output_files(str(self.config.tool), "run").values():
-            yield path.replace("work/", "output/", 1)
+            yield path

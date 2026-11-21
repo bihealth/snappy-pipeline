@@ -99,7 +99,7 @@ class VarfishAnnotatorExternalStepPart(BaseStepPart):
         return [
             path
             for tpl in self.get_output_files("annotate").values()
-            for path in expand(tpl.replace("work/", "output/", 1), related_group=indexes)
+            for path in expand(tpl, related_group=indexes)
         ]
 
     def _get_log_file_merge_vcf(self):
@@ -155,6 +155,8 @@ class WgsCnvExportExternalWorkflow(BaseStep):
     #: Workflow name
     name = "wgs_cnv_export_external"
     produces = [DataSignature(DataType.EXPORTS, frozenset({"external"}))]
+    #: The pedigrees include the members of background data sets
+    uses_background = True
     config_model_class = WgsCnvExportExternalConfigModel
 
     @classmethod

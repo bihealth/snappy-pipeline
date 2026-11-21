@@ -28,7 +28,6 @@ The task links the following result files below ``tasks/<task>/output/upload/`` 
 Downstream tasks read the keys ``meta_study`` and ``clinical_patient``.
 """
 
-import re
 import sys
 from snappy_pipeline.models import ToolModel
 from snappy_pipeline.utils import dictify, listify
@@ -561,11 +560,9 @@ class cbioportalExportWorkflow(BaseStep):
         )
         # Sub-workflows were registered above.
 
-    @listify
     def get_result_files(self):
-        """Return the upload files, the result files below ``output/``"""
-        for path in self._get_work_files():
-            yield re.sub(r"^work/", "output/", path)
+        """Return the upload files, the result files"""
+        return list(self._get_work_files())
 
     def _get_work_files(self):
         yield from self.sub_steps["cbioportal_meta_files"].get_output_files("run")

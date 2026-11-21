@@ -120,11 +120,7 @@ class VarfishAnnotatorAnnotateStepPart(BaseStepPart):
         if self.config.bam_available_flag:
             outputs |= self.get_output_files("bam_qc")
             keys += ["bam_qc", "bam_qc_md5"]
-        return [
-            path
-            for key in keys
-            for path in expand(outputs[key].replace("work/", "output/", 1), related_group=indexes)
-        ]
+        return [path for key in keys for path in expand(outputs[key], related_group=indexes)]
 
     #: VCF key to file extensions
     vcf_key_ext_dict = {
@@ -272,6 +268,8 @@ class VariantExportExternalWorkflow(BaseStep):
     #: Workflow name
     name = "variant_export_external"
     produces = [DataSignature(DataType.EXPORTS, frozenset({"external"}))]
+    #: The pedigrees include the members of background data sets
+    uses_background = True
     config_model_class = VariantExportExternalConfigModel
 
     @classmethod

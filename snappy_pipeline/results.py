@@ -2,8 +2,9 @@
 """Link the result files of a task into its ``output/`` directory.
 
 ``work/`` holds every file a task writes and is what other tasks read. ``output/`` only holds
-relative symlinks to the result files, created by one local job per task. That job declares a
-single output, ``output/.manifest.tsv``, instead of one output or one job per link.
+relative symlinks to the result files (``get_result_files``, ``work/`` paths), created by one
+local job per task. That job declares a single output, ``output/.manifest.tsv``, instead of one
+output or one job per link.
 """
 
 import os
@@ -11,16 +12,6 @@ from pathlib import Path
 
 #: Manifest of the result files, below the task's ``output/``
 MANIFEST = ".manifest.tsv"
-
-
-def work_paths(result_files: list[str]) -> list[str]:
-    """Return the ``work/`` files behind a task's result files (paths below ``output/``)."""
-    paths = []
-    for path in result_files:
-        if not path.startswith("output/"):
-            raise ValueError(f"result file outside output/: {path}")
-        paths.append("work/" + path.removeprefix("output/"))
-    return paths
 
 
 def _size(path: Path) -> int:
