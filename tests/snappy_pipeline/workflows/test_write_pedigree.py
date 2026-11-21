@@ -34,8 +34,9 @@ def step():
         sheet_type="germline_variants",
         is_background=False,
         pedigree_field_kwargs=None,
+        sheet=sheet,
     )
-    table = build_library_dataframe([info], [sheet])
+    table = build_library_dataframe([info])
     # Bypass ``BaseStep.__init__``; the shared library table is already built
     step = object.__new__(_Step)
     step.task_name = "writer"

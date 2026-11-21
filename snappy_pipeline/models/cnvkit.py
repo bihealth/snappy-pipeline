@@ -213,12 +213,6 @@ class PanelOfNormals(ToolModel):
     target: Target = Target()
     antitarget: Antitarget = Antitarget()
     reference: Reference = Reference()
-    genemetrics: Genemetrics = Genemetrics()
-    segmetrics: Segmetrics = Segmetrics()
-    breaks: Breaks = Breaks()
-
-    drop_low_coverage: bool = False
-    """[genemetrics] Drop very low coverage bins"""
 
     gender: Gender = Gender.guess
     """

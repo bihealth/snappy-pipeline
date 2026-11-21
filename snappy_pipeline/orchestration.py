@@ -27,7 +27,7 @@ from snappy_pipeline.workflows.abstract.protocol import (
     ExpectedPathSchema,
     ExpectedReference,
     ExpectedVcf,
-    Granularity,
+    field_contract,
     select_signature,
 )
 
@@ -70,13 +70,44 @@ class Project:
     dependencies: Mapping[str, Mapping[str, str | tuple[str, ...]]]
     #: Task name -> the DataSignatures the task produces.
     signatures: Mapping[str, tuple[DataSignature, ...]]
+    #: Task name -> ``depends_on`` field -> the upstream signature the field reads (a tuple for a
+    #: list field), picked by :func:`select_signature` from what the upstream task produces
+    selected: Mapping[str, Mapping[str, DataSignature | tuple[DataSignature, ...]]] = (
+        dataclass_field(default_factory=dict)
+    )
+    #: Task name -> the level the task writes its results at, ``library`` or ``related``
+    #: (see :func:`resolve_group_by`)
+    group_by: Mapping[str, str] = dataclass_field(default_factory=dict)
     #: Task name (``data_sets`` for the data sets) -> the paths in its configuration, resolved.
     file_paths: Mapping[str, tuple[str, ...]] = dataclass_field(default_factory=dict)
     #: FASTQ discovery shared by all tasks, so each search path is walked once per run
     read_discovery: ReadDiscovery = dataclass_field(default_factory=ReadDiscovery, compare=False)
     #: ``include_background`` -> the library table without relationships, built once per run
-    #: and shared by all tasks (``BaseStep.build_library_dataframe``)
+    #: and shared by all tasks (``BaseStep.library_table``)
     library_tables: dict[bool, Any] = dataclass_field(default_factory=dict, compare=False)
+    #: ``include_background`` -> the donor table of the germline sheets (``BaseStep.pedigree_donors``)
+    donor_tables: dict[bool, Any] = dataclass_field(default_factory=dict, compare=False)
+    #: The data sets with their sample sheets, loaded on first use (:attr:`data_set_infos`)
+    _data_sets: list[Any] = dataclass_field(default_factory=list, compare=False, repr=False)
+
+    @property
+    def data_set_infos(self) -> list[Any]:
+        """The data sets of the configuration with their loaded sample sheets, once per run"""
+        from snappy_pipeline.workflows.abstract import DataSetInfo
+
+        if not self._data_sets and self.model.data_sets:
+            self._data_sets.extend(
+                DataSetInfo(
+                    name,
+                    data_set.file,
+                    data_set.type,
+                    data_set.is_background,
+                    data_set.naming_scheme,
+                    data_set.pedigree_field,
+                )
+                for name, data_set in self.model.data_sets.items()
+            )
+        return self._data_sets
 
     def task(self, name: str) -> TaskModel:
         """Return the task called ``name``."""
@@ -146,6 +177,7 @@ def load_project(config: Mapping[str, Any], project_dir: str) -> Project:
             dependencies[task.name] = _resolve_dependencies(task.name, task_config, names)
 
     tasks = tuple(_topological_order(model.tasks, dependencies))
+    signatures, selected = _task_signatures(tasks, task_configs, dependencies)
     project = Project(
         config=config,
         model=model,
@@ -154,7 +186,9 @@ def load_project(config: Mapping[str, Any], project_dir: str) -> Project:
         tasks=tasks,
         task_configs=task_configs,
         dependencies=dependencies,
-        signatures=_task_signatures(tasks, task_configs, dependencies),
+        signatures=signatures,
+        selected=selected,
+        group_by=resolve_group_by(tasks, task_configs, dependencies),
         file_paths={name: tuple(paths) for name, paths in file_paths.items()},
     )
     _check_granularity(project)
@@ -239,36 +273,57 @@ def _check_filter_ids(project: Project) -> None:
         writers[task.name] = inherited | dict.fromkeys(ids[task.name], task.name)
 
 
+def resolve_group_by(
+    tasks: tuple[TaskModel, ...],
+    task_configs: Mapping[str, SnappyStepModel],
+    dependencies: Mapping[str, Mapping[str, str | tuple[str, ...]]],
+) -> dict[str, str]:
+    """Return task name -> ``library`` or ``related``: the level a task writes its results at.
+
+    A task declares its own ``group_by``, else its step's :meth:`default_group_by`, else what its
+    upstream tasks declare (the first in ``depends_on`` order that declares one, transitively), so
+    a filtration after joint calling writes per group of related libraries. A task that declares
+    nothing writes per library, and passes nothing on, so that default does not spread downstream.
+    ``tasks`` must be in topological order.
+    """
+    from snappy_pipeline.workflow_registry import WORKFLOW_REGISTRY
+
+    declared: dict[str, str | None] = {}
+    for task in tasks:
+        config = task_configs[task.name]
+        level = getattr(config, "group_by", None)
+        if level is None:
+            level = WORKFLOW_REGISTRY[task.step].default_group_by(config) or None
+        if level is None:
+            upstreams = upstream_tasks(dependencies.get(task.name, {}))
+            level = next((declared[name] for name in upstreams if declared.get(name)), None)
+        declared[task.name] = level
+    return {name: level or "library" for name, level in declared.items()}
+
+
 def _check_granularity(project: Project) -> None:
     """Raise if a task reads results that its upstream task writes at another level.
     A ``depends_on`` field with a :class:`Granularity` names the level it needs (``ANY_LEVEL`` takes both); any other field reads the result of the task's own entity, so a task behind one that writes per related group must write per related group too."""
-    from snappy_pipeline.workflows.abstract import _declared_group_by
-
     for task in project.tasks:
         with in_task(task):
-            depends_on = getattr(project.task_configs[task.name], "depends_on", None)
-            own = None
+            config = project.task_configs[task.name]
+            fields = type(config.depends_on).model_fields if project.dependencies[task.name] else {}
             for field, value in project.dependencies[task.name].items():
-                metadata = type(depends_on).model_fields[field].metadata
-                required = next((m for m in metadata if isinstance(m, Granularity)), None)
+                required = field_contract(fields[field], config.tool_tag()).level
                 for upstream in value if isinstance(value, tuple) else (value,):
-                    level = _declared_group_by(project, upstream, frozenset()) or "library"
+                    level = project.group_by[upstream]
                     if required is not None:
                         if required.level is not None and level != required.level:
                             raise ConfigError(
                                 f"depends_on.{field} needs results with group_by: {required.level}, "
                                 f"but task {upstream!r} writes them with group_by: {level}"
                             )
-                    elif level == "related":
-                        own = (
-                            own or _declared_group_by(project, task.name, frozenset()) or "library"
+                    elif level == "related" and project.group_by[task.name] != "related":
+                        raise ConfigError(
+                            f"task {upstream!r} writes one result per related group, but "
+                            f"depends_on.{field} reads it per {project.group_by[task.name]}; set "
+                            "group_by: related on this task"
                         )
-                        if own != "related":
-                            raise ConfigError(
-                                f"task {upstream!r} writes one result per related group, but "
-                                f"depends_on.{field} reads it per {own}; set group_by: related on "
-                                "this task"
-                            )
 
 
 def _exists(path: str) -> bool:
@@ -418,27 +473,33 @@ def _resolve_dependencies(
     return result
 
 
+Selected = dict[str, DataSignature | tuple[DataSignature, ...]]
+
+
 def _task_signatures(
     tasks: tuple[TaskModel, ...],
     task_configs: Mapping[str, SnappyStepModel],
     dependencies: Mapping[str, Mapping[str, str | tuple[str, ...]]],
-) -> dict[str, tuple[DataSignature, ...]]:
-    """Return task name -> produced signatures, checking every ``depends_on`` requirement.
+) -> tuple[dict[str, tuple[DataSignature, ...]], dict[str, Selected]]:
+    """Return task name -> produced signatures and task name -> the signatures its ``depends_on``
+    fields read, checking every ``depends_on`` requirement.
 
     Each task's ``task_produces`` receives, per field, the upstream signature it reads
-    (``select_signature``); for a list field, a tuple of them.
+    (``select_signature``); for a list field, a tuple of them. The steps read the same selection
+    through ``BaseStep.get_upstream_paths``.
 
     ``tasks`` must be in topological order, so the upstream signatures exist when a task needs
     them.
     """
     signatures: dict[str, tuple[DataSignature, ...]] = {}
+    selected: dict[str, Selected] = {}
     steps = {task.name: task.step for task in tasks}
     for task in tasks:
         with in_task(task):
-            signatures[task.name] = _task_signature(
+            signatures[task.name], selected[task.name] = _task_signature(
                 task, task_configs, dependencies, signatures, steps
             )
-    return signatures
+    return signatures, selected
 
 
 def _task_signature(
@@ -447,48 +508,39 @@ def _task_signature(
     dependencies: Mapping[str, Mapping[str, str | tuple[str, ...]]],
     signatures: Mapping[str, tuple[DataSignature, ...]],
     steps: Mapping[str, str],
-) -> tuple[DataSignature, ...]:
-    """Return the signatures that ``task`` produces, given those of its upstream tasks."""
+) -> tuple[tuple[DataSignature, ...], Selected]:
+    """Return the signatures that ``task`` produces and those its fields read, given those of
+    its upstream tasks."""
     from snappy_pipeline.workflow_registry import WORKFLOW_REGISTRY
 
     config = task_configs[task.name]
     fields = type(config.depends_on).model_fields if dependencies[task.name] else {}
-    upstream_signatures = {}
+    upstream_signatures: Selected = {}
     for field, value in dependencies[task.name].items():
-        required = next((m for m in fields[field].metadata if isinstance(m, DataSignature)), None)
-        if required is not None:
-            required = required.for_tool(config.tool_tag())
+        contract = field_contract(fields[field], config.tool_tag())
         selected_all = []
         for upstream in value if isinstance(value, tuple) else (value,):
             produced = signatures[upstream]
-            selected = select_signature(produced, required)
+            selected = select_signature(produced, contract.signature)
             if selected is None:
                 raise ConfigError(
-                    f"depends_on.{field} requires {required}, but task {upstream!r} produces "
-                    f"{', '.join(map(str, produced)) or 'nothing'}"
+                    f"depends_on.{field} requires {contract.signature}, but task {upstream!r} "
+                    f"produces {', '.join(map(str, produced)) or 'nothing'}"
                 )
             selected_all.append(selected)
-            _check_output_keys(
-                task.name, field, fields[field], upstream, selected, steps, task_configs
-            )
+            _check_output_keys(field, contract.schema, upstream, selected, steps, task_configs)
         upstream_signatures[field] = (
             tuple(selected_all) if isinstance(value, tuple) else selected_all[0]
         )
-    return WORKFLOW_REGISTRY[task.step].task_produces(config, upstream_signatures)
+    produces = WORKFLOW_REGISTRY[task.step].task_produces(config, upstream_signatures)
+    return produces, upstream_signatures
 
 
-def _check_output_keys(
-    task_name, field, field_info, upstream, signature, steps, task_configs
-) -> None:
+def _check_output_keys(field, schema, upstream, signature, steps, task_configs) -> None:
     """Raise if the upstream task does not provide the keys of the field's ``ExpectedPathSchema``
     for the signature the field selected."""
     from snappy_pipeline.workflow_registry import WORKFLOW_REGISTRY
 
-    tool = task_configs[task_name].tool_tag()
-    schema = next(
-        (m.for_tool(tool) for m in field_info.metadata if isinstance(m, ExpectedPathSchema)),
-        None,
-    )
     if schema is None:
         return
     keys = WORKFLOW_REGISTRY[steps[upstream]].output_keys(task_configs[upstream], signature)

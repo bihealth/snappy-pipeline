@@ -4,7 +4,7 @@
 __author__ = "Manuel Holtgrewe <manuel.holtgrewe@bih-charite.de>"
 
 import functools
-from typing import Any, Callable, Generator, Iterable, TypeVar
+from typing import Callable, Generator, Iterable, TypeVar
 
 F = TypeVar("F")
 T = TypeVar("T")
@@ -65,51 +65,3 @@ def flatten(coll: list[str | list[str] | Iterable[str]]) -> list[str]:
                 yield subc
         else:
             yield i
-
-
-def try_or_none(func, exceptions):
-    """Helper that tries to execute the function
-
-    If one of the ``exceptions`` is raised then return None
-    """
-    try:
-        return func()
-    except exceptions:
-        return None
-
-
-def is_none(value: Any) -> bool:
-    """Helper function returning whether ``value is None``"""
-    return value is None
-
-
-def is_not_none(value: Any) -> bool:
-    """Helper function returning whether ``value is not None``"""
-    return value is not None
-
-
-class DictQuery(dict):
-    """Helper class for comfortable access to nested dicts with ``str`` keys.
-
-    Source:
-
-    - https://www.haykranen.nl/2016/02/13/handling-complex-nested-dicts-in-python/
-    """
-
-    def get(self, path: str, default=None):
-        keys = path.split("/")
-        val = None
-
-        for key in keys:
-            if val:
-                if isinstance(val, list):
-                    val = [v.get(key, default) if v else None for v in val]
-                else:
-                    val = val.get(key, default)
-            else:
-                val = dict.get(self, key, default)
-
-            if not val:
-                break
-
-        return val

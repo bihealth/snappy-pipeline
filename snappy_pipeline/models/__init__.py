@@ -82,14 +82,6 @@ SizeString = Annotated[str, Predicate(lambda s: size_string_regexp.match(s) is n
 """A string representing a size, e.g. '1G' for 1 gigabyte."""
 
 
-class KeepTmpdir(enum.StrEnum):
-    """Whether to keep the temporary directory after the job has finished."""
-
-    always = "always"
-    never = "never"
-    onerror = "onerror"
-
-
 class SnappyModel(BaseModel):
     """
     Base class for all snappy models.

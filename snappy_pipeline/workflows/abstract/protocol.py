@@ -123,6 +123,33 @@ class ExpectedPathSchema:
         return self.schema if self.schema is not None else dict(self.per_tool).get(tool)
 
 
+@dataclass(frozen=True)
+class FieldContract:
+    """What a ``depends_on`` field requires, from its ``Annotated`` metadata (see :func:`field_contract`)."""
+
+    #: The data the field brings in, ``None`` for a field without a requirement
+    signature: DataSignature | None
+    #: The keys the step reads from the upstream task, ``None`` for a field read as a plain dict
+    schema: type[BaseModel] | None
+    #: The level the field reads, ``None`` for the step's own entity
+    level: Granularity | None
+
+
+def field_contract(field_info, tool: str | None) -> FieldContract:
+    """The contract of a ``depends_on`` field for a task whose tool is ``tool``: its
+    :class:`DataSignature`, :class:`ExpectedPathSchema` and :class:`Granularity` metadata, with the
+    ``TOOL`` placeholder replaced; the only place these are read."""
+    signature = schema = level = None
+    for meta in field_info.metadata:
+        if isinstance(meta, DataSignature):
+            signature = meta.for_tool(tool)
+        elif isinstance(meta, ExpectedPathSchema):
+            schema = meta.for_tool(tool)
+        elif isinstance(meta, Granularity):
+            level = meta
+    return FieldContract(signature, schema, level)
+
+
 class ExpectedReference(BaseModel):
     """The genome FASTA; its ``.fai`` and ``.dict`` are next to it, named by the fixed convention of
     samtools and GATK."""
@@ -162,6 +189,20 @@ class ExpectedVcf(BaseModel):
         return feature_index(self.vcf)
 
 
+class ExpectedAlignments(BaseModel):
+    """A BAM file with its index next to it."""
+
+    bam: str
+    bai: str
+
+
+class ExpectedVariants(BaseModel):
+    """A bgzipped VCF file with its tabix index next to it."""
+
+    vcf: str
+    vcf_tbi: str
+
+
 class ExpectedKits(BaseModel):
     """The regions of one enrichment kit as BED files: its targets and its baits (probes)."""
 
@@ -184,6 +225,12 @@ class ExpectedIndexedRegions(ExpectedRegions):
         return feature_index(self.bed)
 
 
+#: The DNA alignments of a library, the input of most somatic and germline callers
+DnaAlignments = Annotated[
+    str,
+    DataSignature(DataType.ALIGNMENTS, frozenset({"dna"})),
+    ExpectedPathSchema(ExpectedAlignments),
+]
 #: ``depends_on`` field types for the reference data that many steps read
 Reference = Annotated[
     str,

@@ -14,7 +14,12 @@ from html import escape
 
 from snappy_pipeline.orchestration import ON_HOLD_STEPS
 from snappy_pipeline.workflow_registry import WORKFLOW_REGISTRY
-from snappy_pipeline.workflows.abstract.protocol import TOOL, DataSignature, DataType
+from snappy_pipeline.workflows.abstract.protocol import (
+    TOOL,
+    DataSignature,
+    DataType,
+    field_contract,
+)
 
 #: Steps that provide reference data and existing files, not results of other steps
 RESOURCE_STEPS = frozenset({"external_data", "reference_download", "reference_index"})
@@ -66,7 +71,7 @@ def step_contracts() -> list[StepContract]:
         requirements = []
         if field is not None:
             for key, info in field.annotation.model_fields.items():
-                signature = next(m for m in info.metadata if isinstance(m, DataSignature))
+                signature = field_contract(info, TOOL).signature
                 requirements.append(Requirement(key, signature, info.is_required()))
         contracts.append(StepContract(name, tuple(workflow_cls.produces), tuple(requirements)))
     return contracts

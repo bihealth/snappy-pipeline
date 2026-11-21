@@ -17,7 +17,6 @@ from ruamel.yaml import YAML
 
 from snappy_pipeline.base import ConfigError
 from snappy_pipeline.workflows.abstract import TARGETED_LIBRARY_TYPES, BaseStep
-from snappy_pipeline.workflows.abstract.protocol import DATA_SETS
 
 #: JSON schema of the sample sheet values of one library
 LIBRARY_SCHEMA = os.path.join(os.path.dirname(__file__), "schemas", "library.schema.yaml")
@@ -98,9 +97,7 @@ def missing_reads(instances: Mapping[str, BaseStep]) -> list[tuple[str, str, str
     checked: set[tuple[str, str]] = set()
     for name, task in instances.items():
         source = getattr(task.depends_on, "reads", "")
-        if not source or (
-            source != DATA_SETS and task.project.task(source).step != "external_data"
-        ):
+        if not source or task.reads_from_task(source):
             continue
         for library in task.libraries["library_name"]:
             if (source, library) in checked:
@@ -118,7 +115,7 @@ def print_library_summary(instances: Mapping[str, BaseStep]) -> None:
     sample sheets and of the tasks, then raise :class:`ConfigError` if a library has no reads."""
     if not instances:
         return
-    df = next(iter(instances.values())).build_library_dataframe(include_background=True)
+    df = next(iter(instances.values())).library_table(include_background=True)
     check_libraries(df)
     print(f"[snappy] Libraries in the sample sheets:\n{library_summary(df)}", flush=True)
     warnings = library_warnings(df)

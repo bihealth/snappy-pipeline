@@ -10,6 +10,7 @@ from snappy_pipeline.orchestration import (
 )
 from snappy_pipeline.results import MANIFEST, link_results, work_paths
 from snappy_pipeline.sheet_summary import print_library_summary
+from snappy_pipeline.workflows.abstract import BaseStep
 
 configfile: "config.yaml"
 
@@ -51,7 +52,8 @@ for task in project.model.tasks:
     t_step = task.step
     alias = t_name + "_"
     # Each task writes below tasks/<name>/
-    prefixes = {d: f"tasks/{t_name}/{d}" for d in ("output/", "work/", "benchmarks/")}
+    task_root = BaseStep.task_root(t_name)
+    prefixes = {d: f"{task_root}/{d}" for d in ("output/", "work/", "benchmarks/")}
 
     module:
         name: t_name
@@ -75,13 +77,14 @@ for task in project.model.tasks:
 targets = []
 for t_name in target_task_names:
     result_files = list(task_instances[t_name].get_result_files())
+    task_root = BaseStep.task_root(t_name)
     if project.task(t_name).step in ON_HOLD_STEPS:
-        targets += [f"tasks/{t_name}/{f}" for f in result_files if not f.endswith((".md5", ".tbi"))]
+        targets += [f"{task_root}/{f}" for f in result_files if not f.endswith((".md5", ".tbi"))]
         continue
     if not result_files:
         continue
-    work_files = [f"tasks/{t_name}/{path}" for path in work_paths(result_files)]
-    manifest = f"tasks/{t_name}/output/{MANIFEST}"
+    work_files = [f"{task_root}/{path}" for path in work_paths(result_files)]
+    manifest = f"{task_root}/output/{MANIFEST}"
     targets += [*work_files, manifest]
 
     rule:
@@ -92,7 +95,7 @@ for t_name in target_task_names:
         output:
             manifest
         params:
-            task_dir=f"tasks/{t_name}"
+            task_dir=task_root
         localrule: True
         run:
             link_results(params.task_dir, list(input), output[0])

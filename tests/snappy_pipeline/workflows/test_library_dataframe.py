@@ -27,24 +27,30 @@ from snappy_pipeline.workflows.abstract import (
 # ---------------------------------------------------------------------------
 
 
-def _make_data_set_info(sheet_type="germline_variants", is_background=False):
+def _make_data_set_info(sheet_type="germline_variants", is_background=False, sheet=None):
     return SimpleNamespace(
         name="first",
         sheet_type=sheet_type,
         is_background=is_background,
         pedigree_field_kwargs=None,
+        sheet=sheet,
     )
+
+
+def _with_sheets(infos, sheets):
+    """The data set infos with their sheets, as ``Project.data_set_infos`` holds them."""
+    return [SimpleNamespace(**{**vars(info), "sheet": sheet}) for info, sheet in zip(infos, sheets)]
 
 
 def _entities(infos, sheets, selection=None, group_by=None, relationships=None):
     """The output entities of the libraries that ``selection`` takes, as ``BaseStep.output_entities``."""
-    df = build_library_dataframe(infos, sheets, relationships=relationships)
+    df = build_library_dataframe(_with_sheets(infos, sheets), relationships=relationships)
     return list(entity_libraries(select_libraries(df, selection), group_by))
 
 
 def _groups(infos, sheets, selection=None):
     """``related_group`` -> the names of its libraries, restricted only by ``selection``."""
-    df = build_library_dataframe(infos, sheets)
+    df = build_library_dataframe(_with_sheets(infos, sheets))
     if selection:
         df = df.query(selection)
     return {name: group["library_name"].tolist() for name, group in df.groupby("related_group")}
@@ -82,7 +88,7 @@ class TestBuildLibraryDataframe:
     def test_cancer_sheet_correct_columns(self, cancer_sheet_tsv):
         csheet = _parse_cancer_sheet(cancer_sheet_tsv)
         info = _make_data_set_info("matched_cancer")
-        df = build_library_dataframe([info], [csheet.sheet])
+        df = build_library_dataframe(_with_sheets([info], [csheet.sheet]))
 
         expected_cols = {
             "library_name",
@@ -114,7 +120,7 @@ class TestBuildLibraryDataframe:
     def test_cancer_sheet_roles_and_tissue_type(self, cancer_sheet_tsv):
         csheet = _parse_cancer_sheet(cancer_sheet_tsv)
         info = _make_data_set_info("matched_cancer")
-        df = build_library_dataframe([info], [csheet.sheet])
+        df = build_library_dataframe(_with_sheets([info], [csheet.sheet]))
 
         tumor_rows = df[df["role"] == "tumor"]
         assert (tumor_rows["tissue_type"] == "tumor").all()
@@ -127,7 +133,7 @@ class TestBuildLibraryDataframe:
     def test_cancer_sheet_primary_flags(self, cancer_sheet_tsv):
         csheet = _parse_cancer_sheet(cancer_sheet_tsv)
         info = _make_data_set_info("matched_cancer")
-        df = build_library_dataframe([info], [csheet.sheet])
+        df = build_library_dataframe(_with_sheets([info], [csheet.sheet]))
 
         normal_rows = df[df["role"] == "normal"]
         assert normal_rows["is_primary"].all()
@@ -139,7 +145,7 @@ class TestBuildLibraryDataframe:
     def test_cancer_donor_count(self, cancer_sheet_tsv):
         csheet = _parse_cancer_sheet(cancer_sheet_tsv)
         info = _make_data_set_info("matched_cancer")
-        df = build_library_dataframe([info], [csheet.sheet])
+        df = build_library_dataframe(_with_sheets([info], [csheet.sheet]))
         # Two donors: P001 and P002 (P003 is commented out)
         donors = df["donor_name"].unique()
         assert len(donors) == 2
@@ -148,7 +154,7 @@ class TestBuildLibraryDataframe:
     def test_germline_trio_sheet_roles(self, germline_sheet_tsv):
         gsheet = _parse_germline_sheet(germline_sheet_tsv)
         info = _make_data_set_info("germline_variants")
-        df = build_library_dataframe([info], [gsheet.sheet])
+        df = build_library_dataframe(_with_sheets([info], [gsheet.sheet]))
 
         assert (df["kind"] == "germline").all()
 
@@ -161,7 +167,7 @@ class TestBuildLibraryDataframe:
     def test_germline_trio_pedigree_fields(self, germline_sheet_tsv):
         gsheet = _parse_germline_sheet(germline_sheet_tsv)
         info = _make_data_set_info("germline_variants")
-        df = build_library_dataframe([info], [gsheet.sheet])
+        df = build_library_dataframe(_with_sheets([info], [gsheet.sheet]))
 
         # Index P001 should have father and mother library names
         idx_p001 = df[(df["role"] == "index") & (df["donor_name"].str.startswith("P001"))]
@@ -172,7 +178,7 @@ class TestBuildLibraryDataframe:
     def test_germline_sex_and_disease(self, germline_sheet_tsv):
         gsheet = _parse_germline_sheet(germline_sheet_tsv)
         info = _make_data_set_info("germline_variants")
-        df = build_library_dataframe([info], [gsheet.sheet])
+        df = build_library_dataframe(_with_sheets([info], [gsheet.sheet]))
 
         # P001 is female and affected
         p001 = df[df["donor_name"].str.startswith("P001")]
@@ -187,13 +193,13 @@ class TestBuildLibraryDataframe:
     def test_germline_tissue_type_is_unknown(self, germline_sheet_tsv):
         gsheet = _parse_germline_sheet(germline_sheet_tsv)
         info = _make_data_set_info("germline_variants")
-        df = build_library_dataframe([info], [gsheet.sheet])
+        df = build_library_dataframe(_with_sheets([info], [gsheet.sheet]))
         assert (df["tissue_type"] == "unknown").all()
 
     def test_germline_pedigree_grouping(self, germline_sheet_tsv):
         gsheet = _parse_germline_sheet(germline_sheet_tsv)
         info = _make_data_set_info("germline_variants")
-        df = build_library_dataframe([info], [gsheet.sheet])
+        df = build_library_dataframe(_with_sheets([info], [gsheet.sheet]))
 
         # Two pedigrees (trios), each with 3 members
         pedigrees = df.groupby("related_group")
@@ -206,11 +212,11 @@ class TestBuildLibraryDataframe:
         gsheet = _parse_germline_sheet(germline_sheet_tsv)
         info_c = _make_data_set_info("matched_cancer")
         info_g = _make_data_set_info("germline_variants")
-        df = build_library_dataframe([info_c, info_g], [csheet.sheet, gsheet.sheet])
+        df = build_library_dataframe(_with_sheets([info_c, info_g], [csheet.sheet, gsheet.sheet]))
         assert set(df["kind"].unique()) == {"cancer", "germline"}
 
     def test_empty_data_returns_empty_dataframe(self):
-        df = build_library_dataframe([], [])
+        df = build_library_dataframe([])
         assert df.empty
         assert "library_name" in df.columns
         assert "tissue_type" in df.columns
@@ -218,27 +224,29 @@ class TestBuildLibraryDataframe:
     def test_background_dataset_skipped(self, cancer_sheet_tsv):
         csheet = _parse_cancer_sheet(cancer_sheet_tsv)
         info = _make_data_set_info("matched_cancer", is_background=True)
-        df = build_library_dataframe([info], [csheet.sheet])
+        df = build_library_dataframe(_with_sheets([info], [csheet.sheet]))
         assert df.empty
 
     def test_background_dataset_included_on_request(self, cancer_sheet_tsv):
         csheet = _parse_cancer_sheet(cancer_sheet_tsv)
         background = _make_data_set_info("matched_cancer", is_background=True)
-        df = build_library_dataframe([background], [csheet.sheet], include_background=True)
+        df = build_library_dataframe(
+            _with_sheets([background], [csheet.sheet]), include_background=True
+        )
         assert not df.empty
         assert df["is_background"].all()
 
     def test_cancer_rna_libraries_present(self, cancer_sheet_tsv):
         csheet = _parse_cancer_sheet(cancer_sheet_tsv)
         info = _make_data_set_info("matched_cancer")
-        df = build_library_dataframe([info], [csheet.sheet])
+        df = build_library_dataframe(_with_sheets([info], [csheet.sheet]))
         rna = df[df["extraction_type"] == "rna"]
         assert len(rna) > 0
 
     def test_extra_sheet_columns_values(self, cancer_sheet_tsv):
         csheet = _parse_cancer_sheet(cancer_sheet_tsv)
         info = _make_data_set_info("matched_cancer")
-        df = build_library_dataframe([info], [csheet.sheet])
+        df = build_library_dataframe(_with_sheets([info], [csheet.sheet]))
 
         tumor_dna = df[df["library_name"].str.startswith("P001-T1-DNA1")].iloc[0]
         assert tumor_dna["folder_name"] == "P001_T1_DNA1_WGS1"
@@ -248,7 +256,7 @@ class TestBuildLibraryDataframe:
     def test_sheet_keys_of_standard_columns_are_not_duplicated(self, germline_sheet_tsv):
         gsheet = _parse_germline_sheet(germline_sheet_tsv)
         info = _make_data_set_info("germline_variants")
-        df = build_library_dataframe([info], [gsheet.sheet])
+        df = build_library_dataframe(_with_sheets([info], [gsheet.sheet]))
 
         # sex, isAffected, fatherName, motherName and extractionType only feed standard columns.
         assert {"is_affected", "father_pk", "mother_pk", "is_tumor"}.isdisjoint(df.columns)
@@ -257,7 +265,7 @@ class TestBuildLibraryDataframe:
     def test_library_selection_on_extra_sheet_column(self, cancer_sheet_tsv):
         csheet = _parse_cancer_sheet(cancer_sheet_tsv)
         info = _make_data_set_info("matched_cancer")
-        df = build_library_dataframe([info], [csheet.sheet])
+        df = build_library_dataframe(_with_sheets([info], [csheet.sheet]))
 
         selected = select_libraries(df, "library_type == 'mRNA_seq'")
         assert len(selected) > 0
@@ -300,7 +308,9 @@ def _build_germline_singleton_dataframe(custom_fields, values):
         f"P001\t.\t.\tF\tY\tWGS\tP001\t.\t{row}\n"
     )
     gsheet = _parse_germline_sheet(tsv)
-    return build_library_dataframe([_make_data_set_info("germline_variants")], [gsheet.sheet])
+    return build_library_dataframe(
+        _with_sheets([_make_data_set_info("germline_variants")], [gsheet.sheet])
+    )
 
 
 # ---------------------------------------------------------------------------
@@ -312,7 +322,7 @@ class TestSelectLibraries:
     def _cancer_df(self, cancer_sheet_tsv):
         csheet = _parse_cancer_sheet(cancer_sheet_tsv)
         info = _make_data_set_info("matched_cancer")
-        return build_library_dataframe([info], [csheet.sheet])
+        return build_library_dataframe(_with_sheets([info], [csheet.sheet]))
 
     def test_cancer_default(self, cancer_sheet_tsv):
         df = self._cancer_df(cancer_sheet_tsv)
@@ -323,7 +333,7 @@ class TestSelectLibraries:
     def test_germline_default(self, germline_sheet_tsv):
         gsheet = _parse_germline_sheet(germline_sheet_tsv)
         info = _make_data_set_info("germline_variants")
-        df = build_library_dataframe([info], [gsheet.sheet])
+        df = build_library_dataframe(_with_sheets([info], [gsheet.sheet]))
         result = select_libraries(df, None)
         assert (result["extraction_type"] == "dna").all()
 
@@ -400,7 +410,7 @@ class TestResolveRelationships:
     def _cancer_df(self, cancer_sheet_tsv):
         csheet = _parse_cancer_sheet(cancer_sheet_tsv)
         info = _make_data_set_info("matched_cancer")
-        return build_library_dataframe([info], [csheet.sheet])
+        return build_library_dataframe(_with_sheets([info], [csheet.sheet]))
 
     def test_matched_normal_lib(self, cancer_sheet_tsv):
         df = self._cancer_df(cancer_sheet_tsv)
@@ -823,7 +833,7 @@ class TestIntegrationRoundtrip:
             )
         }
 
-        df = build_library_dataframe([info], [csheet.sheet], relationships=rels)
+        df = build_library_dataframe(_with_sheets([info], [csheet.sheet]), relationships=rels)
         assert "matched_normal_lib" in df.columns
 
         selected = select_libraries(df, "role == 'tumor' and extraction_type == 'dna'")
@@ -1010,7 +1020,7 @@ class TestScenarioGermlineDuo:
         sheet = read_gtsv(_io.StringIO(tsv))
         info = _make_data_set_info("germline_variants")
 
-        df = build_library_dataframe([info], [sheet])
+        df = build_library_dataframe(_with_sheets([info], [sheet]))
         assert len(df) == 2
 
         members = _groups([info], [sheet], selection=None)
@@ -1039,7 +1049,7 @@ class TestScenarioGermlineSingleton:
         sheet = read_gtsv(_io.StringIO(tsv))
         info = _make_data_set_info("germline_variants")
 
-        df = build_library_dataframe([info], [sheet])
+        df = build_library_dataframe(_with_sheets([info], [sheet]))
         assert len(df) == 1
         assert df.iloc[0]["role"] == "index"
 
@@ -1056,7 +1066,7 @@ class TestScenarioMixedCancerAndGermline:
         info_c = _make_data_set_info("matched_cancer")
         info_g = _make_data_set_info("germline_variants")
 
-        df = build_library_dataframe([info_c, info_g], [csheet.sheet, gsheet.sheet])
+        df = build_library_dataframe(_with_sheets([info_c, info_g], [csheet.sheet, gsheet.sheet]))
         assert set(df["kind"].unique()) == {"cancer", "germline"}
 
     def test_per_kind_defaults(self, cancer_sheet_tsv, germline_sheet_tsv):
@@ -1098,8 +1108,10 @@ class TestScenarioMixedCancerAndGermline:
         csheet = _parse_cancer_sheet(cancer_sheet_tsv)
         gsheet = _parse_germline_sheet(germline_sheet_tsv)
         df = build_library_dataframe(
-            [_make_data_set_info("matched_cancer"), _make_data_set_info("germline_variants")],
-            [csheet.sheet, gsheet.sheet],
+            _with_sheets(
+                [_make_data_set_info("matched_cancer"), _make_data_set_info("germline_variants")],
+                [csheet.sheet, gsheet.sheet],
+            )
         )
         cls = WORKFLOW_REGISTRY[step]
         # The requirement may use the step's relationships, such as the matched normal
@@ -1121,7 +1133,7 @@ def test_germline_sheets_list_all_libraries_with_their_pedigree():
         father\t.\t.\tM\tN\tWGS\tfather\t.
     """)
     sheet = read_germline_tsv_sheet(io.StringIO(tsv))
-    df = build_library_dataframe([_make_data_set_info("germline_variants")], [sheet])
+    df = build_library_dataframe(_with_sheets([_make_data_set_info("germline_variants")], [sheet]))
     # Library names end in the PK of the naming scheme
     names = df["library_name"].str.rsplit("-", n=1).str[0]
     assert dict(zip(names, df["role"])) == {
@@ -1149,7 +1161,7 @@ def test_siblings_and_grandparents_are_not_primary_so_the_index_names_the_family
         mo\t.\tgm\tF\tN\tWES\tmo\t.
     """)
     sheet = read_germline_tsv_sheet(io.StringIO(tsv))
-    df = build_library_dataframe([_make_data_set_info("germline_variants")], [sheet])
+    df = build_library_dataframe(_with_sheets([_make_data_set_info("germline_variants")], [sheet]))
     names = df["library_name"].str.split("-", n=1).str[0]
     roles = dict(zip(names, df["role"]))
     assert roles == {
@@ -1174,21 +1186,24 @@ def test_the_family_id_of_the_sheet_names_the_pedigree(germline_trio_plus_sheet_
     gsheet = _parse_germline_sheet(germline_trio_plus_sheet_tsv)
     info = _make_data_set_info("germline_variants")
     info.pedigree_field_kwargs = {"join_by_field": "familyId"}
-    df = build_library_dataframe([info], [gsheet.sheet])
+    df = build_library_dataframe(_with_sheets([info], [gsheet.sheet]))
     groups = dict(zip(df["donor_name"].str.split("-").str[0], df["related_group"]))
     assert groups == {"P001": "family1", "P002": "family1", "P003": "family1"} | dict.fromkeys(
         ["P004", "P005", "P006", "P007"], "family2"
     )
-    assert set(build_donor_dataframe([info], [gsheet.sheet])["pedigree"]) == {"family1", "family2"}
+    assert set(build_donor_dataframe(_with_sheets([info], [gsheet.sheet]))["pedigree"]) == {
+        "family1",
+        "family2",
+    }
 
     # Without the field, the parent columns make P007 a pedigree of its own, named like P004's
     info.pedigree_field_kwargs = None
     with pytest.raises(ConfigError, match="both named family2; group them with pedigree_field"):
-        build_library_dataframe([info], [gsheet.sheet])
+        build_library_dataframe(_with_sheets([info], [gsheet.sheet]))
 
     # A familyId of its own names it without the field
     tsv = germline_trio_plus_sheet_tsv.replace("family2\tP007", "family3\tP007")
-    df = build_library_dataframe([info], [_parse_germline_sheet(tsv).sheet])
+    df = build_library_dataframe(_with_sheets([info], [_parse_germline_sheet(tsv).sheet]))
     assert set(df["related_group"]) == {"family1", "family2", "family3"}
 
 
@@ -1199,7 +1214,7 @@ def test_a_pedigree_field_without_a_value_is_an_error(germline_trio_plus_sheet_t
     info = _make_data_set_info("germline_variants")
     info.pedigree_field_kwargs = {"join_by_field": "familyId"}
     with pytest.raises(ConfigError, match="pedigree_field of data set 'first': Field 'familyId'"):
-        build_library_dataframe([info], [_parse_germline_sheet(tsv).sheet])
+        build_library_dataframe(_with_sheets([info], [_parse_germline_sheet(tsv).sheet]))
 
 
 def test_the_prefix_of_a_donor_named_group_follows_the_sheet_type(cancer_sheet_tsv):
@@ -1211,12 +1226,14 @@ def test_the_prefix_of_a_donor_named_group_follows_the_sheet_type(cancer_sheet_t
     """)
     for sheet_type, prefix in [("germline_variants", "FAM_"), ("generic", "")]:
         sheet = read_germline_tsv_sheet(io.StringIO(tsv))
-        df = build_library_dataframe([_make_data_set_info(sheet_type)], [sheet])
+        df = build_library_dataframe(_with_sheets([_make_data_set_info(sheet_type)], [sheet]))
         index_donor = df.loc[df["role"] == "index", "donor_name"].iloc[0]
         assert set(df["related_group"]) == {prefix + index_donor}
 
     cancer = _parse_cancer_sheet(cancer_sheet_tsv)
-    df = build_library_dataframe([_make_data_set_info("matched_cancer")], [cancer.sheet])
+    df = build_library_dataframe(
+        _with_sheets([_make_data_set_info("matched_cancer")], [cancer.sheet])
+    )
     assert (df["related_group"] == "PAT_" + df["donor_name"]).all()
 
 
@@ -1231,7 +1248,7 @@ def test_a_donors_other_libraries_join_the_family_but_only_the_first_dna_library
         mo\t.\t.\tF\tN\tWES\tmo\t.
     """)
     sheet = read_germline_tsv_sheet(io.StringIO(tsv))
-    df = build_library_dataframe([_make_data_set_info("germline_variants")], [sheet])
+    df = build_library_dataframe(_with_sheets([_make_data_set_info("germline_variants")], [sheet]))
     # Library names: <donor>-N1-<extraction>-<type>-<pk>; the first DNA library is the donor's
     types = df["library_name"].str.split("-").str[3]
     family = "FAM_" + df.loc[df["role"] == "index", "donor_name"].iloc[0]
@@ -1245,7 +1262,7 @@ class TestLibraryRequirement:
     def _cancer_df(self, cancer_sheet_tsv):
         csheet = _parse_cancer_sheet(cancer_sheet_tsv)
         info = _make_data_set_info("matched_cancer")
-        return build_library_dataframe([info], [csheet.sheet])
+        return build_library_dataframe(_with_sheets([info], [csheet.sheet]))
 
     def test_requirement_applies_to_an_explicit_selection(self, cancer_sheet_tsv):
         df = self._cancer_df(cancer_sheet_tsv)
@@ -1287,7 +1304,7 @@ def test_the_donor_table_lists_unsequenced_donors_with_their_parents():
 
     sheet = read_germline_tsv_sheet(io.StringIO(tsv), naming_scheme=NAMING_ONLY_SECONDARY_ID)
 
-    donors = build_donor_dataframe([_make_data_set_info()], [sheet])
+    donors = build_donor_dataframe([_make_data_set_info(sheet=sheet)])
 
     rows = donors.set_index("donor_name").to_dict("index")
     assert rows["P001"]["library_name"] == "P001-N1-DNA1-WGS1"

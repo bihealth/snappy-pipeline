@@ -3,12 +3,7 @@
 
 import pytest
 
-from snappy_pipeline.base import (
-    ConfigError,
-    UnknownFiltrationSourceException,
-    UnsupportedActionException,
-    in_task,
-)
+from snappy_pipeline.base import ConfigError, UnsupportedActionException, in_task
 from snappy_pipeline.workflow_model import TaskModel
 
 
@@ -31,12 +26,4 @@ def test_unsupported_action_exception():
     error_msg = "Raised UnsupportedActionException"
     with pytest.raises(Exception) as exec_info:
         raise UnsupportedActionException(error_msg)
-    assert exec_info.value.args[0] == error_msg
-
-
-def test_unknown_filtration_source_exception():
-    """Tests UnknownFiltrationSourceException raise."""
-    error_msg = "Raised UnknownFiltrationSourceException"
-    with pytest.raises(Exception) as exec_info:
-        raise UnknownFiltrationSourceException(error_msg)
     assert exec_info.value.args[0] == error_msg

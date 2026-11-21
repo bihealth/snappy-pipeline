@@ -1,22 +1,19 @@
 # -*- coding: utf-8 -*-
 """Base classes for the actual pipeline steps"""
 
-import contextlib
-import datetime
 import logging
 import os
 import os.path
 import inspect
 import math
 import re
-import sys
 import tempfile
 import typing
 from collections import OrderedDict
 from collections.abc import Mapping
 from dataclasses import dataclass
 from fnmatch import fnmatch
-from functools import cached_property, lru_cache, wraps
+from functools import cached_property, wraps
 from typing import Any, Callable
 
 import pydantic
@@ -42,50 +39,18 @@ from snappy_pipeline.models import (
 )
 from snappy_pipeline.wrapper_code import code_of, package_root
 from snappy_pipeline.utils import listify
+from snappy_pipeline.workflow_model import DataSetType
 from snappy_pipeline.reads import ReadGroup
 from snappy_pipeline.workflows.abstract.protocol import (
     DATA_SETS,
     DataSignature,
-    ExpectedPathSchema,
+    field_contract,
     select_signature,
 )
 
 if typing.TYPE_CHECKING:
     from snappy_pipeline.orchestration import Project
 from snappy_wrappers.resource_usage import ResourceUsage, mem_mb, runtime_minutes
-
-
-@contextlib.contextmanager
-def modified_environ(*remove, **update):
-    """
-    Temporarily updates the ``os.environ`` dictionary in-place.
-
-    The ``os.environ`` dictionary is updated in-place so that the modification
-    is sure to work in all situations.
-
-    :param remove: Environment variables to remove.
-    :param update: Dictionary of environment variables and values to add/update.
-
-       Source: https://stackoverflow.com/a/34333710/84349
-    """
-    env = os.environ
-    update = update or {}
-    remove = remove or []
-
-    # List of environment variables being updated or removed.
-    stomped = (set(update.keys()) | set(remove)) & set(env.keys())
-    # Environment variables and values to restore on exit.
-    update_after = {k: env[k] for k in stomped}
-    # Environment variables and values to remove on exit.
-    remove_after = frozenset(k for k in update if k not in env)
-
-    try:
-        env.update(update)
-        [env.pop(k, None) for k in remove]
-        yield
-    finally:
-        env.update(update_after)
-        [env.pop(k) for k in remove_after]
 
 
 Inputs: typing.TypeAlias = InputFiles | dict[str, Any]
@@ -181,7 +146,7 @@ class BaseStepPart:
             error_message = f"Action '{action}' is not supported. Valid options: {actions_str}"
             raise UnsupportedActionException(error_message)
 
-    def get_resource_usage(self, action: str, **kwargs) -> ResourceUsage:
+    def get_resource_usage(self, action: str) -> ResourceUsage:
         """Return the resource usage for the given action: ``resource_usage[action]`` or
         ``default_resource_usage``. A step part whose usage depends on its config defines either
         as a property."""
@@ -210,9 +175,7 @@ class BaseStepPart:
             threads: Threads = None,
             attempt: Attempt = 1,
         ) -> Any:
-            resource_usage = self.get_resource_usage(
-                action, wildcards=wildcards, input=input, threads=threads, attempt=attempt
-            )
+            resource_usage = self.get_resource_usage(action)
             if resource_name == "tmpdir" and not resource_usage.tmpdir:
                 return self.parent.get_tmpdir()
             if resource_name == "partition" and not resource_usage.partition:
@@ -308,7 +271,8 @@ class BaseStepPart:
 
     def get_result_files(self) -> list[str]:
         """Return the result files below ``output/``: the outputs of ``result_keys`` for
-        each output entity, at their mirror path."""
+        each output entity, at their mirror path; a static path (a file of the whole task, such
+        as a panel of normals) once."""
         result = []
         for action in self.actions:
             keys = self.result_keys
@@ -324,6 +288,9 @@ class BaseStepPart:
                 for path in paths if isinstance(paths, list) else [paths]:
                     unconstrained = re.sub(r"\{(\w+),[^}]*\}", r"{\1}", str(path))
                     template = "output/" + unconstrained.removeprefix("work/")
+                    if "{" not in template:
+                        result.append(template)
+                        continue
                     for entity in self.parent.output_entities:
                         result += expand(template, **self._result_wildcards(entity))
         return result
@@ -468,29 +435,17 @@ class LinkOutStepPart(BaseStepPart):
             os.symlink(target, path_out)
 
 
-@lru_cache()
-def _cached_read_cancer_tsv_sheet(path_abs, path_rel, naming_scheme):
-    """Cached reading of cancer TSV sheets."""
-    with open(path_abs, "rt") as f:
-        return io_tsv.read_cancer_tsv_sheet(f, path_rel, naming_scheme)
-
-
-@lru_cache()
-def _cached_read_germline_tsv_sheet(path_abs, path_rel, naming_scheme):
-    """Cached reading of germline TSV sheets."""
-    with open(path_abs, "rt") as f:
-        return io_tsv.read_germline_tsv_sheet(f, path_rel, naming_scheme)
-
-
-@lru_cache()
-def _cached_read_generic_tsv_sheet(path_abs, path_rel, naming_scheme):
-    """Cached reading of generic TSV sheets."""
-    with open(path_abs, "rt") as f:
-        return io_tsv.read_generic_tsv_sheet(f, path_rel, naming_scheme)
+#: The biomedsheets readers of the TSV sheets by sheet type
+_TSV_READERS = {
+    DataSetType.MATCHED_CANCER: io_tsv.read_cancer_tsv_sheet,
+    DataSetType.GERMLINE_VARIANTS: io_tsv.read_germline_tsv_sheet,
+    DataSetType.GENERIC: io_tsv.read_generic_tsv_sheet,
+}
 
 
 class DataSetInfo:
-    """Information on a DataSet"""
+    """A data set of the project with its loaded sample sheet; ``Project.data_set_infos`` loads
+    each once per run."""
 
     def __init__(
         self,
@@ -499,8 +454,6 @@ class DataSetInfo:
         sheet_type,
         is_background,
         naming_scheme,
-        sodar_uuid,
-        sodar_title,
         pedigree_field=None,
     ):
         """Constructor.
@@ -522,12 +475,6 @@ class DataSetInfo:
         'only_secondary_id'.
         :type naming_scheme: str
 
-        :param sodar_uuid: The UUID of the corresponding SODAR project.
-        :type sodar_uuid: str
-
-        :param sodar_title: The title of the project in SODAR [optional].
-        :type sodar_title: str
-
         :param pedigree_field: Custom field from sample sheet used to define pedigree, e.g.,
         'familyId'. If none defined, it will set pedigree based on sample sheet 'row'.
         Default: None.
@@ -548,10 +495,6 @@ class DataSetInfo:
         self.naming_scheme = naming_scheme
         #: The BioMed SampleSheet
         self.sheet = self._load_sheet()
-        #: The UUID of the corresponding SODAR project.
-        self.sodar_uuid = sodar_uuid
-        #: The (optional) title of the project in SODAR.
-        self.sodar_title = sodar_title
         #: The (optional) custom field used to define pedigree
         self.pedigree_field_kwargs = None
         if pedigree_field:
@@ -563,15 +506,11 @@ class DataSetInfo:
         if not os.path.exists(fname):
             raise ConfigError(f"Could not find sample sheet file {fname}")
         if self.sheet_path.endswith(".tsv"):
-            readers = {
-                "matched_cancer": _cached_read_cancer_tsv_sheet,
-                "germline_variants": _cached_read_germline_tsv_sheet,
-                "generic": _cached_read_generic_tsv_sheet,
-            }
-            if self.sheet_type not in readers:
+            if self.sheet_type not in _TSV_READERS:
                 raise ConfigError("Invalid sheet type {}".format(self.sheet_type))
             try:
-                sheet = readers[self.sheet_type](fname, self.sheet_path, self.naming_scheme)
+                with open(fname, "rt") as f:
+                    sheet = _TSV_READERS[self.sheet_type](f, self.sheet_path, self.naming_scheme)
             except SheetIOException as e:
                 raise ConfigError(f"Sample sheet {fname}: {e}") from None
             # biomedsheets skips rows without libraryType silently (germline and generic sheets)
@@ -586,7 +525,7 @@ class DataSetInfo:
                     "so there are no libraries. A row without libraryType is a person without "
                     "sequencing data, such as a parent who was not sequenced."
                 )
-            return self._set_is_background(sheet, self.is_background)
+            return sheet
         elif self.sheet_path.endswith(".json"):
             with open(fname, "rt") as f:
                 sheet_json = json_loads_ordered(f.read())
@@ -595,27 +534,13 @@ class DataSetInfo:
                 dict_class=OrderedDict,
             )
             resolved_json = resolver.resolve("file://" + self.sheet_path, sheet_json)
-            return self._set_is_background(
-                SheetBuilder(resolved_json).run(
-                    name_generator=name_generator_for_scheme(self.naming_scheme)
-                ),
-                self.is_background,
+            return SheetBuilder(resolved_json).run(
+                name_generator=name_generator_for_scheme(self.naming_scheme)
             )
         else:
             raise ValueError(  # pragma: no cover
                 "Invalid sheet file type of {}".format(self.sheet_path)
             )
-
-    @classmethod
-    def _set_is_background(cls, sheet, flag):
-        """Override "is_background" flag"""
-        # TODO: check whether is already there and fail if not compatible
-        sheet.json_data["extraInfoDefs"]["is_background"] = {
-            "type": "boolean",
-            "default": False,
-        }
-        sheet.extra_infos["is_background"] = flag
-        return sheet
 
 
 @dataclass(frozen=True)
@@ -641,6 +566,14 @@ class BaseStep:
 
     #: DataSignatures a task of this step produces; the default of :meth:`task_produces`
     produces: list[DataSignature] = []
+
+    #: The step part of each tool, by the ``tool`` value of the task config: the constructor
+    #: registers the selected one after the ``helper_parts``; a step that registers its parts
+    #: itself leaves it empty
+    tool_parts: dict[str, type[BaseStepPart]] = {}
+
+    #: Structural step parts registered for every tool, such as ``WritePedigreeStepPart``
+    helper_parts: tuple[type[BaseStepPart], ...] = ()
 
     #: Whether ``get_output_paths`` needs the project's read discovery (``discovery`` keyword)
     needs_discovery: bool = False
@@ -768,16 +701,17 @@ class BaseStep:
         self.w_config = project.model
         self.config = project.task_configs[task_name]
         self.depends_on = getattr(self.config, "depends_on", None)
-        self.config_paths = project.config_paths
-        self.project_dir = project.project_dir
 
         self.sub_steps: dict[str, BaseStepPart] = {}
         self._library_dataframes = {}
         self._primary_dna_libraries = {}
-        self._donor_tables = {}
-        self.data_set_infos = list(self._load_data_set_infos())
-        self.sheets = [info.sheet for info in self.data_set_infos]
+        #: The data sets with their sample sheets, loaded once per run and shared by all tasks
+        self.data_set_infos = project.data_set_infos
 
+        if self.tool_parts:
+            self.register_sub_step_classes(
+                (*self.helper_parts, self.tool_parts[str(self.config.tool)])
+            )
         self.check_config()
 
     @staticmethod
@@ -837,7 +771,7 @@ class BaseStep:
           the files keep the names and sub-directories of the task's own input.
         """
         source = self.depends_on.reads if source is None else source
-        if source not in ("", DATA_SETS) and self.project.task(source).step != "external_data":
+        if self.reads_from_task(source):
             out_dir = self.namespaced_path(source, f"work/{library_name}/out")
             upstream = self.project.task_configs[source].depends_on.reads
             return [group.rebased(out_dir) for group in self.read_groups(library_name, upstream)]
@@ -872,9 +806,14 @@ class BaseStep:
         them.
         """
         source = self.depends_on.reads
-        if source not in ("", DATA_SETS) and self.project.task(source).step != "external_data":
+        if self.reads_from_task(source):
             return [self.namespaced_path(source, f"work/{library_name}/out")]
         return [path for group in self.read_groups(library_name) for path in group.paths.values()]
+
+    def reads_from_task(self, source: str) -> bool:
+        """Whether ``source`` (a ``depends_on.reads`` value) is a task that writes FASTQs, such as
+        ``adapter_trimming``, rather than the data sets or an ``external_data`` task"""
+        return source not in ("", DATA_SETS) and self.project.task(source).step != "external_data"
 
     def build_library_dataframe(self, include_background: bool = False):
         """Return the unified library dataframe for this workflow, with its relationships.
@@ -885,7 +824,7 @@ class BaseStep:
         """
         if include_background not in self._library_dataframes:
             df = self._with_relationships(
-                type(self), self.config, self._library_table(include_background)
+                type(self), self.config, self.library_table(include_background)
             )
             self._library_dataframes[include_background] = self._narrow_background(self.config, df)
         return self._library_dataframes[include_background]
@@ -899,12 +838,13 @@ class BaseStep:
         kept = set(_query_libraries(df[df["is_background"]], selection).index)
         return df[~df["is_background"] | df.index.isin(kept)]
 
-    def _library_table(self, include_background: bool):
-        """Return the library table without relationships, built once per run."""
+    def library_table(self, include_background: bool):
+        """Return the library table without relationships, built once per run and shared by all
+        tasks (``Project.library_tables``)."""
         tables = self.project.library_tables
         if include_background not in tables:
             tables[include_background] = build_library_dataframe(
-                self.data_set_infos, self.sheets, include_background=include_background
+                self.data_set_infos, include_background=include_background
             )
         return tables[include_background]
 
@@ -926,7 +866,7 @@ class BaseStep:
             return self.libraries
         cls = WORKFLOW_REGISTRY[self.project.task(task_name).step]
         config = self.project.task_configs[task_name]
-        df = self._with_relationships(cls, config, self._library_table(cls.background_results))
+        df = self._with_relationships(cls, config, self.library_table(cls.background_results))
         df = self._narrow_background(config, df)
         return select_libraries(
             df,
@@ -952,10 +892,7 @@ class BaseStep:
         """Return ``"library"`` or ``"related"``: the task's ``group_by``, else its step's
         :meth:`default_group_by`, else the one its upstream tasks declare (so a filtration
         after joint calling writes per group of related libraries), else ``"library"``."""
-        own = getattr(self.config, "group_by", None)
-        if own is not None:
-            return own
-        return _declared_group_by(self.project, self.task_name, frozenset()) or "library"
+        return self.project.group_by[self.task_name]
 
     @cached_property
     def libraries(self):
@@ -1007,7 +944,7 @@ class BaseStep:
     def upstream_entity(self, field: str, library_name: str) -> str:
         """Return the entity under which the task of ``depends_on.<field>`` writes the result of ``library_name``: its related group when that task writes one result per related group, else the library itself."""
         (upstream,) = self.upstream_task_names(field)
-        if _declared_group_by(self.project, upstream, frozenset()) != "related":
+        if self.project.group_by[upstream] != "related":
             return library_name
         return self.library_row(library_name)["related_group"]
 
@@ -1068,11 +1005,12 @@ class BaseStep:
         """Return the donor table rows of the pedigree named ``pedigree``: every donor of the
         pedigree, sequenced or not, with its parents as donor names, its sex and its DNA
         library (``""`` without one); see :func:`build_donor_dataframe`."""
-        if include_background not in self._donor_tables:
-            self._donor_tables[include_background] = build_donor_dataframe(
-                self.data_set_infos, self.sheets, include_background=include_background
+        tables = self.project.donor_tables
+        if include_background not in tables:
+            tables[include_background] = build_donor_dataframe(
+                self.data_set_infos, include_background=include_background
             )
-        donors = self._donor_tables[include_background]
+        donors = tables[include_background]
         return donors[donors["pedigree"] == pedigree]
 
     def children_with_both_parents(self) -> list[str]:
@@ -1182,6 +1120,29 @@ class BaseStep:
             rows = kept
         return rows[0]
 
+    def matched(self, library_name: str, relationship: str) -> str:
+        """The library that a relationship (``matched_normal_lib``, ``matched_rna_lib``) gives for
+        ``library_name``, or ``""`` for none"""
+        return self.library_row(library_name).get(relationship) or ""
+
+    def matched_normal(self, tumor_library: str) -> str:
+        """The matched normal DNA library of a tumor library (``MATCHED_NORMAL_RELATIONSHIP``), or ``""``"""
+        return self.matched(tumor_library, "matched_normal_lib")
+
+    def tumor_normal_alignments(self, tumor_library: str) -> dict[str, str]:
+        """The rule inputs of a tool that compares a tumor with its matched normal: ``tumor_bam``,
+        ``tumor_bai``, ``normal_bam`` and ``normal_bai`` from ``depends_on.alignments``"""
+        tumor = self.get_upstream_paths("alignments", library_name=tumor_library)
+        normal = self.get_upstream_paths(
+            "alignments", library_name=self.matched_normal(tumor_library)
+        )
+        return {
+            "tumor_bam": tumor.bam,
+            "tumor_bai": tumor.bai,
+            "normal_bam": normal.bam,
+            "normal_bai": normal.bai,
+        }
+
     def library_warnings(self) -> list[str]:
         """Return warnings about the libraries of this task, which the main Snakefile prints once
         per run: by default, the cancer libraries without a matched normal that a task with
@@ -1223,21 +1184,21 @@ class BaseStep:
                 f"cannot resolve upstream field '{field_name}'."
             )
 
-        model_fields = type(self.depends_on).model_fields
-        field_info = model_fields.get(field_name)
-        if field_info is None:
+        from snappy_pipeline.workflow_registry import WORKFLOW_REGISTRY
+
+        if field_name not in type(self.depends_on).model_fields:
             raise ValueError(
                 f"Task '{self.task_name}' has no depends_on field named '{field_name}'."
             )
-
-        target_task_name = getattr(self.depends_on, field_name)
+        # load_project checked the value and the upstream task; this only looks them up
+        target_task_name = self.project.dependencies[self.task_name].get(field_name)
         if not target_task_name:
             raise ValueError(f"Task '{self.task_name}': depends_on.{field_name} is empty or unset.")
-        if isinstance(target_task_name, list):
+        if isinstance(target_task_name, tuple):
             if upstream_task not in target_task_name:
                 raise ValueError(
                     f"Task '{self.task_name}': depends_on.{field_name} names several tasks; "
-                    f"pass one of {target_task_name} as upstream_task, not {upstream_task!r}"
+                    f"pass one of {list(target_task_name)} as upstream_task, not {upstream_task!r}"
                 )
             target_task_name = upstream_task
         elif upstream_task not in (None, target_task_name):
@@ -1245,43 +1206,29 @@ class BaseStep:
                 f"Task '{self.task_name}': depends_on.{field_name} names {target_task_name!r}, "
                 f"not {upstream_task!r}"
             )
-
-        target_task = next((t for t in self.w_config.tasks if t.name == target_task_name), None)
-        if target_task is None:
-            raise ValueError(
-                f"Task '{self.task_name}': upstream task '{target_task_name}' from "
-                f"depends_on.{field_name} was not found in configuration."
-            )
-        step_name = target_task.step
-
-        from snappy_pipeline.workflow_registry import WORKFLOW_REGISTRY
-
-        workflow_cls = WORKFLOW_REGISTRY.get(step_name)
-        if workflow_cls is None:
-            raise ValueError(
-                f"Workflow class for step '{step_name}' (from depends_on.{field_name}="
-                f"'{target_task_name}') not found in WORKFLOW_REGISTRY."
-            )
-
-        required_sig: DataSignature | None = None
-        expected_schema: type[pydantic.BaseModel] | None = None
-        tool = self.config.tool_tag()
-        for meta in field_info.metadata:
-            if isinstance(meta, DataSignature):
-                required_sig = meta.for_tool(tool)
-            elif isinstance(meta, ExpectedPathSchema):
-                expected_schema = meta.for_tool(tool)
-            elif isinstance(meta, type) and issubclass(meta, pydantic.BaseModel):
-                expected_schema = meta
-
+        step_name = self.project.task(target_task_name).step
+        contract = field_contract(
+            type(self.depends_on).model_fields[field_name], self.config.tool_tag()
+        )
         return ResolvedDependency(
             field_name=field_name,
             task_name=target_task_name,
             step_name=step_name,
-            workflow_cls=workflow_cls,
-            signature=required_sig,
-            expected_schema=expected_schema,
+            workflow_cls=WORKFLOW_REGISTRY[step_name],
+            signature=contract.signature,
+            expected_schema=contract.schema,
         )
+
+    def upstream_signature(
+        self, field_name: str, upstream_task: str | None = None
+    ) -> DataSignature:
+        """The signature that ``depends_on.<field_name>`` reads from its upstream task, as
+        ``load_project`` selected it from what that task produces"""
+        selected = self.project.selected[self.task_name][field_name]
+        if isinstance(selected, tuple):
+            names = self.project.dependencies[self.task_name][field_name]
+            return selected[names.index(upstream_task)]
+        return selected
 
     def _check_upstream_library(self, upstream: str, library_name: str) -> None:
         """Raise ``ConfigError`` if the upstream task writes no result for ``library_name``: a
@@ -1378,13 +1325,16 @@ class BaseStep:
             self._check_upstream_library(dependency.task_name, kwargs["library_name"])
 
         # The provider gets the signature this consumer reads, so it can choose the file.
-        required = signature or dependency.signature
-        produced = self.project.signatures[dependency.task_name]
-        selected = select_signature(produced, required)
-        if selected is None:
-            raise ConfigError(
-                f"depends_on.{req_field_name} task {dependency.task_name!r} produces no {required}"
-            )
+        if signature is None:
+            selected = self.upstream_signature(req_field_name, upstream_task)
+        else:
+            produced = self.project.signatures[dependency.task_name]
+            selected = select_signature(produced, signature)
+            if selected is None:
+                raise ConfigError(
+                    f"depends_on.{req_field_name} task {dependency.task_name!r} produces no "
+                    f"{signature}"
+                )
         if dependency.workflow_cls.needs_discovery:
             kwargs["discovery"] = self.project.read_discovery
         local_paths = dependency.workflow_cls.get_output_paths(
@@ -1514,27 +1464,18 @@ class BaseStep:
             for name in ("runtime", "mem", "partition", "tmpdir")
         }
 
-    def get_tmpdir(self) -> str:
-        """Return temporary directory.
-
-        To be used directly or via get_resource("step", "action", "tmpdir")
-
-        1. Try to evaluate global_config/tmpdir. Interpret $-variables from environment.
-           Provides the current date as $TODAY.
-        2. If this fails, try to use environment variable TMPDIR.
-        3. If this fails, use tempfile.gettempdir(), same as Snakemake default.
-        """
-        tmpdir = getattr(self.w_config, "global_config", {}).get("tmpdir", None)
-        if tmpdir:
-            with modified_environ(TODAY=datetime.date.today().strftime("%Y%m%d")):
-                tmpdir = os.path.expandvars(tmpdir)
-        if not tmpdir:
-            tmpdir = os.getenv("TMPDIR")
-        if not tmpdir:
-            tmpdir = tempfile.gettempdir()
-        # Force existence of temporary directory
+    @cached_property
+    def tmpdir(self) -> str:
+        """The temporary directory of the jobs (the ``tmpdir`` resource): ``resources.tmpdir`` of the
+        project config, else ``$TMPDIR``, else the system's, as for Snakemake. It is created once."""
+        tmpdir = os.path.expandvars(self.w_config.resources.tmpdir) or os.getenv("TMPDIR")
+        tmpdir = tmpdir or tempfile.gettempdir()
         os.makedirs(tmpdir, exist_ok=True)
         return tmpdir
+
+    def get_tmpdir(self) -> str:
+        """See ``tmpdir``; used by ``get_resource(part, action, "tmpdir")``"""
+        return self.tmpdir
 
     def get_log_file(self, sub_step: str, action: str) -> Outputs:
         """Return the log files of a rule, for ``log: **wf.get_log_file(...)``"""
@@ -1560,20 +1501,6 @@ class BaseStep:
                 'Could not find sub step "{}" in workflow step "{}"'.format(sub_step, self.name)
             )  # pragma: no cover
 
-    def _load_data_set_infos(self) -> typing.Generator[DataSetInfo, None, None]:
-        """Load BioMed Sample Sheets as given by configuration and yield them"""
-        for name, data_set in self.w_config.data_sets.items():
-            yield DataSetInfo(
-                name,
-                data_set.file,
-                data_set.type,
-                data_set.is_background,
-                data_set.naming_scheme,
-                data_set.sodar_uuid,
-                data_set.sodar_title,
-                data_set.pedigree_field,
-            )
-
     @staticmethod
     def wrapper_path(path: str) -> str:
         """The ``file://`` URL of a wrapper directory below ``snappy_wrappers/wrappers``"""
@@ -1585,24 +1512,9 @@ class BaseStep:
 # ---------------------------------------------------------------------------
 
 
-def _declared_group_by(project, task_name: str, visited: frozenset[str]) -> str | None:
-    """Return the ``group_by`` that a task declares: its own, else its step's default, else the
-    one that its upstream tasks declare, depth first in ``depends_on`` order. A task without any
-    declares ``None``, so the final default ``"library"`` does not spread downstream."""
-    from snappy_pipeline.workflow_registry import WORKFLOW_REGISTRY
-
-    config = project.task_configs[task_name]
-    if (own := getattr(config, "group_by", None)) is not None:
-        return own
-    if default := WORKFLOW_REGISTRY[project.task(task_name).step].default_group_by(config):
-        return default
-    from snappy_pipeline.orchestration import upstream_tasks
-
-    for upstream in upstream_tasks(project.dependencies.get(task_name, {})):
-        if upstream not in visited and upstream != task_name:
-            if declared := _declared_group_by(project, upstream, visited | {task_name}):
-                return declared
-    return None
+def _declared_group_by(project, task_name: str, visited: frozenset[str] = frozenset()) -> str:
+    """The level a task writes its results at, resolved once by ``load_project`` (``Project.group_by``)."""
+    return project.group_by[task_name]
 
 
 # ---------------------------------------------------------------------------
@@ -1622,6 +1534,15 @@ TARGETED_LIBRARY_TYPES = ("WES", "Panel_seq")
 #: normal (the ``matched_normal_lib`` relationship); ``BaseStep.library_warnings`` names the
 #: libraries they leave out
 MATCHED_NORMAL_REQUIREMENT = "kind == 'cancer' and matched_normal_lib != ''"
+
+#: The ``default_relationships`` of the steps that compare each tumor with its matched normal: the
+#: donor's normal DNA library as ``matched_normal_lib``
+MATCHED_NORMAL_RELATIONSHIP = {
+    "matched_normal_lib": RelationshipDefinition(
+        via="donor_name",
+        target="role == 'normal' and extraction_type == 'dna'",
+    )
+}
 
 #: Standard columns of the library dataframe built by :func:`build_library_dataframe`.
 _LIBRARY_COLUMNS = [
@@ -1712,12 +1633,7 @@ def _library_extra_columns(raw_sheet) -> dict[str, dict[str, Any]]:
     return result
 
 
-def build_library_dataframe(
-    data_set_infos,
-    sheets,
-    relationships=None,
-    include_background=False,
-):
+def build_library_dataframe(data_set_infos, relationships=None, include_background=False):
     """Build a tidy pandas DataFrame with one row per NGS library.
 
     The biomedsheets views (CancerCaseSheet for cancer sheets; GenericSampleSheet for the
@@ -1728,9 +1644,8 @@ def build_library_dataframe(
     Parameters
     ----------
     data_set_infos:
-        Iterable of :class:`DataSetInfo` objects (``self.data_set_infos``).
-    sheets:
-        Corresponding raw biomedsheets ``sheet`` objects (``self.sheets``).
+        Iterable of :class:`DataSetInfo` objects (``self.data_set_infos``), each with its
+        loaded biomedsheets ``sheet``.
 
     Returns
     -------
@@ -1763,30 +1678,21 @@ def build_library_dataframe(
 
     rows: list[dict] = []
 
-    for info, _raw_sheet in zip(data_set_infos, sheets):
+    for info in data_set_infos:
         if info.is_background and not include_background:
             continue
+        _raw_sheet = info.sheet
 
         extra_columns = _library_extra_columns(_raw_sheet) if _raw_sheet is not None else {}
 
         sheet_type = _sheet_type(info)
 
         # ── matched_cancer ───────────────────────────────────────────────────
-        if sheet_type == "matched_cancer":
-            try:
-                csheet = CancerCaseSheet(
-                    _raw_sheet,
-                    options=CancerCaseSheetOptions(
-                        allow_missing_normal=True, allow_missing_tumor=True
-                    ),
-                )
-            except Exception as exc:
-                print(
-                    f"WARNING: could not build cancer library DataFrame: {exc}",
-                    file=sys.stderr,
-                )
-                continue
-
+        if sheet_type == DataSetType.MATCHED_CANCER:
+            csheet = CancerCaseSheet(
+                _raw_sheet,
+                options=CancerCaseSheetOptions(allow_missing_normal=True, allow_missing_tumor=True),
+            )
             # Collect library names that belong to the primary tumor per donor
             # (first tumor in primary_sample_pairs).
             primary_tumor_lib_names: set[str] = set()
@@ -2019,7 +1925,11 @@ def _donor_name(donor) -> str:
 FAMILY_FIELD = "familyId"
 
 #: The prefix of a related group that is named after a donor, by sheet type
-_GROUP_PREFIXES = {"matched_cancer": "PAT_", "germline_variants": "FAM_", "generic": ""}
+_GROUP_PREFIXES = {
+    DataSetType.MATCHED_CANCER: "PAT_",
+    DataSetType.GERMLINE_VARIANTS: "FAM_",
+    DataSetType.GENERIC: "",
+}
 
 
 def _sheet_type(info) -> str:
@@ -2102,7 +2012,7 @@ def _check_groups(df) -> None:
         )
 
 
-def build_donor_dataframe(data_set_infos, sheets, include_background=False):
+def build_donor_dataframe(data_set_infos, include_background=False):
     """Build a DataFrame with one row per donor of the germline sample sheets, sequenced or
     not: the parents as donor names (``"0"`` for none), ``sex``, the donor's primary DNA
     library (``""`` without one) and ``pedigree``, the name of its pedigree (the ``related_group``
@@ -2110,11 +2020,12 @@ def build_donor_dataframe(data_set_infos, sheets, include_background=False):
     import pandas as pd
 
     rows: list[dict] = []
-    for info, raw_sheet in zip(data_set_infos, sheets):
+    for info in data_set_infos:
         if info.is_background and not include_background:
             continue
         sheet_type = _sheet_type(info)
-        if sheet_type == "matched_cancer" or raw_sheet is None:
+        raw_sheet = info.sheet
+        if sheet_type == DataSetType.MATCHED_CANCER or raw_sheet is None:
             continue
         germline_sheet = _germline_case_sheet(info, raw_sheet)
         for pedigree in germline_sheet.cohort.pedigrees:

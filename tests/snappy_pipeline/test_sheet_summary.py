@@ -87,6 +87,9 @@ def _reads_task(source, libraries, read_groups):
         project=project,
         libraries=pd.DataFrame({"library_name": libraries}),
         read_groups=read_groups,
+        reads_from_task=lambda source: (
+            source not in ("", "data_sets") and project.task(source).step != "external_data"
+        ),
     )
 
 

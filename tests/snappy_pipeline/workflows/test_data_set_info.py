@@ -24,8 +24,6 @@ def _info(path):
         sheet_type="germline_variants",
         is_background=False,
         naming_scheme="only_secondary_id",
-        sodar_uuid=None,
-        sodar_title=None,
     )
 
 

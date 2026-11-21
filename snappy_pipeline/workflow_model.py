@@ -3,12 +3,7 @@ from typing import Any
 
 from pydantic import ConfigDict, Field, model_validator
 
-from snappy_pipeline.models import (
-    ConfigPath,
-    LibraryFolders,
-    SnappyModel,
-    SnappyStepModel,
-)
+from snappy_pipeline.models import ConfigPath, LibraryFolders, SnappyModel
 
 
 class DataSetType(enum.StrEnum):
@@ -70,10 +65,14 @@ class TaskModel(SnappyModel):
 
 
 class Resources(SnappyModel):
-    """Project-wide rules for the memory and runtime that jobs request."""
+    """Project-wide rules for the memory, runtime and temporary directory that jobs request."""
 
     retry_factor: float = 1.5
     """Memory and runtime grow by this factor with each retry of a failed job"""
+
+    tmpdir: str = ""
+    """The temporary directory of the jobs (their ``tmpdir`` resource), with ``$VARIABLES`` of the
+    environment expanded; unset: ``$TMPDIR``, else the system's temporary directory"""
 
 
 class ProjectInfo(SnappyModel):
@@ -85,7 +84,9 @@ class ProjectInfo(SnappyModel):
     description: str = ""
 
 
-class ConfigModel(SnappyStepModel):
+class ConfigModel(SnappyModel):
+    """The project configuration, ``config.yaml``; ``snappy run`` adds ``task`` and ``frozen``."""
+
     model_config = ConfigDict(
         extra="allow",
         use_attribute_docstrings=True,

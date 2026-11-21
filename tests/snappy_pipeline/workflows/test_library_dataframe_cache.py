@@ -7,6 +7,7 @@ from types import SimpleNamespace
 import pandas as pd
 import pytest
 
+from snappy_pipeline.orchestration import resolve_group_by
 from snappy_pipeline.workflows import abstract
 from snappy_pipeline.workflows.abstract import BaseStep
 from snappy_pipeline.workflows.abstract.protocol import DataSignature, DataType
@@ -37,7 +38,7 @@ def _make_step():
     step = object.__new__(_DummyStep)
     step.data_set_infos = []
     step.sheets = []
-    step.project = SimpleNamespace(library_tables={})
+    step.project = SimpleNamespace(library_tables={}, group_by={"dummy": "related"})
     step.config = SimpleNamespace(library_selection=None, group_by="related", relationships=None)
     step.task_name = "dummy"
     step._library_dataframes = {}
@@ -153,6 +154,7 @@ def test_a_joint_call_takes_one_dna_library_per_donor_the_index_first(mocker):
 
 
 def test_group_by_comes_from_the_task_then_its_step_then_upstream():
+    """``load_project`` resolves the level of every task once; the steps read ``Project.group_by``."""
     configs = {
         "mapping": SimpleNamespace(group_by=None, tool="bwa"),
         "calling": SimpleNamespace(group_by=None, tool="gatk4_hc_joint"),
@@ -164,29 +166,29 @@ def test_group_by_comes_from_the_task_then_its_step_then_upstream():
     steps = {"mapping": "ngs_mapping", "calling": "variant_calling"}
     steps |= {"annotation": "variant_annotation", "single": "variant_calling"}
     steps |= {"combine": "combine_variants", "phasing": "variant_phasing"}
-    project = SimpleNamespace(
-        task_configs=configs,
-        dependencies={
-            "calling": {"alignments": "mapping"},
-            "annotation": {"variants": "calling"},
-            "single": {"alignments": "mapping"},
-            "combine": {"germline_variants": "calling", "somatic_variants": "single"},
-            "phasing": {"combined_variants": "combine"},
-        },
-        task=lambda name: SimpleNamespace(step=steps[name]),
-    )
+    tasks = tuple(SimpleNamespace(name=name, step=step) for name, step in steps.items())
+    dependencies = {
+        "mapping": {},
+        "calling": {"alignments": "mapping"},
+        "annotation": {"variants": "calling"},
+        "single": {"alignments": "mapping"},
+        "combine": {"germline_variants": "calling", "somatic_variants": "single"},
+        "phasing": {"combined_variants": "combine"},
+    }
 
-    def effective(name):
-        step = object.__new__(_DummyStep)
-        step.config, step.project, step.task_name = configs[name], project, name
-        return step.effective_group_by
+    group_by = resolve_group_by(tasks, configs, dependencies)
 
-    assert effective("mapping") == "library"  # nothing declared
-    assert effective("calling") == "related"  # the step's default: joint calling
-    assert effective("annotation") == "related"  # inherited from the calling task
-    assert effective("single") == "library"  # the task's own choice wins
-    assert effective("combine") == "library"  # per tumor, not the germline calls' grouping
-    assert effective("phasing") == "library"  # the tumor tools phase per tumor
+    assert group_by == {
+        "mapping": "library",  # nothing declared
+        "calling": "related",  # the step's default: joint calling
+        "annotation": "related",  # inherited from the calling task
+        "single": "library",  # the task's own choice wins
+        "combine": "library",  # per tumor, not the germline calls' grouping
+        "phasing": "library",  # the tumor tools phase per tumor
+    }
+    step = object.__new__(_DummyStep)
+    step.project, step.task_name = SimpleNamespace(group_by=group_by), "annotation"
+    assert step.effective_group_by == "related"
 
 
 def test_background_selection_narrows_only_the_background_libraries():

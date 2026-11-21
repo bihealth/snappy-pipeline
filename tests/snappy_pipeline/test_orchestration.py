@@ -83,7 +83,8 @@ def _mapping(name="mapping", depends_on=None, **config):
 def _calling(name="calling", mapping="mapping", tool="mutect2", **depends_on):
     depends_on = {"alignments": mapping, "reference": "genome", **depends_on}
     config = {"depends_on": depends_on, "tool": tool}
-    config[tool] = {"contamination": {}} if tool == "mutect2" else {}
+    required = {"mutect2": {"contamination": {}}, "bcftools_call": {"assembly": "GRCh38"}}
+    config[tool] = required.get(tool, {})
     return ("variant_calling", name, config)
 
 
