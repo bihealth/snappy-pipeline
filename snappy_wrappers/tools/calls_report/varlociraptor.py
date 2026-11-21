@@ -318,15 +318,22 @@ def probability_columns(vcf: Vcf) -> dict[str, Column]:
     return result
 
 
-def sample_columns(vcf: Vcf, rows: list[dict[str, Any]]) -> dict[str, Column]:
-    """The rendering of the per-sample columns, in order, labelled with the short sample names."""
+def sample_columns(
+    vcf: Vcf, rows: list[dict[str, Any]], on_demand: bool = False
+) -> dict[str, Column]:
+    """The rendering of the per-sample columns, in order, labelled with the short sample names;
+    ``on_demand`` hides the allele frequency, depth and genotype until the reader shows them
+    (the pedigree plot of the row details has them)."""
     result: dict[str, Column] = {}
     labels = short_labels(vcf.samples)
+    display = "available" if on_demand else None
     for sample in vcf.samples:
         short = labels[sample]
-        result[f"{sample}: AF"] = ticks(label=f"{short}: AF", precision=3, domain=(0, 1))
-        result[f"{sample}: DP"] = bars(label=f"{short}: DP")
-        result[f"{sample}: GT"] = Column(label=f"{short}: GT")
+        result[f"{sample}: AF"] = ticks(
+            label=f"{short}: AF", precision=3, domain=(0, 1), display=display
+        )
+        result[f"{sample}: DP"] = bars(label=f"{short}: DP", display=display)
+        result[f"{sample}: GT"] = Column(label=f"{short}: GT", display=display)
         most = max(
             (
                 record["count"]

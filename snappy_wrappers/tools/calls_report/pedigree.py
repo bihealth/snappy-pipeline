@@ -21,6 +21,9 @@ X_STEP, Y_STEP = 96, 104
 #: Characters of a member's label under its node; longer labels are cut, the tooltip has them
 LABEL_LENGTH = 14
 
+#: How far below a couple the sibship line runs (in rows): below the labels of the couple
+SIBSHIP = 0.72
+
 #: The sex of the unknown parent that fills the other slot
 OPPOSITE = {"father": "male", "mother": "female"}
 
@@ -152,8 +155,8 @@ def layout(members: list[Member]) -> dict[str, tuple[float, int]]:
 
 
 def nodes_and_edges(members: list[Member]) -> tuple[list[dict[str, Any]], list[dict[str, Any]]]:
-    """The records of the layout: nodes with their glyph and position, edges between partners
-    and from each couple's center to its children."""
+    """The records of the layout: nodes with their glyph and position, and the line segments
+    between partners, down to the sibship line and down to each child."""
     positions = layout(members)
     nodes = [
         {
@@ -171,23 +174,25 @@ def nodes_and_edges(members: list[Member]) -> tuple[list[dict[str, Any]], list[d
         }
         for member in members
     ]
-    edges = []
-    couples = set()
+    # Orthogonal lines, as pedigrees are drawn: the partners joined, a drop from the middle of
+    # their line to the sibship line half-way down, and a drop from it to each child
+    couples: dict[tuple[str, str], list[str]] = {}
     for member in members:
         if member.father in positions and member.mother in positions:
-            couples.add((member.father, member.mother))
-            (xf, yf), (xm, _) = positions[member.father], positions[member.mother]
-            edges.append(
-                {
-                    "x": (xf + xm) / 2,
-                    "y": -yf,
-                    "x2": positions[member.name][0],
-                    "y2": -positions[member.name][1],
-                }
-            )
-    for father, mother in sorted(couples):
-        (xf, yf), (xm, ym) = positions[father], positions[mother]
-        edges.append({"x": xf, "y": -yf, "x2": xm, "y2": -ym})
+            couples.setdefault((member.father, member.mother), []).append(member.name)
+    edges = []
+    for (father, mother), children in sorted(couples.items()):
+        (xf, yf), (xm, _) = positions[father], positions[mother]
+        top, center = -yf, (xf + xm) / 2
+        sibship = top - SIBSHIP
+        edges.append({"x": xf, "y": top, "x2": xm, "y2": top})
+        edges.append({"x": center, "y": top, "x2": center, "y2": sibship})
+        xs = [positions[child][0] for child in children] + [center]
+        if max(xs) > min(xs):
+            edges.append({"x": min(xs), "y": sibship, "x2": max(xs), "y2": sibship})
+        for child in children:
+            x, y = positions[child]
+            edges.append({"x": x, "y": sibship, "x2": x, "y2": -y})
     return nodes, edges
 
 

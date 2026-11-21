@@ -119,10 +119,17 @@ def test_nodes_and_edges_carry_the_glyphs_and_link_couples_to_children():
     assert by_name["idx-N1"]["sex"] == "female" and by_name["idx-N1"]["status"] == "affected"
     assert by_name["pgm"]["observed"] is False and by_name["pgm"]["status"] == "unknown"
     assert by_name["fa-N1"]["y"] == -1 and by_name["pgf-N1"]["y"] == 0
-    # One edge per child from its parents' center, one per couple between the partners
-    child_edges = [e for e in edges if e["y2"] == e["y"] - 1]
-    assert len(child_edges) == 4  # fa, mo, idx, sib1
-    assert len([e for e in edges if e["y"] == e["y2"]]) == 3  # pgf-pgm, mo.father-mgm, fa-mo
+    # Orthogonal segments: one per couple between the partners, a drop to the sibship line,
+    # the sibship line of the two children, and a drop to each child
+    from snappy_wrappers.tools.calls_report.pedigree import SIBSHIP
+
+    partner_lines = [e for e in edges if e["y"] == e["y2"] and e["y"] % 1 == 0]
+    child_drops = [e for e in edges if e["x"] == e["x2"] and e["y"] % 1 != 0]
+    sibship_lines = [e for e in edges if e["y"] == e["y2"] and e["y"] % 1 != 0]
+    assert len(partner_lines) == 3  # pgf-pgm, mo.father-mgm, fa-mo
+    assert len(child_drops) == 4  # fa, mo, idx, sib1
+    assert len(sibship_lines) == 1  # idx and sib1 share one; the single children need none
+    assert all(e["y"] == e["y2"] + 1 - SIBSHIP for e in child_drops)
 
 
 def test_the_plot_is_a_layered_spec_whose_data_function_reads_the_sample_columns():
@@ -170,7 +177,19 @@ def test_the_calls_report_adds_the_pedigree_column_in_the_row_details():
 
     assert table.columns["pedigree"].display == "detail"
     assert "pedigree" in table.exclude  # a custom plot: in the event views only
-    assert "`pedigree` (row details)" in table.desc
+    order = list(table.columns)
+    assert order.index("pedigree") == order.index("P(absent)") + 1  # first of the row details
+    assert order[-1] == "hints"  # the hints last
+    # The per-sample columns step back behind the pedigree
+    assert table.columns["case001subregion-N1-DNA1-WES1: AF"].display == "available"
+    assert table.columns["case001subregion-N1-DNA1-WES1: GT"].display == "available"
+    assert (
+        summarize(str(FIXTURES / "calls.vcf"))
+        .table.columns["case001subregion-N1-DNA1-WES1: AF"]
+        .display
+        is None
+    )
+    assert "`pedigree` (row details, first)" in table.desc
     present = next(view for view in summary.views if view.name == "present")
     cfg = config([table, *summary.views], "calls", "/data", summary.default_view)
     assert "pedigree" in cfg["views"]["present"]["render-table"]["columns"]

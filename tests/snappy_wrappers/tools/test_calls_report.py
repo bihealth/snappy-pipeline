@@ -302,6 +302,7 @@ def test_annotated_calls_get_gene_consequence_impact_hgvs_and_the_other_entries(
     assert columns["consequence"].ellipsis == 32 and columns["hgvs.p"].ellipsis == 28
     assert columns["transcript"].display == "available"
     assert columns["other annotations"].display == "detail"
+    assert list(columns)[-2:] == ["other annotations", "hints"]  # last in the row details
     assert columns["gene_id"].display == "hidden"
     _validate(summary)
 

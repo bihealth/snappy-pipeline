@@ -89,6 +89,8 @@ def rows_and_columns(
     clinvar = annotation.has_clinvar(vcf, annotated)
     links = annotation.linkouts(set(options.linkouts), options.assembly)
     inspect = events and "varlociraptor_inspect" in options.linkouts
+    members = pedigree.members_of(list(options.pedigree), vcf.samples)
+    with_pedigree = bool(events) and len(members) > 1 and any(m.sample for m in members)
     rows = []
     for record in vcf.records:
         row = _core(record)
@@ -118,13 +120,17 @@ def rows_and_columns(
     if events:
         columns["event"] = views.event_column(events)
         columns |= varlociraptor.probability_columns(vcf)
+    if with_pedigree:  # first in the row details
+        for row in rows:
+            row["pedigree"] = ""
+        columns["pedigree"] = pedigree.column(members)
     if annotated:
         columns |= annotation.columns(annotated, links["gene"])
     columns |= annotation.frequency_column_specs(frequencies)
     if clinvar:
         columns |= annotation.clinvar_columns(links["ClinVar"])
     if events:
-        columns |= varlociraptor.sample_columns(vcf, rows)
+        columns |= varlociraptor.sample_columns(vcf, rows, on_demand=with_pedigree)
     else:
         columns |= samples.columns(vcf)
     columns["id"] = Column(display="available", links=links["id"] or None)
@@ -133,13 +139,11 @@ def rows_and_columns(
     columns["filter"] = Column(display=None if filters else "available")
     if "HINTS" in vcf.info:
         columns["hints"] = Column(display="detail")
-    members = pedigree.members_of(list(options.pedigree), vcf.samples)
-    if events and len(members) > 1 and any(member.sample for member in members):
-        for row in rows:
-            row["pedigree"] = ""
-        columns["pedigree"] = pedigree.column(members)
     if inspect:
         columns |= varlociraptor.inspect_columns()
+    for name in ("other annotations", "hints"):  # last in the row details
+        if name in columns:
+            columns[name] = columns.pop(name)
     for name in ("id", "quality", "filter"):  # a column the VCF does not fill is left out
         if rows and all(row[name] in (None, "", ".") for row in rows):
             del columns[name]
@@ -185,6 +189,14 @@ def describe(vcf: Vcf, columns: dict[str, Column], options: Options) -> Descript
     column_notes: list[str] = []
     if varlociraptor.events(vcf):
         column_notes += varlociraptor.COLUMN_NOTES
+    if "pedigree" in columns:
+        column_notes.insert(
+            1,
+            "`pedigree` (row details, first): the pedigree with the call's allele frequency per "
+            "member as a bar with its 90 % credible interval, the depth and the genotype; "
+            "squares are male, circles female, filled when affected, dashed without data. "
+            "The per-sample `AF`, `DP` and `GT` columns are on demand.",
+        )
     else:
         column_notes.append(
             "Per sample: genotype, allele frequency, reads for the alternative allele, depth and "
@@ -208,12 +220,6 @@ def describe(vcf: Vcf, columns: dict[str, Column], options: Options) -> Descript
         column_notes.append(", ".join(f"`{name}`" for name in on_demand) + ": on demand.")
     if "hints" in columns:
         column_notes.append("`hints`: varlociraptor's hints, in the row details.")
-    if "pedigree" in columns:
-        column_notes.append(
-            "`pedigree` (row details): the pedigree with the call's allele frequency per member "
-            "as a bar with its 90 % credible interval, the depth and the genotype; squares are "
-            "male, circles female, filled when affected, dashed without data."
-        )
     links: list[str] = []
     for name in ("position", "gene", "id", "ClinVar"):
         if name in columns and columns[name].links:
