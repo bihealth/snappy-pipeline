@@ -192,9 +192,14 @@ def describe(vcf: Vcf, columns: dict[str, Column], options: Options) -> Descript
     if "pedigree" in columns:
         column_notes.insert(
             1,
-            "`pedigree` (row details, first): the pedigree with the call's allele frequency per "
-            "member as a bar with its 90 % credible interval, the depth and the genotype; "
-            "squares are male, circles female, filled when affected, dashed without data. "
+            "`pedigree` (row details, first): the pedigree with, per member, the call's allele "
+            "frequency as a bar with its 90 % credible interval, below it the reads (for the "
+            "alternative allele to the right in blue, for the reference to the left in gray, "
+            "darker for stronger evidence, pale for uncertain mapping, scaled to the member "
+            "with the most reads), the depth and the genotype. "
+            "Squares in blue are male, circles in magenta female, diamonds in gray of unknown "
+            "sex; an affected member is filled in its color, an unaffected one white, one of "
+            "unknown status light gray; a dashed outline has no data. "
             "The per-sample `AF`, `DP` and `GT` columns are on demand.",
         )
     else:

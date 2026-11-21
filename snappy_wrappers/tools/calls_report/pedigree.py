@@ -3,8 +3,9 @@
 
 The members of the entity's pedigree, from the sample sheet, are laid out once per table:
 generations as rows, children below their parents, partners side by side, with the unsequenced donors that connect members and the unknown parents of members with one parent drawn hollow.
-Per call, the plot reads the per-sample columns of the row: the allele frequency as a bar under the node with the 90 % credible interval from the allele frequency density, the depth and the genotype as text, and the call's event with its posterior as the title.
-The glyphs follow the pedigree convention: square for male, circle for female, diamond for unknown sex, filled when affected.
+Per call, the plot reads the per-sample columns of the row: the allele frequency as a bar under the node with the 90 % credible interval from the allele frequency density, below it the reads as a diverging bar (for the alternative allele to the right in blue, for the reference to the left in gray, darker for stronger evidence, pale for uncertain mapping, scaled to the member with the most reads), the depth and the genotype as text, and the call's event with its posterior as the title.
+The glyphs follow the pedigree convention: square for male, circle for female, diamond for unknown sex, filled when affected;
+    the stroke carries the sex color (blue, magenta) and the fill of an affected member repeats it.
 """
 
 from __future__ import annotations
@@ -13,7 +14,15 @@ import json
 from dataclasses import dataclass
 from typing import Any
 
-from snappy_wrappers.tools.qc_summary import CELL_CONFIG, INK, MUTED, TEXT, VEGA_LITE, Column
+from snappy_wrappers.tools.qc_summary import (
+    CELL_CONFIG,
+    COLORS,
+    INK,
+    MUTED,
+    TEXT,
+    VEGA_LITE,
+    Column,
+)
 
 #: Pixels per unit of the layout, sideways and downwards
 X_STEP, Y_STEP = 96, 104
@@ -21,8 +30,20 @@ X_STEP, Y_STEP = 96, 104
 #: Characters of a member's label under its node; longer labels are cut, the tooltip has them
 LABEL_LENGTH = 14
 
+#: The stroke of a node by sex: blue for male, magenta for female (the shape says it as well)
+SEX_COLORS = {"male": COLORS[0], "female": COLORS[4], "unknown": MUTED}
+
+#: The fill of a node by affected status: the sex color when affected, white when unaffected,
+#: a light gray when unknown
+UNAFFECTED_FILL, UNKNOWN_FILL = "#ffffff", "#f0efec"
+
+#: The reads of a member by strength of evidence (equal, barely, positive, strong, very
+#: strong): for the alternative allele on the blue ramp, for the reference on a gray ramp
+ALT_RAMP = ("#cde2fb", "#9ec5f4", "#5598e7", "#2a78d6", "#0d366b")
+REF_RAMP = ("#f0efec", "#e1e0d9", "#c3c2b7", "#898781", "#52514e")
+
 #: How far below a couple the sibship line runs (in rows): below the labels of the couple
-SIBSHIP = 0.72
+SIBSHIP = 0.76
 
 #: The sex of the unknown parent that fills the other slot
 OPPOSITE = {"father": "male", "mother": "female"}
@@ -158,22 +179,32 @@ def nodes_and_edges(members: list[Member]) -> tuple[list[dict[str, Any]], list[d
     """The records of the layout: nodes with their glyph and position, and the line segments
     between partners, down to the sibship line and down to each child."""
     positions = layout(members)
-    nodes = [
-        {
-            "name": member.name,
-            "label": member.label
-            if len(member.label) <= LABEL_LENGTH
-            else member.label[: LABEL_LENGTH - 1] + "…",
-            "full_label": member.label,
-            "sample": member.sample,
-            "x": positions[member.name][0],
-            "y": -positions[member.name][1],
-            "sex": member.sex if member.sex in ("male", "female") else "unknown",
-            "status": {True: "affected", False: "unaffected"}.get(member.affected, "unknown"),
-            "observed": member.sample is not None,
+    nodes = []
+    for member in members:
+        sex = member.sex if member.sex in ("male", "female") else "unknown"
+        status = {True: "affected", False: "unaffected"}.get(member.affected, "unknown")
+        fills = {
+            "affected": SEX_COLORS[sex],
+            "unaffected": UNAFFECTED_FILL,
+            "unknown": UNKNOWN_FILL,
         }
-        for member in members
-    ]
+        nodes.append(
+            {
+                "name": member.name,
+                "label": member.label
+                if len(member.label) <= LABEL_LENGTH
+                else member.label[: LABEL_LENGTH - 1] + "…",
+                "full_label": member.label,
+                "sample": member.sample,
+                "x": positions[member.name][0],
+                "y": -positions[member.name][1],
+                "sex": sex,
+                "status": status,
+                "stroke_color": SEX_COLORS[sex],
+                "fill_color": fills[status],
+                "observed": member.sample is not None,
+            }
+        )
     # Orthogonal lines, as pedigrees are drawn: the partners joined, a drop from the middle of
     # their line to the sibship line half-way down, and a drop from it to each child
     couples: dict[tuple[str, str], list[str]] = {}
@@ -224,9 +255,46 @@ DATA_FUNCTION = """function(value, row) {
     return [lo, hi === null ? points[points.length - 1].af : hi];
   };
   const records = edges.map((e) => Object.assign({kind: "edge"}, e));
+  const strengths = {E: 0, B: 1, P: 2, S: 3, V: 4};
+  const strengthNames = ["equal", "barely", "positive", "strong", "very strong"];
+  const altRamp = %(alt_ramp)s;
+  const refRamp = %(ref_ramp)s;
+  const reads = (textValue) => {
+    const sides = String(textValue || "").split("|");
+    const parse = (side) => {
+      const out = [];
+      for (const m of (side || "").matchAll(/(\\d+)([A-Za-z])/g)) {
+        const code = m[2].toUpperCase();
+        if (code in strengths) out.push({strength: strengths[code], count: parseInt(m[1]), certain: m[2] === code});
+      }
+      return out.sort((a, b) => b.strength - a.strength);
+    };
+    return {alt: parse(sides[0]), ref: parse(sides[1])};
+  };
+  const observations = {};
+  let most = 0;
+  for (const node of nodes) {
+    if (!node.sample) continue;
+    observations[node.name] = reads(text(row[node.sample + ": observations"]));
+    for (const side of ["alt", "ref"]) {
+      most = Math.max(most, observations[node.name][side].reduce((s, o) => s + o.count, 0));
+    }
+  }
+  const unit = most > 0 ? 0.4 / most : 0;
   for (const node of nodes) {
     const r = Object.assign({kind: "node", text: "no data"}, node);
     if (node.sample) {
+      const obs = observations[node.name];
+      for (const [side, sign, ramp] of [["alt", 1, altRamp], ["ref", -1, refRamp]]) {
+        let at = node.x;
+        for (const o of obs[side]) {
+          const end = at + sign * o.count * unit;
+          records.push({kind: "obs", x: Math.min(at, end), x2: Math.max(at, end), y: node.y,
+            fill: ramp[o.strength], opacity: o.certain ? 1 : 0.45,
+            label: `${side === "alt" ? "alternative allele" : "reference"} · ${strengthNames[o.strength]} · ${o.count} reads${o.certain ? "" : " (uncertain mapping)"}`});
+          at = end;
+        }
+      }
       const af = num(row[node.sample + ": AF"]);
       const dp = num(row[node.sample + ": DP"]);
       const gt = text(row[node.sample + ": GT"]);
@@ -274,7 +342,7 @@ def plot(members: list[Member]) -> dict[str, Any]:
                 "x": {"field": "bar_x", "type": "quantitative"},
                 "x2": {"field": "bar_end"},
                 "y": {"field": "y", "type": "quantitative"},
-                "yOffset": {"value": 24},
+                "yOffset": {"value": 20},
             },
         },
         {
@@ -284,7 +352,7 @@ def plot(members: list[Member]) -> dict[str, Any]:
                 "x": {"field": "bar_x", "type": "quantitative"},
                 "x2": {"field": "bar_x2"},
                 "y": {"field": "y", "type": "quantitative"},
-                "yOffset": {"value": 24},
+                "yOffset": {"value": 20},
             },
         },
         {
@@ -294,7 +362,30 @@ def plot(members: list[Member]) -> dict[str, Any]:
                 "x": {"field": "lo_x", "type": "quantitative"},
                 "x2": {"field": "hi_x"},
                 "y": {"field": "y", "type": "quantitative"},
-                "yOffset": {"value": 30},
+                "yOffset": {"value": 26},
+            },
+        },
+        {
+            "transform": [{"filter": "datum.kind == 'obs'"}],
+            "mark": {"type": "rect", "height": 6, "tooltip": True},
+            "encoding": {
+                "x": {"field": "x", "type": "quantitative"},
+                "x2": {"field": "x2"},
+                "y": {"field": "y", "type": "quantitative"},
+                "yOffset": {"value": 35},
+                "fill": {"field": "fill", "type": "nominal", "scale": None},
+                "fillOpacity": {"field": "opacity", "type": "quantitative", "scale": None},
+                "tooltip": [{"field": "label", "type": "nominal", "title": "reads"}],
+            },
+        },
+        {
+            "transform": [{"filter": "datum.kind == 'node' && datum.sample"}],
+            "mark": {"type": "rule", "stroke": TEXT, "strokeWidth": 1},
+            "encoding": {
+                "x": {"field": "x", "type": "quantitative"},
+                "y": {"field": "y", "type": "quantitative"},
+                "yOffset": {"value": 31},
+                "y2Offset": {"value": 39},
             },
         },
         {
@@ -312,16 +403,8 @@ def plot(members: list[Member]) -> dict[str, Any]:
                     },
                     "legend": None,
                 },
-                "fill": {
-                    "field": "status",
-                    "type": "nominal",
-                    "scale": {
-                        "domain": ["affected", "unaffected", "unknown"],
-                        "range": [TEXT, "#ffffff", "#f0efec"],
-                    },
-                    "legend": None,
-                },
-                "stroke": {"value": TEXT},
+                "fill": {"field": "fill_color", "type": "nominal", "scale": None},
+                "stroke": {"field": "stroke_color", "type": "nominal", "scale": None},
                 "strokeDash": {
                     "field": "observed",
                     "type": "nominal",
@@ -330,6 +413,8 @@ def plot(members: list[Member]) -> dict[str, Any]:
                 },
                 "tooltip": [
                     {"field": "full_label", "type": "nominal", "title": "member"},
+                    {"field": "sex", "type": "nominal"},
+                    {"field": "status", "type": "nominal"},
                     {"field": "sample", "type": "nominal"},
                     {"field": "text", "type": "nominal", "title": "call"},
                 ],
@@ -337,7 +422,7 @@ def plot(members: list[Member]) -> dict[str, Any]:
         },
         {
             "transform": [{"filter": "datum.kind == 'node'"}],
-            "mark": {"type": "text", "fontSize": 10, "color": TEXT, "yOffset": 44},
+            "mark": {"type": "text", "fontSize": 10, "color": TEXT, "yOffset": 50},
             "encoding": {
                 "x": {"field": "x", "type": "quantitative"},
                 "y": {"field": "y", "type": "quantitative"},
@@ -346,7 +431,7 @@ def plot(members: list[Member]) -> dict[str, Any]:
         },
         {
             "transform": [{"filter": "datum.kind == 'node'"}],
-            "mark": {"type": "text", "fontSize": 9, "color": TEXT, "yOffset": 56},
+            "mark": {"type": "text", "fontSize": 9, "color": TEXT, "yOffset": 62},
             "encoding": {
                 "x": {"field": "x", "type": "quantitative"},
                 "y": {"field": "y", "type": "quantitative"},
@@ -378,6 +463,8 @@ def plot(members: list[Member]) -> dict[str, Any]:
         "nodes": json.dumps(nodes),
         "edges": json.dumps(edges),
         "center": (x_min + x_max) / 2,
+        "alt_ramp": json.dumps(list(ALT_RAMP)),
+        "ref_ramp": json.dumps(list(REF_RAMP)),
     }
     return {"data": data, "spec": spec}
 
