@@ -27,6 +27,7 @@ def main():
         max_in_memory_rows=args["max_in_memory_rows"],
         linkouts=tuple(args["linkouts"]),
         assembly=args["assembly"],
+        pedigree=tuple(args["pedigree"]),
     )
     summary = summarize(snakemake.input.vcf, options)
     settings = args["igv"]

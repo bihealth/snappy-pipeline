@@ -100,7 +100,40 @@ class CallsReportStepPart(BaseStepPart):
             "linkouts": [str(link) for link in settings.linkouts],
             "assembly": self.assembly(),
             "igv": self._igv_params(wildcards.library_name),
+            "pedigree": self.pedigree(wildcards.library_name),
         }
+
+    def pedigree(self, entity: str) -> list[dict[str, Any]]:
+        """The members of the entity's pedigree for the pedigree plot: every donor of the
+        sample sheet's pedigree, named after its library (the VCF sample) or, unsequenced,
+        after the donor, with its parents, sex and affected status; empty for an entity that
+        is no pedigree."""
+        if self.parent.effective_group_by != "related":
+            return []
+        donors = self.parent.pedigree_donors(entity)
+        if donors.empty:
+            return []
+        table = self.parent.build_library_dataframe()
+        status = dict(zip(table["library_name"], table["disease_state"]))
+        names = {
+            row.donor_name: row.library_name or row.donor_name
+            for row in donors.itertuples(index=False)
+        }
+        members = []
+        for row in donors.itertuples(index=False):
+            affected = {2: True, 1: False}.get(status.get(row.library_name))
+            members.append(
+                {
+                    "name": names[row.donor_name],
+                    "label": row.donor_name,
+                    "father": names.get(row.father_name, "0"),
+                    "mother": names.get(row.mother_name, "0"),
+                    "sex": row.sex,
+                    "affected": affected,
+                    "sample": row.library_name or None,
+                }
+            )
+        return members
 
     def _igv_params(self, entity: str) -> dict[str, Any] | None:
         igv = self.parent.config.calls_report.igv

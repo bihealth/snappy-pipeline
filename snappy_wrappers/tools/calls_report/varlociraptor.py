@@ -35,7 +35,7 @@ from snappy_wrappers.tools.qc_summary import (
     ticks,
 )
 
-from .vcf import Record, Vcf
+from .vcf import Record, Vcf, short_labels
 
 #: What the table's description says about the varlociraptor columns
 COLUMN_NOTES = [
@@ -319,12 +319,14 @@ def probability_columns(vcf: Vcf) -> dict[str, Column]:
 
 
 def sample_columns(vcf: Vcf, rows: list[dict[str, Any]]) -> dict[str, Column]:
-    """The rendering of the per-sample columns, in order."""
+    """The rendering of the per-sample columns, in order, labelled with the short sample names."""
     result: dict[str, Column] = {}
+    labels = short_labels(vcf.samples)
     for sample in vcf.samples:
-        result[f"{sample}: AF"] = ticks(precision=3, domain=(0, 1))
-        result[f"{sample}: DP"] = bars()
-        result[f"{sample}: GT"] = Column()
+        short = labels[sample]
+        result[f"{sample}: AF"] = ticks(label=f"{short}: AF", precision=3, domain=(0, 1))
+        result[f"{sample}: DP"] = bars(label=f"{short}: DP")
+        result[f"{sample}: GT"] = Column(label=f"{short}: GT")
         most = max(
             (
                 record["count"]
@@ -335,8 +337,10 @@ def sample_columns(vcf: Vcf, rows: list[dict[str, Any]]) -> dict[str, Column]:
             default=0,
         )
         result[f"{sample}: observations"] = Column(
-            custom_plot=observations_plot(most), display="detail"
+            label=f"{short}: observations", custom_plot=observations_plot(most), display="detail"
         )
-        result[f"{sample}: AFD"] = Column(custom_plot=AFD_PLOT, display="detail")
-        result[f"{sample}: biases"] = Column(display="available")
+        result[f"{sample}: AFD"] = Column(
+            label=f"{short}: AFD", custom_plot=AFD_PLOT, display="detail"
+        )
+        result[f"{sample}: biases"] = Column(label=f"{short}: biases", display="available")
     return result

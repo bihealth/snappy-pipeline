@@ -827,6 +827,7 @@
     ],
     "max_in_memory_rows": 50000,
     "page_size": 25,
+    "pedigree": [],
     "title": "variant_filtration_varlociraptor: calls of case001subregion-T1-DNA1-WES1"
    }
   },

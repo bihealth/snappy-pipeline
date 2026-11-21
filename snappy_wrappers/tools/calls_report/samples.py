@@ -9,7 +9,7 @@ from typing import Any
 
 from snappy_wrappers.tools.qc_summary import Column, bars, ticks
 
-from .vcf import Record, Vcf
+from .vcf import Record, Vcf, short_labels
 
 
 def _number(text: str | None) -> float | None:
@@ -56,17 +56,19 @@ def values(record: Record, vcf: Vcf) -> dict[str, Any]:
 
 
 def columns(vcf: Vcf) -> dict[str, Column]:
-    """The rendering of the per-sample columns, in order."""
+    """The rendering of the per-sample columns, in order, labelled with the short sample names."""
     result: dict[str, Column] = {}
+    labels = short_labels(vcf.samples)
     for sample in vcf.samples:
+        short = labels[sample]
         if "GT" in vcf.formats:
-            result[f"{sample}: GT"] = Column()
+            result[f"{sample}: GT"] = Column(label=f"{short}: GT")
         if "AF" in vcf.formats or "AD" in vcf.formats:
-            result[f"{sample}: AF"] = ticks(precision=3, domain=(0, 1))
+            result[f"{sample}: AF"] = ticks(label=f"{short}: AF", precision=3, domain=(0, 1))
         if "AD" in vcf.formats:
-            result[f"{sample}: alt reads"] = bars()
+            result[f"{sample}: alt reads"] = bars(label=f"{short}: alt reads")
         if "DP" in vcf.formats:
-            result[f"{sample}: DP"] = bars()
+            result[f"{sample}: DP"] = bars(label=f"{short}: DP")
         if "GQ" in vcf.formats:
-            result[f"{sample}: GQ"] = ticks(precision=0, display="available")
+            result[f"{sample}: GQ"] = ticks(label=f"{short}: GQ", precision=0, display="available")
     return result

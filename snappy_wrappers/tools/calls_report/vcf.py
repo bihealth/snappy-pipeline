@@ -53,6 +53,18 @@ def _open(path: str):
     return gzip.open(path, "rt") if path.endswith(".gz") else open(path, "rt")
 
 
+def short_labels(samples: list[str]) -> dict[str, str]:
+    """Sample -> the shortest leading part of its name that tells the samples apart:
+    ``idx`` for ``idx-N1-DNA1-WES1`` when the donors differ, ``P001-T1`` and ``P001-N1`` for
+    a tumor and its normal."""
+    parts = {sample: sample.split("-") for sample in samples}
+    for length in range(1, max((len(p) for p in parts.values()), default=1) + 1):
+        labels = {sample: "-".join(p[:length]) for sample, p in parts.items()}
+        if len(set(labels.values())) == len(samples):
+            return labels
+    return {sample: sample for sample in samples}
+
+
 def header_attributes(text: str) -> dict[str, str]:
     """The ``key=value`` attributes of a header line's ``<...>`` part, quotes removed."""
     attributes = {}

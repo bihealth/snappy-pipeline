@@ -25,7 +25,7 @@ import polars as pl
 
 from snappy_wrappers.tools.qc_summary import Column, Summary, ticks
 
-from . import annotation, samples, varlociraptor, views
+from . import annotation, pedigree, samples, varlociraptor, views
 from .vcf import Record, Vcf, read_vcf
 
 #: The first columns of every table
@@ -42,6 +42,8 @@ class Options:
     linkouts: tuple[str, ...] = ()
     #: The genome build of the variants (``GRCh37``, ``GRCh38``), for the build-dependent linkouts
     assembly: str | None = None
+    #: The members of the entity's pedigree (see :func:`pedigree.members_of`); empty for none
+    pedigree: tuple[dict[str, Any], ...] = ()
 
 
 def variant_type(ref: str, alt: str, info: dict[str, str]) -> str:
@@ -131,6 +133,11 @@ def rows_and_columns(
     columns["filter"] = Column(display=None if filters else "available")
     if "HINTS" in vcf.info:
         columns["hints"] = Column(display="detail")
+    members = pedigree.members_of(list(options.pedigree), vcf.samples)
+    if events and len(members) > 1 and any(member.sample for member in members):
+        for row in rows:
+            row["pedigree"] = ""
+        columns["pedigree"] = pedigree.column(members)
     if inspect:
         columns |= varlociraptor.inspect_columns()
     for name in ("id", "quality", "filter"):  # a column the VCF does not fill is left out
@@ -201,6 +208,12 @@ def describe(vcf: Vcf, columns: dict[str, Column], options: Options) -> Descript
         column_notes.append(", ".join(f"`{name}`" for name in on_demand) + ": on demand.")
     if "hints" in columns:
         column_notes.append("`hints`: varlociraptor's hints, in the row details.")
+    if "pedigree" in columns:
+        column_notes.append(
+            "`pedigree` (row details): the pedigree with the call's allele frequency per member "
+            "as a bar with its 90 % credible interval, the depth and the genotype; squares are "
+            "male, circles female, filled when affected, dashed without data."
+        )
     links: list[str] = []
     for name in ("position", "gene", "id", "ClinVar"):
         if name in columns and columns[name].links:

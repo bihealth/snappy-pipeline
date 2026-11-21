@@ -25,6 +25,7 @@ def _part(tags=frozenset({"germline", "filtered"}), **settings):
         config=SimpleNamespace(calls_report=CallsReport(**settings)),
         get_output_paths=_paths,
         project=SimpleNamespace(signatures=signatures),
+        effective_group_by="library",
     )
     return part
 
@@ -52,7 +53,97 @@ def test_the_report_reads_the_tasks_own_vcf_of_the_entity():
         ],
         "assembly": None,
         "igv": None,
+        "pedigree": [],
     }
+
+
+def test_the_pedigree_of_a_related_entity_names_every_donor_with_parents_and_status():
+    import pandas as pd
+
+    part = _part()
+    part.parent.effective_group_by = "related"
+    part.parent.pedigree_donors = lambda entity: pd.DataFrame(
+        [
+            {
+                "donor_name": "idx",
+                "father_name": "fa",
+                "mother_name": "mo",
+                "sex": "female",
+                "library_name": "idx-N1-DNA1-WES1",
+            },
+            {
+                "donor_name": "fa",
+                "father_name": "0",
+                "mother_name": "0",
+                "sex": "male",
+                "library_name": "fa-N1-DNA1-WES1",
+            },
+            {
+                "donor_name": "mo",
+                "father_name": "0",
+                "mother_name": "gm",
+                "sex": "female",
+                "library_name": "mo-N1-DNA1-WES1",
+            },
+            {
+                "donor_name": "gm",
+                "father_name": "0",
+                "mother_name": "0",
+                "sex": "female",
+                "library_name": "",
+            },
+        ]
+    )
+    part.parent.build_library_dataframe = lambda: pd.DataFrame(
+        [
+            {"library_name": "idx-N1-DNA1-WES1", "disease_state": 2},
+            {"library_name": "fa-N1-DNA1-WES1", "disease_state": 1},
+            {"library_name": "mo-N1-DNA1-WES1", "disease_state": 0},
+        ]
+    )
+
+    members = part.pedigree("FAM_idx")
+
+    assert members == [
+        {
+            "name": "idx-N1-DNA1-WES1",
+            "label": "idx",
+            "father": "fa-N1-DNA1-WES1",
+            "mother": "mo-N1-DNA1-WES1",
+            "sex": "female",
+            "affected": True,
+            "sample": "idx-N1-DNA1-WES1",
+        },
+        {
+            "name": "fa-N1-DNA1-WES1",
+            "label": "fa",
+            "father": "0",
+            "mother": "0",
+            "sex": "male",
+            "affected": False,
+            "sample": "fa-N1-DNA1-WES1",
+        },
+        {
+            "name": "mo-N1-DNA1-WES1",
+            "label": "mo",
+            "father": "0",
+            "mother": "gm",
+            "sex": "female",
+            "affected": None,
+            "sample": "mo-N1-DNA1-WES1",
+        },
+        {
+            "name": "gm",
+            "label": "gm",
+            "father": "0",
+            "mother": "0",
+            "sex": "female",
+            "affected": None,
+            "sample": None,
+        },
+    ]
+    assert part._get_params_run(SimpleNamespace(library_name="FAM_idx"))["pedigree"] == members
+    assert _part().pedigree("P001-N1-DNA1-WES1") == []  # per library: no pedigree
 
 
 def test_the_assembly_is_the_tag_of_the_tasks_own_variants():
