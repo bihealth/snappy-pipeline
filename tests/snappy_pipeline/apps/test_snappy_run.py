@@ -12,7 +12,8 @@ from snappy_pipeline.apps import snappy_cli
 
 def _compact(output: str) -> str:
     """The output without whitespace and the box that rich-click draws around errors."""
-    return re.sub(r"[\s│╭╮╰╯─]", "", output)
+    # rich-click colors its output on a terminal (CI), which the escape codes carry
+    return re.sub(r"\x1b\[[0-9;]*m|[\s│╭╮╰╯─]", "", output)
 
 
 def _invoke_run(mocker, args):

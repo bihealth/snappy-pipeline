@@ -41,5 +41,6 @@ def test_check_files_without_a_config_hints_at_the_project_directory(tmp_path):
     result = CliRunner().invoke(main, ["check-files", "--directory", str(tmp_path)])
 
     assert result.exit_code == 2
-    assert f"Noconfig.yamlin{tmp_path}." in re.sub(r"[\s│╭╮╰╯─]", "", result.output)
+    compact = re.sub(r"\x1b\[[0-9;]*m|[\s│╭╮╰╯─]", "", result.output)  # colors and box
+    assert f"Noconfig.yamlin{tmp_path}." in compact
     assert "Traceback" not in result.output
