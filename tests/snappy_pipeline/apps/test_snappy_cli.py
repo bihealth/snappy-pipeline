@@ -2,6 +2,7 @@
 """Tests for ``snappy`` CLI subcommands, completion, and task listing."""
 
 import os
+import re
 import subprocess
 import sys
 import textwrap
@@ -266,7 +267,9 @@ def test_task_add_without_a_config_fails_with_a_hint(tmp_path):
         snappy_cli.main, ["task", "add", "--directory", str(tmp_path), "ngs_mapping"]
     )
     assert result.exit_code == 2
-    assert "createaprojectwithsnappyinit" in "".join(result.output.replace("│", "").split())
+    # rich-click colors the output on a CI runner and wraps it in a box
+    plain = re.sub(r"\x1b\[[0-9;]*m", "", result.output).replace("│", "")
+    assert "createaprojectwithsnappyinit" in "".join(plain.split())
 
 
 def test_task_add_minimal_writes_the_required_fields_only(tmp_path):
