@@ -34,8 +34,6 @@ class CallsReportStepPart(BaseStepPart):
     entity_wildcard = "library_name"
     result_keys = ("tsv", "tsv_md5")
 
-    default_resource_usage = ResourceUsage(threads=1, runtime="2h", mem="8GB")
-
     #: The site, and the table itself for download
     report_outputs = {
         "run": {
@@ -44,15 +42,7 @@ class CallsReportStepPart(BaseStepPart):
         }
     }
 
-    def igv_libraries(self, entity: str) -> list[str]:
-        """The libraries whose BAMs the IGV views show:
-        the members of the entity and, on cancer sheets, their matched normals."""
-        libraries = list(self.parent.member_libraries(entity))
-        for library in list(libraries):
-            normal = self.parent.matched_normal(library)
-            if normal and normal not in libraries:
-                libraries.append(normal)
-        return libraries
+    default_resource_usage = ResourceUsage(threads=1, runtime="2h", mem="8GB")
 
     def _get_input_files_run(self, wildcards: Wildcards) -> dict[str, Any]:
         """The task's own output VCF of the entity (the PASS calls of mutect2);
@@ -81,14 +71,6 @@ class CallsReportStepPart(BaseStepPart):
     def _get_log_file_run(self):
         return {"log": "work/{library_name}/log/{library_name}.calls_report.log"}
 
-    def assembly(self) -> str | None:
-        """The genome build the task's variants are tagged with (``variant_annotation`` adds it and the steps after it keep it), else ``None``."""
-        for signature in self.parent.project.signatures[self.parent.task_name]:
-            for tag in signature.tags:
-                if tag in ASSEMBLIES:
-                    return tag
-        return None
-
     def _get_params_run(self, wildcards: Wildcards) -> dict[str, Any]:
         settings = self.parent.config.calls_report
         return {
@@ -100,6 +82,24 @@ class CallsReportStepPart(BaseStepPart):
             "igv": self._igv_params(wildcards.library_name),
             "pedigree": self.pedigree(wildcards.library_name),
         }
+
+    def igv_libraries(self, entity: str) -> list[str]:
+        """The libraries whose BAMs the IGV views show:
+        the members of the entity and, on cancer sheets, their matched normals."""
+        libraries = list(self.parent.member_libraries(entity))
+        for library in list(libraries):
+            normal = self.parent.matched_normal(library)
+            if normal and normal not in libraries:
+                libraries.append(normal)
+        return libraries
+
+    def assembly(self) -> str | None:
+        """The genome build the task's variants are tagged with (``variant_annotation`` adds it and the steps after it keep it), else ``None``."""
+        for signature in self.parent.project.signatures[self.parent.task_name]:
+            for tag in signature.tags:
+                if tag in ASSEMBLIES:
+                    return tag
+        return None
 
     def pedigree(self, entity: str) -> list[dict[str, Any]]:
         """The members of the entity's pedigree for the pedigree plot: every donor of the

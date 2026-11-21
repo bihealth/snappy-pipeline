@@ -64,6 +64,7 @@ class CnvettiSomaticWgsStepPart(BaseStepPart):
 
     #: Class available actions
     actions = ("coverage", "tumor_normal_ratio", "segment")
+
     wrappers = {
         "segment": "cnvetti/wgs/segment",
         "tumor_normal_ratio": "cnvetti/wgs/tumor_normal_ratio",
@@ -71,18 +72,7 @@ class CnvettiSomaticWgsStepPart(BaseStepPart):
     }
 
     extra_arguments_action = "coverage"
-
     entity_wildcard = "tumor_library"
-
-    default_resource_usage = ResourceUsage(threads=4, runtime="4h", mem=f"{int(3.75 * 1024 * 4)}MB")
-
-    intermediate_outputs = {
-        "coverage": ("bcf", "bcf_csi"),
-        "tumor_normal_ratio": ("bcf", "bcf_csi"),
-    }
-
-    #: Extension file dictionary. Key: file type (string); Value: file extension (string)
-    bcf_dict = {"bcf": ".bcf", "bcf_csi": ".bcf.csi"}
 
     #: The files that downstream tasks read, the segments: the key of ``get_output_paths`` and the
     #: suffix after ``work/{tumor_library}/out/{tumor_library}``
@@ -98,87 +88,21 @@ class CnvettiSomaticWgsStepPart(BaseStepPart):
 
     result_keys = {"segment": tuple(k + md5 for k in segment_dict for md5 in ("", "_md5"))}
 
+    intermediate_outputs = {
+        "coverage": ("bcf", "bcf_csi"),
+        "tumor_normal_ratio": ("bcf", "bcf_csi"),
+    }
+
+    default_resource_usage = ResourceUsage(threads=4, runtime="4h", mem=f"{int(3.75 * 1024 * 4)}MB")
+
+    #: Extension file dictionary. Key: file type (string); Value: file extension (string)
+    bcf_dict = {"bcf": ".bcf", "bcf_csi": ".bcf.csi"}
+
     #: Parameters to pass to the wrapper
     params_for_action = {
         "coverage": ("window_length", "count_kind", "normalization"),
         "segment": ("segmentation",),
     }
-
-    @dictify
-    def _get_input_files_coverage(self, wildcards):
-        """Return input files that "cnvetti coverage" needs"""
-        alignments = self.parent.get_upstream_paths(
-            "alignments", library_name=wildcards.library_name
-        )
-        # Yield input BAM and BAI file
-        yield "bam", alignments.bam
-        yield "bai", alignments.bai
-        yield from self.parent.reference_inputs().items()
-
-    @dictify
-    def _get_input_files_tumor_normal_ratio(self, wildcards):
-        tumor_library = wildcards.library_name
-        normal_library = self.parent.matched_normal(tumor_library)
-        libraries = {"tumor": tumor_library, "normal": normal_library}
-        for kind, library_name in libraries.items():
-            if not library_name:
-                continue
-            key = "{}_bcf".format(kind)
-            yield (
-                key,
-                f"work/{library_name}/out/{library_name}.coverage.bcf",
-            )
-            yield (
-                key + "_csi",
-                f"work/{library_name}/out/{library_name}.coverage.bcf.csi",
-            )
-
-    @dictify
-    def _get_input_files_segment(self, wildcards):
-        """Return input files that "cnvetti segment" needs"""
-        for key, ext in self.bcf_dict.items():
-            name_pattern = "{tumor_library}".format(**wildcards)
-            yield (
-                key,
-                "work/{name_pattern}/out/{name_pattern}.tumor_normal_ratio{ext}".format(
-                    name_pattern=name_pattern, ext=ext
-                ),
-            )
-
-    @dictify
-    def _get_output_files_coverage(self):
-        for key, ext in self.bcf_dict.items():
-            name_pattern = "{library_name}"
-            yield (
-                key,
-                "work/{name_pattern}/out/{name_pattern}.coverage{ext}".format(
-                    name_pattern=name_pattern, ext=ext
-                ),
-            )
-
-    @dictify
-    def _get_output_files_tumor_normal_ratio(self):
-        for key, ext in self.bcf_dict.items():
-            name_pattern = "{library_name}"
-            yield (
-                key,
-                "work/{name_pattern}/out/{name_pattern}.tumor_normal_ratio{ext}".format(
-                    name_pattern=name_pattern, ext=ext
-                ),
-            )
-
-    @dictify
-    def _get_output_files_segment(self):
-        prefix = "work/{tumor_library}/out/{tumor_library}"
-        for key, ext in self.segment_dict.items():
-            yield key, prefix + ext
-            yield key + "_md5", prefix + ext + ".md5"
-
-    def _get_params_coverage(self, wildcards: Wildcards) -> dict[str, Any]:
-        return self._get_params("coverage")
-
-    def _get_params_segment(self, wildcards: Wildcards) -> dict[str, Any]:
-        return self._get_params("segment")
 
     def _get_params(self, action: str) -> dict[str, Any]:
         """Return args (params) that CNVetti creates for the given action"""
@@ -214,20 +138,117 @@ class CnvettiSomaticWgsStepPart(BaseStepPart):
         prefix = f"work/{name_pattern}/log/{name_pattern}.{action}"
         return {"log": prefix + ".log"}
 
+    @dictify
+    def _get_input_files_coverage(self, wildcards):
+        """Return input files that "cnvetti coverage" needs"""
+        alignments = self.parent.get_upstream_paths(
+            "alignments", library_name=wildcards.library_name
+        )
+        # Yield input BAM and BAI file
+        yield "bam", alignments.bam
+        yield "bai", alignments.bai
+        yield from self.parent.reference_inputs().items()
+
+    @dictify
+    def _get_output_files_coverage(self):
+        for key, ext in self.bcf_dict.items():
+            name_pattern = "{library_name}"
+            yield (
+                key,
+                "work/{name_pattern}/out/{name_pattern}.coverage{ext}".format(
+                    name_pattern=name_pattern, ext=ext
+                ),
+            )
+
+    def _get_params_coverage(self, wildcards: Wildcards) -> dict[str, Any]:
+        return self._get_params("coverage")
+
+    @dictify
+    def _get_input_files_tumor_normal_ratio(self, wildcards):
+        tumor_library = wildcards.library_name
+        normal_library = self.parent.matched_normal(tumor_library)
+        libraries = {"tumor": tumor_library, "normal": normal_library}
+        for kind, library_name in libraries.items():
+            if not library_name:
+                continue
+            key = "{}_bcf".format(kind)
+            yield (
+                key,
+                f"work/{library_name}/out/{library_name}.coverage.bcf",
+            )
+            yield (
+                key + "_csi",
+                f"work/{library_name}/out/{library_name}.coverage.bcf.csi",
+            )
+
+    @dictify
+    def _get_output_files_tumor_normal_ratio(self):
+        for key, ext in self.bcf_dict.items():
+            name_pattern = "{library_name}"
+            yield (
+                key,
+                "work/{name_pattern}/out/{name_pattern}.tumor_normal_ratio{ext}".format(
+                    name_pattern=name_pattern, ext=ext
+                ),
+            )
+
+    @dictify
+    def _get_input_files_segment(self, wildcards):
+        """Return input files that "cnvetti segment" needs"""
+        for key, ext in self.bcf_dict.items():
+            name_pattern = "{tumor_library}".format(**wildcards)
+            yield (
+                key,
+                "work/{name_pattern}/out/{name_pattern}.tumor_normal_ratio{ext}".format(
+                    name_pattern=name_pattern, ext=ext
+                ),
+            )
+
+    @dictify
+    def _get_output_files_segment(self):
+        prefix = "work/{tumor_library}/out/{tumor_library}"
+        for key, ext in self.segment_dict.items():
+            yield key, prefix + ext
+            yield key + "_md5", prefix + ext + ".md5"
+
+    def _get_params_segment(self, wildcards: Wildcards) -> dict[str, Any]:
+        return self._get_params("segment")
+
 
 class CnvkitSomaticWgsStepPart(SomaticCnvkitStepPart):
     """Somatic WGS CNV calling with cnvkit.py"""
+
+    default_resource_usage = ResourceUsage(threads=1, runtime="1d", mem=f"{int(7.5 * 1024)}MB")
 
     resource_usage = {
         "plot": ResourceUsage(threads=1, runtime="1d", mem=f"{30 * 1024}MB"),
         "coverage": ResourceUsage(threads=8, runtime="1d", mem=f"{16 * 1024}MB"),
     }
 
-    default_resource_usage = ResourceUsage(threads=1, runtime="1d", mem=f"{int(7.5 * 1024)}MB")
-
 
 class ControlFreecSomaticWgsStepPart(BaseStepPart):
     """Somatic WGS CNV calling with Control-FreeC"""
+
+    #: Step name
+    name = "control_freec"
+
+    #: Class available actions
+    actions = ("run", "transform", "plot")
+
+    wrappers = {
+        "plot": "cnvkit/plot",
+        "transform": "control_freec/transform",
+        "run": "control_freec",
+    }
+
+    extra_arguments_action = "run"
+    entity_wildcard = "tumor_library"
+
+    result_keys = {
+        "run": ("ratio", "ratio_md5"),
+        "transform": ("log2", "call", "segments", "log2_md5", "call_md5", "segments_md5"),
+        "plot": ("scatter", "diagram", "scatter_md5", "diagram_md5"),
+    }
 
     report_outputs = {
         "plot": {
@@ -236,22 +257,13 @@ class ControlFreecSomaticWgsStepPart(BaseStepPart):
         }
     }
 
-    #: Step name
-    name = "control_freec"
-
-    #: Class available actions
-    actions = ("run", "transform", "plot")
-    wrappers = {
-        "plot": "cnvkit/plot",
-        "transform": "control_freec/transform",
-        "run": "control_freec",
-    }
-
-    extra_arguments_action = "run"
-
     intermediate_outputs = {"transform": ("cns", "cnr")}
 
-    entity_wildcard = "tumor_library"
+    resource_usage = {
+        "plot": ResourceUsage(threads=1, runtime="40h", mem=f"{2 * 30 * 1024}MB"),
+        "transform": ResourceUsage(threads=1, runtime="40h", mem=f"{2 * 8 * 1024}MB"),
+        "run": ResourceUsage(threads=8, runtime="40h", mem=f"{int(2 * 3.75 * 1024 * 8)}MB"),
+    }
 
     #: The files that downstream tasks read: the key of ``get_output_paths`` and the suffix after
     #: ``work/{tumor_library}/out/{tumor_library}``
@@ -261,62 +273,8 @@ class ControlFreecSomaticWgsStepPart(BaseStepPart):
         "segments": ".segments.txt",
     }
 
-    result_keys = {
-        "run": ("ratio", "ratio_md5"),
-        "transform": ("log2", "call", "segments", "log2_md5", "call_md5", "segments_md5"),
-        "plot": ("scatter", "diagram", "scatter_md5", "diagram_md5"),
-    }
-
-    resource_usage = {
-        "plot": ResourceUsage(threads=1, runtime="40h", mem=f"{2 * 30 * 1024}MB"),
-        "transform": ResourceUsage(threads=1, runtime="40h", mem=f"{2 * 8 * 1024}MB"),
-        "run": ResourceUsage(threads=8, runtime="40h", mem=f"{int(2 * 3.75 * 1024 * 8)}MB"),
-    }
-
     def _get_log_file(self, action):
         return {"log": f"work/{{tumor_library}}/log/{{tumor_library}}.{action}.log"}
-
-    @cached_property
-    def freec_sex(self) -> dict[str, str]:
-        """Control-FREEC's ``sex`` (XY, XX) of each library whose donor's sex is known"""
-        df = self.parent.build_library_dataframe()
-        sexes = {"male": "XY", "female": "XX"}
-        return {
-            library: sexes[str(sex).lower()]
-            for library, sex in zip(df["library_name"], df["sex"])
-            if str(sex).lower() in sexes
-        }
-
-    def _get_output_files_run(self):
-        base = "work/{tumor_library}/out/{tumor_library}"
-        return {"ratio": base + ".ratio.txt", "ratio_md5": base + ".ratio.txt.md5"}
-
-    def _get_output_files_transform(self):
-        base = "work/{tumor_library}/out/{tumor_library}"
-        result = {
-            **{key: base + suffix for key, suffix in self.output_suffixes.items()},
-            "cns": base + ".cns",
-            "cnr": base + ".cnr",
-        }
-        for name in ("log2", "call", "segments"):  # result files
-            result[name + "_md5"] = result[name] + ".md5"
-        return result
-
-    def _get_output_files_plot(self):
-        base = "work/{tumor_library}/out/{tumor_library}"
-        result = {
-            "scatter": base + ".scatter.png",
-            "diagram": base + ".diagram.pdf",
-        }
-        result.update({name + "_md5": path + ".md5" for name, path in result.items()})
-        return result
-
-    def _get_input_files_transform(self, wildcards):
-        return {"ratio": "work/{tumor_library}/out/{tumor_library}.ratio.txt"}
-
-    def _get_input_files_plot(self, wildcards):
-        transform = self.get_output_files("transform").items()
-        return {k: v.format(**wildcards) for k, v in transform if not k.endswith("_md5")}
 
     @dictify
     def _get_input_files_run(self, wildcards):
@@ -325,6 +283,10 @@ class ControlFreecSomaticWgsStepPart(BaseStepPart):
         yield "chrlenfile", database.chr_len
         if database.mappability:
             yield "mappability", database.mappability
+
+    def _get_output_files_run(self):
+        base = "work/{tumor_library}/out/{tumor_library}"
+        return {"ratio": base + ".ratio.txt", "ratio_md5": base + ".ratio.txt.md5"}
 
     def _get_params_run(self, wildcards: Wildcards) -> dict[str, Any]:
         cfg = self.config.control_freec
@@ -345,6 +307,20 @@ class ControlFreecSomaticWgsStepPart(BaseStepPart):
             "sex": self.freec_sex.get(wildcards.tumor_library, cfg.unknown_sex),
         }
 
+    def _get_input_files_transform(self, wildcards):
+        return {"ratio": "work/{tumor_library}/out/{tumor_library}.ratio.txt"}
+
+    def _get_output_files_transform(self):
+        base = "work/{tumor_library}/out/{tumor_library}"
+        result = {
+            **{key: base + suffix for key, suffix in self.output_suffixes.items()},
+            "cns": base + ".cns",
+            "cnr": base + ".cnr",
+        }
+        for name in ("log2", "call", "segments"):  # result files
+            result[name + "_md5"] = result[name] + ".md5"
+        return result
+
     def _get_params_transform(self, wildcards: Wildcards) -> dict[str, Any]:
         cfg = self.config.control_freec
         return {
@@ -355,8 +331,32 @@ class ControlFreecSomaticWgsStepPart(BaseStepPart):
             "tumor_library": wildcards.tumor_library,
         }
 
+    def _get_input_files_plot(self, wildcards):
+        transform = self.get_output_files("transform").items()
+        return {k: v.format(**wildcards) for k, v in transform if not k.endswith("_md5")}
+
+    def _get_output_files_plot(self):
+        base = "work/{tumor_library}/out/{tumor_library}"
+        result = {
+            "scatter": base + ".scatter.png",
+            "diagram": base + ".diagram.pdf",
+        }
+        result.update({name + "_md5": path + ".md5" for name, path in result.items()})
+        return result
+
     def _get_params_plot(self, wildcards: Wildcards) -> dict[str, Any]:
         return self.config.control_freec.diagram.model_dump(by_alias=True)
+
+    @cached_property
+    def freec_sex(self) -> dict[str, str]:
+        """Control-FREEC's ``sex`` (XY, XX) of each library whose donor's sex is known"""
+        df = self.parent.build_library_dataframe()
+        sexes = {"male": "XY", "female": "XX"}
+        return {
+            library: sexes[str(sex).lower()]
+            for library, sex in zip(df["library_name"], df["sex"])
+            if str(sex).lower() in sexes
+        }
 
 
 class SomaticWgsCnvCallingWorkflow(BaseStep):
@@ -364,8 +364,8 @@ class SomaticWgsCnvCallingWorkflow(BaseStep):
 
     #: Workflow name
     name = "somatic_wgs_cnv_calling"
-    produces = [DataSignature(DataType.VARIANTS, frozenset({"somatic", "cnv"}))]
 
+    produces = [DataSignature(DataType.VARIANTS, frozenset({"somatic", "cnv"}))]
     config_model_class = SomaticWgsCnvCallingConfigModel
 
     tool_parts = {
@@ -375,6 +375,7 @@ class SomaticWgsCnvCallingWorkflow(BaseStep):
     }
 
     library_requirement = "kind == 'cancer'"
+    default_relationships = MATCHED_NORMAL_RELATIONSHIP
 
     @classmethod
     def task_library_requirement(cls, config):
@@ -383,8 +384,6 @@ class SomaticWgsCnvCallingWorkflow(BaseStep):
         if config.tool == Tool.control_freec:
             return MATCHED_NORMAL_REQUIREMENT
         return cls.library_requirement
-
-    default_relationships = MATCHED_NORMAL_RELATIONSHIP
 
     @classmethod
     def get_output_paths(cls, config, signature=None, **kwargs) -> dict[str, str]:

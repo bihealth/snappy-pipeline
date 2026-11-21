@@ -44,9 +44,9 @@ These are the methods a step part provides, which the generated and the explicit
 | Method                       | Returns                                                                    | Rule section                                                                            |
 | ---------------------------- | -------------------------------------------------------------------------- | --------------------------------------------------------------------------------------- |
 | `get_input_files(action)`    | a function of wildcards, returning a dict (named inputs), a list or a path | `input: unpack(wf.get_input_files(...))` for dicts, otherwise `wf.get_input_files(...)` |
-| `get_params(action)`         | a function of wildcards (optionally also of `input`), returning a dict     | `params: args=wf.get_params(...)`                                                       |
 | `get_output_files(action)`   | static paths (Snakemake does not accept functions here)                    | `output: **wf.get_output_files(...)`                                                    |
 | `get_log_file(action)`       | static paths                                                               | `log: **wf.get_log_file(...)`                                                           |
+| `get_params(action)`         | a function of wildcards (optionally also of `input`), returning a dict     | `params: args=wf.get_params(...)`                                                       |
 | `get_resource(action, name)` | a function of wildcards, input, threads and attempt                        | `threads: wf.get_resource(..., "threads")`                                              |
 | `get_resources(action)`      | the functions of runtime, mem, partition and tmpdir                        | `resources: **wf.get_resources(...)`                                                    |
 | `get_wrapper(action)`        | the `file://` URL of the action's wrapper, from the part's `wrappers`      | `wrapper: wf.get_wrapper(...)`                                                          |
@@ -58,6 +58,13 @@ Every rule that runs a wrapper passes `params: args=wf.get_params(...)`; an acti
 
 A step part implements these through per-action methods that `BaseStepPart` dispatches to after validating the action.
 These are `_get_input_files_<action>(wildcards)`, `_get_params_<action>(wildcards)`, `_get_output_files_<action>()` and `_get_log_file_<action>()`.
+
+### Module and class layout
+
+A step module lists its imports, constants and functions, then the step parts in the order the step class registers them (a base part before its subclasses), then the step class.
+A step or step part class lists its attributes first: those of its base classes in the bases' order (root first, so `name`, `actions`, `wrappers`, ... come before a part's own attributes), where a property that overrides a base attribute counts as that attribute.
+Then come the methods: `__init__` and the other overrides of base methods in the bases' order, the per-action methods by action (in `actions` order; inputs, outputs, log file, params within an action), then the class's own methods.
+`pixi run lint-layout` checks this and `pixi run layout` rewrites the modules (`tests/scripts/class_layout.py`); `test_workflow_modules_follow_the_layout` fails otherwise.
 One `_get_log_file(action)` can replace the log methods of all actions.
 Resource usage is declared, not computed.
 `default_resource_usage` holds it for all actions and `resource_usage` per action, each as a property when it depends on the config.

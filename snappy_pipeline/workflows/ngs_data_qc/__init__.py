@@ -162,20 +162,16 @@ class FastQcReportStepPart(BaseStepPart):
 
     #: Class available actions
     actions = ("run",)
+
     wrappers = {"run": "fastqc"}
-
-    default_resource_usage = ResourceUsage(threads=1, mem="4GB", runtime="4h")
-
-    library_requirement = "extraction_type in ['dna', 'rna']"
-
     result_keys = ("fastqc_done",)
 
     report_outputs = {
         "run": {"html": ReportOutput("FastQC", caption="fastqc.rst", htmlindex="index.html")}
     }
 
-    def _get_params_run(self, wildcards):
-        return {"num_threads": 1} | reads_params(self.parent, wildcards.library_name)
+    default_resource_usage = ResourceUsage(threads=1, mem="4GB", runtime="4h")
+    library_requirement = "extraction_type in ['dna', 'rna']"
 
     def _get_input_files_run(self, wildcards):
         return reads_input_files(self.parent, wildcards.library_name)
@@ -189,6 +185,9 @@ class FastQcReportStepPart(BaseStepPart):
     def _get_log_file_run(self):
         return {"log": "work/{library_name}/log/{library_name}.log"}
 
+    def _get_params_run(self, wildcards):
+        return {"num_threads": 1} | reads_params(self.parent, wildcards.library_name)
+
 
 class PicardStepPart(BaseStepPart):
     """Collect Picard metrics"""
@@ -199,9 +198,6 @@ class PicardStepPart(BaseStepPart):
 
     #: ``prepare`` converts the BED files of the kit to interval lists
     extra_arguments_action = "metrics"
-    intermediate_outputs = {"prepare": ("baits", "targets")}
-
-    library_requirement = "extraction_type == 'dna'"
 
     @property
     def result_keys(self) -> dict[str, tuple[str, ...]]:
@@ -214,12 +210,24 @@ class PicardStepPart(BaseStepPart):
         metrics = {pgm: ReportOutput(f"Picard {pgm}", caption="picard.rst") for pgm in programs}
         return {"metrics": metrics}
 
+    intermediate_outputs = {"prepare": ("baits", "targets")}
+    resource_usage = {"metrics": ResourceUsage(threads=1, runtime="24h", mem="64GB")}
+    library_requirement = "extraction_type == 'dna'"
+
     @dictify
     def _get_input_files_prepare(self, wildcards):
         yield from self.parent.reference_inputs().items()
         kit = self.parent.get_upstream_paths("kits", library_kit=wildcards.library_kit)
         yield "baits", kit.baits
         yield "targets", kit.targets
+
+    @dictify
+    def _get_output_files_prepare(self):
+        yield "baits", "work/{library_kit}/out/{library_kit}.baits.interval_list"
+        yield "targets", "work/{library_kit}/out/{library_kit}.targets.interval_list"
+
+    def _get_log_file_prepare(self):
+        return {"log": "work/{library_kit}/log/{library_kit}.prepare.log"}
 
     @dictify
     def _get_input_files_metrics(self, wildcards):
@@ -236,11 +244,6 @@ class PicardStepPart(BaseStepPart):
         yield "bam", alignments.bam
 
     @dictify
-    def _get_output_files_prepare(self):
-        yield "baits", "work/{library_kit}/out/{library_kit}.baits.interval_list"
-        yield "targets", "work/{library_kit}/out/{library_kit}.targets.interval_list"
-
-    @dictify
     def _get_output_files_metrics(self):
         base_out = "work/{library_name}/report/{library_name}."
         for pgm in self.config.picard.programs:
@@ -251,9 +254,6 @@ class PicardStepPart(BaseStepPart):
             else:
                 yield pgm, base_out + pgm + ".txt"
                 yield pgm + "_md5", base_out + pgm + ".txt.md5"
-
-    def _get_log_file_prepare(self):
-        return {"log": "work/{library_kit}/log/{library_kit}.prepare.log"}
 
     def _get_log_file_metrics(self):
         return {"log": "work/{library_name}/log/{library_name}.log"}
@@ -267,8 +267,6 @@ class PicardStepPart(BaseStepPart):
             params["bait_name"] = self.parent.library_kits[wildcards.library_name]
         return params
 
-    resource_usage = {"metrics": ResourceUsage(threads=1, runtime="24h", mem="64GB")}
-
 
 class NgsChewStepPart(BaseStepPart):
     """Fingerprints with ngs-chew, compared across the libraries of the task"""
@@ -280,8 +278,6 @@ class NgsChewStepPart(BaseStepPart):
     #: ``compare`` runs ngs-chew's comparison, statistics and plots, which take no
     #: ``extra_arguments``
     extra_arguments_action = "fingerprint"
-
-    library_requirement = "extraction_type == 'dna'"
 
     result_keys = {
         "fingerprint": ("npz", "npz_md5"),
@@ -296,6 +292,7 @@ class NgsChewStepPart(BaseStepPart):
     }
 
     resource_usage = {"fingerprint": ResourceUsage(threads=1, runtime="4h", mem="2GB")}
+    library_requirement = "extraction_type == 'dna'"
 
     @dictify
     def _get_input_files_fingerprint(self, wildcards):
@@ -310,11 +307,11 @@ class NgsChewStepPart(BaseStepPart):
         npz = "work/{library_name}/out/{library_name}.npz"
         return {"npz": npz, "npz_md5": npz + ".md5"}
 
-    def _get_params_fingerprint(self, wildcards: Wildcards) -> dict[str, Any]:
-        return {}  # get_params adds the extra_arguments
-
     def _get_log_file_fingerprint(self):
         return {"log": "work/{library_name}/log/{library_name}.fingerprint.log"}
+
+    def _get_params_fingerprint(self, wildcards: Wildcards) -> dict[str, Any]:
+        return {}  # get_params adds the extra_arguments
 
     def _get_input_files_compare(self, wildcards):
         return {"npz": [f"work/{lib}/out/{lib}.npz" for lib in self.parent.output_entities]}
@@ -331,12 +328,67 @@ class NgsChewStepPart(BaseStepPart):
         return {"log": "work/cohort/log/cohort.compare.log"}
 
 
+class AlfredStepPart(BaseStepPart):
+    """Coverage of the targets of each library's kit with ``alfred qc``"""
+
+    name = "alfred"
+    actions = ("run",)
+    wrappers = {"run": "alfred/qc"}
+    default_resource_usage = ResourceUsage(threads=2, runtime="4h", mem="20GB")
+    library_requirement = "extraction_type == 'dna'"
+
+    def get_result_files(self) -> list[str]:
+        """The report of each library with a kit"""
+        json = "work/{library_name}/out/{library_name}.target_coverage.json.gz"
+        libraries = self.parent.kit_libraries()
+        return [
+            path.format(library_name=lib) for lib in libraries for path in (json, json + ".md5")
+        ]
+
+    @dictify
+    def _get_input_files_run(self, wildcards):
+        alignments = self.parent.get_upstream_paths(
+            "alignments", library_name=wildcards.library_name
+        )
+        yield "bam", alignments.bam
+        yield "bai", alignments.bai
+        yield from self.parent.reference_inputs().items()
+        yield "targets_bed", self.parent.library_kit_paths("kits", wildcards.library_name).targets
+
+    def _get_output_files_run(self):
+        json = "work/{library_name}/out/{library_name}.target_coverage.json.gz"
+        return {"json": json, "json_md5": json + ".md5"}
+
+    def _get_log_file_run(self):
+        return {"log": "work/{library_name}/log/{library_name}.log"}
+
+    def _get_params_run(self, wildcards: Wildcards) -> dict[str, Any]:
+        return {"ignore_read_groups": self.config.alfred.ignore_read_groups}
+
+
+class PicardSummaryStepPart(QcSummaryStepPart):
+    """Tables and charts of the Picard metrics of all DNA libraries"""
+
+    report_outputs = {
+        "run": {
+            "html": ReportOutput(
+                "Picard metrics", caption="picard_summary.rst", htmlindex="index.html"
+            )
+        }
+    }
+
+    source = ("picard", "metrics")
+
+    @property
+    def source_keys(self) -> dict[str, str]:
+        """One kind of file per program, the metrics file that the program writes first"""
+        return {program: program for program in self.config.picard.programs}
+
+    format = "picard"
+
+
 class NgsChewSummaryStepPart(QcSummaryStepPart):
     """The fingerprint checks: the sheet's sex and pedigree against the ngs-chew tables"""
-
-    source = ("ngs_chew", "compare")
-    source_keys = {table: table for table in COMPARE_TABLES}
-    format = "ngs_chew"
 
     report_outputs = {
         "run": {
@@ -345,6 +397,10 @@ class NgsChewSummaryStepPart(QcSummaryStepPart):
             )
         }
     }
+
+    source = ("ngs_chew", "compare")
+    source_keys = {table: table for table in COMPARE_TABLES}
+    format = "ngs_chew"
 
     def entities(self) -> list[str]:
         """The one comparison of the cohort."""
@@ -383,72 +439,8 @@ class NgsChewSummaryStepPart(QcSummaryStepPart):
         return {"libraries": libraries, "donors": donors}
 
 
-class AlfredStepPart(BaseStepPart):
-    """Coverage of the targets of each library's kit with ``alfred qc``"""
-
-    name = "alfred"
-    actions = ("run",)
-    wrappers = {"run": "alfred/qc"}
-
-    default_resource_usage = ResourceUsage(threads=2, runtime="4h", mem="20GB")
-
-    library_requirement = "extraction_type == 'dna'"
-
-    @dictify
-    def _get_input_files_run(self, wildcards):
-        alignments = self.parent.get_upstream_paths(
-            "alignments", library_name=wildcards.library_name
-        )
-        yield "bam", alignments.bam
-        yield "bai", alignments.bai
-        yield from self.parent.reference_inputs().items()
-        yield "targets_bed", self.parent.library_kit_paths("kits", wildcards.library_name).targets
-
-    def get_result_files(self) -> list[str]:
-        """The report of each library with a kit"""
-        json = "work/{library_name}/out/{library_name}.target_coverage.json.gz"
-        libraries = self.parent.kit_libraries()
-        return [
-            path.format(library_name=lib) for lib in libraries for path in (json, json + ".md5")
-        ]
-
-    def _get_output_files_run(self):
-        json = "work/{library_name}/out/{library_name}.target_coverage.json.gz"
-        return {"json": json, "json_md5": json + ".md5"}
-
-    def _get_params_run(self, wildcards: Wildcards) -> dict[str, Any]:
-        return {"ignore_read_groups": self.config.alfred.ignore_read_groups}
-
-    def _get_log_file_run(self):
-        return {"log": "work/{library_name}/log/{library_name}.log"}
-
-
-class PicardSummaryStepPart(QcSummaryStepPart):
-    """Tables and charts of the Picard metrics of all DNA libraries"""
-
-    source = ("picard", "metrics")
-    format = "picard"
-
-    report_outputs = {
-        "run": {
-            "html": ReportOutput(
-                "Picard metrics", caption="picard_summary.rst", htmlindex="index.html"
-            )
-        }
-    }
-
-    @property
-    def source_keys(self) -> dict[str, str]:
-        """One kind of file per program, the metrics file that the program writes first"""
-        return {program: program for program in self.config.picard.programs}
-
-
 class AlfredSummaryStepPart(QcSummaryStepPart):
     """Tables and charts of the ``alfred qc`` reports of all libraries with a kit"""
-
-    source = ("alfred", "run")
-    source_keys = {"json": "json"}
-    format = "alfred"
 
     report_outputs = {
         "run": {
@@ -458,6 +450,10 @@ class AlfredSummaryStepPart(QcSummaryStepPart):
         }
     }
 
+    source = ("alfred", "run")
+    source_keys = {"json": "json"}
+    format = "alfred"
+
     def entities(self) -> list[str]:
         return self.parent.kit_libraries()
 
@@ -466,27 +462,11 @@ class NgsDataQcWorkflow(BaseStep):
     """Perform NGS raw data QC"""
 
     name = "ngs_data_qc"
-    config_model_class = NgsDataQcConfigModel
+
     #: QC data tagged with the tool, so that a consumer can require one
     produces = [DataSignature(DataType.QC, frozenset({tool})) for tool in Tool]
 
-    @classmethod
-    def task_produces(cls, config, upstream):
-        """QC data tagged with the tool (``varfish_export`` reads alfred's)."""
-        return (DataSignature(DataType.QC, frozenset({str(config.tool)})),)
-
-    #: Every library, not only the tumors of cancer sheets
-    library_default = ""
-
-    @classmethod
-    def get_output_paths(cls, config, signature=None, **kwargs) -> dict[str, str]:
-        """Return local NGS QC output paths for downstream consumers."""
-        lib = kwargs.get("library_name", "{library_name}")
-        if config.tool == "ngs_chew":
-            return {"npz": f"work/{lib}/out/{lib}.npz"}
-        if config.tool == "alfred":
-            return {"alfred_qc": f"work/{lib}/out/{lib}.target_coverage.json.gz"}
-        return {"done": f"work/{lib}/report/.done"}
+    config_model_class = NgsDataQcConfigModel
 
     tool_parts = {
         Tool.fastqc: FastQcReportStepPart,
@@ -494,6 +474,9 @@ class NgsDataQcWorkflow(BaseStep):
         Tool.ngs_chew: NgsChewStepPart,
         Tool.alfred: AlfredStepPart,
     }
+
+    #: Every library, not only the tumors of cancer sheets
+    library_default = ""
 
     #: The QC summary of the files of each tool, registered after the tool's part
     summary_parts = {
@@ -506,6 +489,21 @@ class NgsDataQcWorkflow(BaseStep):
     def task_library_requirement(cls, config):
         """The libraries that the tool runs on."""
         return cls.tool_parts[config.tool].library_requirement
+
+    @classmethod
+    def task_produces(cls, config, upstream):
+        """QC data tagged with the tool (``varfish_export`` reads alfred's)."""
+        return (DataSignature(DataType.QC, frozenset({str(config.tool)})),)
+
+    @classmethod
+    def get_output_paths(cls, config, signature=None, **kwargs) -> dict[str, str]:
+        """Return local NGS QC output paths for downstream consumers."""
+        lib = kwargs.get("library_name", "{library_name}")
+        if config.tool == "ngs_chew":
+            return {"npz": f"work/{lib}/out/{lib}.npz"}
+        if config.tool == "alfred":
+            return {"alfred_qc": f"work/{lib}/out/{lib}.target_coverage.json.gz"}
+        return {"done": f"work/{lib}/report/.done"}
 
     def __init__(self, workflow, project, task_name):
         super().__init__(workflow, project, task_name)

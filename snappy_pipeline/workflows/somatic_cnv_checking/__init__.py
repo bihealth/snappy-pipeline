@@ -54,13 +54,15 @@ class SomaticCnvCheckingPileupStepPart(BaseStepPart):
     name = "pileup"
     actions = ("normal", "tumor")
     wrappers = {"tumor": "bcftools/pileups", "normal": "bcftools/heterozygous_variants"}
-
     intermediate_outputs = {"normal": ("vcf", "vcf_tbi"), "tumor": ("vcf", "vcf_tbi")}
 
     resource_usage = {
         "normal": ResourceUsage(threads=2, runtime="12h", mem=f"{int(3.7 * 1024 * 2)}MB"),
         "tumor": ResourceUsage(threads=2, runtime="1h", mem=f"{int(3.7 * 1024 * 2)}MB"),
     }
+
+    def _get_log_file(self, action):
+        return {"log": f"work/{{tumor_library}}/log/{{tumor_library}}.{action}.log"}
 
     def _get_input_files_normal(self, wildcards):
         alignments = self.parent.get_upstream_paths(
@@ -70,6 +72,16 @@ class SomaticCnvCheckingPileupStepPart(BaseStepPart):
             "bam": alignments.bam,
             "bai": alignments.bai,
             **self.parent.reference_inputs(),
+        }
+
+    def _get_output_files_normal(self):
+        return self._pileup_outputs("normal")
+
+    def _get_params_normal(self, wildcards):
+        return {
+            "min_baf": self.config.min_baf,
+            "min_depth": self.config.min_depth,
+            "max_depth": self.config.max_depth,
         }
 
     def _get_input_files_tumor(self, wildcards):
@@ -89,31 +101,18 @@ class SomaticCnvCheckingPileupStepPart(BaseStepPart):
             **self.parent.reference_inputs(),
         }
 
-    @staticmethod
-    def _pileup_outputs(action):
-        """Return the pileup VCF + TBI file (intermediate, so without md5 files)"""
-        base = f"work/{{tumor_library}}/out/{{tumor_library}}.{action}.vcf.gz"
-        return {"vcf": base, "vcf_tbi": base + ".tbi"}
-
-    def _get_output_files_normal(self):
-        return self._pileup_outputs("normal")
-
     def _get_output_files_tumor(self):
         return self._pileup_outputs("tumor")
-
-    def _get_params_normal(self, wildcards):
-        return {
-            "min_baf": self.config.min_baf,
-            "min_depth": self.config.min_depth,
-            "max_depth": self.config.max_depth,
-        }
 
     def _get_params_tumor(self, wildcards):
         # The tumor is piled up at the heterozygous sites of the normal, without filters
         return {"max_depth": self.config.max_depth}
 
-    def _get_log_file(self, action):
-        return {"log": f"work/{{tumor_library}}/log/{{tumor_library}}.{action}.log"}
+    @staticmethod
+    def _pileup_outputs(action):
+        """Return the pileup VCF + TBI file (intermediate, so without md5 files)"""
+        base = f"work/{{tumor_library}}/out/{{tumor_library}}.{action}.vcf.gz"
+        return {"vcf": base, "vcf_tbi": base + ".tbi"}
 
 
 class SomaticCnvCheckingCnvStepPart(BaseStepPart):
@@ -122,9 +121,7 @@ class SomaticCnvCheckingCnvStepPart(BaseStepPart):
     name = "cnv"
     actions = ("run",)
     wrappers = {"run": "vcfpy/add_bed"}
-
     entity_wildcard = "tumor_library"
-
     result_keys = ("vcf", "vcf_tbi", "vcf_md5", "vcf_tbi_md5", "tsv", "tsv_md5")
 
     def _get_input_files_run(self, wildcards):
@@ -149,27 +146,19 @@ class SomaticCnvCheckingCnvStepPart(BaseStepPart):
         prefix = _PREFIX.format(library="{tumor_library}")
         return {**vcf_outputs(prefix), "tsv": prefix + ".tsv", "tsv_md5": prefix + ".tsv.md5"}
 
-    def _get_params_run(self, wildcards: Wildcards) -> dict[str, Any]:
-        return {"tumor_library": wildcards.tumor_library}
-
     def _get_log_file_run(self):
         return {"log": "work/{tumor_library}/log/{tumor_library}.log"}
+
+    def _get_params_run(self, wildcards: Wildcards) -> dict[str, Any]:
+        return {"tumor_library": wildcards.tumor_library}
 
 
 class SomaticCnvCheckingReportStepPart(BaseStepPart):
     """Plots of BAF vs CNV"""
 
-    report_outputs = {
-        "run": {
-            key: ReportOutput("CNV checking", caption="cnv_checking.rst")
-            for key in ("cnv", "locus", "segment")
-        }
-    }
-
     name = "report"
     actions = ("run",)
     wrappers = {"run": "somatic_cnv_checking"}
-
     entity_wildcard = "tumor_library"
 
     result_keys = (
@@ -180,6 +169,13 @@ class SomaticCnvCheckingReportStepPart(BaseStepPart):
         "segment",
         "segment_md5",
     )
+
+    report_outputs = {
+        "run": {
+            key: ReportOutput("CNV checking", caption="cnv_checking.rst")
+            for key in ("cnv", "locus", "segment")
+        }
+    }
 
     def _get_input_files_run(self, wildcards):
         name_pattern = "{tumor_library}".format(**wildcards)
@@ -201,14 +197,14 @@ class SomaticCnvCheckingReportStepPart(BaseStepPart):
             "segment_md5": base_path_out + ".segment.pdf.md5",
         }
 
+    def _get_log_file_run(self):
+        return {"log": "work/{tumor_library}/log/{tumor_library}.report.log"}
+
     def _get_params_run(self, wildcards: Wildcards) -> dict[str, Any]:
         return {
             "tumor_library": wildcards.tumor_library,
             "amplification": self.config.amplification,
         }
-
-    def _get_log_file_run(self):
-        return {"log": "work/{tumor_library}/log/{tumor_library}.report.log"}
 
 
 class SomaticCnvCheckingWorkflow(BaseStep):
@@ -216,12 +212,10 @@ class SomaticCnvCheckingWorkflow(BaseStep):
 
     #: Workflow name
     name = "somatic_cnv_checking"
+
     produces = [DataSignature(DataType.QC, frozenset({"cnv_check"}))]
-
     config_model_class = SomaticCnvCheckingConfigModel
-
     library_requirement = MATCHED_NORMAL_REQUIREMENT
-
     default_relationships = MATCHED_NORMAL_RELATIONSHIP
 
     @classmethod

@@ -63,6 +63,7 @@ class MehariStepPart(BaseStepPart):
 
     name = "mehari"
     actions = ("annotate_seqvars", "annotate_strucvars", "bam_qc")
+
     wrappers = {
         "bam_qc": "mehari/bam_qc",
         "annotate_strucvars": "mehari/annotate_strucvars",
@@ -72,45 +73,12 @@ class MehariStepPart(BaseStepPart):
     #: The ``strucvars`` section passes its own extra arguments
     extra_arguments_action = "annotate_seqvars"
 
-    default_resource_usage = ResourceUsage(threads=2, runtime="1d", mem="14GB")
-
     result_keys = {
         action: tuple(f"{key}{md5}" for key in outputs for md5 in ("", "_md5"))
         for action, outputs in _OUTPUTS.items()
     }
 
-    def _get_log_file(self, action: str) -> SnakemakeDict:
-        return {"log": f"work/{{library_name}}/log/{{library_name}}.{action}.log"}
-
-    def _has_result_files(self, action: str) -> bool:
-        """Whether the config asks for the files of the action."""
-        if action == "annotate_strucvars":
-            return bool(self.parent.config.depends_on.structural_variants)
-        if action == "bam_qc":
-            return bool(self.parent.config.depends_on.qc)
-        return True
-
-    def get_result_files(self):
-        pedigrees = self._pedigrees_with_index()
-        result = []
-        for action in filter(self._has_result_files, self.actions):
-            for path in self.get_output_files(action).values():
-                result += expand(path, library_name=pedigrees)
-        return result
-
-    def _pedigrees_with_index(self) -> list[str]:
-        """Return the pedigrees whose index has a DNA library.
-        The other pedigrees are skipped with a warning that names their donors."""
-        result = []
-        for pedigree in self.parent.pedigrees():
-            if self.parent.pedigree_index(pedigree, include_background=True) is None:
-                members = self.parent.pedigree_members(pedigree, include_background=True)
-                names = sorted(members["donor_name"])
-                msg = f"INFO: pedigree {pedigree} has no index with a DNA library (donors: {names})"
-                warnings.warn(InconsistentPedigreeWarning(msg))
-                continue
-            result.append(pedigree)
-        return result
+    default_resource_usage = ResourceUsage(threads=2, runtime="1d", mem="14GB")
 
     def _get_output_files(self, action: str) -> dict[str, str]:
         prefix = "work/{library_name}/out/{library_name}"
@@ -120,9 +88,16 @@ class MehariStepPart(BaseStepPart):
             files[f"{key}_md5"] = f"{prefix}{suffix}.md5"
         return files
 
-    @staticmethod
-    def _ped(wildcards) -> str:
-        return "work/write_pedigree.{library_name}/out/{library_name}.ped".format(**wildcards)
+    def _get_log_file(self, action: str) -> SnakemakeDict:
+        return {"log": f"work/{{library_name}}/log/{{library_name}}.{action}.log"}
+
+    def get_result_files(self):
+        pedigrees = self._pedigrees_with_index()
+        result = []
+        for action in filter(self._has_result_files, self.actions):
+            for path in self.get_output_files(action).values():
+                result += expand(path, library_name=pedigrees)
+        return result
 
     @dictify
     def _get_input_files_annotate_seqvars(self, wildcards):
@@ -140,12 +115,12 @@ class MehariStepPart(BaseStepPart):
         if self.config.depends_on.exons:
             yield "exon_bed", self.parent.get_upstream_paths("exons").bed
 
+    def _get_output_files_annotate_seqvars(self):
+        return self._get_output_files("annotate_seqvars")
+
     def _get_params_annotate_seqvars(self, wildcards):
         """The options of ``mehari annotate seqvars``; ``assembly`` also for the table"""
         return {"config": self.config.mehari.model_dump(by_alias=True, exclude={"extra_arguments"})}
-
-    def _get_output_files_annotate_seqvars(self):
-        return self._get_output_files("annotate_seqvars")
 
     @dictify
     def _get_input_files_annotate_strucvars(self, wildcards):
@@ -187,15 +162,15 @@ class MehariStepPart(BaseStepPart):
         )
         yield "vcf", [variants.vcf]
 
+    def _get_output_files_annotate_strucvars(self):
+        return self._get_output_files("annotate_strucvars")
+
     def _get_params_annotate_strucvars(self, wildcards):
         return {
             "assembly": self.config.mehari.assembly,
             "rng_seed": self.config.strucvars.rng_seed,
             "extra_arguments": self.config.strucvars.extra_arguments,
         }
-
-    def _get_output_files_annotate_strucvars(self):
-        return self._get_output_files("annotate_strucvars")
 
     @dictify
     def _get_input_files_bam_qc(self, wildcards):
@@ -211,13 +186,39 @@ class MehariStepPart(BaseStepPart):
                 result["alfred_qc"].append(coverage.alfred_qc)
         return result
 
+    def _get_output_files_bam_qc(self) -> SnakemakeDictItemsGenerator:
+        return self._get_output_files("bam_qc")
+
     def _get_params_bam_qc(self, wildcards):
         """The library of each ``bamstats`` and ``idxstats`` input, in their order"""
         members = self.parent.pedigree_members(wildcards.library_name, include_background=True)
         return {"libraries": members["library_name"].tolist()}
 
-    def _get_output_files_bam_qc(self) -> SnakemakeDictItemsGenerator:
-        return self._get_output_files("bam_qc")
+    def _has_result_files(self, action: str) -> bool:
+        """Whether the config asks for the files of the action."""
+        if action == "annotate_strucvars":
+            return bool(self.parent.config.depends_on.structural_variants)
+        if action == "bam_qc":
+            return bool(self.parent.config.depends_on.qc)
+        return True
+
+    def _pedigrees_with_index(self) -> list[str]:
+        """Return the pedigrees whose index has a DNA library.
+        The other pedigrees are skipped with a warning that names their donors."""
+        result = []
+        for pedigree in self.parent.pedigrees():
+            if self.parent.pedigree_index(pedigree, include_background=True) is None:
+                members = self.parent.pedigree_members(pedigree, include_background=True)
+                names = sorted(members["donor_name"])
+                msg = f"INFO: pedigree {pedigree} has no index with a DNA library (donors: {names})"
+                warnings.warn(InconsistentPedigreeWarning(msg))
+                continue
+            result.append(pedigree)
+        return result
+
+    @staticmethod
+    def _ped(wildcards) -> str:
+        return "work/write_pedigree.{library_name}/out/{library_name}.ped".format(**wildcards)
 
 
 class VarfishExportWorkflow(BaseStep):
@@ -225,17 +226,10 @@ class VarfishExportWorkflow(BaseStep):
 
     name = "varfish_export"
     produces = [DataSignature(DataType.EXPORTS, frozenset({"varfish"}))]
-    #: The pedigrees include the members of background data sets
-    uses_background = True
     config_model_class = VarfishExportConfigModel
 
-    @cached_property
-    def coverage_qc_libraries(self) -> set[str]:
-        """The libraries that the ``depends_on.qc`` task reports on: those with a kit among its
-        libraries."""
-        if not (task := self.config.depends_on.qc):
-            return set()
-        return set(self.task_libraries(task)["library_name"]) & set(self.library_kits)
+    #: The pedigrees include the members of background data sets
+    uses_background = True
 
     @classmethod
     def get_output_paths(cls, config, signature=None, **kwargs) -> dict[str, str]:
@@ -249,3 +243,11 @@ class VarfishExportWorkflow(BaseStep):
 
         # Register sub step classes so the sub steps are available
         self.register_sub_step_classes((WritePedigreeStepPart, MehariStepPart))
+
+    @cached_property
+    def coverage_qc_libraries(self) -> set[str]:
+        """The libraries that the ``depends_on.qc`` task reports on: those with a kit among its
+        libraries."""
+        if not (task := self.config.depends_on.qc):
+            return set()
+        return set(self.task_libraries(task)["library_name"]) & set(self.library_kits)

@@ -67,6 +67,7 @@ class PopDelStepPart(
 
     name = "popdel"
     actions = ("profile", "scatter", "call", "concat_calls", "reorder_vcf")
+
     wrappers = RegionScatter.scatter_wrapper | {
         "reorder_vcf": "popdel/reorder_vcf",
         "concat_calls": "popdel/concat_calls",
@@ -78,21 +79,19 @@ class PopDelStepPart(
     extra_arguments_action = "call"
 
     temp_outputs = {"scatter": ("regions",), "call": ("vcf", "vcf_tbi")}
-
     intermediate_outputs = {"profile": ("profile",), "concat_calls": ("vcf", "vcf_tbi")}
-
     default_resource_usage = ResourceUsage(threads=2, runtime="4d", mem="24GB")
 
-    #: The calls of the cohort in one part of the genome
-    chunk_tpl = "work/cohort/out/cohort/calls/{scatteritem}"
+    @property
+    def scatter_padding(self) -> int:
+        return self.config.popdel.max_sv_size
 
     @property
     def scatter_window_size(self) -> int:
         return self.config.popdel.window_size
 
-    @property
-    def scatter_padding(self) -> int:
-        return self.config.popdel.max_sv_size
+    #: The calls of the cohort in one part of the genome
+    chunk_tpl = "work/cohort/out/cohort/calls/{scatteritem}"
 
     def scatter_ignore_contigs(self) -> list[str]:
         return self.config.ignore_contigs
@@ -110,6 +109,9 @@ class PopDelStepPart(
     def _get_output_files_profile(self):
         prefix = "work/{library_name}/out/{library_name}"
         yield "profile", f"{prefix}.profile"
+
+    def _get_params_profile(self, wildcards: Wildcards) -> dict[str, Any]:
+        return {"profile_regions": self.config.popdel.profile_regions}
 
     @dictify
     def _get_input_files_call(self, wildcards):
@@ -139,9 +141,6 @@ class PopDelStepPart(
         yield "vcf", f"work/{infix}/out/{infix}.concat_calls.vcf.gz"
         yield "vcf_tbi", f"work/{infix}/out/{infix}.concat_calls.vcf.gz.tbi"
 
-    def _get_log_file_infix_concat_calls(self):
-        return "cohort"
-
     @dictify
     def _get_input_files_reorder_vcf(self, wildcards):
         yield "vcf", "work/cohort/out/cohort.concat_calls.vcf.gz"
@@ -149,9 +148,6 @@ class PopDelStepPart(
 
     def _get_output_files_reorder_vcf(self):
         return dict(VCF_OUTPUTS)
-
-    def _get_params_profile(self, wildcards: Wildcards) -> dict[str, Any]:
-        return {"profile_regions": self.config.popdel.profile_regions}
 
     def _get_params_reorder_vcf(self, wildcards: Wildcards) -> dict[str, Any]:
         """Used in Snakefile to rule ``sv_calling_wgs_popdel_reorder_vcf``"""
@@ -161,14 +157,14 @@ class PopDelStepPart(
             )
         }
 
+    def _get_log_file_infix_concat_calls(self):
+        return "cohort"
+
 
 class SvCallingWgsWorkflow(SvCallingWorkflow):
     """Perform (germline) WGS SV calling"""
 
     name = "sv_calling_wgs"
-    #: Whole genomes: the callers run without target regions
-    targeted = False
-
     config_model_class = SvCallingWgsConfigModel
 
     tool_parts = {
@@ -178,3 +174,6 @@ class SvCallingWgsWorkflow(SvCallingWorkflow):
         Tool.gcnv: RunGcnvStepPart,
         Tool.melt: MeltStepPart,
     }
+
+    #: Whole genomes: the callers run without target regions
+    targeted = False

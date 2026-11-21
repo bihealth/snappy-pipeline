@@ -16,6 +16,8 @@ from pydantic import BaseModel
 from snappy_pipeline import wrapper_code
 from snappy_pipeline.models import RequiredBy, reader_markers
 from snappy_pipeline.workflow_registry import WORKFLOW_REGISTRY
+from tests.scripts.class_layout import check as layout_check
+from tests.scripts.class_layout import module_paths
 from tests.scripts.generate_task_configs import tool_values
 
 REPO = Path(__file__).resolve().parents[2]
@@ -154,6 +156,14 @@ def test_step_snakefiles_fetch_their_workflow_object():
         ):
             found.append(str(path.relative_to(REPO)))
     assert not found, f"use wf = task_instance(config['__task_name__']) only: {found}"
+
+
+def test_workflow_modules_follow_the_layout():
+    """A workflow module lists its parts in registration order before the step class, and a
+    class its attributes (base order first) before its methods (overrides, actions, own); see
+    ``tests/scripts/class_layout.py``."""
+    out_of_order = [str(path.relative_to(REPO)) for path in layout_check(module_paths())]
+    assert not out_of_order, "run `pixi run layout` for: " + ", ".join(out_of_order)
 
 
 def test_step_snakefiles_include_the_generated_wrapper_rules():

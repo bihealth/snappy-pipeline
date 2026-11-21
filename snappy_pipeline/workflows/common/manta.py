@@ -28,10 +28,6 @@ class MantaStepPart(
         """Exomes and genomes run different Manta workflows"""
         return {"run": "manta/germline_targeted" if self.parent.targeted else "manta/germline_wgs"}
 
-    def _get_params_run(self, wildcards):
-        """The tool's ``extra_arguments`` only, which ``with_extra_arguments`` adds"""
-        return {}
-
     @property
     def default_resource_usage(self) -> ResourceUsage:
         num_threads = self.config.manta.num_threads
@@ -54,3 +50,7 @@ class MantaStepPart(
 
     def _get_output_files_run(self):
         return dict(VCF_OUTPUTS)
+
+    def _get_params_run(self, wildcards):
+        """The tool's ``extra_arguments`` only, which ``with_extra_arguments`` adds"""
+        return {}

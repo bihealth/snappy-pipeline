@@ -67,11 +67,8 @@ class Gatk4BqsrStepPart(AlignmentProcessingStepPart):
 
     name = "gatk4_bqsr"
     wrappers = {"run": "gatk4_bqsr"}
-
     result_keys = ("bam", "bam_bai", "bam_md5", "bam_bai_md5", "recal_table", "recal_table_md5")
-
     report_outputs = {"run": {"recal_table": ReportOutput("BQSR", caption="recal_table.rst")}}
-
     default_resource_usage = ResourceUsage(threads=1, runtime="24h", mem="16GB")
 
     @dictify
@@ -87,28 +84,26 @@ class Gatk4BqsrStepPart(AlignmentProcessingStepPart):
             "recal_table_md5": table + ".md5",
         }
 
-    def _get_params_run(self, wildcards):
-        return {}  # get_params adds the extra_arguments
-
     def _get_log_file_run(self):
         return {"log": "work/{library_name}/log/{library_name}.recalibration.log"}
+
+    def _get_params_run(self, wildcards):
+        return {}  # get_params adds the extra_arguments
 
 
 class AlignmentProcessingWorkflow(BaseStep):
     """Process the alignments of a mapping task"""
 
     name = "alignment_processing"
+    produces = [DataSignature(DataType.ALIGNMENTS, frozenset(TOOL_TAGS.values()))]
+    config_model_class = AlignmentProcessingConfigModel
+    tool_parts = {Tool.gatk4_bqsr: Gatk4BqsrStepPart}
 
     #: The DNA libraries, background included
     library_requirement = "extraction_type == 'dna'"
+
     library_default = ""
     background_results = True
-
-    produces = [DataSignature(DataType.ALIGNMENTS, frozenset(TOOL_TAGS.values()))]
-
-    config_model_class = AlignmentProcessingConfigModel
-
-    tool_parts = {Tool.gatk4_bqsr: Gatk4BqsrStepPart}
 
     @classmethod
     def task_produces(cls, config, upstream):

@@ -68,15 +68,6 @@ def _filter_intervals_memory(wildcards, input=None, threads=None, attempt=1):
 class GcnvModelStepPart(BuildGcnvModelStepPart):
     """Build model for GATK4 gCNV"""
 
-    def __init__(self, parent):
-        super().__init__(parent)
-        libraries = self.parent.primary_dna_libraries(include_background=True)
-        if self.config.intervals == Intervals.targeted:
-            self.parent.check_library_kits("kits", libraries["library_name"], require=False)
-        self.ngs_library_to_kit = build_ngs_library_to_kit(
-            libraries, self.config.intervals, self.parent.library_kits
-        )
-
     @property
     def resource_usage(self):
         """Whole genomes need more memory to filter the intervals."""
@@ -86,6 +77,15 @@ class GcnvModelStepPart(BuildGcnvModelStepPart):
                 BuildGcnvModelStepPart.default_resource_usage, mem=_filter_intervals_memory
             )
         return usage
+
+    def __init__(self, parent):
+        super().__init__(parent)
+        libraries = self.parent.primary_dna_libraries(include_background=True)
+        if self.config.intervals == Intervals.targeted:
+            self.parent.check_library_kits("kits", libraries["library_name"], require=False)
+        self.ngs_library_to_kit = build_ngs_library_to_kit(
+            libraries, self.config.intervals, self.parent.library_kits
+        )
 
     @dictify
     def _get_input_files_post_germline_calls(self, wildcards, checkpoints):
@@ -110,11 +110,12 @@ class GcnvModelWorkflow(BaseStep):
 
     #: Workflow name
     name = "gcnv_model"
+
+    produces = [DataSignature(DataType.MODELS, frozenset({"gcnv"}))]
+    config_model_class = GcnvModelConfigModel
+
     #: The background libraries train the model, too
     uses_background = True
-
-    config_model_class = GcnvModelConfigModel
-    produces = [DataSignature(DataType.MODELS, frozenset({"gcnv"}))]
 
     @classmethod
     def task_produces(cls, config, upstream):

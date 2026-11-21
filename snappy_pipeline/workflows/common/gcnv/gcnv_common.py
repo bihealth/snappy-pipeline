@@ -145,6 +145,14 @@ class GcnvCommonStepPart(
     #: ``extra_arguments`` go to ``GermlineCNVCaller``; the other GATK commands take none
     extra_arguments_action = "call_cnvs"
 
+    default_resource_usage = ResourceUsage(threads=1, runtime="1d", mem="7680MB")
+
+    #: Resource usage of the actions that run the gCNV model
+    resource_usage = dict.fromkeys(
+        ("call_cnvs", "post_germline_calls", "joint_germline_cnv_segmentation"),
+        ResourceUsage(threads=16, runtime="4d", mem="46080MB"),
+    )
+
     #: Dictionary: Key: library name (str); Value: library kit (str).
     ngs_library_to_kit = None
 
@@ -155,11 +163,3 @@ class GcnvCommonStepPart(
     def _interval_list_path(self, library_kit: str) -> str:
         """Return the preprocessed interval list of the kit, a local path of the model task."""
         return f"work/{library_kit}/out/{library_kit}.interval_list"
-
-    #: Resource usage of the actions that run the gCNV model
-    resource_usage = dict.fromkeys(
-        ("call_cnvs", "post_germline_calls", "joint_germline_cnv_segmentation"),
-        ResourceUsage(threads=16, runtime="4d", mem="46080MB"),
-    )
-
-    default_resource_usage = ResourceUsage(threads=1, runtime="1d", mem="7680MB")

@@ -73,25 +73,24 @@ class StarFusionStepPart(SomaticGeneFusionCallingStepPart):
 
     #: Step name
     name = "star_fusion"
-    wrappers = {"run": "star_fusion"}
 
+    wrappers = {"run": "star_fusion"}
     result_keys = ("out",)
+    default_resource_usage = ResourceUsage(threads=4, runtime="5d", mem=f"{30 * 1024 * 4}MB")
 
     @dictify
     def _get_input_files_run(self, wildcards):
         yield from super()._get_input_files_run(wildcards).items()
         yield "ctat_resource_lib", self.parent.get_upstream_paths("database").ctat_resource_lib
 
-    def _get_params_run(self, wildcards):
-        """The reads written by another task, and the tool's ``extra_arguments``, which
-        ``with_extra_arguments`` adds"""
-        return reads_params(self.parent, wildcards.library_name)
-
     def _get_output_files_run(self):
         # STAR-Fusion writes many files that the step does not name
         return {"out": directory(_OUT.format(library="{library_name}"))}
 
-    default_resource_usage = ResourceUsage(threads=4, runtime="5d", mem=f"{30 * 1024 * 4}MB")
+    def _get_params_run(self, wildcards):
+        """The reads written by another task, and the tool's ``extra_arguments``, which
+        ``with_extra_arguments`` adds"""
+        return reads_params(self.parent, wildcards.library_name)
 
 
 class ArribaStepPart(SomaticGeneFusionCallingStepPart):
@@ -99,9 +98,15 @@ class ArribaStepPart(SomaticGeneFusionCallingStepPart):
 
     #: Step name
     name = "arriba"
-    wrappers = {"run": "arriba/run"}
 
+    wrappers = {"run": "arriba/run"}
     result_keys = ("fusions", "fusions_md5", "discarded", "discarded_md5")
+
+    @property
+    def default_resource_usage(self) -> ResourceUsage:
+        return ResourceUsage(
+            threads=self.config.arriba.num_threads, runtime="24h", mem=f"{96 * 1024}MB"
+        )
 
     @dictify
     def _get_input_files_run(self, wildcards):
@@ -114,22 +119,6 @@ class ArribaStepPart(SomaticGeneFusionCallingStepPart):
             for key in type(database).model_fields:
                 if path := getattr(database, key):
                     yield key, path
-
-    def _get_params_run(self, wildcards):
-        return {
-            "trim_adapters": self.config.arriba.trim_adapters,
-            "num_threads_trimming": self.config.arriba.num_threads_trimming,
-            "num_threads": self.config.arriba.num_threads,
-            "star_parameters": self.config.arriba.star_parameters,
-        } | reads_params(self.parent, wildcards.library_name)
-
-    @dictify
-    def _get_output_files_run(self):
-        out = _OUT.format(library="{library_name}")
-        for key, suffix in ARRIBA_TABLES.items():
-            path = f"{out}/{{library_name}}.{suffix}"
-            yield key, path
-            yield key + "_md5", path + ".md5"
 
     @dictify
     def _get_log_file_run(self):
@@ -145,11 +134,21 @@ class ArribaStepPart(SomaticGeneFusionCallingStepPart):
         for key, ext in key_ext:
             yield key, prefix + ext
 
-    @property
-    def default_resource_usage(self) -> ResourceUsage:
-        return ResourceUsage(
-            threads=self.config.arriba.num_threads, runtime="24h", mem=f"{96 * 1024}MB"
-        )
+    @dictify
+    def _get_output_files_run(self):
+        out = _OUT.format(library="{library_name}")
+        for key, suffix in ARRIBA_TABLES.items():
+            path = f"{out}/{{library_name}}.{suffix}"
+            yield key, path
+            yield key + "_md5", path + ".md5"
+
+    def _get_params_run(self, wildcards):
+        return {
+            "trim_adapters": self.config.arriba.trim_adapters,
+            "num_threads_trimming": self.config.arriba.num_threads_trimming,
+            "num_threads": self.config.arriba.num_threads,
+            "star_parameters": self.config.arriba.star_parameters,
+        } | reads_params(self.parent, wildcards.library_name)
 
 
 class SomaticGeneFusionCallingWorkflow(BaseStep):
@@ -157,14 +156,12 @@ class SomaticGeneFusionCallingWorkflow(BaseStep):
 
     #: Workflow name
     name = "somatic_gene_fusion_calling"
+
     produces = [DataSignature(DataType.VARIANTS, frozenset({"somatic", "fusion", "rna"}))]
-
     config_model_class = SomaticGeneFusionCallingConfigModel
-
+    tool_parts = {Tool.star_fusion: StarFusionStepPart, Tool.arriba: ArribaStepPart}
     library_requirement = "kind == 'cancer' and extraction_type == 'rna'"
     library_default = ""
-
-    tool_parts = {Tool.star_fusion: StarFusionStepPart, Tool.arriba: ArribaStepPart}
 
     @classmethod
     def get_output_paths(cls, config, signature=None, **kwargs) -> dict[str, str]:

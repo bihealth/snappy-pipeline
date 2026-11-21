@@ -28,8 +28,6 @@ __author__ = "Clemens Messerschmidt"
 
 
 # Default configuration variant_signatures
-
-
 class SignaturesStepPart(BaseStepPart):
     """Base class for signature classes"""
 
@@ -37,7 +35,6 @@ class SignaturesStepPart(BaseStepPart):
     actions = ("run",)
 
     entity_wildcard = "tumor_library"
-
     default_resource_usage = ResourceUsage(threads=2, runtime="1h", mem=f"{7 * 1024 * 2}MB")
 
     def _get_log_file(self, action):
@@ -49,8 +46,8 @@ class TabulateVariantsStepPart(SignaturesStepPart):
 
     #: Step name
     name = "tabulate_vcf"
-    wrappers = {"run": "signatures/tabulate_vcf"}
 
+    wrappers = {"run": "signatures/tabulate_vcf"}
     intermediate_outputs = {"run": ("tsv",)}
 
     @dictify
@@ -73,15 +70,15 @@ class TabulateVariantsStepPart(SignaturesStepPart):
 class DeconstructSigsStepPart(SignaturesStepPart):
     """Use deconstructSigs R package to identify signatures from tables"""
 
+    #: Step name
+    name = "deconstruct_sigs"
+
+    wrappers = {"run": "signatures/deconstruct_sigs"}
+    result_keys = ("tsv", "tsv_md5")
+
     report_outputs = {
         "run": {"pdf": ReportOutput("deconstructSigs", caption="deconstruct_sigs.rst")}
     }
-
-    #: Step name
-    name = "deconstruct_sigs"
-    wrappers = {"run": "signatures/deconstruct_sigs"}
-
-    result_keys = ("tsv", "tsv_md5")
 
     @dictify
     def _get_input_files_run(self, wildcards):
@@ -91,13 +88,13 @@ class DeconstructSigsStepPart(SignaturesStepPart):
             f"work/{wildcards.tumor_library}/out/tabulate_vcf.{wildcards.tumor_library}.tsv",
         )
 
-    def _get_params_run(self, wildcards):
-        """The options of ``whichSignatures``"""
-        return self.config.deconstruct_sigs.model_dump(mode="json")
-
     def _get_output_files_run(self):
         base = "work/{tumor_library}/out/deconstruct_sigs.{tumor_library}"
         return {"tsv": base + ".tsv", "tsv_md5": base + ".tsv.md5", "pdf": base + ".pdf"}
+
+    def _get_params_run(self, wildcards):
+        """The options of ``whichSignatures``"""
+        return self.config.deconstruct_sigs.model_dump(mode="json")
 
 
 class SomaticVariantSignaturesWorkflow(BaseStep):
@@ -105,11 +102,10 @@ class SomaticVariantSignaturesWorkflow(BaseStep):
 
     #: Workflow name
     name = "somatic_variant_signatures"
+
     produces = [DataSignature(DataType.TABULAR, frozenset({"signatures"}))]
-
-    library_requirement = "kind == 'cancer'"
-
     config_model_class = SomaticVariantSignaturesConfigModel
+    library_requirement = "kind == 'cancer'"
 
     @classmethod
     def get_output_paths(cls, config, signature=None, **kwargs) -> dict[str, str]:

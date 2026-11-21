@@ -48,9 +48,7 @@ class BcftoolsConcatStepPart(BaseStepPart):
     name = "bcftools"
     actions = ("run",)
     wrappers = {"run": "bcftools/concat_variants"}
-
     result_keys = {"run": tuple(vcf_outputs(_OUT_PREFIX))}
-
     default_resource_usage = ResourceUsage(threads=1, mem="2G", runtime="2h")
 
     @dictify
@@ -68,18 +66,16 @@ class BcftoolsConcatStepPart(BaseStepPart):
     def _get_output_files_run(self) -> dict[str, str]:
         return vcf_outputs(_OUT_PREFIX)
 
-    def _get_params_run(self, wildcards: Wildcards) -> dict[str, Any]:
-        return {}  # the base class adds the extra_arguments of the tool section
-
     def _get_log_file_run(self) -> dict[str, str]:
         return {"log": "work/{library_name}/log/{library_name}.log"}
+
+    def _get_params_run(self, wildcards: Wildcards) -> dict[str, Any]:
+        return {}  # the base class adds the extra_arguments of the tool section
 
 
 class ConcatVariantsWorkflow(BaseStep):
     name = "concat_variants"
-
     produces = [DataSignature(DataType.VARIANTS)]
-
     config_model_class = ConcatVariantsConfigModel
 
     @classmethod

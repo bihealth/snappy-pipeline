@@ -57,13 +57,6 @@ class AscatStepPart(BaseStepPart):
       to
     """
 
-    report_outputs = {
-        "run_ascat": {
-            key: ReportOutput("ASCAT", caption="ascat_plots.rst")
-            for key in ("plot_tumour", "plot_germline", "plot_aspcf")
-        }
-    }
-
     # Name of the step.
     name = "ascat"
 
@@ -76,16 +69,13 @@ class AscatStepPart(BaseStepPart):
         "cnv_normal",
         "run_ascat",
     )
+
     wrappers = {
         "run_ascat": "ascat/run_ascat",
         "cnv_normal": "ascat/build_cnv",
         "cnv_tumor": "ascat/build_cnv",
         "baf_normal": "ascat/build_baf",
         "baf_tumor": "ascat/build_baf",
-    }
-
-    intermediate_outputs = {
-        action: ("txt",) for action in ("baf_tumor", "baf_normal", "cnv_tumor", "cnv_normal")
     }
 
     entity_wildcard = "tumor_library"
@@ -104,7 +94,29 @@ class AscatStepPart(BaseStepPart):
 
     result_keys = {"run_ascat": tuple(k + md5 for k in result_suffixes for md5 in ("", "_md5"))}
 
+    report_outputs = {
+        "run_ascat": {
+            key: ReportOutput("ASCAT", caption="ascat_plots.rst")
+            for key in ("plot_tumour", "plot_germline", "plot_aspcf")
+        }
+    }
+
+    intermediate_outputs = {
+        action: ("txt",) for action in ("baf_tumor", "baf_normal", "cnv_tumor", "cnv_normal")
+    }
+
     default_resource_usage = ResourceUsage(threads=8, runtime="2d", mem=f"{10 * 1024 * 8}MB")
+
+    def _get_log_file(self, action):
+        """Return path to log file"""
+        log_dict = {
+            "baf_tumor": "work/{tumor_library}/log/{tumor_library}.baf_tumor.log",
+            "baf_normal": "work/{normal_library}/log/{normal_library}.baf_normal.log",
+            "cnv_tumor": "work/{tumor_library}/log/{tumor_library}.cnv_tumor.log",
+            "cnv_normal": "work/{normal_library}/log/{normal_library}.cnv_normal.log",
+            "run_ascat": "work/{tumor_library}/log/{tumor_library}.run.log",
+        }
+        return {"log": log_dict[action]}
 
     def _get_input_files_baf_tumor(self, wildcards):
         """Return input files for generating BAF file for the tumor."""
@@ -118,6 +130,11 @@ class AscatStepPart(BaseStepPart):
             "b_af_loci": self.parent.get_upstream_paths("snp_loci").bed,
         }
 
+    @staticmethod
+    def _get_output_files_baf_tumor():
+        """Return output files for generating BAF file for the tumor."""
+        return {"txt": "work/{tumor_library}/out/{tumor_library}.baf_tumor.txt"}
+
     def _get_input_files_baf_normal(self, wildcards):
         """Return input files for generating BAF file for the normal."""
         alignments = self.parent.get_upstream_paths(
@@ -130,13 +147,28 @@ class AscatStepPart(BaseStepPart):
             "b_af_loci": self.parent.get_upstream_paths("snp_loci").bed,
         }
 
+    @staticmethod
+    def _get_output_files_baf_normal():
+        """Return output files for generating BAF file for the normal."""
+        return {"txt": "work/{normal_library}/out/{normal_library}.baf_normal.txt"}
+
     def _get_input_files_cnv_tumor(self, wildcards):
         """Return input files for generating BAF file for the tumor."""
         return self._get_input_files_baf_tumor(wildcards)
 
+    @staticmethod
+    def _get_output_files_cnv_tumor():
+        """Return output files for generating BAF file for the tumor."""
+        return {"txt": "work/{tumor_library}/out/{tumor_library}.cnv_tumor.txt"}
+
     def _get_input_files_cnv_normal(self, wildcards):
         """Return input files for generating CNV file for the normal."""
         return self._get_input_files_baf_normal(wildcards)
+
+    @staticmethod
+    def _get_output_files_cnv_normal():
+        """Return output files for generating CNV file for the normal."""
+        return {"txt": "work/{normal_library}/out/{normal_library}.cnv_normal.txt"}
 
     @dictify
     def _get_input_files_run_ascat(self, wildcards):
@@ -151,26 +183,6 @@ class AscatStepPart(BaseStepPart):
         for key, value in result.items():
             yield key, value.format(normal_library=normal_library, **wildcards)
 
-    @staticmethod
-    def _get_output_files_baf_tumor():
-        """Return output files for generating BAF file for the tumor."""
-        return {"txt": "work/{tumor_library}/out/{tumor_library}.baf_tumor.txt"}
-
-    @staticmethod
-    def _get_output_files_baf_normal():
-        """Return output files for generating BAF file for the normal."""
-        return {"txt": "work/{normal_library}/out/{normal_library}.baf_normal.txt"}
-
-    @staticmethod
-    def _get_output_files_cnv_tumor():
-        """Return output files for generating BAF file for the tumor."""
-        return {"txt": "work/{tumor_library}/out/{tumor_library}.cnv_tumor.txt"}
-
-    @staticmethod
-    def _get_output_files_cnv_normal():
-        """Return output files for generating CNV file for the normal."""
-        return {"txt": "work/{normal_library}/out/{normal_library}.cnv_normal.txt"}
-
     @dictify
     def _get_output_files_run_ascat(self):
         """Return output files for actually running ASCAT."""
@@ -182,29 +194,16 @@ class AscatStepPart(BaseStepPart):
     def _get_params_run_ascat(self, wildcards: Wildcards) -> dict[str, Any]:
         return {"tumor_library": wildcards.tumor_library}
 
-    def _get_log_file(self, action):
-        """Return path to log file"""
-        log_dict = {
-            "baf_tumor": "work/{tumor_library}/log/{tumor_library}.baf_tumor.log",
-            "baf_normal": "work/{normal_library}/log/{normal_library}.baf_normal.log",
-            "cnv_tumor": "work/{tumor_library}/log/{tumor_library}.cnv_tumor.log",
-            "cnv_normal": "work/{normal_library}/log/{normal_library}.cnv_normal.log",
-            "run_ascat": "work/{tumor_library}/log/{tumor_library}.run.log",
-        }
-        return {"log": log_dict[action]}
-
 
 class SomaticPurityPloidyEstimateWorkflow(BaseStep):
     """Perform purity and ploidy estimation"""
 
     #: Workflow name
     name = "somatic_purity_ploidy_estimate"
+
     produces = [DataSignature(DataType.TABULAR, frozenset({"purity_ploidy"}))]
-
     config_model_class = SomaticPurityPloidyEstimateConfigModel
-
     library_requirement = MATCHED_NORMAL_REQUIREMENT
-
     default_relationships = MATCHED_NORMAL_RELATIONSHIP
 
     @classmethod

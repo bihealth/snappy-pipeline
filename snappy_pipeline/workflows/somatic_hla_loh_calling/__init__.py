@@ -42,11 +42,18 @@ class LohhlaStepPart(BaseStepPart):
 
     #: Class available actions
     actions = ("run",)
+
     wrappers = {"run": "lohhla"}
-
     entity_wildcard = "tumor_library"
-
     result_keys = ("out",)
+
+    #: The plots of each HLA gene in LOHHLA's ``Figures`` directory; it writes none when all
+    #: HLA alleles are homozygous
+    report_outputs = {
+        "run": {
+            "out": ReportOutput("LOHHLA", caption="lohhla.rst", patterns=("Figures/{plot}.pdf",))
+        }
+    }
 
     def tool_section(self) -> ToolModel:
         """The options are on the step model"""
@@ -65,20 +72,6 @@ class LohhlaStepPart(BaseStepPart):
             "picard_dir": self.config.path_picard_dir,
         }
 
-    def _get_params_run(self, wildcards):
-        return {
-            "tumor_library": wildcards.tumor_library,
-            "min_coverage_filter": self.config.min_coverage_filter,
-        }
-
-    #: The plots of each HLA gene in LOHHLA's ``Figures`` directory; it writes none when all
-    #: HLA alleles are homozygous
-    report_outputs = {
-        "run": {
-            "out": ReportOutput("LOHHLA", caption="lohhla.rst", patterns=("Figures/{plot}.pdf",))
-        }
-    }
-
     def _get_output_files_run(self):
         # LOHHLA writes many files that the step does not name
         return {"out": directory("work/{tumor_library}/out")}
@@ -86,18 +79,22 @@ class LohhlaStepPart(BaseStepPart):
     def _get_log_file_run(self):
         return {"log": "work/{tumor_library}/log/{tumor_library}.log"}
 
+    def _get_params_run(self, wildcards):
+        return {
+            "tumor_library": wildcards.tumor_library,
+            "min_coverage_filter": self.config.min_coverage_filter,
+        }
+
 
 class SomaticHlaLohCallingWorkflow(BaseStep):
     """Perform somatic hla loh calling"""
 
     #: Workflow name
     name = "somatic_hla_loh_calling"
+
     produces = [DataSignature(DataType.TABULAR, frozenset({"hla_loh"}))]
-
     config_model_class = SomaticHlaLohCallingConfigModel
-
     library_requirement = MATCHED_NORMAL_REQUIREMENT
-
     default_relationships = MATCHED_NORMAL_RELATIONSHIP
 
     @classmethod

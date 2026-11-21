@@ -193,13 +193,13 @@ class GeneExpressionQuantificationStepPart(BaseStepPart):
     #: Class available actions
     actions = ("run",)
 
-    #: Whether the tool reads the strandedness decision of the ``strandedness`` dependency.
-    needs_strandedness = False
-
     @property
     def result_keys(self) -> tuple[str, ...]:
         """All outputs of the tool"""
         return tuple(EXTENSIONS[self.name])
+
+    #: Whether the tool reads the strandedness decision of the ``strandedness`` dependency.
+    needs_strandedness = False
 
     def _get_input_files_run(self, wildcards: Wildcards):
         """Resolve alignment inputs through the typed upstream contract broker."""
@@ -220,44 +220,29 @@ class GeneExpressionQuantificationStepPart(BaseStepPart):
     def _get_output_files_run(self):
         return {key: OUT_PATH + ext for key, ext in EXTENSIONS[self.name].items()}
 
-    def _get_params_run(self, wildcards: Wildcards) -> dict[str, Any]:
-        return {"strand": self.config.strand}
-
     def _get_log_file_run(self):
         return {"log": "work/{library_name}/log/{library_name}.log"}
 
+    def _get_params_run(self, wildcards: Wildcards) -> dict[str, Any]:
+        return {"strand": self.config.strand}
 
-class SalmonStepPart(GeneExpressionQuantificationStepPart):
-    """Gene expression quantification for raw data using salmon"""
+
+class StrandednessStepPart(GeneExpressionQuantificationStepPart):
+    """The strand of each library with RSeQC ``infer_experiment``"""
 
     #: Step name
-    name = "salmon"
-    wrappers = {"run": "salmon"}
+    name = "strandedness"
 
-    def _get_output_files_run(self):
-        outputs = super()._get_output_files_run()
-        outputs["aux"] = directory(outputs["aux"])
-        return outputs
+    wrappers = {"run": "rseqc"}
+    default_resource_usage = ResourceUsage(threads=2, runtime="12h", mem="6700MB")
 
     @dictify
-    def _get_input_files_run(self, wildcards):
-        """Return input files"""
-        yield from reads_input_files(self.parent, wildcards.library_name).items()
-        yield "features", self.parent.get_upstream_paths("features").gtf
-        index = self.parent.get_upstream_paths("index")
-        yield "index", index.index
-        yield "transcript_to_gene", index.transcript_to_gene
+    def _get_input_files_run(self, wildcards: Wildcards):
+        yield from super()._get_input_files_run(wildcards).items()
+        yield "exon_bed", self.parent.get_upstream_paths("exons").bed
 
-    def _get_params_run(self, wildcards):
-        """Return dict for the wrapper"""
-        result = reads_params(self.parent, wildcards.library_name)
-        result |= self.config.salmon.model_dump(by_alias=True)
-        result["strand"] = self.config.strand
-        return result
-
-    @property
-    def default_resource_usage(self) -> ResourceUsage:
-        return ResourceUsage(threads=self.config.salmon.num_threads, runtime="4h", mem="32GB")
+    def _get_params_run(self, wildcards: Wildcards) -> dict[str, Any]:
+        return strandedness_params(self.config.strandedness, wildcards.library_name)
 
 
 class FeatureCountsStepPart(GeneExpressionQuantificationStepPart):
@@ -266,9 +251,9 @@ class FeatureCountsStepPart(GeneExpressionQuantificationStepPart):
     #: Step name
     name = "featurecounts"
 
-    needs_strandedness = True
-
     wrappers = {"run": "featurecounts"}
+    default_resource_usage = ResourceUsage(threads=2, runtime="1d", mem="6700MB")
+    needs_strandedness = True
 
     @dictify
     def _get_input_files_run(self, wildcards: Wildcards):
@@ -284,45 +269,27 @@ class FeatureCountsStepPart(GeneExpressionQuantificationStepPart):
             "min_mapq": section.min_mapq,
         }
 
-    default_resource_usage = ResourceUsage(threads=2, runtime="1d", mem="6700MB")
-
-
-class StrandednessStepPart(GeneExpressionQuantificationStepPart):
-    """The strand of each library with RSeQC ``infer_experiment``"""
-
-    #: Step name
-    name = "strandedness"
-    wrappers = {"run": "rseqc"}
-
-    @dictify
-    def _get_input_files_run(self, wildcards: Wildcards):
-        yield from super()._get_input_files_run(wildcards).items()
-        yield "exon_bed", self.parent.get_upstream_paths("exons").bed
-
-    default_resource_usage = ResourceUsage(threads=2, runtime="12h", mem="6700MB")
-
-    def _get_params_run(self, wildcards: Wildcards) -> dict[str, Any]:
-        return strandedness_params(self.config.strandedness, wildcards.library_name)
-
 
 class QCStepPartDuplication(GeneExpressionQuantificationStepPart):
     #: Step name
     name = "duplication"
     wrappers = {"run": "rnaqc/duplication"}
+    default_resource_usage = ResourceUsage(threads=1, runtime="3d", mem="127GB")
 
     def _get_params_run(self, wildcards: Wildcards) -> dict[str, Any]:
         return {}
-
-    default_resource_usage = ResourceUsage(threads=1, runtime="3d", mem="127GB")
 
 
 class QCStepPartDupradar(GeneExpressionQuantificationStepPart):
     #: Step name
     name = "dupradar"
+    wrappers = {"run": "rnaqc/dupradar"}
+
+    @property
+    def default_resource_usage(self) -> ResourceUsage:
+        return ResourceUsage(threads=self.config.dupradar.num_threads, runtime="4d", mem="6700MB")
 
     needs_strandedness = True
-
-    wrappers = {"run": "rnaqc/dupradar"}
 
     @dictify
     def _get_input_files_run(self, wildcards: Wildcards):
@@ -334,18 +301,12 @@ class QCStepPartDupradar(GeneExpressionQuantificationStepPart):
             "num_threads": self.config.dupradar.num_threads,
         }
 
-    @property
-    def default_resource_usage(self) -> ResourceUsage:
-        return ResourceUsage(threads=self.config.dupradar.num_threads, runtime="4d", mem="6700MB")
-
 
 class QCStepPartRnaseqc(GeneExpressionQuantificationStepPart):
     #: Step name
     name = "rnaseqc"
     wrappers = {"run": "rnaqc/rnaseqc"}
-
-    def _get_params_run(self, wildcards: Wildcards) -> dict[str, Any]:
-        return {}
+    default_resource_usage = ResourceUsage(threads=1, runtime="4h", mem="16GB")
 
     @dictify
     def _get_input_files_run(self, wildcards: Wildcards):
@@ -354,18 +315,52 @@ class QCStepPartRnaseqc(GeneExpressionQuantificationStepPart):
         features = self.parent.get_upstream_paths("features", signature=RNASEQC_FEATURES_SIGNATURE)
         yield "features", features.gtf
 
-    default_resource_usage = ResourceUsage(threads=1, runtime="4h", mem="16GB")
+    def _get_params_run(self, wildcards: Wildcards) -> dict[str, Any]:
+        return {}
 
 
 class QCStepPartStats(GeneExpressionQuantificationStepPart):
     #: Step name
     name = "stats"
     wrappers = {"run": "rnaqc/stats"}
+    default_resource_usage = ResourceUsage(threads=1, runtime="4h", mem="4GB")
 
     def _get_params_run(self, wildcards: Wildcards) -> dict[str, Any]:
         return {}
 
-    default_resource_usage = ResourceUsage(threads=1, runtime="4h", mem="4GB")
+
+class SalmonStepPart(GeneExpressionQuantificationStepPart):
+    """Gene expression quantification for raw data using salmon"""
+
+    #: Step name
+    name = "salmon"
+
+    wrappers = {"run": "salmon"}
+
+    @property
+    def default_resource_usage(self) -> ResourceUsage:
+        return ResourceUsage(threads=self.config.salmon.num_threads, runtime="4h", mem="32GB")
+
+    @dictify
+    def _get_input_files_run(self, wildcards):
+        """Return input files"""
+        yield from reads_input_files(self.parent, wildcards.library_name).items()
+        yield "features", self.parent.get_upstream_paths("features").gtf
+        index = self.parent.get_upstream_paths("index")
+        yield "index", index.index
+        yield "transcript_to_gene", index.transcript_to_gene
+
+    def _get_output_files_run(self):
+        outputs = super()._get_output_files_run()
+        outputs["aux"] = directory(outputs["aux"])
+        return outputs
+
+    def _get_params_run(self, wildcards):
+        """Return dict for the wrapper"""
+        result = reads_params(self.parent, wildcards.library_name)
+        result |= self.config.salmon.model_dump(by_alias=True)
+        result["strand"] = self.config.strand
+        return result
 
 
 class GeneExpressionQuantificationWorkflow(BaseStep):
@@ -374,12 +369,8 @@ class GeneExpressionQuantificationWorkflow(BaseStep):
     #: Workflow name
     name = "gene_expression_quantification"
 
-    config_model_class = GeneExpressionQuantificationConfigModel
-
     produces = [EXPRESSION_SIGNATURE, STRANDEDNESS_SIGNATURE, RNA_QC_SIGNATURE]
-
-    library_requirement = "extraction_type == 'rna'"
-    library_default = ""
+    config_model_class = GeneExpressionQuantificationConfigModel
 
     tool_parts = {
         Tool.strandedness: StrandednessStepPart,
@@ -390,6 +381,9 @@ class GeneExpressionQuantificationWorkflow(BaseStep):
         Tool.stats: QCStepPartStats,
         Tool.salmon: SalmonStepPart,
     }
+
+    library_requirement = "extraction_type == 'rna'"
+    library_default = ""
 
     @classmethod
     def task_produces(cls, config, upstream):

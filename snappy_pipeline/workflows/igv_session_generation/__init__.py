@@ -53,6 +53,18 @@ class WriteIgvSessionFileStepPart(BaseStepPart):
         super().__init__(parent)
         self.previous_step = self.parent.previous_step
 
+    @dictify
+    def _get_input_files_run(self, wildcards):
+        # BAM file of each donor
+        yield "bam", [self._get_path_bam(name) for name in self._members(wildcards)["library_name"]]
+        # Input file comes from previous step.
+        yield "vcf", self._get_path_vcf(wildcards)
+
+    def _get_output_files_run(self):
+        return {
+            key: f"work/{{library_name}}/out/{{library_name}}{ext}" for key, ext in _OUTPUTS.items()
+        }
+
     def _members(self, wildcards):
         """Return the rows of the pedigree members with a DNA library."""
         pedigree = self.parent.pedigree_of(wildcards.library_name, include_background=True)
@@ -76,18 +88,6 @@ class WriteIgvSessionFileStepPart(BaseStepPart):
         The session file references the result files in ``output/``, not the ``work/`` files other tasks read.
         """
         return re.sub(r"(^|/)work/", r"\1output/", path, count=1)
-
-    @dictify
-    def _get_input_files_run(self, wildcards):
-        # BAM file of each donor
-        yield "bam", [self._get_path_bam(name) for name in self._members(wildcards)["library_name"]]
-        # Input file comes from previous step.
-        yield "vcf", self._get_path_vcf(wildcards)
-
-    def _get_output_files_run(self):
-        return {
-            key: f"work/{{library_name}}/out/{{library_name}}{ext}" for key, ext in _OUTPUTS.items()
-        }
 
     @staticmethod
     def render_from_template(directory, template_name, **kwargs):
@@ -140,11 +140,12 @@ class IgvSessionGenerationWorkflow(BaseStep):
 
     #: Workflow name
     name = "igv_session_generation"
+
     produces = [DataSignature(DataType.EXPORTS, frozenset({"igv"}))]
+    config_model_class = IgvSessionGenerationConfigModel
 
     #: The pedigrees include the members of background data sets
     uses_background = True
-    config_model_class = IgvSessionGenerationConfigModel
 
     @classmethod
     def get_output_paths(cls, config, signature=None, **kwargs) -> dict[str, str]:

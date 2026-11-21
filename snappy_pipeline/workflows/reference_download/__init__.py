@@ -49,13 +49,12 @@ from .model import Source
 
 
 class _ReferenceDownloadStepPart(BaseStepPart):
-    source: Source
     actions = ("run",)
+    default_resource_usage = ResourceUsage(threads=2, runtime="2h", mem="2GB")
+    source: Source
 
     def _get_input_files_run(self, wildcards):
         return []
-
-    default_resource_usage = ResourceUsage(threads=2, runtime="2h", mem="2GB")
 
     def _get_output_files_run(self):
         work_fasta = "work/reference_download/out/reference.fa"
@@ -97,7 +96,6 @@ class SidecarsStepPart(BaseStepPart):
     actions = ("run",)
     wrappers = {"run": "reference_download/sidecars"}
     rule_options = {"run": RuleOptions(local=True)}
-
     default_resource_usage = ResourceUsage(threads=1, runtime="1h", mem="2GB")
 
     def _get_input_files_run(self, wildcards):
@@ -118,6 +116,7 @@ class SidecarsStepPart(BaseStepPart):
 
 class ReferenceDownloadWorkflow(BaseStep):
     name = "reference_download"
+
     produces = [
         DataSignature(DataType.RAW, frozenset({"ensembl", "reference", "dna"})),
         DataSignature(DataType.RAW, frozenset({"ensembl", "reference", "rna"})),

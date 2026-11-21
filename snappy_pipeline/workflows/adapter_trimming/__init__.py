@@ -46,8 +46,13 @@ class AdapterTrimmingStepPart(BaseStepPart):
     #: Class available actions
     actions = ("run",)
 
+    result_keys = ("out", "report")
+
     #: Keys of the tool config that name files, which are inputs and not params
     file_keys: tuple[str, ...] = ()
+
+    def _get_log_file(self, action):
+        return {"log": "work/{library_name}/log/{library_name}.log"}
 
     def _get_input_files_run(self, wildcards):
         inputs = reads_input_files(self.parent, wildcards.library_name)
@@ -57,8 +62,6 @@ class AdapterTrimmingStepPart(BaseStepPart):
                 inputs[key] = value
         return inputs
 
-    result_keys = ("out", "report")
-
     @dictify
     def _get_output_files_run(self):
         # The tool writes one file per input file, named by params: directories, not files
@@ -67,9 +70,6 @@ class AdapterTrimmingStepPart(BaseStepPart):
             ("report", directory("work/{library_name}/report")),
             ("rejected", directory("work/{library_name}/rejected")),
         )
-
-    def _get_log_file(self, action):
-        return {"log": "work/{library_name}/log/{library_name}.log"}
 
     def _get_params_run(self, wildcards):
         # The trimmed files keep the sub-directory and name of each input file, in input order.
@@ -97,17 +97,17 @@ class AdapterTrimmingStepPart(BaseStepPart):
 class BbdukStepPart(AdapterTrimmingStepPart):
     name = "bbduk"
     wrappers = {"run": "bbduk/run"}
-    file_keys = ("adapter_sequences", "barcodes")
 
     @property
     def default_resource_usage(self) -> ResourceUsage:
         return ResourceUsage(threads=self.config.bbduk.num_threads, runtime="12h", mem="24000MB")
 
+    file_keys = ("adapter_sequences", "barcodes")
+
 
 class FastpStepPart(AdapterTrimmingStepPart):
     name = "fastp"
     wrappers = {"run": "fastp/run"}
-    file_keys = ("filter_by_index1", "filter_by_index2")
 
     #: The HTML report of each FASTQ file or pair, below the path of the file
     report_outputs = {
@@ -120,13 +120,13 @@ class FastpStepPart(AdapterTrimmingStepPart):
     def default_resource_usage(self) -> ResourceUsage:
         return ResourceUsage(threads=self.config.fastp.num_threads, runtime="12h", mem="24000MB")
 
+    file_keys = ("filter_by_index1", "filter_by_index2")
+
 
 class AdapterTrimmingWorkflow(BaseStep):
     name = "adapter_trimming"
     produces = [DataSignature(DataType.RAW, frozenset({"trimmed"}))]
-
     config_model_class = AdapterTrimmingConfigModel
-
     tool_parts = {Tool.BBDUK: BbdukStepPart, Tool.FASTP: FastpStepPart}
 
     @classmethod

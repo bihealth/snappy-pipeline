@@ -47,19 +47,18 @@ class ExpansionHunterStepPart(BaseStepPart):
 
     #: Valid actions
     actions = ("run", "annotate")
+
     wrappers = {"run": "expansionhunter"}
     rule_options = {"run": RuleOptions(constraints={"library_name": r"(?!annotated\.).+"})}
-
     extra_arguments_action = "run"
-
-    def tool_section(self):
-        """ExpansionHunter has no tool section: the ``extra_arguments`` are the step's own"""
-        return self.config
-
     intermediate_outputs = {"run": ("json",)}
 
     #: The annotation only reads two JSON files
     resource_usage = {"annotate": ResourceUsage(threads=1, runtime="10m", mem="1GB")}
+
+    def tool_section(self):
+        """ExpansionHunter has no tool section: the ``extra_arguments`` are the step's own"""
+        return self.config
 
     def _get_input_files_run(self, wildcards):
         """Yield BAM files based on subworkflow `ngs_mapping` results.
@@ -78,6 +77,27 @@ class ExpansionHunterStepPart(BaseStepPart):
         }
 
     @dictify
+    def _get_output_files_run(self):
+        """Yield output files' patterns for rule `run` - ExpansionHunter call."""
+        for key, ext in {"json": "json", "vcf": "vcf", "vcf_md5": "vcf.md5"}.items():
+            yield key, f"work/{{library_name}}/out/{{library_name}}.{ext}"
+
+    def _get_log_file_run(self):
+        """Return the log file pattern for rule `run` - ExpansionHunter call."""
+        return {"log": "work/{library_name}/log/{library_name}.log"}
+
+    def _get_params_run(self, wildcards):
+        """Get donor's sex.
+
+        :param wildcards: Snakemake wildcards associated with rule (unused).
+        :type wildcards: snakemake.io.Wildcards
+
+        :return: Returns donor's sex as found in sample sheet: 'female' or 'male', otherwise None.
+        """
+        sex = self.parent.library_row(wildcards.library_name)["sex"]
+        return {"sex": sex if sex in ("female", "male") else None}
+
+    @dictify
     def _get_input_files_annotate(self, wildcards):
         """Yield input files' pattern for rule `annotate` - based on ExpansionHunter call results.
 
@@ -94,31 +114,10 @@ class ExpansionHunterStepPart(BaseStepPart):
         yield "annotation", self.parent.get_upstream_paths("database").annotation
 
     @dictify
-    def _get_output_files_run(self):
-        """Yield output files' patterns for rule `run` - ExpansionHunter call."""
-        for key, ext in {"json": "json", "vcf": "vcf", "vcf_md5": "vcf.md5"}.items():
-            yield key, f"work/{{library_name}}/out/{{library_name}}.{ext}"
-
-    @dictify
     def _get_output_files_annotate(self):
         """Yield output files' patterns for rule `annotate`."""
         for key, ext in {"json": "json", "json_md5": "json.md5"}.items():
             yield key, f"work/annotated.{{library_name}}/out/annotated.{{library_name}}.{ext}"
-
-    def _get_log_file_run(self):
-        """Return the log file pattern for rule `run` - ExpansionHunter call."""
-        return {"log": "work/{library_name}/log/{library_name}.log"}
-
-    def _get_params_run(self, wildcards):
-        """Get donor's sex.
-
-        :param wildcards: Snakemake wildcards associated with rule (unused).
-        :type wildcards: snakemake.io.Wildcards
-
-        :return: Returns donor's sex as found in sample sheet: 'female' or 'male', otherwise None.
-        """
-        sex = self.parent.library_row(wildcards.library_name)["sex"]
-        return {"sex": sex if sex in ("female", "male") else None}
 
     def annotate_results(self, _wildcards, sm_input, sm_output):
         """Annotate/Explain ExpansionHunter results.
@@ -148,10 +147,9 @@ class RepeatExpansionWorkflow(BaseStep):
 
     #: Workflow name
     name = "repeat_expansion"
+
     produces = [DataSignature(DataType.VARIANTS, frozenset({"germline", "repeats"}))]
-
     config_model_class = RepeatExpansionConfigModel
-
     tool_parts = {Tool.expansionhunter: ExpansionHunterStepPart}
 
     @classmethod

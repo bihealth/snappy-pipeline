@@ -63,19 +63,23 @@ Threads: typing.TypeAlias = int | None
 Attempt: typing.TypeAlias = int | None
 
 
-@dataclass(frozen=True)
-class ReportOutput:
-    """An output that the Snakemake report shows (``snappy report``)."""
+# ---------------------------------------------------------------------------
+# Upstream group_by resolution
+# ---------------------------------------------------------------------------
+#: ``library_requirement`` of the steps and tools that compare each tumor with its matched
+#: normal (the ``matched_normal_lib`` relationship); ``BaseStep.library_warnings`` names the
+#: libraries they leave out
+MATCHED_NORMAL_REQUIREMENT = "kind == 'cancer' and matched_normal_lib != ''"
 
-    #: Subcategory below the task's category
-    subcategory: str | None = None
-    #: Caption, an RST file in the ``report/`` directory next to the step part's module
-    caption: str | None = None
-    #: For a directory output: the HTML file to open (Snakemake's ``htmlindex``)
-    htmlindex: str | None = None
-    #: For a directory output: the files to show, as patterns relative to it (Snakemake's
-    #: ``patterns``); their wildcards label the files
-    patterns: tuple[str, ...] = ()
+
+#: The ``default_relationships`` of the steps that compare each tumor with its matched normal: the
+#: donor's normal DNA library as ``matched_normal_lib``
+MATCHED_NORMAL_RELATIONSHIP = {
+    "matched_normal_lib": RelationshipDefinition(
+        via="donor_name",
+        target="role == 'normal' and extraction_type == 'dna'",
+    )
+}
 
 
 @dataclass(frozen=True)
@@ -95,13 +99,18 @@ class RuleOptions:
 
 
 @dataclass(frozen=True)
-class WrapperRule:
-    """One generated wrapper rule: its name, the step part and action it wires, and its options"""
+class ReportOutput:
+    """An output that the Snakemake report shows (``snappy report``)."""
 
-    name: str
-    part: str
-    action: str
-    options: RuleOptions
+    #: Subcategory below the task's category
+    subcategory: str | None = None
+    #: Caption, an RST file in the ``report/`` directory next to the step part's module
+    caption: str | None = None
+    #: For a directory output: the HTML file to open (Snakemake's ``htmlindex``)
+    htmlindex: str | None = None
+    #: For a directory output: the files to show, as patterns relative to it (Snakemake's
+    #: ``patterns``); their wildcards label the files
+    patterns: tuple[str, ...] = ()
 
 
 class BaseStepPart:
@@ -111,27 +120,6 @@ class BaseStepPart:
 
     #: The actions available in the class.
     actions: tuple[str, ...]
-
-    #: Default resource usage for actions that are not given in ``resource_usage``.
-    default_resource_usage: ResourceUsage = ResourceUsage(
-        threads=1,
-        runtime="1h",
-        mem="2GB",  # 1h
-    )
-
-    #: Configure resource usage here that should not use the default resource usage from
-    #: ``default_resource_usage``.
-    resource_usage: dict[str, ResourceUsage] = {}
-
-    #: Outputs that the Snakemake report shows, by action and output key
-    report_outputs: dict[str, dict[str, ReportOutput]] = {}
-
-    #: Output keys whose files are result files, for all actions or by action; ``get_result_files``
-    #: derives the result files from them
-    result_keys: tuple[str, ...] | dict[str, tuple[str, ...]] = ()
-
-    #: Wildcard of the output entity (library, tumor library, ...) in the output paths
-    entity_wildcard: str = "library_name"
 
     #: The wrapper of each action that runs one, as a path below ``snappy_wrappers/wrappers``;
     #: a property where the config picks it. The shared include ``common/wrapper_rules.rules``
@@ -146,6 +134,16 @@ class BaseStepPart:
     #: only action
     extra_arguments_action: str | None = None
 
+    #: Wildcard of the output entity (library, tumor library, ...) in the output paths
+    entity_wildcard: str = "library_name"
+
+    #: Output keys whose files are result files, for all actions or by action; ``get_result_files``
+    #: derives the result files from them
+    result_keys: tuple[str, ...] | dict[str, tuple[str, ...]] = ()
+
+    #: Outputs that the Snakemake report shows, by action and output key
+    report_outputs: dict[str, dict[str, ReportOutput]] = {}
+
     #: Output keys by action of scatter fragments (per-region or per-chunk pieces that a gather
     #: rule joins): always ``temp()``
     temp_outputs: dict[str, tuple[str, ...]] = {}
@@ -158,6 +156,17 @@ class BaseStepPart:
     #: Output keys by action of the task's BAM file and its index, which another task may process
     #: further: ``temp()`` and no result files when ``delete_intermediates`` names ``bam``
     bam_outputs: dict[str, tuple[str, ...]] = {}
+
+    #: Default resource usage for actions that are not given in ``resource_usage``.
+    default_resource_usage: ResourceUsage = ResourceUsage(
+        threads=1,
+        runtime="1h",
+        mem="2GB",  # 1h
+    )
+
+    #: Configure resource usage here that should not use the default resource usage from
+    #: ``default_resource_usage``.
+    resource_usage: dict[str, ResourceUsage] = {}
 
     def __init__[P: BaseStep](self, parent: P):
         self.name = self.__class__.name
@@ -339,6 +348,28 @@ class BaseStepPart:
         return {self.entity_wildcard: [entity]}
 
 
+@dataclass(frozen=True)
+class ResolvedDependency:
+    """Normalized dependency resolution result for one ``depends_on`` field."""
+
+    field_name: str
+    task_name: str
+    step_name: str
+    workflow_cls: type["BaseStep"]
+    signature: DataSignature | None
+    expected_schema: type[pydantic.BaseModel] | None
+
+
+@dataclass(frozen=True)
+class WrapperRule:
+    """One generated wrapper rule: its name, the step part and action it wires, and its options"""
+
+    name: str
+    part: str
+    action: str
+    options: RuleOptions
+
+
 class WritePedigreeStepPart(BaseStepPart):
     """Write the PED file of a pedigree, whose family column is the pedigree's name (its ``related_group``).
 
@@ -359,15 +390,8 @@ class WritePedigreeStepPart(BaseStepPart):
     #: sample names of the VCFs
     individual_column = "library_name"
 
-    def _members(self, entity: str):
-        """Return the primary DNA library rows of the pedigree ``entity``; none in projects with cancer sample sheets only."""
-        members = self.parent.pedigree_members(entity)
-        df = self.parent.build_library_dataframe()
-        return members.iloc[0:0] if df.empty or df["kind"].eq("cancer").all() else members
-
-    def _family(self, entity: str) -> str:
-        """The family column of the PED: the pedigree's name, ``FAM_`` and the index donor on a germline sheet without a family id"""
-        return entity
+    def get_result_files(self):
+        return []
 
     @listify
     def _get_input_files_run(self, wildcards):
@@ -377,15 +401,6 @@ class WritePedigreeStepPart(BaseStepPart):
 
     def _get_output_files_run(self):
         return f"work/write_pedigree.{{{self.entity_wildcard}}}/out/{{{self.entity_wildcard}}}.ped"
-
-    def get_result_files(self):
-        return []
-
-    def _individual(self, library_name: str) -> str:
-        """The PED name of the individual of a DNA library, ``0`` for none"""
-        if library_name == "0" or self.individual_column == "library_name":
-            return library_name
-        return self.parent.library_row(library_name)[self.individual_column]
 
     def _get_params_run(self, wildcards) -> dict[str, Any]:
         """The PED rows as biomedsheets wrote them: the family, the individual, its father and mother, sex (1 male, 2 female, 0 unknown) and affected status (2 affected, 1 unaffected, 0 unknown)"""
@@ -403,6 +418,22 @@ class WritePedigreeStepPart(BaseStepPart):
             for _, row in self._members(entity).iterrows()
         ]
         return {"pedigree": rows}
+
+    def _members(self, entity: str):
+        """Return the primary DNA library rows of the pedigree ``entity``; none in projects with cancer sample sheets only."""
+        members = self.parent.pedigree_members(entity)
+        df = self.parent.build_library_dataframe()
+        return members.iloc[0:0] if df.empty or df["kind"].eq("cancer").all() else members
+
+    def _family(self, entity: str) -> str:
+        """The family column of the PED: the pedigree's name, ``FAM_`` and the index donor on a germline sheet without a family id"""
+        return entity
+
+    def _individual(self, library_name: str) -> str:
+        """The PED name of the individual of a DNA library, ``0`` for none"""
+        if library_name == "0" or self.individual_column == "library_name":
+            return library_name
+        return self.parent.library_row(library_name)[self.individual_column]
 
     @staticmethod
     def write(args: dict[str, Any], output: OutputFiles):
@@ -437,7 +468,6 @@ class LinkOutStepPart(BaseStepPart):
     """
 
     name = "link_out"
-
     actions = ("run",)
 
     def __init__(self, parent, disable_patterns=None):
@@ -450,6 +480,11 @@ class LinkOutStepPart(BaseStepPart):
         #: performed or not, depending on the configuration.
         self.disable_patterns = list(disable_patterns or [])
 
+    def get_output_files(self, action):
+        """Return output file pattern"""
+        assert action == "run", "Unsupported action"
+        return self.base_pattern_out
+
     def _get_input_files_run(self, wildcards):
         """Return the work file to link to"""
         path = self.base_path_in.format(**wildcards)
@@ -457,11 +492,6 @@ class LinkOutStepPart(BaseStepPart):
             if fnmatch(path, pattern):
                 raise ValueError("Blocking match...")
         return path
-
-    def get_output_files(self, action):
-        """Return output file pattern"""
-        assert action == "run", "Unsupported action"
-        return self.base_pattern_out
 
     def run_locally(self, action, wildcards):
         assert action == "run", "Unsupported action"
@@ -472,18 +502,6 @@ class LinkOutStepPart(BaseStepPart):
         if not os.path.islink(path_out):
             target = os.path.relpath(path_in, start=os.path.dirname(path_out))
             os.symlink(target, path_out)
-
-
-@dataclass(frozen=True)
-class ResolvedDependency:
-    """Normalized dependency resolution result for one ``depends_on`` field."""
-
-    field_name: str
-    task_name: str
-    step_name: str
-    workflow_cls: type["BaseStep"]
-    signature: DataSignature | None
-    expected_schema: type[pydantic.BaseModel] | None
 
 
 class BaseStep:
@@ -498,6 +516,9 @@ class BaseStep:
     #: DataSignatures a task of this step produces; the default of :meth:`task_produces`
     produces: list[DataSignature] = []
 
+    #: Override with the Pydantic model class for configuration validation
+    config_model_class: type[SnappyStepModel]
+
     #: The step part of each tool, by the ``tool`` value of the task config: the constructor
     #: registers the selected one after the ``helper_parts``; a step that registers its parts
     #: itself leaves it empty
@@ -505,23 +526,6 @@ class BaseStep:
 
     #: Structural step parts registered for every tool, such as ``WritePedigreeStepPart``
     helper_parts: tuple[type[BaseStepPart], ...] = ()
-
-    #: Whether ``get_output_paths`` needs the project's read discovery (``discovery`` keyword)
-    needs_discovery: bool = False
-
-    #: Default relationships merged into ``build_library_dataframe()``.
-    #: Config-level ``relationships`` override these.
-    default_relationships: dict[str, RelationshipDefinition] = {}
-
-    def __init_subclass__(cls, **kwargs):
-        """Enforce that every ``BaseStep`` subclass declares a ``produces`` contract."""
-        super().__init_subclass__(**kwargs)
-        # Only check concrete leaf classes that inherit produces=[] from BaseStep
-        own_produces = cls.__dict__.get("produces")
-        if own_produces is None and not cls.produces:
-            raise TypeError(
-                f"'{cls.__name__}' must declare a 'produces' list for contract compliance."
-            )
 
     #: The libraries that the step can process at all, as a pandas query, such as RNA libraries
     #: for expression quantification; it applies in addition to ``library_selection``.
@@ -532,6 +536,10 @@ class BaseStep:
     #: DNA), ``""`` takes all libraries.
     library_default: str | None = None
 
+    #: Default relationships merged into ``build_library_dataframe()``.
+    #: Config-level ``relationships`` override these.
+    default_relationships: dict[str, RelationshipDefinition] = {}
+
     #: Whether the step produces results for the libraries of background data sets, too
     background_results: bool = False
 
@@ -539,6 +547,19 @@ class BaseStep:
     #: members of joint calling or the samples of a model; only such steps and those with
     #: ``background_results`` accept ``background_selection``
     uses_background: bool = False
+
+    #: Whether ``get_output_paths`` needs the project's read discovery (``discovery`` keyword)
+    needs_discovery: bool = False
+
+    def __init_subclass__(cls, **kwargs):
+        """Enforce that every ``BaseStep`` subclass declares a ``produces`` contract."""
+        super().__init_subclass__(**kwargs)
+        # Only check concrete leaf classes that inherit produces=[] from BaseStep
+        own_produces = cls.__dict__.get("produces")
+        if own_produces is None and not cls.produces:
+            raise TypeError(
+                f"'{cls.__name__}' must declare a 'produces' list for contract compliance."
+            )
 
     @classmethod
     def task_library_requirement(cls, config: SnappyStepModel) -> str | None:
@@ -561,9 +582,6 @@ class BaseStep:
             " " * 6 + line if line.strip() else line for line in config.splitlines(keepends=True)
         )
         return f"tasks:\n  - step: {cls.name}\n    name: {cls.name}\n    config:\n{lines}"
-
-    #: Override with the Pydantic model class for configuration validation
-    config_model_class: type[SnappyStepModel]
 
     @classmethod
     def task_produces(
@@ -614,6 +632,18 @@ class BaseStep:
         raise NotImplementedError(
             f"'{cls.__name__}' must implement 'get_output_paths' to act as an upstream provider."
         )
+
+    @classmethod
+    def default_group_by(cls, config: SnappyStepModel) -> str | None:
+        """Return the granularity of a task of this step that sets no ``group_by``, such as
+        ``"related"`` for joint calling; ``None`` takes the one that upstream tasks declare."""
+        return None
+
+    @classmethod
+    def filter_ids(cls, config: SnappyStepModel) -> frozenset[str]:
+        """Return the ``FILTER`` IDs that a task of this step writes under names other than its
+        task name; ``load_project()`` rejects other tasks named like one of them."""
+        return frozenset()
 
     def __init__(self, workflow: Workflow, project: "Project", task_name: str):
         self.step_name = self.__class__.name
@@ -805,18 +835,6 @@ class BaseStep:
             cls.task_library_default(config),
             cls.task_library_requirement(config),
         )
-
-    @classmethod
-    def default_group_by(cls, config: SnappyStepModel) -> str | None:
-        """Return the granularity of a task of this step that sets no ``group_by``, such as
-        ``"related"`` for joint calling; ``None`` takes the one that upstream tasks declare."""
-        return None
-
-    @classmethod
-    def filter_ids(cls, config: SnappyStepModel) -> frozenset[str]:
-        """Return the ``FILTER`` IDs that a task of this step writes under names other than its
-        task name; ``load_project()`` rejects other tasks named like one of them."""
-        return frozenset()
 
     @cached_property
     def effective_group_by(self) -> str:
@@ -1463,23 +1481,3 @@ class BaseStep:
     def wrapper_path(path: str) -> str:
         """The ``file://`` URL of a wrapper directory below ``snappy_wrappers/wrappers``"""
         return (package_root() / "wrappers" / path).as_uri()
-
-
-# ---------------------------------------------------------------------------
-# Upstream group_by resolution
-# ---------------------------------------------------------------------------
-
-
-#: ``library_requirement`` of the steps and tools that compare each tumor with its matched
-#: normal (the ``matched_normal_lib`` relationship); ``BaseStep.library_warnings`` names the
-#: libraries they leave out
-MATCHED_NORMAL_REQUIREMENT = "kind == 'cancer' and matched_normal_lib != ''"
-
-#: The ``default_relationships`` of the steps that compare each tumor with its matched normal: the
-#: donor's normal DNA library as ``matched_normal_lib``
-MATCHED_NORMAL_RELATIONSHIP = {
-    "matched_normal_lib": RelationshipDefinition(
-        via="donor_name",
-        target="role == 'normal' and extraction_type == 'dna'",
-    )
-}

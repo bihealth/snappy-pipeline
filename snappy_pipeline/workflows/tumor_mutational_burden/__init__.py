@@ -37,14 +37,10 @@ class TumorMutationalBurdenCalculationStepPart(BaseStepPart):
     """Calculation tumor mutational burden for each sample"""
 
     name = "tmb_gathering"
-
     actions = ("run",)
     wrappers = {"run": "bcftools/TMB"}
-
     entity_wildcard = "tumor_library"
-
     result_keys = ("json", "json_md5")
-
     default_resource_usage = ResourceUsage(threads=2, runtime="1h", mem="4096MB")
 
     @dictify

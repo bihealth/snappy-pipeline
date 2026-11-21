@@ -44,13 +44,13 @@ class ScrambleStepPart(BaseStepPart):
 
     #: Class available actions
     actions = ("cluster", "analysis")
+
     wrappers = {"analysis": "scramble/analysis", "cluster": "scramble/cluster"}
 
     #: ``cluster`` is scramble's ``cluster_identifier`` script, which takes no tool options
     extra_arguments_action = "analysis"
 
     intermediate_outputs = {"cluster": ("txt",)}
-
     default_resource_usage = ResourceUsage(threads=1, runtime="6h", mem=f"{8 * 1024}MB")
 
     def _get_log_file(self, action):
@@ -68,6 +68,10 @@ class ScrambleStepPart(BaseStepPart):
         )
         yield alignments.bam
 
+    def _get_output_files_cluster(self):
+        """Return output files' patterns for scramble cluster call."""
+        return {"txt": "work/{library_name}/out/{library_name}.cluster.txt"}
+
     @dictify
     def _get_input_files_analysis(self, wildcards):
         """Yield input files' pattern for rule `annotate` - based on scramble call results.
@@ -83,10 +87,6 @@ class ScrambleStepPart(BaseStepPart):
         yield "reference_genome", self.config.scramble.blast_ref
         if self.config.scramble.mei_refs:
             yield "mei_refs", self.config.scramble.mei_refs
-
-    def _get_output_files_cluster(self):
-        """Return output files' patterns for scramble cluster call."""
-        return {"txt": "work/{library_name}/out/{library_name}.cluster.txt"}
 
     def _get_output_files_analysis(self):
         """The table and the VCF of scramble, and the VCF bgzipped"""
@@ -109,19 +109,20 @@ class MeiWorkflow(BaseStep):
 
     #: Workflow name
     name = "targeted_seq_mei_calling"
+
     produces = [DataSignature(DataType.VARIANTS, frozenset({"germline", "mei"}))]
     config_model_class = TargetedSeqMeiCallingConfigModel
-
-    def __init__(self, workflow, project, task_name):
-        super().__init__(workflow, project, task_name)
-        # Register sub step classes so the sub steps are available
-        self.register_sub_step_classes((ScrambleStepPart,))
 
     @classmethod
     def get_output_paths(cls, config, signature=None, **kwargs) -> dict[str, str]:
         """Return local MEI calling output paths for downstream consumers."""
         lib = kwargs.get("library_name", "{library_name}")
         return {"vcf": f"work/{lib}/out/{lib}.vcf.gz"}
+
+    def __init__(self, workflow, project, task_name):
+        super().__init__(workflow, project, task_name)
+        # Register sub step classes so the sub steps are available
+        self.register_sub_step_classes((ScrambleStepPart,))
 
     @listify
     def get_result_files(self):

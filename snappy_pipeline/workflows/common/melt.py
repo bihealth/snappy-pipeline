@@ -21,9 +21,6 @@ class MeltStepPart(SvCallingGetResultFilesMixin, BaseStepPart):
 
     name = "melt"
 
-    #: MELT calls only the pedigrees of foreground data sets
-    pedigrees_include_background = False
-
     actions = (
         "preprocess",
         "indiv_analysis",
@@ -32,6 +29,7 @@ class MeltStepPart(SvCallingGetResultFilesMixin, BaseStepPart):
         "make_vcf",
         "merge_vcf",
     )
+
     wrappers = {
         "merge_vcf": "melt/merge_vcf",
         "make_vcf": "melt/make_vcf",
@@ -40,6 +38,7 @@ class MeltStepPart(SvCallingGetResultFilesMixin, BaseStepPart):
         "indiv_analysis": "melt/indiv_analysis",
         "preprocess": "melt/preprocess",
     }
+
     rule_options = {
         "preprocess": RuleOptions(constraints={"library_name": r"[^.]+", "me_type": r"[^.]+"}),
         "indiv_analysis": RuleOptions(constraints={"library_name": r"[^.]+", "me_type": r"[^.]+"}),
@@ -49,6 +48,9 @@ class MeltStepPart(SvCallingGetResultFilesMixin, BaseStepPart):
         "merge_vcf": RuleOptions(constraints={"library_name": r"[^.]+"}),
     }
 
+    #: The MELT commands of the other actions take no ``extra_arguments``
+    extra_arguments_action = "indiv_analysis"
+
     intermediate_outputs = {
         "preprocess": ("orig_bam", "orig_bai", "disc_bam", "disc_bai"),
         "indiv_analysis": ("out",),
@@ -57,24 +59,10 @@ class MeltStepPart(SvCallingGetResultFilesMixin, BaseStepPart):
         "make_vcf": ("vcf", "vcf_tbi"),
     }
 
-    #: The MELT commands of the other actions take no ``extra_arguments``
-    extra_arguments_action = "indiv_analysis"
-
     default_resource_usage = ResourceUsage(threads=1, runtime="1d", mem="16GB")
 
-    def _melt_files(self, *keys: str) -> dict[str, str]:
-        """Return the MELT jar, support files directory and genes file (``keys`` selects)."""
-        files = {
-            "jar": self.config.melt.jar_file,
-            "me_refs": self.config.melt.me_refs_path,
-            "genes": self.parent.get_upstream_paths("gene_regions").bed,
-        }
-        return {key: files[key] for key in keys}
-
-    @dictify
-    def _get_log_file_with_prefix(self, prefix: str):
-        """Return dict of log files whose paths start with ``prefix``"""
-        yield "log", f"{prefix}.log"
+    #: MELT calls only the pedigrees of foreground data sets
+    pedigrees_include_background = False
 
     @dictify
     def _get_input_files_preprocess(self, wildcards):
@@ -123,6 +111,14 @@ class MeltStepPart(SvCallingGetResultFilesMixin, BaseStepPart):
             "work/indiv_analysis.{library_name}.{me_type}/log/{library_name}.{me_type}"
         ).items()
 
+    def _get_params_indiv_analysis(self, wildcards: Wildcards) -> dict[str, Any]:
+        """IndivAnalysis takes MELT's ``-r``, ``-b`` and, for targeted data, ``-exome``"""
+        params = self._get_params_group_analysis(wildcards)
+        params["exclude_contigs"] = self.config.melt.exclude_contigs
+        if self.parent.targeted:
+            params["exome"] = True
+        return params
+
     @dictify
     def _get_input_files_group_analysis(self, wildcards):
         yield from self.parent.reference_inputs().items()
@@ -152,10 +148,11 @@ class MeltStepPart(SvCallingGetResultFilesMixin, BaseStepPart):
             "work/group_analysis.{related_group}.{me_type}/log/{related_group}.{me_type}"
         ).items()
 
-    def _pre_geno(self, wildcards) -> str:
-        """The sites of GroupAnalysis, which Genotype and MakeVCF find in its directory (``-p``)"""
-        infix = f"group_analysis.{wildcards.related_group}.{wildcards.me_type}"
-        return f"work/{infix}/out/{wildcards.me_type}.pre_geno.tsv"
+    def _get_params_group_analysis(self, wildcards: Wildcards) -> dict[str, Any]:
+        """GroupAnalysis takes MELT's ``-r``"""
+        params = self._get_params_genotype(wildcards)
+        params["read_length"] = self.config.melt.read_length
+        return params
 
     @dictify
     def _get_input_files_genotype(self, wildcards):
@@ -179,6 +176,12 @@ class MeltStepPart(SvCallingGetResultFilesMixin, BaseStepPart):
             "work/genotype.{related_group}.{me_type}/log/{library_name}.{me_type}"
         ).items()
 
+    def _get_params_genotype(self, wildcards: Wildcards) -> dict[str, Any]:
+        return {
+            "me_refs_infix": self.config.melt.me_refs_infix,
+            "me_type": wildcards.me_type,
+        }
+
     @dictify
     def _get_input_files_make_vcf(self, wildcards):
         yield "pre_geno", self._pre_geno(wildcards)
@@ -194,17 +197,23 @@ class MeltStepPart(SvCallingGetResultFilesMixin, BaseStepPart):
         yield from self._melt_files("jar", "me_refs").items()
 
     @dictify
-    def _get_log_file_make_vcf(self):
-        yield from self._get_log_file_with_prefix(
-            "work/make_vcf.{related_group}.{me_type}/log/{related_group}.{me_type}"
-        ).items()
-
-    @dictify
     def _get_output_files_make_vcf(self):
         out_dir = "work/make_vcf.{related_group}.{me_type}/out"
         yield "list_txt", f"{out_dir}/list.txt"
         yield "vcf", f"{out_dir}/{{related_group}}.{{me_type}}.final_comp.vcf.gz"
         yield "vcf_tbi", f"{out_dir}/{{related_group}}.{{me_type}}.final_comp.vcf.gz.tbi"
+
+    @dictify
+    def _get_log_file_make_vcf(self):
+        yield from self._get_log_file_with_prefix(
+            "work/make_vcf.{related_group}.{me_type}/log/{related_group}.{me_type}"
+        ).items()
+
+    def _get_params_make_vcf(self, wildcards: Wildcards) -> dict[str, Any]:
+        """MakeVCF takes MELT's ``-j``"""
+        params = self._get_params_genotype(wildcards)
+        params["max_no_call_percent"] = self.config.melt.max_no_call_percent
+        return params
 
     @dictify
     def _get_input_files_merge_vcf(self, wildcards):
@@ -224,28 +233,21 @@ class MeltStepPart(SvCallingGetResultFilesMixin, BaseStepPart):
             "work/{library_name}/log/{library_name}.merge_vcf"
         ).items()
 
-    def _get_params_genotype(self, wildcards: Wildcards) -> dict[str, Any]:
-        return {
-            "me_refs_infix": self.config.melt.me_refs_infix,
-            "me_type": wildcards.me_type,
+    @dictify
+    def _get_log_file_with_prefix(self, prefix: str):
+        """Return dict of log files whose paths start with ``prefix``"""
+        yield "log", f"{prefix}.log"
+
+    def _melt_files(self, *keys: str) -> dict[str, str]:
+        """Return the MELT jar, support files directory and genes file (``keys`` selects)."""
+        files = {
+            "jar": self.config.melt.jar_file,
+            "me_refs": self.config.melt.me_refs_path,
+            "genes": self.parent.get_upstream_paths("gene_regions").bed,
         }
+        return {key: files[key] for key in keys}
 
-    def _get_params_group_analysis(self, wildcards: Wildcards) -> dict[str, Any]:
-        """GroupAnalysis takes MELT's ``-r``"""
-        params = self._get_params_genotype(wildcards)
-        params["read_length"] = self.config.melt.read_length
-        return params
-
-    def _get_params_make_vcf(self, wildcards: Wildcards) -> dict[str, Any]:
-        """MakeVCF takes MELT's ``-j``"""
-        params = self._get_params_genotype(wildcards)
-        params["max_no_call_percent"] = self.config.melt.max_no_call_percent
-        return params
-
-    def _get_params_indiv_analysis(self, wildcards: Wildcards) -> dict[str, Any]:
-        """IndivAnalysis takes MELT's ``-r``, ``-b`` and, for targeted data, ``-exome``"""
-        params = self._get_params_group_analysis(wildcards)
-        params["exclude_contigs"] = self.config.melt.exclude_contigs
-        if self.parent.targeted:
-            params["exome"] = True
-        return params
+    def _pre_geno(self, wildcards) -> str:
+        """The sites of GroupAnalysis, which Genotype and MakeVCF find in its directory (``-p``)"""
+        infix = f"group_analysis.{wildcards.related_group}.{wildcards.me_type}"
+        return f"work/{infix}/out/{wildcards.me_type}.pre_geno.tsv"

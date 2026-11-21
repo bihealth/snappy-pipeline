@@ -59,20 +59,25 @@ _OUT_PATTERN = "work/{library_name}/out/{library_name}"
 class OptiTypeStepPart(BaseStepPart):
     """HLA Typing using OptiType"""
 
-    report_outputs = {"run": {"cov_pdf": ReportOutput("OptiType", caption="optitype.rst")}}
-
     #: Step name
     name = "optitype"
+
+    #: Class available actions
+    actions = ("run",)
+
+    wrappers = {"run": "optitype"}
+    result_keys = tuple(_OUTPUTS | _OPTITYPE_OUTPUTS)
+    report_outputs = {"run": {"cov_pdf": ReportOutput("OptiType", caption="optitype.rst")}}
+
+    @property
+    def default_resource_usage(self) -> ResourceUsage:
+        threads = self.config.optitype.num_mapping_threads
+        return ResourceUsage(threads=threads, runtime="40h", mem="45000MB")
+
     #: The MHC classes that the tool types
     mhc_classes = ("class_i",)
 
     supported_extraction_types = ("dna", "rna")
-
-    #: Class available actions
-    actions = ("run",)
-    wrappers = {"run": "optitype"}
-
-    result_keys = tuple(_OUTPUTS | _OPTITYPE_OUTPUTS)
 
     def _get_input_files_run(self, wildcards):
         """Return input files"""
@@ -103,42 +108,33 @@ class OptiTypeStepPart(BaseStepPart):
         """Return sequence type for the library name in wildcards"""
         return self.parent.library_row(wildcards.library_name)["extraction_type"]
 
-    @property
-    def default_resource_usage(self) -> ResourceUsage:
-        threads = self.config.optitype.num_mapping_threads
-        return ResourceUsage(threads=threads, runtime="40h", mem="45000MB")
-
 
 class ArcasHlaStepPart(BaseStepPart):
     """HLA Typing using arcasHLA"""
 
     #: Step name
     name = "arcashla"
+
+    #: Class available actions
+    actions = ("prepare_reference", "run")
+
+    wrappers = {"prepare_reference": "arcashla/prepare_reference", "run": "arcashla/run"}
+    rule_options = {"prepare_reference": RuleOptions(retries=2)}
+    extra_arguments_action = "run"
+    result_keys = {"run": tuple(_OUTPUTS)}
+    default_resource_usage = ResourceUsage(threads=4, runtime="60h", mem="64000MB")
+
+    #: Downloading and indexing the reference
+    resource_usage = {"prepare_reference": ResourceUsage(threads=1, runtime="4h", mem="8GB")}
+
     #: The MHC classes that the tool types
     mhc_classes = ("class_i", "class_ii")
 
     supported_extraction_types = ("rna",)
 
-    #: Class available actions
-    actions = ("prepare_reference", "run")
-    wrappers = {"prepare_reference": "arcashla/prepare_reference", "run": "arcashla/run"}
-    rule_options = {"prepare_reference": RuleOptions(retries=2)}
-    extra_arguments_action = "run"
-
-    result_keys = {"run": tuple(_OUTPUTS)}
-
     PAIRED_PATTERN: re.Pattern = re.compile(
         r"^(?P<passPairs>[0-9]+) \+ (?P<failPairs>[0-9]+) paired in sequencing$"
     )
-
-    @dictify
-    def _get_input_files_run(self, wildcards):
-        """Return input files"""
-        yield "ref_done", "work/prepare_reference/out/.done"
-        alignments = self.parent.get_upstream_paths(
-            "alignments", library_name=wildcards.library_name
-        )
-        yield "bam", alignments.bam
 
     def _get_output_files_prepare_reference(self):
         return {"done": "work/prepare_reference/out/.done"}
@@ -148,6 +144,15 @@ class ArcasHlaStepPart(BaseStepPart):
 
     def _get_params_prepare_reference(self, wildcards):
         return {"reference_version": self.config.arcashla.reference_version}
+
+    @dictify
+    def _get_input_files_run(self, wildcards):
+        """Return input files"""
+        yield "ref_done", "work/prepare_reference/out/.done"
+        alignments = self.parent.get_upstream_paths(
+            "alignments", library_name=wildcards.library_name
+        )
+        yield "bam", alignments.bam
 
     def _get_output_files_run(self):
         return {key: _OUT_PATTERN + ext for key, ext in _OUTPUTS.items()}
@@ -161,22 +166,29 @@ class ArcasHlaStepPart(BaseStepPart):
             mode="json", exclude={"extra_arguments", "reference_version"}, exclude_none=True
         )
 
-    default_resource_usage = ResourceUsage(threads=4, runtime="60h", mem="64000MB")
-    #: Downloading and indexing the reference
-    resource_usage = {"prepare_reference": ResourceUsage(threads=1, runtime="4h", mem="8GB")}
-
 
 class HlaTypingWorkflow(BaseStep):
     """Perform HLA Typing"""
 
     #: Step name
     name = "hla_typing"
+
     produces = [DataSignature(DataType.TABULAR, frozenset({"hla"}))]
 
     #: config_model_class
     config_model_class = HlaTypingConfigModel
 
     tool_parts = {Tool.optitype: OptiTypeStepPart, Tool.arcashla: ArcasHlaStepPart}
+
+    @classmethod
+    def task_library_requirement(cls, config):
+        """The libraries whose extraction type the tool supports."""
+        return f"extraction_type in {list(cls.tool_parts[config.tool].supported_extraction_types)}"
+
+    @classmethod
+    def task_library_default(cls, config):
+        """arcashla takes all RNA libraries, which are all it supports."""
+        return "" if config.tool == "arcashla" else None
 
     @classmethod
     def get_output_paths(cls, config, signature=None, **kwargs) -> dict[str, str]:
@@ -188,13 +200,3 @@ class HlaTypingWorkflow(BaseStep):
     def mhc_classes(cls, config) -> tuple[str, ...]:
         """The MHC classes that a task of this step types."""
         return cls.tool_parts[config.tool].mhc_classes
-
-    @classmethod
-    def task_library_requirement(cls, config):
-        """The libraries whose extraction type the tool supports."""
-        return f"extraction_type in {list(cls.tool_parts[config.tool].supported_extraction_types)}"
-
-    @classmethod
-    def task_library_default(cls, config):
-        """arcashla takes all RNA libraries, which are all it supports."""
-        return "" if config.tool == "arcashla" else None

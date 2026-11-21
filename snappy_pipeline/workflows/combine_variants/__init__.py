@@ -51,12 +51,19 @@ class CombineVariantsStepPart(BaseStepPart):
     name = "combine"
     actions = ("run",)
     wrappers = {"run": "combine_variants/run"}
+    default_resource_usage = ResourceUsage(threads=1, mem="4G", runtime="4h")
 
     def tool_section(self):
         """The options of GATK's CombineVariants are on the step model"""
         return self.config
 
-    default_resource_usage = ResourceUsage(threads=1, mem="4G", runtime="4h")
+    def get_result_files(self) -> list[str]:
+        result = []
+        for tumor_library in self.parent.libraries["library_name"].unique():
+            self.get_normal_lib_name(tumor_library)
+            for path in self.get_output_files("run").values():
+                result += expand(path, tumor_library=[tumor_library])
+        return result
 
     @dictify
     def _get_input_files_run(self, wildcards: Wildcards):
@@ -72,18 +79,11 @@ class CombineVariantsStepPart(BaseStepPart):
         germline = self.parent.get_upstream_paths("germline_variants", library_name=entity)
         yield "germline_vcf", germline.vcf
 
-    def get_normal_lib_name(self, tumor_library: str) -> str:
-        """Return the matched normal library of the tumor library; fail if there is none"""
-        normal_lib = self.parent.matched_normal(tumor_library)
-        if not normal_lib:
-            raise ConfigError(
-                f"Tumor library {tumor_library!r} has no matched normal library, "
-                "which combine_variants needs for the germline variants"
-            )
-        return normal_lib
-
     def _get_output_files_run(self) -> dict[str, str]:
         return vcf_outputs(_OUT_PREFIX)
+
+    def _get_log_file_run(self) -> dict[str, str]:
+        return {"log": _LOG_PREFIX + ".log"}
 
     def _get_params_run(self, wildcards: Wildcards) -> dict[str, Any]:
         if name_origin := self.config.rename_combined:
@@ -97,25 +97,26 @@ class CombineVariantsStepPart(BaseStepPart):
         else:
             return {"tumor_library": wildcards.tumor_library}
 
-    def get_result_files(self) -> list[str]:
-        result = []
-        for tumor_library in self.parent.libraries["library_name"].unique():
-            self.get_normal_lib_name(tumor_library)
-            for path in self.get_output_files("run").values():
-                result += expand(path, tumor_library=[tumor_library])
-        return result
-
-    def _get_log_file_run(self) -> dict[str, str]:
-        return {"log": _LOG_PREFIX + ".log"}
+    def get_normal_lib_name(self, tumor_library: str) -> str:
+        """Return the matched normal library of the tumor library; fail if there is none"""
+        normal_lib = self.parent.matched_normal(tumor_library)
+        if not normal_lib:
+            raise ConfigError(
+                f"Tumor library {tumor_library!r} has no matched normal library, "
+                "which combine_variants needs for the germline variants"
+            )
+        return normal_lib
 
 
 class CombineVariantsWorkflow(BaseStep):
     name = "combine_variants"
+    produces = [DataSignature(DataType.VARIANTS, frozenset({"combined"}))]
+    config_model_class = CombineVariantsConfigModel
 
     #: The tumor DNA libraries, whose somatic and germline calls are combined
     library_requirement = "role == 'tumor' and extraction_type == 'dna'"
 
-    produces = [DataSignature(DataType.VARIANTS, frozenset({"combined"}))]
+    default_relationships = MATCHED_NORMAL_RELATIONSHIP
 
     @classmethod
     def task_produces(cls, config, upstream):
@@ -125,19 +126,15 @@ class CombineVariantsWorkflow(BaseStep):
         return (cls.produces[0].with_tags(*common),)
 
     @classmethod
-    def default_group_by(cls, config):
-        """One combined VCF per tumor library, whatever grouping the germline calls have."""
-        return "library"
-
-    config_model_class = CombineVariantsConfigModel
-
-    default_relationships = MATCHED_NORMAL_RELATIONSHIP
-
-    @classmethod
     def get_output_paths(cls, config, signature=None, **kwargs) -> dict[str, str]:
         lib = kwargs.get("library_name", "{library_name}")
         paths = vcf_outputs(_OUT_PREFIX.format(tumor_library=lib))
         return {key: paths[key] for key in ("vcf", "vcf_tbi")}
+
+    @classmethod
+    def default_group_by(cls, config):
+        """One combined VCF per tumor library, whatever grouping the germline calls have."""
+        return "library"
 
     def __init__(self, workflow, project, task_name):
 

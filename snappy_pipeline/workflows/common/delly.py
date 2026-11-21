@@ -26,6 +26,7 @@ class Delly2StepPart(
 
     name = "delly2"
     actions = ("call", "merge_calls", "genotype", "merge_genotypes")
+
     wrappers = {
         "merge_genotypes": "delly2/germline/merge_genotypes",
         "genotype": "delly2/germline/genotype",
@@ -42,24 +43,15 @@ class Delly2StepPart(
         "genotype": ("bcf", "bcf_csi"),
     }
 
-    _cheap_resource_usage = ResourceUsage(threads=1, runtime="1d", mem="4GB")
     _normal_resource_usage = ResourceUsage(threads=1, runtime="2d", mem="16GB")
+    _cheap_resource_usage = ResourceUsage(threads=1, runtime="1d", mem="4GB")
+
     resource_usage = {
         "call": _normal_resource_usage,
         "merge_calls": _cheap_resource_usage,
         "genotype": _normal_resource_usage,
         "merge_genotypes": _cheap_resource_usage,
     }
-
-    def _get_params_call(self, wildcards: Wildcards) -> dict[str, Any]:
-        config = dict(self.config.get(self.name))
-        return {
-            "config": {
-                key: config[key] for key in ("map_qual", "qual_tra", "geno_qual", "mad_cutoff")
-            },
-        }
-
-    _get_params_genotype = _get_params_call
 
     @dictify
     def _get_input_files_call(self, wildcards):
@@ -77,6 +69,14 @@ class Delly2StepPart(
         prefix = "work/{library_name}/out/{library_name}.call"
         yield "bcf", f"{prefix}.bcf"
         yield "bcf_csi", f"{prefix}.bcf.csi"
+
+    def _get_params_call(self, wildcards: Wildcards) -> dict[str, Any]:
+        config = dict(self.config.get(self.name))
+        return {
+            "config": {
+                key: config[key] for key in ("map_qual", "qual_tra", "geno_qual", "mad_cutoff")
+            },
+        }
 
     @dictify
     def _get_input_files_merge_calls(self, wildcards):
@@ -108,6 +108,8 @@ class Delly2StepPart(
         prefix = "work/{library_name}/out/{library_name}.genotype"
         yield "bcf", f"{prefix}.bcf"
         yield "bcf_csi", f"{prefix}.bcf.csi"
+
+    _get_params_genotype = _get_params_call
 
     @dictify
     def _get_input_files_merge_genotypes(self, wildcards):

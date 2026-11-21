@@ -51,22 +51,21 @@ _OUTPUTS = {
 class PeddyStepPart(BaseStepPart):
     """Compute variant statistics using peddy"""
 
-    report_outputs = {"run": {"html": ReportOutput("peddy", caption="peddy.rst")}}
-
     #: Step name
     name = "peddy"
 
     #: Class available actions
     actions = ("run",)
+
     wrappers = {"run": "peddy/run"}
+    entity_wildcard = "related_group"
+    result_keys = tuple(f"{key}{suffix}" for key in _OUTPUTS for suffix in ("", "_md5"))
+    report_outputs = {"run": {"html": ReportOutput("peddy", caption="peddy.rst")}}
+    default_resource_usage = ResourceUsage(threads=1, runtime="10h", mem=f"{15 * 1024}MB")
 
     def tool_section(self):
         """peddy has no tool section: the ``extra_arguments`` are the step's own"""
         return self.config
-
-    result_keys = tuple(f"{key}{suffix}" for key in _OUTPUTS for suffix in ("", "_md5"))
-    entity_wildcard = "related_group"
-    default_resource_usage = ResourceUsage(threads=1, runtime="10h", mem=f"{15 * 1024}MB")
 
     @dictify
     def _get_input_files_run(self, wildcards):
@@ -89,20 +88,16 @@ class PeddyStepPart(BaseStepPart):
             result[f"{key}_md5"] = prefix + ext + ".md5"
         return result
 
+    def _get_log_file_run(self):
+        return {"log": "work/{related_group}/log/snakemake.filter.log"}
+
     def _get_params_run(self, wildcards):
         """The tool's ``extra_arguments`` only, which ``with_extra_arguments`` adds"""
         return {}
 
-    def _get_log_file_run(self):
-        return {"log": "work/{related_group}/log/snakemake.filter.log"}
-
 
 class PeddySummaryStepPart(QcSummaryStepPart):
     """Tables and charts of the peddy checks of all pedigrees"""
-
-    source = ("peddy", "run")
-    source_keys = {"ped_check": "ped_check", "sex_check": "sex_check", "het_check": "het_check"}
-    format = "peddy"
 
     report_outputs = {
         "run": {
@@ -112,12 +107,17 @@ class PeddySummaryStepPart(QcSummaryStepPart):
         }
     }
 
+    source = ("peddy", "run")
+    source_keys = {"ped_check": "ped_check", "sex_check": "sex_check", "het_check": "het_check"}
+    format = "peddy"
+
 
 class VariantCheckingWorkflow(BaseStep):
     """Perform germline variant checking"""
 
     #: Workflow name
     name = "variant_checking"
+
     produces = [DataSignature(DataType.QC, frozenset({"pedigree_check"}))]
     config_model_class = VariantCheckingConfigModel
 
@@ -131,5 +131,3 @@ class VariantCheckingWorkflow(BaseStep):
         super().__init__(workflow, project, task_name)
         # Register sub step classes so the sub steps are available
         self.register_sub_step_classes((PeddyStepPart, WritePedigreeStepPart, PeddySummaryStepPart))
-
-        # Copy over "tools" setting from ngs_mapping/variant_calling if not set here

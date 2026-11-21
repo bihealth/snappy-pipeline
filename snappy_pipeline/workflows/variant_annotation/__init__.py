@@ -61,7 +61,6 @@ class VariantAnnotationStepPart(BaseStepPart):
     """Base class for concrete variant annotation tool step parts."""
 
     actions = ("run",)
-
     result_keys = tuple(vcf_outputs(_OUT_PREFIX))
 
     @dictify
@@ -81,15 +80,12 @@ class VariantAnnotationStepPart(BaseStepPart):
 class VepStepPart(VariantAnnotationStepPart):
     name = "vep"
     wrappers = {"run": "vep/run"}
-
     report_outputs = {"run": {"summary": ReportOutput("VEP", caption="vep_summary.rst")}}
 
-    def _get_output_files_run(self):
-        """The annotated VCF and, unless ``output_options`` has ``no_stats``, VEP's summary"""
-        outputs = super()._get_output_files_run()
-        if "no_stats" not in self.config.vep.output_options:
-            outputs["summary"] = "work/{library_name}/report/{library_name}.summary.html"
-        return outputs
+    @property
+    def default_resource_usage(self) -> ResourceUsage:
+        num_threads = self.config.vep.num_threads
+        return ResourceUsage(threads=num_threads, runtime="1d", mem=f"{2 * num_threads}GB")
 
     @dictify
     def _get_input_files_run(self, wildcards):
@@ -98,24 +94,26 @@ class VepStepPart(VariantAnnotationStepPart):
         if self.config.vep.plugins:
             yield "plugins", [plugin.path for plugin in self.config.vep.plugins]
 
+    def _get_output_files_run(self):
+        """The annotated VCF and, unless ``output_options`` has ``no_stats``, VEP's summary"""
+        outputs = super()._get_output_files_run()
+        if "no_stats" not in self.config.vep.output_options:
+            outputs["summary"] = "work/{library_name}/report/{library_name}.summary.html"
+        return outputs
+
     def _get_params_run(self, wildcards):
         config = self.config.vep.model_dump(by_alias=True, exclude={"extra_arguments"})
         config["plugins"] = [plugin.name for plugin in self.config.vep.plugins]
         return {"config": config}
-
-    @property
-    def default_resource_usage(self) -> ResourceUsage:
-        num_threads = self.config.vep.num_threads
-        return ResourceUsage(threads=num_threads, runtime="1d", mem=f"{2 * num_threads}GB")
 
 
 class MehariStepPart(VariantAnnotationStepPart):
     name = "mehari"
     wrappers = {"run": "mehari/run"}
 
-    def _get_params_run(self, wildcards):
-        """Pass the options; the files (reference, databases) are inputs."""
-        return {"config": self.config.mehari.model_dump(by_alias=True, exclude={"extra_arguments"})}
+    @property
+    def default_resource_usage(self) -> ResourceUsage:
+        return ResourceUsage(threads=self.config.mehari.threads, runtime="20m", mem="8GB")
 
     @dictify
     def _get_input_files_run(self, wildcards):
@@ -127,19 +125,23 @@ class MehariStepPart(VariantAnnotationStepPart):
         if database.clinvar_db:
             yield "clinvar", database.clinvar_db
 
-    @property
-    def default_resource_usage(self) -> ResourceUsage:
-        return ResourceUsage(threads=self.config.mehari.threads, runtime="20m", mem="8GB")
+    def _get_params_run(self, wildcards):
+        """Pass the options; the files (reference, databases) are inputs."""
+        return {"config": self.config.mehari.model_dump(by_alias=True, exclude={"extra_arguments"})}
 
 
 class VariantAnnotationWorkflow(BaseStep):
     """Annotate germline or somatic variant calls with a single selected tool."""
 
     name = "variant_annotation"
+
     produces = [
         DataSignature(DataType.VARIANTS, frozenset({"germline", "snv", "indel", "annotated"})),
         DataSignature(DataType.VARIANTS, frozenset({"somatic", "snv", "indel", "annotated"})),
     ]
+
+    config_model_class = VariantAnnotationConfigModel
+    tool_parts = {Tool.vep: VepStepPart, Tool.mehari: MehariStepPart}
 
     @classmethod
     def task_produces(cls, config, upstream):
@@ -149,10 +151,6 @@ class VariantAnnotationWorkflow(BaseStep):
         which the calls report reads for its build-dependent linkouts."""
         assembly = getattr(config, str(config.tool)).assembly
         return (upstream["variants"].with_tags("annotated", str(config.tool), assembly),)
-
-    config_model_class = VariantAnnotationConfigModel
-
-    tool_parts = {Tool.vep: VepStepPart, Tool.mehari: MehariStepPart}
 
     @classmethod
     def get_output_paths(cls, config, signature=None, **kwargs) -> dict[str, str]:

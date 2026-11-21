@@ -11,34 +11,6 @@ from snappy_pipeline.workflows.common import vcf_outputs
 VCF_OUTPUTS = vcf_outputs("work/{library_name}/out/{library_name}")
 
 
-class SvCallingWorkflow(BaseStep):
-    """Base class of ``sv_calling_{targeted,wgs}``: one VCF per pedigree, named after it"""
-
-    produces = [DataSignature(DataType.VARIANTS, frozenset({"germline", "sv"}))]
-
-    #: Whether the libraries are exomes and panels, whose target regions the callers take into
-    #: account (Manta's workflow, MELT's ``-exome``)
-    targeted: bool
-
-    #: The pedigrees of background data sets are called, too
-    uses_background = True
-
-    helper_parts = (WritePedigreeStepPart,)
-
-    @classmethod
-    def default_group_by(cls, config):
-        """The callers write one result per pedigree, named after the pedigree."""
-        return "related"
-
-    @classmethod
-    def get_output_paths(cls, config, signature=None, **kwargs) -> dict[str, str]:
-        """Return the VCF of a pedigree and its index for downstream consumers."""
-        library_name = kwargs.get("library_name", "{library_name}")
-        return {
-            key: VCF_OUTPUTS[key].format(library_name=library_name) for key in ("vcf", "vcf_tbi")
-        }
-
-
 class SvCallingGetResultFilesMixin:
     """Mixin that provides ``get_result_files()`` for SV calling steps"""
 
@@ -76,3 +48,30 @@ class SvCallingGetLogFileMixin:
         else:
             infix = "{library_name}"
         yield "log", f"work/{infix}/log/{infix}.{action}.log"
+
+
+class SvCallingWorkflow(BaseStep):
+    """Base class of ``sv_calling_{targeted,wgs}``: one VCF per pedigree, named after it"""
+
+    produces = [DataSignature(DataType.VARIANTS, frozenset({"germline", "sv"}))]
+    helper_parts = (WritePedigreeStepPart,)
+
+    #: The pedigrees of background data sets are called, too
+    uses_background = True
+
+    #: Whether the libraries are exomes and panels, whose target regions the callers take into
+    #: account (Manta's workflow, MELT's ``-exome``)
+    targeted: bool
+
+    @classmethod
+    def get_output_paths(cls, config, signature=None, **kwargs) -> dict[str, str]:
+        """Return the VCF of a pedigree and its index for downstream consumers."""
+        library_name = kwargs.get("library_name", "{library_name}")
+        return {
+            key: VCF_OUTPUTS[key].format(library_name=library_name) for key in ("vcf", "vcf_tbi")
+        }
+
+    @classmethod
+    def default_group_by(cls, config):
+        """The callers write one result per pedigree, named after the pedigree."""
+        return "related"

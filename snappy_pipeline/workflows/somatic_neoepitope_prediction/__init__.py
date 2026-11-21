@@ -128,11 +128,12 @@ class PvacToolsStepPart(NeoepitopeStepPart):
             wrappers["normalize"] = "pvactools/normalize"
         return wrappers
 
+    intermediate_outputs = {"normalize": ("vcf", "vcf_tbi"), "hla_types": ("hla_types",)}
+
     resource_usage = {
         "normalize": ResourceUsage(threads=1, runtime="1h", mem="4GB"),
         "hla_types": ResourceUsage(threads=1, runtime="1h", mem="4GB"),
     }
-    intermediate_outputs = {"normalize": ("vcf", "vcf_tbi"), "hla_types": ("hla_types",)}
 
     def _get_input_files_normalize(self, wildcards):
         return {"annotated": self.variants(wildcards.tumor_library)}
@@ -140,11 +141,11 @@ class PvacToolsStepPart(NeoepitopeStepPart):
     def _get_output_files_normalize(self):
         return {"vcf": f"{_OUT}.normalized.vcf.gz", "vcf_tbi": f"{_OUT}.normalized.vcf.gz.tbi"}
 
-    def _get_params_normalize(self, wildcards):
-        return self.samples(wildcards.tumor_library)
-
     def _get_log_file_normalize(self):
         return {"log": f"{_LOG}.normalize.log"}
+
+    def _get_params_normalize(self, wildcards):
+        return self.samples(wildcards.tumor_library)
 
     @dictify
     def _get_input_files_hla_types(self, wildcards):
@@ -179,21 +180,9 @@ class PredictionStepPart(NeoepitopeStepPart):
 
     actions = ("run",)
 
-    def __init__(self, parent):
-        super().__init__(parent)
-        self.cfg = getattr(self.config.pvactools, self.name)
-
-    @property
-    def default_resource_usage(self) -> ResourceUsage:
-        return ResourceUsage(threads=min(16, self.cfg.n_threads), runtime="24h", mem="64GB")
-
     result_keys = {
         "run": tuple(f"{key}.{COMBINED[1]}{md5}" for key in RESULT_TABLES for md5 in ("", "_md5"))
     }
-
-    @property
-    def directory(self) -> str:
-        return f"work/{{tumor_library}}/out/{self.name}"
 
     @property
     def intermediate_outputs(self) -> dict[str, tuple[str, ...]]:
@@ -209,12 +198,21 @@ class PredictionStepPart(NeoepitopeStepPart):
             keys.append(f"{'all' if self.cfg.netmhc_stab.all_epitopes else 'filtered'}.MHC_I")
         return {"run": tuple(keys)}
 
-    def fasta_outputs(self) -> dict[str, str]:
-        """The epitope sequences of each MHC class, which NetChop reads"""
-        return {
-            f"fasta.{infix}": f"{self.directory}/{subdir}/{{tumor_library}}.fasta"
-            for subdir, infix in MHC_CLASSES.values()
-        }
+    @property
+    def default_resource_usage(self) -> ResourceUsage:
+        return ResourceUsage(threads=min(16, self.cfg.n_threads), runtime="24h", mem="64GB")
+
+    def __init__(self, parent):
+        super().__init__(parent)
+        self.cfg = getattr(self.config.pvactools, self.name)
+
+    @dictify
+    def _get_input_files_run(self, wildcards):
+        yield "alleles", f"{_OUT}.hla_types.txt".format(**wildcards)
+        if self.cfg.genes_of_interest:
+            yield "genes", self.cfg.genes_of_interest
+        if self.config.depends_on.proteome:
+            yield "peptides", self.parent.get_upstream_paths("proteome").fasta
 
     @dictify
     def _get_output_files_run(self):
@@ -232,14 +230,6 @@ class PredictionStepPart(NeoepitopeStepPart):
     def _get_log_file_run(self):
         return {"log": f"{_LOG}.{self.name}.log"}
 
-    @dictify
-    def _get_input_files_run(self, wildcards):
-        yield "alleles", f"{_OUT}.hla_types.txt".format(**wildcards)
-        if self.cfg.genes_of_interest:
-            yield "genes", self.cfg.genes_of_interest
-        if self.config.depends_on.proteome:
-            yield "peptides", self.parent.get_upstream_paths("proteome").fasta
-
     def _get_params_run(self, wildcards):
         return {
             **self.sample_names(wildcards.tumor_library),
@@ -249,6 +239,17 @@ class PredictionStepPart(NeoepitopeStepPart):
                 "class_ii": self.cfg.class_ii_epitope_length,
             },
             "extra_arguments": self.cfg.extra_arguments,
+        }
+
+    @property
+    def directory(self) -> str:
+        return f"work/{{tumor_library}}/out/{self.name}"
+
+    def fasta_outputs(self) -> dict[str, str]:
+        """The epitope sequences of each MHC class, which NetChop reads"""
+        return {
+            f"fasta.{infix}": f"{self.directory}/{subdir}/{{tumor_library}}.fasta"
+            for subdir, infix in MHC_CLASSES.values()
         }
 
     def mhc_classes(self) -> list[str]:
@@ -270,7 +271,6 @@ class PvacSeqStepPart(PredictionStepPart):
 
     name = "pvacseq"
     actions = ("pileup", "add_expression", "run")
-    rule_options = {"run": RuleOptions(explicit=True)}
 
     @property
     def wrappers(self) -> dict[str, str]:
@@ -282,10 +282,7 @@ class PvacSeqStepPart(PredictionStepPart):
             wrappers["add_expression"] = "pvactools/add_expression"
         return wrappers
 
-    resource_usage = {
-        "pileup": ResourceUsage(threads=1, runtime="4h", mem="6GB"),
-        "add_expression": ResourceUsage(threads=1, runtime="4h", mem="6GB"),
-    }
+    rule_options = {"run": RuleOptions(explicit=True)}
 
     @property
     def intermediate_outputs(self) -> dict[str, tuple[str, ...]]:
@@ -295,63 +292,10 @@ class PvacSeqStepPart(PredictionStepPart):
             "add_expression": ("vcf", "vcf_tbi"),
         }
 
-    def with_expression(self, tumor_library: str) -> bool:
-        """Whether pVACseq reads the VCF with RNA evidence"""
-        has_rna = bool(self.parent.matched(tumor_library, "matched_rna_lib"))
-        return has_rna and (self.cfg.pileup.enabled or self.cfg.expression.enabled)
-
-    def _get_input_files_pileup(self, wildcards):
-        rna = self.parent.matched(wildcards.tumor_library, "matched_rna_lib")
-        alignments = self.parent.get_upstream_paths("alignments", library_name=rna)
-        return {
-            "bam": alignments.bam,
-            "bai": alignments.bai,
-            "loci": self.variants(wildcards.tumor_library),
-            **self.parent.reference_inputs(),
-        }
-
-    def _get_output_files_pileup(self):
-        return {"vcf": f"{_OUT}.pileup.vcf.gz", "vcf_tbi": f"{_OUT}.pileup.vcf.gz.tbi"}
-
-    def _get_params_pileup(self, wildcards):
-        return {
-            "tumor_sample": wildcards.tumor_library,
-            "extra_arguments": self.cfg.pileup.extra_arguments,
-        }
-
-    def _get_log_file_pileup(self):
-        return {"log": f"{_LOG}.pileup.log"}
-
-    @dictify
-    def _get_input_files_add_expression(self, wildcards):
-        yield "annotated", f"{_OUT}.normalized.vcf.gz".format(**wildcards)
-        yield "annotated_tbi", f"{_OUT}.normalized.vcf.gz.tbi".format(**wildcards)
-        if self.cfg.pileup.enabled:
-            yield "pileup", f"{_OUT}.pileup.vcf.gz".format(**wildcards)
-            yield "pileup_tbi", f"{_OUT}.pileup.vcf.gz.tbi".format(**wildcards)
-        if self.cfg.expression.enabled:
-            rna = self.parent.matched(wildcards.tumor_library, "matched_rna_lib")
-            expression = self.parent.get_upstream_paths("expression", library_name=rna)
-            yield "gene_tpms", expression.gene_sf
-            yield "transcript_tpms", expression.transcript_sf
-            if table := self.cfg.expression.duplicate_transcripts_table:
-                yield "duplicate_transcripts_table", table
-
-    def _get_output_files_add_expression(self):
-        return {
-            "vcf": f"{_OUT}.with_expression.vcf.gz",
-            "vcf_tbi": f"{_OUT}.with_expression.vcf.gz.tbi",
-        }
-
-    def _get_params_add_expression(self, wildcards):
-        return {
-            "format": "salmon",
-            "extra_arguments": self.cfg.expression.extra_arguments,
-            "tumor_sample": wildcards.tumor_library,
-        }
-
-    def _get_log_file_add_expression(self):
-        return {"log": f"{_LOG}.add_expression.log"}
+    resource_usage = {
+        "pileup": ResourceUsage(threads=1, runtime="4h", mem="6GB"),
+        "add_expression": ResourceUsage(threads=1, runtime="4h", mem="6GB"),
+    }
 
     @dictify
     def _get_input_files_run(self, wildcards):
@@ -379,6 +323,64 @@ class PvacSeqStepPart(PredictionStepPart):
             ]
         return params
 
+    def _get_input_files_pileup(self, wildcards):
+        rna = self.parent.matched(wildcards.tumor_library, "matched_rna_lib")
+        alignments = self.parent.get_upstream_paths("alignments", library_name=rna)
+        return {
+            "bam": alignments.bam,
+            "bai": alignments.bai,
+            "loci": self.variants(wildcards.tumor_library),
+            **self.parent.reference_inputs(),
+        }
+
+    def _get_output_files_pileup(self):
+        return {"vcf": f"{_OUT}.pileup.vcf.gz", "vcf_tbi": f"{_OUT}.pileup.vcf.gz.tbi"}
+
+    def _get_log_file_pileup(self):
+        return {"log": f"{_LOG}.pileup.log"}
+
+    def _get_params_pileup(self, wildcards):
+        return {
+            "tumor_sample": wildcards.tumor_library,
+            "extra_arguments": self.cfg.pileup.extra_arguments,
+        }
+
+    @dictify
+    def _get_input_files_add_expression(self, wildcards):
+        yield "annotated", f"{_OUT}.normalized.vcf.gz".format(**wildcards)
+        yield "annotated_tbi", f"{_OUT}.normalized.vcf.gz.tbi".format(**wildcards)
+        if self.cfg.pileup.enabled:
+            yield "pileup", f"{_OUT}.pileup.vcf.gz".format(**wildcards)
+            yield "pileup_tbi", f"{_OUT}.pileup.vcf.gz.tbi".format(**wildcards)
+        if self.cfg.expression.enabled:
+            rna = self.parent.matched(wildcards.tumor_library, "matched_rna_lib")
+            expression = self.parent.get_upstream_paths("expression", library_name=rna)
+            yield "gene_tpms", expression.gene_sf
+            yield "transcript_tpms", expression.transcript_sf
+            if table := self.cfg.expression.duplicate_transcripts_table:
+                yield "duplicate_transcripts_table", table
+
+    def _get_output_files_add_expression(self):
+        return {
+            "vcf": f"{_OUT}.with_expression.vcf.gz",
+            "vcf_tbi": f"{_OUT}.with_expression.vcf.gz.tbi",
+        }
+
+    def _get_log_file_add_expression(self):
+        return {"log": f"{_LOG}.add_expression.log"}
+
+    def _get_params_add_expression(self, wildcards):
+        return {
+            "format": "salmon",
+            "extra_arguments": self.cfg.expression.extra_arguments,
+            "tumor_sample": wildcards.tumor_library,
+        }
+
+    def with_expression(self, tumor_library: str) -> bool:
+        """Whether pVACseq reads the VCF with RNA evidence"""
+        has_rna = bool(self.parent.matched(tumor_library, "matched_rna_lib"))
+        return has_rna and (self.cfg.pileup.enabled or self.cfg.expression.enabled)
+
 
 class PvacFuseStepPart(PredictionStepPart):
     """pVACfuse on the arriba fusions of the matched RNA library"""
@@ -404,21 +406,32 @@ class PvacSpliceStepPart(PredictionStepPart):
 
     name = "pvacsplice"
     actions = ("features", "junction", "run")
+
     wrappers = {
         "run": "pvactools/pvacsplice",
         "junction": "pvactools/junction",
         "features": "pvactools/features",
     }
+
     rule_options = {"run": RuleOptions(explicit=True)}
+
+    @property
+    def intermediate_outputs(self) -> dict[str, tuple[str, ...]]:
+        return {**super().intermediate_outputs, "features": ("gtf",), "junction": ("junctions",)}
 
     resource_usage = {
         "features": ResourceUsage(threads=1, runtime="1h", mem="4GB"),
         "junction": ResourceUsage(threads=1, runtime="4h", mem="16GB"),
     }
 
-    @property
-    def intermediate_outputs(self) -> dict[str, tuple[str, ...]]:
-        return {**super().intermediate_outputs, "features": ("gtf",), "junction": ("junctions",)}
+    @dictify
+    def _get_input_files_run(self, wildcards):
+        yield from super()._get_input_files_run(wildcards).items()
+        yield from self.parent.reference_inputs().items()
+        yield "features", self.parent.get_upstream_paths("features").gtf
+        yield "annotated", f"{_OUT}.normalized.vcf.gz".format(**wildcards)
+        yield "annotated_tbi", f"{_OUT}.normalized.vcf.gz.tbi".format(**wildcards)
+        yield "junctions", f"{_OUT}.junctions.tsv".format(**wildcards)
 
     def fasta_outputs(self):
         """pVACsplice writes the transcript sequences, which NetChop reads, once"""
@@ -450,15 +463,6 @@ class PvacSpliceStepPart(PredictionStepPart):
 
     def _get_log_file_junction(self):
         return {"log": f"{_LOG}.junction.log"}
-
-    @dictify
-    def _get_input_files_run(self, wildcards):
-        yield from super()._get_input_files_run(wildcards).items()
-        yield from self.parent.reference_inputs().items()
-        yield "features", self.parent.get_upstream_paths("features").gtf
-        yield "annotated", f"{_OUT}.normalized.vcf.gz".format(**wildcards)
-        yield "annotated_tbi", f"{_OUT}.normalized.vcf.gz.tbi".format(**wildcards)
-        yield "junctions", f"{_OUT}.junctions.tsv".format(**wildcards)
 
 
 class PostProcessStepPart(NeoepitopeStepPart):
@@ -500,14 +504,14 @@ class NetChopStepPart(PostProcessStepPart):
         path = _post_processed("netchop")
         return {"netchop": path, "netchop_md5": path + ".md5"}
 
-    def _get_params_run(self, wildcards):
-        cfg = self.prediction(wildcards).cfg.net_chop
-        return {"tool": wildcards.prediction, "method": cfg.method, "threshold": cfg.threshold}
-
     def _get_log_file_run(self):
         return {
             "log": "work/{tumor_library}/log/{tumor_library}.{prediction}.{mhc_class}.netchop.log"
         }
+
+    def _get_params_run(self, wildcards):
+        cfg = self.prediction(wildcards).cfg.net_chop
+        return {"tool": wildcards.prediction, "method": cfg.method, "threshold": cfg.threshold}
 
 
 class NetStabStepPart(PostProcessStepPart):
@@ -531,12 +535,12 @@ class NetStabStepPart(PostProcessStepPart):
         path = _post_processed("netstab", mhc_class="MHC_I")
         return {"netstab": path, "netstab_md5": path + ".md5"}
 
+    def _get_log_file_run(self):
+        return {"log": "work/{tumor_library}/log/{tumor_library}.{prediction}.netstab.log"}
+
     def _get_params_run(self, wildcards):
         cfg = self.prediction(wildcards).cfg
         return {"tool": wildcards.prediction, "lengths": cfg.class_i_epitope_length}
-
-    def _get_log_file_run(self):
-        return {"log": "work/{tumor_library}/log/{tumor_library}.{prediction}.netstab.log"}
 
 
 class SomaticNeoepitopePredictionWorkflow(BaseStep):
@@ -544,7 +548,6 @@ class SomaticNeoepitopePredictionWorkflow(BaseStep):
 
     name = "somatic_neoepitope_prediction"
     produces = [DataSignature(DataType.TABULAR, frozenset({"neoepitope"}))]
-
     config_model_class = SomaticNeoepitopePredictionConfigModel
 
     #: Somatic variants of tumor DNA libraries
@@ -584,6 +587,28 @@ class SomaticNeoepitopePredictionWorkflow(BaseStep):
         )
         self.check_vep_plugins()
         self.check_rna()
+
+    @listify
+    def get_result_files(self):
+        for prediction in self.enabled_predictions:
+            part = self.sub_steps[prediction]
+            for tumor in self.output_entities:
+                if prediction in NEED_RNA and not self.matched(tumor, "matched_rna_lib"):
+                    continue
+                outputs = part._get_output_files_run()
+                for key in part.result_keys["run"]:
+                    yield outputs[key].format(tumor_library=tumor)
+                classes = part.mhc_classes()
+                post_processed = [
+                    _post_processed("netchop", prediction, MHC_CLASSES[name][1])
+                    for name in classes
+                    if part.cfg.net_chop.enabled
+                ]
+                if part.cfg.netmhc_stab.enabled and "class_i" in classes:
+                    post_processed.append(_post_processed("netstab", prediction, "MHC_I"))
+                for path in post_processed:
+                    path = path.format(tumor_library=tumor)
+                    yield from (path, path + ".md5")
 
     def check_vep_plugins(self):
         """pVACseq and pVACsplice need the VEP plugins Frameshift and Wildtype."""
@@ -634,25 +659,3 @@ class SomaticNeoepitopePredictionWorkflow(BaseStep):
             classes = getattr(cls, "mhc_classes", None)
             result |= set(classes(config)) if classes else set(MHC_CLASSES)
         return result
-
-    @listify
-    def get_result_files(self):
-        for prediction in self.enabled_predictions:
-            part = self.sub_steps[prediction]
-            for tumor in self.output_entities:
-                if prediction in NEED_RNA and not self.matched(tumor, "matched_rna_lib"):
-                    continue
-                outputs = part._get_output_files_run()
-                for key in part.result_keys["run"]:
-                    yield outputs[key].format(tumor_library=tumor)
-                classes = part.mhc_classes()
-                post_processed = [
-                    _post_processed("netchop", prediction, MHC_CLASSES[name][1])
-                    for name in classes
-                    if part.cfg.net_chop.enabled
-                ]
-                if part.cfg.netmhc_stab.enabled and "class_i" in classes:
-                    post_processed.append(_post_processed("netstab", prediction, "MHC_I"))
-                for path in post_processed:
-                    path = path.format(tumor_library=tumor)
-                    yield from (path, path + ".md5")

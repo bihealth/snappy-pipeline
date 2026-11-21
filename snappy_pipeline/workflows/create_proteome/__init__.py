@@ -28,26 +28,12 @@ class CreateProteomeStepPart(BaseStepPart):
     wrappers = {"run": "pvactools/create_proteome"}
     default_resource_usage = ResourceUsage(threads=1, mem="4G", runtime="4h")
 
-    @dictify
-    def _get_input_files_run(self, wildcards: Wildcards):
-        yield from self.parent.reference_inputs().items()
-        yield "features", self.parent.get_upstream_paths("features").gtf
-
-        if self.config.path_proteome:
-            yield "proteome", self.config.path_proteome
-
-        variant = self.parent.get_upstream_paths("variants", library_name=wildcards.library_name)
-        yield "vcf", getattr(variant, "vcf", None) or variant["vcf"]
-
     def get_output_files(self, action: str) -> dict[str, Any]:
         match action:
             case "run":
                 return {"vcf": _OUT_PREFIX + ".fa.gz"}
             case _:
                 raise NotImplementedError(f"Unimplemented action {action}")
-
-    def _get_params_run(self, wildcards: Wildcards) -> dict[str, Any]:
-        return {"add_reference": self.config.add_reference}
 
     @dictify
     def get_log_file(self, action: str):
@@ -63,12 +49,24 @@ class CreateProteomeStepPart(BaseStepPart):
             case _:
                 raise NotImplementedError(f"Unimplemented action {action}")
 
+    @dictify
+    def _get_input_files_run(self, wildcards: Wildcards):
+        yield from self.parent.reference_inputs().items()
+        yield "features", self.parent.get_upstream_paths("features").gtf
+
+        if self.config.path_proteome:
+            yield "proteome", self.config.path_proteome
+
+        variant = self.parent.get_upstream_paths("variants", library_name=wildcards.library_name)
+        yield "vcf", getattr(variant, "vcf", None) or variant["vcf"]
+
+    def _get_params_run(self, wildcards: Wildcards) -> dict[str, Any]:
+        return {"add_reference": self.config.add_reference}
+
 
 class CreateProteomeWorkflow(BaseStep):
     name = "create_proteome"
-
     produces = [DataSignature(DataType.TABULAR, frozenset({"proteome"}))]
-
     config_model_class = CreateProteomeConfigModel
 
     @classmethod

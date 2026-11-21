@@ -52,10 +52,9 @@ class ScarHRDStepPart(BaseStepPart):
 
     #: Class available actions
     actions = ("run",)
+
     wrappers = {"run": "scarHRD/run"}
-
     result_keys = {"run": ("hrd", "hrd_md5")}
-
     resource_usage = {"run": ResourceUsage(threads=1, mem="32GB", runtime="24h")}
 
     @dictify
@@ -71,11 +70,11 @@ class ScarHRDStepPart(BaseStepPart):
             "hrd_md5": "work/{library_name}/out/{library_name}.hrd.json.md5",
         }
 
-    def _get_params_run(self, wildcards: Wildcards) -> dict[str, Any]:
-        return self.config.scarHRD.model_dump(by_alias=True)
-
     def _get_log_file_run(self):
         return {"log": "work/{library_name}/log/{library_name}.log"}
+
+    def _get_params_run(self, wildcards: Wildcards) -> dict[str, Any]:
+        return self.config.scarHRD.model_dump(by_alias=True)
 
 
 class HomologousRecombinationDeficiencyWorkflow(BaseStep):
@@ -83,12 +82,10 @@ class HomologousRecombinationDeficiencyWorkflow(BaseStep):
 
     #: Step name
     name = "homologous_recombination_deficiency"
+
     produces = [DataSignature(DataType.TABULAR, frozenset({"hrd"}))]
-
     config_model_class = HomologousRecombinationDeficiencyConfigModel
-
     library_requirement = MATCHED_NORMAL_REQUIREMENT
-
     default_relationships = MATCHED_NORMAL_RELATIONSHIP
 
     @classmethod

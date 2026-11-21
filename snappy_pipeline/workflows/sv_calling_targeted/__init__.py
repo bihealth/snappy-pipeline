@@ -44,8 +44,6 @@ class SvCallingTargetedWorkflow(SvCallingWorkflow):
 
     #: Workflow name
     name = "sv_calling_targeted"
-    #: Exomes and panels: the callers take the target regions into account
-    targeted = True
 
     config_model_class = SvCallingTargetedConfigModel
 
@@ -55,3 +53,6 @@ class SvCallingTargetedWorkflow(SvCallingWorkflow):
         Tool.manta: MantaStepPart,
         Tool.melt: MeltStepPart,
     }
+
+    #: Exomes and panels: the callers take the target regions into account
+    targeted = True

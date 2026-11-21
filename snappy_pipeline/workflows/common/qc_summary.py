@@ -38,19 +38,49 @@ class QcSummaryStepPart(BaseStepPart):
     name = "qc_summary"
     actions = ("run",)
     wrappers = {"run": "qc_summary"}
+    result_keys = ("tsv", "tsv_md5")
+    default_resource_usage = ResourceUsage(threads=1, runtime="2h", mem="4GB")
 
     #: Step part and action whose per-library outputs the summary reads
     source: tuple[str, str]
+
     #: Kind of file -> output key of the source action; the wrapper gets the files by kind
     source_keys: dict[str, str]
+
     #: Parser of the files: a module of ``snappy_wrappers.tools.qc_summary``
     format: str
+
     #: Wildcard of the source outputs whose value labels a file, else the entity
     label_wildcard: str | None = None
 
-    result_keys = ("tsv", "tsv_md5")
+    def get_result_files(self) -> list[str]:
+        """The summary table, if the task has libraries with QC files."""
+        if not self.source_files:
+            return []
+        return ["work/qc_summary/out/qc_summary.tsv", "work/qc_summary/out/qc_summary.tsv.md5"]
 
-    default_resource_usage = ResourceUsage(threads=1, runtime="2h", mem="4GB")
+    @dictify
+    def _get_input_files_run(self, wildcards: Wildcards):
+        for kind in self.source_keys:
+            yield kind, [files[kind] for _, files in self.source_files]
+
+    @dictify
+    def _get_output_files_run(self):
+        tsv = "work/qc_summary/out/qc_summary.tsv"
+        yield "tsv", tsv
+        yield "tsv_md5", tsv + ".md5"
+        yield "html", directory("work/qc_summary/report/html")
+
+    def _get_log_file_run(self):
+        return {"log": "work/qc_summary/log/qc_summary.log"}
+
+    def _get_params_run(self, wildcards: Wildcards) -> dict[str, Any]:
+        return {
+            "format": self.format,
+            "labels": [label for label, _ in self.source_files],
+            "title": self.report_outputs["run"]["html"].subcategory,
+            **self.summary_options(),
+        }
 
     def entities(self) -> list[str]:
         """The output entities that have the QC files: the task's, by default."""
@@ -78,36 +108,7 @@ class QcSummaryStepPart(BaseStepPart):
                 result.append((label, files))
         return result
 
-    @dictify
-    def _get_input_files_run(self, wildcards: Wildcards):
-        for kind in self.source_keys:
-            yield kind, [files[kind] for _, files in self.source_files]
-
-    @dictify
-    def _get_output_files_run(self):
-        tsv = "work/qc_summary/out/qc_summary.tsv"
-        yield "tsv", tsv
-        yield "tsv_md5", tsv + ".md5"
-        yield "html", directory("work/qc_summary/report/html")
-
-    def _get_log_file_run(self):
-        return {"log": "work/qc_summary/log/qc_summary.log"}
-
     def summary_options(self) -> dict[str, Any]:
         """Further params for the format module's ``summarize``,
         such as the sample sheet facts a check compares the files with; none by default."""
         return {}
-
-    def _get_params_run(self, wildcards: Wildcards) -> dict[str, Any]:
-        return {
-            "format": self.format,
-            "labels": [label for label, _ in self.source_files],
-            "title": self.report_outputs["run"]["html"].subcategory,
-            **self.summary_options(),
-        }
-
-    def get_result_files(self) -> list[str]:
-        """The summary table, if the task has libraries with QC files."""
-        if not self.source_files:
-            return []
-        return ["work/qc_summary/out/qc_summary.tsv", "work/qc_summary/out/qc_summary.tsv.md5"]

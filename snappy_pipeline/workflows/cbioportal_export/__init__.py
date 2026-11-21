@@ -105,8 +105,6 @@ _TABLE_RESOURCE_USAGE = ResourceUsage(threads=2, runtime="2h", mem="8192MB")
 # Abstract classes: one generic, and the other for substeps dealing with a single sample at a runtime
 #
 # ================================================================================================
-
-
 class cbioportalExportStepPart(BaseStepPart):
     """Base class for all cBioPortal export step parts
 
@@ -124,6 +122,25 @@ class cbioportalExportStepPart(BaseStepPart):
     #: Output_file name
     output_file = None
 
+    def _get_log_file(self, action):
+        """Return path to log files for all data files"""
+        return {"log": f"work/log/{self.name}.{action}.log"}
+
+    @dictify
+    def _get_input_files_run(self, wildcards):
+        """Return path of input files for merging; none for the parts without ``input_tpl``"""
+        if self.input_tpl is None:
+            return
+        for lib in self._yield_libraries():
+            yield lib.sample_name, self.input_tpl.format(library_name=lib.library_name)
+
+    def _get_output_files_run(self):
+        assert self.output_file is not None
+        return self.output_file
+
+    def _get_params_run(self, wildcards):
+        return dict(self.config)
+
     def _yield_libraries(self):
         """Yield the first library of each tumor sample, of ``extraction_type`` if set"""
         msg = 'WARNING: multiple libraries or test samples for sample "{}", library "{}" is ignored'
@@ -136,251 +153,9 @@ class cbioportalExportStepPart(BaseStepPart):
         for row in tumors[~duplicated].itertuples():
             yield row
 
-    @dictify
-    def _get_input_files_run(self, wildcards):
-        """Return path of input files for merging; none for the parts without ``input_tpl``"""
-        if self.input_tpl is None:
-            return
-        for lib in self._yield_libraries():
-            yield lib.sample_name, self.input_tpl.format(library_name=lib.library_name)
-
     def _samples(self):
         """Return the sample names of the merged tables, in input order"""
         return [lib.sample_name for lib in self._yield_libraries()]
-
-    def _get_output_files_run(self):
-        assert self.output_file is not None
-        return self.output_file
-
-    def _get_log_file(self, action):
-        """Return path to log files for all data files"""
-        return {"log": f"work/log/{self.name}.{action}.log"}
-
-    def _get_params_run(self, wildcards):
-        return dict(self.config)
-
-
-class cbioportalVcf2MafStepPart(BaseStepPart):
-    """Helper class for VCF2MAF step"""
-
-    #: Step name
-    name = "cbioportal_vcf2maf"
-
-    #: Actions
-    actions = ("run",)
-    wrappers = {"run": "vcf2maf/vcf_to_table"}
-
-    intermediate_outputs = {"run": ("maf",)}
-
-    default_resource_usage = ResourceUsage(threads=2, runtime="2h", mem="5120MB")
-
-    def tool_section(self) -> ToolModel:
-        """The config section is named ``vcf2maf``"""
-        return self.config.vcf2maf
-
-    def _get_output_files_run(self):
-        """Return maf output file"""
-        return {"maf": "work/maf/{tumor_library}/out/{tumor_library}.maf"}
-
-    @dictify
-    def _get_input_files_run(self, wildcards):
-        """Return input vcf for each output maf"""
-        variants = self.parent.get_upstream_paths("variants", library_name=wildcards.tumor_library)
-        yield "vcf", variants.vcf
-
-    def _get_log_file_run(self):
-        """Return path to log files for all data files"""
-        return {"log": "work/maf/{tumor_library}/log/{tumor_library}.log"}
-
-    def _get_params_run(self, wildcards):
-        """The VCF samples are the libraries, the MAF ids their bio samples."""
-        tumor = wildcards.tumor_library
-        normal = self.parent.matched_normal(tumor)
-        return {
-            "tumor_sample": tumor,
-            "normal_sample": normal,
-            "tumor_id": self.parent.library_row(tumor)["sample_name"],
-            "normal_id": normal and self.parent.library_row(normal)["sample_name"],
-            # depends_on.variants requires VEP annotations
-            "somatic_variant_annotation_tool": "vep",
-            "ncbi_build": self.config.vcf2maf.ncbi_build,
-            "Center": self.config.vcf2maf.Center,
-        }
-
-
-class cbioportalMutationsStepPart(cbioportalExportStepPart):
-    """Merges sample MAF files into data_mutation_extended.txt"""
-
-    #: Step name
-    name = "cbioportal_mutations"
-
-    #: Extraction type, must be instantiated in sub-class
-    extraction_type = "DNA"
-
-    #: Actions
-    actions = ("run",)
-
-    #: Output file name
-    output_file = "work/upload/data_mutation_extended.txt"
-
-    input_tpl = "work/maf/{library_name}/out/{library_name}.maf"
-
-
-class cbioportalCns2CnaStepPart(BaseStepPart):
-    """Helper class to extract gene-based log2 & copy number call from a cns file"""
-
-    #: Step name
-    name = "cbioportal_cns2cna"
-
-    #: Actions
-    actions = ("run",)
-    wrappers = {"run": "cbioportal/generate_cna"}
-
-    intermediate_outputs = {"run": ("cna",)}
-
-    default_resource_usage = _TABLE_RESOURCE_USAGE
-
-    @dictify
-    def _get_input_files_run(self, wildcards):
-        """Return the library"""
-        yield "features", self.parent.get_upstream_paths("features").gtf
-        copy_number = self.parent.get_upstream_paths(
-            "copy_number", library_name=wildcards.tumor_library
-        )
-        yield "DNAcopy", copy_number.dnacopy_seg
-
-    def _get_output_files_run(self):
-        """Return cna output file"""
-        return {"cna": "work/cna/{tumor_library}/out/{tumor_library}.cna"}
-
-    def _get_log_file_run(self):
-        """Return path to log files for all data files"""
-        return {"log": "work/cna/{tumor_library}/log/{tumor_library}.log"}
-
-    def _get_params_run(self, wildcards):
-        return {"pipeline_id": "ENSEMBL"}
-
-
-class cbioportalCnaFilesStepPart(cbioportalExportStepPart):
-    """Generate cbioportal continuous (log2), discrete (pseudo-gistic) & segment tables"""
-
-    #: Step name
-    name = "cbioportal_cna"
-
-    #: Extraction type, must be instantiated in sub-class
-    extraction_type = "DNA"
-
-    #: Actions
-    actions = ("log2", "gistic")
-    wrappers = {"gistic": "cbioportal/merge_tables", "log2": "cbioportal/merge_tables"}
-    rule_options = {"log2": RuleOptions(explicit=True), "gistic": RuleOptions(explicit=True)}
-
-    default_resource_usage = _TABLE_RESOURCE_USAGE
-
-    input_tpl = "work/cna/{library_name}/out/{library_name}.cna"
-
-    # Both actions merge the same per-library inputs
-    @dictify
-    def _get_input_files_log2(self, wildcards):
-        libraries = self._yield_libraries()
-        yield "tables", [self.input_tpl.format(library_name=lib.library_name) for lib in libraries]
-        yield "mappings", self.config.path_gene_id_mappings
-
-    _get_input_files_gistic = _get_input_files_log2
-
-    def _get_params_log2(self, wildcards):
-        return {
-            "action_type": "log2",
-            "samples": self._samples(),
-            "extra_args": {"pipeline_id": "ENSEMBL"},
-        }
-
-    def _get_params_gistic(self, wildcards):
-        return {
-            "action_type": "gistic",
-            "samples": self._samples(),
-            "extra_args": {
-                "pipeline_id": "ENSEMBL",
-                "amplification": "9",
-            },  # Amplification: cn >= 9 (https://doi.org/10.1038/s41586-022-04738-6)
-        }
-
-    def _get_output_files_log2(self):
-        return "work/upload/data_cna_log2.txt"
-
-    def _get_output_files_gistic(self):
-        return "work/upload/data_cna_gistic.txt"
-
-
-class cbioportalSegmentStepPart(cbioportalExportStepPart):
-    #: Step name
-    name = "cbioportal_segment"
-
-    #: Extraction type, must be instantiated in sub-class
-    extraction_type = "DNA"
-
-    #: Actions
-    actions = ("run",)
-    wrappers = {"run": "cbioportal/merge_tables"}
-    rule_options = {"run": RuleOptions(explicit=True)}
-
-    #: Output file name
-    output_file = "work/upload/data_segment.txt"
-
-    default_resource_usage = _TABLE_RESOURCE_USAGE
-
-    def _get_input_files_run(self, wildcards):
-        """Return path of input files for merging"""
-        copy_number = self.parent.get_upstream_paths
-        tables = [
-            copy_number("copy_number", library_name=lib.library_name).dnacopy_seg
-            for lib in self._yield_libraries()
-        ]
-        return {"tables": tables}
-
-    def _get_params_run(self, wildcards):
-        return {"action_type": "segment", "samples": self._samples()}
-
-
-class cbioportalExpressionStepPart(cbioportalExportStepPart):
-    """Generates the expression table (z-scores or FPKM)"""
-
-    #: Step name
-    name = "cbioportal_expression"
-
-    #: Extraction type, must be instantiated in sub-class
-    extraction_type = "RNA"
-
-    #: Action
-    actions = ("run",)
-    wrappers = {"run": "cbioportal/merge_tables"}
-    rule_options = {"run": RuleOptions(explicit=True)}
-
-    #: Output file name
-    output_file = "work/upload/data_expression.txt"
-
-    default_resource_usage = _TABLE_RESOURCE_USAGE
-
-    @dictify
-    def _get_input_files_run(self, wildcards):
-        """Return path of input files for merging"""
-        alignments = self.parent.get_upstream_paths
-        yield (
-            "tables",
-            [
-                alignments("alignments", library_name=lib.library_name).gene_counts
-                for lib in self._yield_libraries()
-            ],
-        )
-        yield "mappings", self.config.path_gene_id_mappings
-        yield "features", self.parent.get_upstream_paths("features").gtf
-
-    def _get_params_run(self, wildcards):
-        return {
-            "action_type": "expression",
-            "samples": self._samples(),
-            "extra_args": {"pipeline_id": "ENSEMBL"},
-        }
 
 
 class cbioportalMetaFilesStepPart(BaseStepPart):
@@ -391,6 +166,7 @@ class cbioportalMetaFilesStepPart(BaseStepPart):
 
     #: Actions
     actions = ("run",)
+
     wrappers = {"run": "cbioportal/meta_files"}
     rule_options = {"run": RuleOptions(explicit=True)}
 
@@ -412,43 +188,6 @@ class cbioportalMetaFilesStepPart(BaseStepPart):
         return self.config.study.model_dump(by_alias=True)
 
 
-class cbioportalClinicalDataStepPart(cbioportalExportStepPart):
-    """Generate cbioportal patient data file"""
-
-    #: Step name
-    name = "cbioportal_clinical_data"
-
-    #: Actions
-    actions = ("run",)
-    wrappers = {"run": "cbioportal/clinical_data"}
-    rule_options = {"run": RuleOptions(local=True)}
-
-    def _get_params_run(self, wildcards):
-        donors = {}
-        for extraction_type in ("DNA", "RNA"):
-            if extraction_type == "RNA" and not self.config.expression.enabled:
-                continue
-            self.extraction_type = extraction_type
-            for lib in self._yield_libraries():
-                donor_name = lib.donor_name
-                sample_name = lib.sample_name
-                if donor_name not in donors:
-                    donors[donor_name] = {}
-                if sample_name not in donors[donor_name]:
-                    donors[donor_name][sample_name] = {}
-                # Multiple libraries should not be returned by _yield_libraries
-                assert extraction_type not in donors[donor_name][sample_name]
-                donors[donor_name][sample_name][extraction_type] = lib.library_name
-        config = self.config.model_dump(by_alias=True, exclude={"path_gene_id_mappings"})
-        return {"donors": donors, "config": config}
-
-    def _get_output_files_run(self):
-        return {
-            data_type: f"work/upload/data_clinical_{data_type}.txt"
-            for data_type in ("patient", "sample")
-        }
-
-
 class cbioportalCaseListsStepPart(cbioportalExportStepPart):
     """Generate cbioportal patient data file"""
 
@@ -457,8 +196,23 @@ class cbioportalCaseListsStepPart(cbioportalExportStepPart):
 
     #: Actions
     actions = ("run",)
+
     wrappers = {"run": "cbioportal/case_lists"}
     rule_options = {"run": RuleOptions(local=True)}
+
+    @dictify
+    def _get_output_files_run(self):
+        case_lists = {}
+        case_lists["sequenced"] = CASE_LIST_FILES["sequenced"]["filename"]
+        if self.config.copy_number_alteration.enabled:
+            case_lists["cna"] = CASE_LIST_FILES["cna"]["filename"]
+            case_lists["cnaseq"] = CASE_LIST_FILES["cnaseq"]["filename"]
+        if self.config.expression.enabled:
+            case_lists["rna_seq_mrna"] = CASE_LIST_FILES["rna_seq_mrna"]["filename"]
+            if self.config.copy_number_alteration.enabled:
+                case_lists["3way_complete"] = CASE_LIST_FILES["3way_complete"]["filename"]
+        for case, filename in case_lists.items():
+            yield case, f"work/upload/case_lists/{filename}"
 
     def _get_params_run(self, wildcards):
         samples = dict(zip(CASE_LIST_FILES.keys(), [[] for _ in range(len(CASE_LIST_FILES))]))
@@ -488,19 +242,264 @@ class cbioportalCaseListsStepPart(cbioportalExportStepPart):
         args["__cancer_study_id"] = self.config.study.cancer_study_id
         return args
 
-    @dictify
+
+class cbioportalClinicalDataStepPart(cbioportalExportStepPart):
+    """Generate cbioportal patient data file"""
+
+    #: Step name
+    name = "cbioportal_clinical_data"
+
+    #: Actions
+    actions = ("run",)
+
+    wrappers = {"run": "cbioportal/clinical_data"}
+    rule_options = {"run": RuleOptions(local=True)}
+
     def _get_output_files_run(self):
-        case_lists = {}
-        case_lists["sequenced"] = CASE_LIST_FILES["sequenced"]["filename"]
-        if self.config.copy_number_alteration.enabled:
-            case_lists["cna"] = CASE_LIST_FILES["cna"]["filename"]
-            case_lists["cnaseq"] = CASE_LIST_FILES["cnaseq"]["filename"]
-        if self.config.expression.enabled:
-            case_lists["rna_seq_mrna"] = CASE_LIST_FILES["rna_seq_mrna"]["filename"]
-            if self.config.copy_number_alteration.enabled:
-                case_lists["3way_complete"] = CASE_LIST_FILES["3way_complete"]["filename"]
-        for case, filename in case_lists.items():
-            yield case, f"work/upload/case_lists/{filename}"
+        return {
+            data_type: f"work/upload/data_clinical_{data_type}.txt"
+            for data_type in ("patient", "sample")
+        }
+
+    def _get_params_run(self, wildcards):
+        donors = {}
+        for extraction_type in ("DNA", "RNA"):
+            if extraction_type == "RNA" and not self.config.expression.enabled:
+                continue
+            self.extraction_type = extraction_type
+            for lib in self._yield_libraries():
+                donor_name = lib.donor_name
+                sample_name = lib.sample_name
+                if donor_name not in donors:
+                    donors[donor_name] = {}
+                if sample_name not in donors[donor_name]:
+                    donors[donor_name][sample_name] = {}
+                # Multiple libraries should not be returned by _yield_libraries
+                assert extraction_type not in donors[donor_name][sample_name]
+                donors[donor_name][sample_name][extraction_type] = lib.library_name
+        config = self.config.model_dump(by_alias=True, exclude={"path_gene_id_mappings"})
+        return {"donors": donors, "config": config}
+
+
+class cbioportalCns2CnaStepPart(BaseStepPart):
+    """Helper class to extract gene-based log2 & copy number call from a cns file"""
+
+    #: Step name
+    name = "cbioportal_cns2cna"
+
+    #: Actions
+    actions = ("run",)
+
+    wrappers = {"run": "cbioportal/generate_cna"}
+    intermediate_outputs = {"run": ("cna",)}
+    default_resource_usage = _TABLE_RESOURCE_USAGE
+
+    @dictify
+    def _get_input_files_run(self, wildcards):
+        """Return the library"""
+        yield "features", self.parent.get_upstream_paths("features").gtf
+        copy_number = self.parent.get_upstream_paths(
+            "copy_number", library_name=wildcards.tumor_library
+        )
+        yield "DNAcopy", copy_number.dnacopy_seg
+
+    def _get_output_files_run(self):
+        """Return cna output file"""
+        return {"cna": "work/cna/{tumor_library}/out/{tumor_library}.cna"}
+
+    def _get_log_file_run(self):
+        """Return path to log files for all data files"""
+        return {"log": "work/cna/{tumor_library}/log/{tumor_library}.log"}
+
+    def _get_params_run(self, wildcards):
+        return {"pipeline_id": "ENSEMBL"}
+
+
+class cbioportalCnaFilesStepPart(cbioportalExportStepPart):
+    """Generate cbioportal continuous (log2), discrete (pseudo-gistic) & segment tables"""
+
+    #: Step name
+    name = "cbioportal_cna"
+
+    #: Actions
+    actions = ("log2", "gistic")
+
+    wrappers = {"gistic": "cbioportal/merge_tables", "log2": "cbioportal/merge_tables"}
+    rule_options = {"log2": RuleOptions(explicit=True), "gistic": RuleOptions(explicit=True)}
+    default_resource_usage = _TABLE_RESOURCE_USAGE
+
+    #: Extraction type, must be instantiated in sub-class
+    extraction_type = "DNA"
+
+    input_tpl = "work/cna/{library_name}/out/{library_name}.cna"
+
+    # Both actions merge the same per-library inputs
+    @dictify
+    def _get_input_files_log2(self, wildcards):
+        libraries = self._yield_libraries()
+        yield "tables", [self.input_tpl.format(library_name=lib.library_name) for lib in libraries]
+        yield "mappings", self.config.path_gene_id_mappings
+
+    def _get_output_files_log2(self):
+        return "work/upload/data_cna_log2.txt"
+
+    def _get_params_log2(self, wildcards):
+        return {
+            "action_type": "log2",
+            "samples": self._samples(),
+            "extra_args": {"pipeline_id": "ENSEMBL"},
+        }
+
+    _get_input_files_gistic = _get_input_files_log2
+
+    def _get_output_files_gistic(self):
+        return "work/upload/data_cna_gistic.txt"
+
+    def _get_params_gistic(self, wildcards):
+        return {
+            "action_type": "gistic",
+            "samples": self._samples(),
+            "extra_args": {
+                "pipeline_id": "ENSEMBL",
+                "amplification": "9",
+            },  # Amplification: cn >= 9 (https://doi.org/10.1038/s41586-022-04738-6)
+        }
+
+
+class cbioportalSegmentStepPart(cbioportalExportStepPart):
+    #: Step name
+    name = "cbioportal_segment"
+
+    #: Actions
+    actions = ("run",)
+
+    wrappers = {"run": "cbioportal/merge_tables"}
+    rule_options = {"run": RuleOptions(explicit=True)}
+    default_resource_usage = _TABLE_RESOURCE_USAGE
+
+    #: Extraction type, must be instantiated in sub-class
+    extraction_type = "DNA"
+
+    #: Output file name
+    output_file = "work/upload/data_segment.txt"
+
+    def _get_input_files_run(self, wildcards):
+        """Return path of input files for merging"""
+        copy_number = self.parent.get_upstream_paths
+        tables = [
+            copy_number("copy_number", library_name=lib.library_name).dnacopy_seg
+            for lib in self._yield_libraries()
+        ]
+        return {"tables": tables}
+
+    def _get_params_run(self, wildcards):
+        return {"action_type": "segment", "samples": self._samples()}
+
+
+class cbioportalMutationsStepPart(cbioportalExportStepPart):
+    """Merges sample MAF files into data_mutation_extended.txt"""
+
+    #: Step name
+    name = "cbioportal_mutations"
+
+    #: Actions
+    actions = ("run",)
+
+    #: Extraction type, must be instantiated in sub-class
+    extraction_type = "DNA"
+
+    input_tpl = "work/maf/{library_name}/out/{library_name}.maf"
+
+    #: Output file name
+    output_file = "work/upload/data_mutation_extended.txt"
+
+
+class cbioportalVcf2MafStepPart(BaseStepPart):
+    """Helper class for VCF2MAF step"""
+
+    #: Step name
+    name = "cbioportal_vcf2maf"
+
+    #: Actions
+    actions = ("run",)
+
+    wrappers = {"run": "vcf2maf/vcf_to_table"}
+    intermediate_outputs = {"run": ("maf",)}
+    default_resource_usage = ResourceUsage(threads=2, runtime="2h", mem="5120MB")
+
+    def tool_section(self) -> ToolModel:
+        """The config section is named ``vcf2maf``"""
+        return self.config.vcf2maf
+
+    @dictify
+    def _get_input_files_run(self, wildcards):
+        """Return input vcf for each output maf"""
+        variants = self.parent.get_upstream_paths("variants", library_name=wildcards.tumor_library)
+        yield "vcf", variants.vcf
+
+    def _get_output_files_run(self):
+        """Return maf output file"""
+        return {"maf": "work/maf/{tumor_library}/out/{tumor_library}.maf"}
+
+    def _get_log_file_run(self):
+        """Return path to log files for all data files"""
+        return {"log": "work/maf/{tumor_library}/log/{tumor_library}.log"}
+
+    def _get_params_run(self, wildcards):
+        """The VCF samples are the libraries, the MAF ids their bio samples."""
+        tumor = wildcards.tumor_library
+        normal = self.parent.matched_normal(tumor)
+        return {
+            "tumor_sample": tumor,
+            "normal_sample": normal,
+            "tumor_id": self.parent.library_row(tumor)["sample_name"],
+            "normal_id": normal and self.parent.library_row(normal)["sample_name"],
+            # depends_on.variants requires VEP annotations
+            "somatic_variant_annotation_tool": "vep",
+            "ncbi_build": self.config.vcf2maf.ncbi_build,
+            "Center": self.config.vcf2maf.Center,
+        }
+
+
+class cbioportalExpressionStepPart(cbioportalExportStepPart):
+    """Generates the expression table (z-scores or FPKM)"""
+
+    #: Step name
+    name = "cbioportal_expression"
+
+    #: Action
+    actions = ("run",)
+
+    wrappers = {"run": "cbioportal/merge_tables"}
+    rule_options = {"run": RuleOptions(explicit=True)}
+    default_resource_usage = _TABLE_RESOURCE_USAGE
+
+    #: Extraction type, must be instantiated in sub-class
+    extraction_type = "RNA"
+
+    #: Output file name
+    output_file = "work/upload/data_expression.txt"
+
+    @dictify
+    def _get_input_files_run(self, wildcards):
+        """Return path of input files for merging"""
+        alignments = self.parent.get_upstream_paths
+        yield (
+            "tables",
+            [
+                alignments("alignments", library_name=lib.library_name).gene_counts
+                for lib in self._yield_libraries()
+            ],
+        )
+        yield "mappings", self.config.path_gene_id_mappings
+        yield "features", self.parent.get_upstream_paths("features").gtf
+
+    def _get_params_run(self, wildcards):
+        return {
+            "action_type": "expression",
+            "samples": self._samples(),
+            "extra_args": {"pipeline_id": "ENSEMBL"},
+        }
 
 
 # ================================================================================================
@@ -508,23 +507,20 @@ class cbioportalCaseListsStepPart(cbioportalExportStepPart):
 # cBioPortal step class
 #
 # ================================================================================================
-
-
 class cbioportalExportWorkflow(BaseStep):
     """Perform cbioportal preparation"""
 
     #: Workflow name
     name = "cbioportal_export"
 
-    #: All tumor libraries; the sub steps take those of their extraction type
-    library_requirement = "role == 'tumor'"
-    library_default = ""
-
+    produces = [DataSignature(DataType.EXPORTS, frozenset({"cbioportal"}))]
     config_model_class = CbioportalExportConfigModel
 
-    default_relationships = MATCHED_NORMAL_RELATIONSHIP
+    #: All tumor libraries; the sub steps take those of their extraction type
+    library_requirement = "role == 'tumor'"
 
-    produces = [DataSignature(DataType.EXPORTS, frozenset({"cbioportal"}))]
+    library_default = ""
+    default_relationships = MATCHED_NORMAL_RELATIONSHIP
 
     @classmethod
     def get_output_paths(cls, config, signature=None, **kwargs) -> dict[str, str]:
@@ -566,6 +562,7 @@ class cbioportalExportWorkflow(BaseStep):
                 cbioportalExpressionStepPart,
             )
         )
+
         # Sub-workflows were registered above.
 
     def get_result_files(self):

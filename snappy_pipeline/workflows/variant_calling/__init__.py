@@ -291,689 +291,6 @@ MUTECT2_FILTER_IDS = frozenset(
 GATK_GERMLINE_FILTER_IDS = frozenset({"LowQual"})
 
 
-class VariantCallingStepPart(BaseStepPart):
-    """Base class of the germline callers, which call the libraries of an entity jointly: the
-    pedigree members of its related group with ``group_by: related``, else the library."""
-
-    #: Class available actions
-    actions = ("run",)
-
-    result_keys = ("vcf", "vcf_md5", "vcf_tbi", "vcf_tbi_md5")
-
-    def members(self, library_name: str) -> list[str]:
-        """Return the libraries called for the entity ``library_name``: the pedigree members of its related group with ``group_by: related``, else the library."""
-        return self.parent.member_libraries(library_name)
-
-    def _get_log_file(self, action: str) -> SnakemakeDict:
-        return {"log": f"work/{{library_name}}/log/{{library_name}}.{action}.log"}
-
-    def _called_rows(self, library_name: str):
-        """The library table rows of the libraries called for the entity, in table order"""
-        df = self.parent.build_library_dataframe()
-        return df[df["library_name"].isin(self.members(library_name))]
-
-    def _ped(self, library_name: str, rows) -> str | list:
-        """The PED file of the entity's related group; none for cancer libraries"""
-        if rows["kind"].eq("cancer").all():
-            return []
-        if self.parent.effective_group_by == "related":
-            group = library_name
-        else:
-            group = rows.iloc[0]["related_group"]
-        return f"work/write_pedigree.{group}/out/{group}.ped"
-
-    @dictify
-    def _get_input_files_run(self, wildcards) -> SnakemakeDictItemsGenerator:
-        rows = self._called_rows(wildcards.library_name)
-        yield "ped", self._ped(wildcards.library_name, rows)
-        yield (
-            "bam",
-            [
-                self.parent.get_upstream_paths("alignments", library_name=name).bam
-                for name in rows["library_name"]
-            ],
-        )
-
-    def _get_output_files_run(self) -> dict[str, str]:
-        return vcf_outputs("work/{library_name}/out/{library_name}")
-
-
-class BcftoolsCallStepPart(VariantCallingStepPart):
-    """Germline variant calling with bcftools"""
-
-    #: Step name
-    name = "bcftools_call"
-    wrappers = {"run": "bcftools_call"}
-
-    @property
-    def default_resource_usage(self) -> ResourceUsage:
-        num_threads = self.config.bcftools_call.num_threads
-        mem_mb = int(3.75 * 1024 * num_threads)
-        return ResourceUsage(threads=num_threads, runtime="2d", mem=f"{mem_mb}MB")
-
-    @dictify
-    def _get_input_files_run(self, wildcards: Wildcards) -> SnakemakeDictItemsGenerator:
-        yield from super()._get_input_files_run(wildcards).items()
-        yield from self.parent.reference_inputs().items()
-
-    def _get_params_run(self, wildcards) -> dict[str, Any]:
-        """The options of the section; ``assembly`` names the ploidy of ``bcftools call``"""
-        return self.config.bcftools_call.model_dump(mode="json")
-
-
-class GatkCallerStepPartBase(VariantCallingStepPart):
-    """Base class for GATK v3/v4 variant callers"""
-
-    @dictify
-    def _get_input_files_run(self, wildcards: Wildcards) -> SnakemakeDictItemsGenerator:
-        """The BAMs and the pedigree, the reference and dbSNP"""
-        yield from super()._get_input_files_run(wildcards).items()
-        yield from self.parent.reference_inputs().items()
-        yield from self.parent.vcf_inputs("dbsnp").items()
-
-    @property
-    def default_resource_usage(self) -> ResourceUsage:
-        num_threads = self.config[self.name].num_threads
-        mem_per_thread = 5.5
-        mem_total = int(mem_per_thread * num_threads + 0.5)
-        return ResourceUsage(threads=num_threads, runtime="2d", mem=f"{mem_total}GB")
-
-
-class GatkJointCallerStepPart(GatkCallerStepPartBase):
-    """Base class of the GATK callers that call an entity in one job; the params are the options
-    of the tool's section"""
-
-    def _get_params_run(self, wildcards) -> dict[str, Any]:
-        return self.tool_section().model_dump()
-
-
-class Gatk3HaplotypeCallerStepPart(GatkJointCallerStepPart):
-    """Germline variant calling with GATK v3 HaplotypeCaller"""
-
-    #: Step name
-    name = "gatk3_hc"
-    wrappers = {"run": "gatk3_hc"}
-
-
-class Gatk3UnifiedGenotyperStepPart(GatkJointCallerStepPart):
-    """Germline variant calling with GATK v3 UnifiedGenotyper"""
-
-    #: Step name
-    name = "gatk3_ug"
-    wrappers = {"run": "gatk3_ug"}
-
-
-class Gatk4HaplotypeCallerJointStepPart(GatkJointCallerStepPart):
-    """Germline variant calling with GATK 4 HaplotypeCaller doing joint calling per pedigree"""
-
-    name = "gatk4_hc_joint"
-    wrappers = {"run": "gatk4_hc/joint"}
-
-
-class Gatk4HaplotypeCallerGvcfStepPart(GatkCallerStepPartBase):
-    """Germline variant calling with GATK 4 HaplotypeCaller and gVCF workflow"""
-
-    name = "gatk4_hc_gvcf"
-
-    actions = ("discover", "combine_gvcfs", "genotype")
-    wrappers = {
-        "genotype": "gatk4_hc/genotype",
-        "combine_gvcfs": "gatk4_hc/combine_gvcfs",
-        "discover": "gatk4_hc/discover",
-    }
-
-    extra_arguments_action = "discover"
-
-    intermediate_outputs = {"discover": ("gvcf", "gvcf_tbi")}
-
-    #: The genotype rule links the combined gVCF as ``{library}.g.vcf.gz``, for re-genotyping
-    result_keys = {
-        "genotype": (
-            "vcf",
-            "vcf_md5",
-            "vcf_tbi",
-            "vcf_tbi_md5",
-            "gvcf",
-            "gvcf_md5",
-            "gvcf_tbi",
-            "gvcf_tbi_md5",
-        )
-    }
-
-    #: The gVCF of a library, and the combined gVCF of an entity
-    discovered_tpl = "work/{library_name}/out/{library_name}.discover.g.vcf.gz"
-    combined_tpl = "work/{library_name}/out/{library_name}.combine_gvcfs.g.vcf.gz"
-
-    @dictify
-    def _get_input_files_discover(self, wildcards):
-        yield from self.parent.reference_inputs().items()
-        yield from self.parent.vcf_inputs("dbsnp").items()
-        alignments = self.parent.get_upstream_paths(
-            "alignments", library_name=wildcards.library_name
-        )
-        yield "bam", alignments.bam
-
-    @dictify
-    def _get_input_files_combine_gvcfs(self, wildcards: Wildcards) -> SnakemakeDictItemsGenerator:
-        yield from self.parent.reference_inputs().items()
-        rows = self._called_rows(wildcards.library_name)
-        yield "ped", self._ped(wildcards.library_name, rows)
-        gvcfs = [self.discovered_tpl.format(library_name=name) for name in rows["library_name"]]
-        yield "gvcf", gvcfs
-        yield "gvcf_tbi", [f"{gvcf}.tbi" for gvcf in gvcfs]
-
-    @dictify
-    def _get_input_files_genotype(self, wildcards) -> SnakemakeDictItemsGenerator:
-        yield from self.parent.reference_inputs().items()
-        gvcf = self.combined_tpl.format(**wildcards)
-        yield "gvcf", gvcf
-        yield "gvcf_tbi", gvcf + ".tbi"
-
-    def _get_output_files_discover(self) -> dict[str, str]:
-        return {"gvcf": self.discovered_tpl, "gvcf_tbi": self.discovered_tpl + ".tbi"}
-
-    def _get_output_files_combine_gvcfs(self) -> dict[str, str]:
-        return {"gvcf": self.combined_tpl, "gvcf_tbi": self.combined_tpl + ".tbi"}
-
-    def _get_output_files_genotype(self) -> dict[str, str]:
-        prefix = "work/{library_name}/out/{library_name}"
-        gvcf = {f"g{key}": path for key, path in vcf_outputs(f"{prefix}.g").items()}
-        return gvcf | vcf_outputs(prefix)
-
-    def _get_params_discover(self, wildcards) -> dict[str, Any]:
-        return self._params_gvcf("discover")
-
-    def _get_params_combine_gvcfs(self, wildcards) -> dict[str, Any]:
-        return self._params_gvcf("combine_gvcfs")
-
-    def _get_params_genotype(self, wildcards) -> dict[str, Any]:
-        return self._params_gvcf("genotype")
-
-    def _params_gvcf(self, action: str) -> dict[str, Any]:
-        config = self.config.gatk4_hc_gvcf
-        return {
-            "window_length": config.window_length,
-            "num_threads": config.num_threads,
-            "allow_seq_dict_incompatibility": config.allow_seq_dict_incompatibility,
-            "ignore_contigs": config.ignore_contigs,
-            "padding": config.padding,
-            "annotation_groups": getattr(config, f"{action}_annotation_groups"),
-        }
-
-
-class ReportStepPart(BaseStepPart):
-    """Base class for the reports on the called variants, one per entity (and donor)"""
-
-    actions = ("run",)
-
-    entity_wildcard = "library_name"
-
-    #: Whether we generate per-donor files.
-    report_per_donor: bool
-
-    def _get_log_file(self, action: str) -> SnakemakeDict:
-        token = "{library_name}"
-        donor = "{donor_library_name}." if self.report_per_donor else ""
-        return {"log": f"work/{token}/log/{token}.{donor}{self.name}_{action}.log"}
-
-    def _result_wildcards(self, entity: str) -> dict[str, list[str]]:
-        result = super()._result_wildcards(entity)
-        if self.report_per_donor and self.parent.effective_group_by == "related":
-            result["donor_library_name"] = self.parent.called_libraries(entity)
-        return result
-
-
-class BcftoolsStatsStepPart(ReportStepPart):
-    """VCF statistics computation with ``bcftools stats``.
-
-    Statistics are computed overall and per-sample
-    """
-
-    name = "bcftools_stats"
-    wrappers = {"run": "bcftools_stats/run"}
-
-    report_outputs = {"run": {"txt": ReportOutput("bcftools stats", caption="bcftools_stats.rst")}}
-
-    report_per_donor = True
-
-    result_keys = ("txt", "txt_md5")
-
-    default_resource_usage = ResourceUsage(threads=1, runtime="2h", mem="1024MB")
-
-    @dictify
-    def _get_input_files_run(self, wildcards) -> SnakemakeDictItemsGenerator:
-        yield (
-            "vcf",
-            "work/{library_name}/out/{library_name}.vcf.gz".format(**wildcards),
-        )
-
-    @dictify
-    def _get_output_files_run(self) -> SnakemakeDictItemsGenerator:
-        ext_names = {"txt": ".txt", "txt_md5": ".txt.md5"}
-        base_path = "work/{library_name}/report/bcftools_stats/{library_name}.{donor_library_name}"
-        work_files = {key: f"{base_path}{ext}" for key, ext in ext_names.items()}
-        yield from work_files.items()
-
-    def _get_params_run(self, wildcards: Wildcards) -> dict[str, Any]:
-        return {"donor_library_name": wildcards.donor_library_name}
-
-
-class BcftoolsStatsSummaryStepPart(QcSummaryStepPart):
-    """Tables and charts of the ``bcftools stats`` of all samples"""
-
-    source = ("bcftools_stats", "run")
-    source_keys = {"txt": "txt"}
-    format = "bcftools_stats"
-    #: One file per sample of the entity's VCF
-    label_wildcard = "donor_library_name"
-
-    report_outputs = {
-        "run": {
-            "html": ReportOutput(
-                "bcftools stats", caption="bcftools_stats_summary.rst", htmlindex="index.html"
-            )
-        }
-    }
-
-
-class BcftoolsRohStepPart(ReportStepPart):
-    """ROH calling with `bcftools roh`."""
-
-    name = "bcftools_roh"
-    wrappers = {"run": "bcftools_roh"}
-    report_per_donor = False
-    result_keys = ("txt", "txt_md5")
-    default_resource_usage = ResourceUsage(threads=1, runtime="1h", mem="4GB")
-
-    @dictify
-    def _get_input_files_run(self, wildcards) -> SnakemakeDictItemsGenerator:
-        yield (
-            "vcf",
-            "work/{library_name}/out/{library_name}.vcf.gz".format(**wildcards),
-        )
-        yield "path_af_file", self.config.get(self.name).get("path_af_file")
-        if self.parent.config.depends_on.kits:
-            kit = self.parent.common_kit(
-                "kits", self.parent.called_libraries(wildcards.library_name)
-            )
-            yield "path_targets", self.parent.get_upstream_paths("kits", library_kit=kit).targets
-
-    def _get_params_run(self, wildcards):
-        return {
-            name: self.config.bcftools_roh.get(name)
-            for name in [
-                "ignore_homref",
-                "skip_indels",
-                "rec_rate",
-            ]
-        }
-
-    @dictify
-    def _get_output_files_run(self) -> SnakemakeDictItemsGenerator:
-        ext_names = {"txt": ".txt", "txt_md5": ".txt.md5"}
-        base_path = "work/{library_name}/report/roh/{library_name}"
-        for key, ext in ext_names.items():
-            yield key, f"{base_path}{ext}"
-
-
-class BafFileGenerationStepPart(ReportStepPart):
-    """Class for computing B allele fraction files.
-
-    One file is generated per sample in the output VCF files.
-    """
-
-    #: Step name
-    name = "baf_file_generation"
-    wrappers = {"run": "baf_file_generation"}
-
-    #: Whether to report results per donor
-    report_per_donor = True
-
-    result_keys = ("bw", "bw_md5")
-
-    default_resource_usage = ResourceUsage(threads=1, runtime="2h", mem="1024MB")
-
-    @dictify
-    def _get_input_files_run(self, wildcards) -> SnakemakeDictItemsGenerator:
-        yield (
-            "vcf",
-            "work/{library_name}/out/{library_name}.vcf.gz".format(**wildcards),
-        )
-        yield "reference_index", self.parent.get_upstream_paths("reference").fai
-
-    @dictify
-    def _get_output_files_run(self) -> SnakemakeDictItemsGenerator:
-        base_path = "{library_name}/report/baf/{library_name}.{donor_library_name,[^\\.]+}.baf"
-        ext_names = {"bw": ".bw", "bw_md5": ".bw.md5"}
-        work_files = {}
-        for key, ext in ext_names.items():
-            work_files[key] = f"work/{base_path}{ext}"
-        yield from work_files.items()
-
-    def _get_params_run(self, wildcards):
-        return {"min_dp": self.config.baf_file_generation.min_dp}
-
-
-class Mutect2StepPart(RegionScatter, BaseStepPart):
-    """Somatic calling with Mutect2: each tumor library with its matched normal, scattered over
-    the regions of the genome, which the task's tumors share"""
-
-    name = "mutect2"
-
-    actions = (
-        "scatter",
-        "run",
-        "gather",
-        "filter",
-        "contamination",
-        "pileup_normal",
-        "pileup_tumor",
-    )
-
-    @property
-    def wrappers(self) -> dict[str, str]:
-        """The contamination estimate and its pileups run only when ``contamination`` is enabled"""
-        wrappers = RegionScatter.scatter_wrapper | {
-            "filter": "mutect2/filter",
-            "gather": "mutect2/gather",
-            "run": "mutect2/run",
-        }
-        if self.config.mutect2.contamination.enabled:
-            wrappers |= {
-                "contamination": "mutect2/contamination",
-                "pileup_tumor": "mutect2/pileup",
-                "pileup_normal": "mutect2/pileup",
-            }
-        return wrappers
-
-    #: The sub-sections ``filtration`` and ``contamination`` hold the arguments of the other
-    #: GATK actions
-    extra_arguments_action = "run"
-
-    temp_outputs = {"scatter": ("regions",), "run": ("vcf", "vcf_tbi", "stats", "f1r2")}
-
-    intermediate_outputs = {
-        "gather": ("vcf", "vcf_tbi", "stats", "orientation"),
-        "pileup_normal": ("pileup",),
-        "pileup_tumor": ("pileup",),
-        "contamination": ("table", "segments"),
-    }
-
-    result_keys = {"filter": ("vcf", "vcf_md5", "vcf_tbi", "vcf_tbi_md5")}
-
-    #: The raw calls of a tumor in one part of the genome
-    chunk_tpl = "work/{library_name}/out/{library_name}/calls/{scatteritem}.raw"
-
-    @property
-    def resource_usage(self) -> dict[str, ResourceUsage]:
-        return {
-            "run": ResourceUsage(threads=self.config.mutect2.num_cores, runtime="5d", mem="8000MB"),
-            "gather": ResourceUsage(threads=1, runtime="4h", mem="32768MB"),
-            "filter": ResourceUsage(threads=2, runtime="4h", mem="15872MB"),
-            "contamination": ResourceUsage(threads=2, runtime="4h", mem="7680MB"),
-            "pileup_normal": ResourceUsage(threads=2, runtime="4h", mem="8000MB"),
-            "pileup_tumor": ResourceUsage(threads=2, runtime="4h", mem="8000MB"),
-        }
-
-    @property
-    def scatter_padding(self) -> int:
-        return self.config.mutect2.padding
-
-    def scatter_ignore_contigs(self) -> list[str]:
-        return sorted(set(self.config.mutect2.ignore_contigs))
-
-    def get_normal_lib_name(self, wildcards):
-        """Return the matched normal library of the tumor library, or None"""
-        return self.parent.matched_normal(wildcards.library_name) or None
-
-    def members(self, library_name: str) -> list[str]:
-        """Return the libraries in the VCF of the tumor ``library_name``: the tumor and its matched normal, if it has one."""
-        normal = self.parent.matched_normal(library_name)
-        return [library_name, normal] if normal else [library_name]
-
-    def get_tumor_lib_name(self, wildcards):
-        return wildcards.library_name
-
-    def _get_params_pileup_normal(self, wildcards):
-        return self.config.mutect2.contamination.pileup.model_dump(by_alias=True) | {
-            "normal_lib_name": self.get_normal_lib_name(wildcards)
-        }
-
-    def _get_params_pileup_tumor(self, wildcards):
-        return self.config.mutect2.contamination.pileup.model_dump(by_alias=True) | {
-            "tumor_lib_name": self.get_tumor_lib_name(wildcards)
-        }
-
-    def _get_params_contamination(self, wildcards):
-        return {
-            "java_options": self.config.mutect2.contamination.java_options,
-            "extra_arguments": self.config.mutect2.contamination.extra_arguments,
-        }
-
-    def _get_params_run(self, wildcards):
-        return {
-            "normal_lib_name": self.get_normal_lib_name(wildcards),
-            "java_options": self.config.mutect2.java_options,
-            "extra_arguments": self.config.mutect2.extra_arguments,
-        }
-
-    def _get_params_filter(self, wildcards):
-        return self.config.mutect2.filtration.model_dump(by_alias=True)
-
-    def _get_input_files_run(self, wildcards):
-        tumor = self.parent.get_upstream_paths("alignments", library_name=wildcards.library_name)
-        input_files = {
-            "tumor_bam": tumor.bam,
-            "tumor_bai": tumor.bai,
-            "region": self.region(wildcards),
-        }
-        # ``paired`` mode takes only the tumors with a matched normal (task_library_requirement)
-        normal_library = self.get_normal_lib_name(wildcards)
-        if normal_library and self.config.mutect2.tumor_normal_mode != TumorNormalMode.TUMOR_ONLY:
-            normal = self.parent.get_upstream_paths("alignments", library_name=normal_library)
-            input_files.update({"normal_bam": normal.bam, "normal_bai": normal.bai})
-
-        input_files.update(self.parent.reference_inputs())
-
-        if self.config.depends_on.germline_resource:
-            input_files.update(self.parent.vcf_inputs("germline_resource"))
-        if self.config.depends_on.panel_of_normals:
-            input_files.update(self.parent.vcf_inputs("panel_of_normals"))
-
-        return input_files
-
-    def _get_input_files_gather(self, wildcards):
-        return {
-            key: self.gathered(self.chunk_tpl + ext, wildcards)
-            for key, ext in self._run_outputs.items()
-        }
-
-    def _get_input_files_filter(self, wildcards):
-        base_path = "work/{library_name}/out/{library_name}".format(**wildcards)
-        input_files = {
-            "raw": base_path + ".raw.vcf.gz",
-            "raw_tbi": base_path + ".raw.vcf.gz.tbi",
-            "stats": base_path + ".raw.vcf.stats",
-            "orientation": base_path + ".raw.read_orientation_model.tar.gz",
-            **self.parent.reference_inputs(),
-        }
-        if self.get_normal_lib_name(wildcards):
-            if self.config.mutect2.contamination.enabled:
-                input_files["table"] = base_path + ".contamination.tbl"
-                input_files["segments"] = base_path + ".segments.tbl"
-        return input_files
-
-    def _get_input_files_pileup_normal(self, wildcards):
-        alignments = self.parent.get_upstream_paths(
-            "alignments", library_name=self.get_normal_lib_name(wildcards)
-        )
-        return {
-            "bam": alignments.bam,
-            "bai": alignments.bai,
-            **self.parent.reference_inputs(),
-            **self.parent.vcf_inputs("common_variants"),
-        }
-
-    def _get_input_files_pileup_tumor(self, wildcards):
-        alignments = self.parent.get_upstream_paths(
-            "alignments", library_name=wildcards.library_name
-        )
-        return {
-            "bam": alignments.bam,
-            "bai": alignments.bai,
-            **self.parent.reference_inputs(),
-            **self.parent.vcf_inputs("common_variants"),
-        }
-
-    def _get_input_files_contamination(self, wildcards: Wildcards):
-        base_path = "work/{library_name}/out/{library_name}".format(**wildcards)
-        return {"normal": base_path + ".normal.pileup", "tumor": base_path + ".tumor.pileup"}
-
-    #: The outputs of a part and their extensions
-    _run_outputs = {
-        "vcf": ".vcf.gz",
-        "vcf_tbi": ".vcf.gz.tbi",
-        "stats": ".vcf.stats",
-        "f1r2": ".f1r2.tar.gz",
-    }
-
-    def _get_output_files_run(self):
-        return {key: self.chunk_tpl + ext for key, ext in self._run_outputs.items()}
-
-    def _get_output_files_gather(self):
-        return self._with_exts(
-            {
-                "vcf": ".raw.vcf.gz",
-                "vcf_tbi": ".raw.vcf.gz.tbi",
-                "stats": ".raw.vcf.stats",
-                "orientation": ".raw.read_orientation_model.tar.gz",
-            }
-        )
-
-    def _get_output_files_pileup_normal(self):
-        return self._with_exts({"pileup": ".normal.pileup"})
-
-    def _get_output_files_pileup_tumor(self):
-        return self._with_exts({"pileup": ".tumor.pileup"})
-
-    def _get_output_files_contamination(self):
-        return self._with_exts({"table": ".contamination.tbl", "segments": ".segments.tbl"})
-
-    def _get_output_files_filter(self):
-        return vcf_outputs("work/{library_name}/out/{library_name}") | self._with_exts(
-            {"full_vcf": ".full.vcf.gz", "full_vcf_tbi": ".full.vcf.gz.tbi"}
-        )
-
-    @staticmethod
-    def _with_exts(exts: dict[str, str]) -> dict[str, str]:
-        return {key: "work/{library_name}/out/{library_name}" + ext for key, ext in exts.items()}
-
-    def _get_log_file(self, action):
-        if action == "run":
-            postfix = ".{scatteritem}"
-        elif action == "gather":
-            postfix = ""
-        else:
-            postfix = "." + action
-        return {"log": f"work/{{library_name}}/log/{{library_name}}{postfix}.log"}
-
-
-class ScatteredCallerStepPart(ScatterGather, BaseStepPart):
-    """Base class of the callers that call an entity in scattered parts and concatenate them
-    with the ``bcftools/concat`` wrapper."""
-
-    #: The calls of one part of an entity, a BCF with its ``.csi``
-    chunk_tpl = "work/{library_name}/out/{library_name}/calls/{scatteritem}"
-
-    def members(self, library_name: str) -> list[str]:
-        """Return the libraries called together for the entity ``library_name``: with ``group_by: related`` the pedigree members of its related group (one DNA library per donor, the index first), else the library and its matched normal, if it has one."""
-        if self.parent.effective_group_by == "related":
-            return self.parent.member_libraries(library_name)
-        normal = self.parent.matched_normal(library_name)
-        return [library_name, normal] if normal else [library_name]
-
-    def _get_input_files_gather(self, wildcards):
-        return {
-            "vcf": self.gathered(self.chunk_tpl + ".bcf", wildcards),
-            "vcf_csi": self.gathered(self.chunk_tpl + ".bcf.csi", wildcards),
-        }
-
-    def _get_output_files_gather(self):
-        return vcf_outputs("work/{library_name}/out/{library_name}")
-
-    def _get_log_file_gather(self):
-        return {"log": "work/{library_name}/log/{library_name}.gather.log"}
-
-
-class FreebayesStepPart(RegionScatter, ScatteredCallerStepPart):
-    """Candidate calling with freebayes, jointly over the libraries of an entity, per genome
-    window; the windows are shared by the task's entities and disjoint (no padding), so no call
-    is made twice"""
-
-    name = "freebayes"
-
-    actions = ("scatter", "run", "gather")
-    wrappers = RegionScatter.scatter_wrapper | {"gather": "bcftools/concat", "run": "freebayes"}
-
-    extra_arguments_action = "run"
-
-    temp_outputs = {"scatter": ("regions",), "run": ("bcf", "bcf_csi")}
-
-    result_keys = {"gather": ("vcf", "vcf_md5", "vcf_tbi", "vcf_tbi_md5")}
-
-    resource_usage = {
-        "run": ResourceUsage(threads=1, runtime="1d", mem="8GB"),
-        "gather": ResourceUsage(threads=1, runtime="2h", mem="4GB"),
-    }
-
-    def scatter_ignore_contigs(self) -> list[str]:
-        return sorted(set(self.config.freebayes.ignore_contigs))
-
-    def _get_input_files_scatter(self, wildcards):
-        """The genome index and, with ``depends_on.kits``, the targets of the kits of the
-        task's libraries: the windows then hold equal target bases instead of equal lengths"""
-        inputs = super()._get_input_files_scatter(wildcards)
-        if self.config.depends_on.kits:
-            kits = {
-                self.parent.library_kits[name]
-                for entity in self.parent.output_entities
-                for name in self.members(entity)
-                if name in self.parent.library_kits
-            }
-            inputs["targets"] = [
-                self.parent.get_upstream_paths("kits", library_kit=kit).targets
-                for kit in sorted(kits)
-            ]
-        return inputs
-
-    @dictify
-    def _get_input_files_run(self, wildcards):
-        yield from self.parent.reference_inputs().items()
-        members = self.members(wildcards.library_name)
-        alignments = [
-            self.parent.get_upstream_paths("alignments", library_name=name) for name in members
-        ]
-        yield "bam", [aln.bam for aln in alignments]
-        yield "bai", [aln.bai for aln in alignments]
-        yield "region", self.region(wildcards)
-        if self.config.depends_on.kits:
-            kit = self.parent.common_kit("kits", members)
-            yield "targets", self.parent.get_upstream_paths("kits", library_kit=kit).targets
-
-    def _get_params_run(self, wildcards):
-        return {
-            "min_alternate_fraction": self.config.freebayes.min_alternate_fraction,
-            "min_alternate_count": self.config.freebayes.min_alternate_count,
-            "atomize": self.config.freebayes.atomize,
-        }
-
-    def _get_output_files_run(self):
-        return {"bcf": self.chunk_tpl + ".bcf", "bcf_csi": self.chunk_tpl + ".bcf.csi"}
-
-    def _get_log_file_run(self):
-        return {"log": "work/{library_name}/log/{library_name}.run.{scatteritem}.log"}
-
-
 def _connecting_donors(rows: dict[str, dict[str, Any]], observed: set[str]) -> set[str]:
     """Return the unsequenced donors of a pedigree that connect observed donors: a donor with an
     observed descendant that has an observed or connecting ancestor, that shares a child with
@@ -1033,14 +350,543 @@ def _builtin(value: Any) -> Any:
     return value
 
 
+class VariantCallingStepPart(BaseStepPart):
+    """Base class of the germline callers, which call the libraries of an entity jointly: the
+    pedigree members of its related group with ``group_by: related``, else the library."""
+
+    #: Class available actions
+    actions = ("run",)
+
+    result_keys = ("vcf", "vcf_md5", "vcf_tbi", "vcf_tbi_md5")
+
+    def _get_log_file(self, action: str) -> SnakemakeDict:
+        return {"log": f"work/{{library_name}}/log/{{library_name}}.{action}.log"}
+
+    @dictify
+    def _get_input_files_run(self, wildcards) -> SnakemakeDictItemsGenerator:
+        rows = self._called_rows(wildcards.library_name)
+        yield "ped", self._ped(wildcards.library_name, rows)
+        yield (
+            "bam",
+            [
+                self.parent.get_upstream_paths("alignments", library_name=name).bam
+                for name in rows["library_name"]
+            ],
+        )
+
+    def _get_output_files_run(self) -> dict[str, str]:
+        return vcf_outputs("work/{library_name}/out/{library_name}")
+
+    def members(self, library_name: str) -> list[str]:
+        """Return the libraries called for the entity ``library_name``: the pedigree members of its related group with ``group_by: related``, else the library."""
+        return self.parent.member_libraries(library_name)
+
+    def _called_rows(self, library_name: str):
+        """The library table rows of the libraries called for the entity, in table order"""
+        df = self.parent.build_library_dataframe()
+        return df[df["library_name"].isin(self.members(library_name))]
+
+    def _ped(self, library_name: str, rows) -> str | list:
+        """The PED file of the entity's related group; none for cancer libraries"""
+        if rows["kind"].eq("cancer").all():
+            return []
+        if self.parent.effective_group_by == "related":
+            group = library_name
+        else:
+            group = rows.iloc[0]["related_group"]
+        return f"work/write_pedigree.{group}/out/{group}.ped"
+
+
+class BcftoolsCallStepPart(VariantCallingStepPart):
+    """Germline variant calling with bcftools"""
+
+    #: Step name
+    name = "bcftools_call"
+
+    wrappers = {"run": "bcftools_call"}
+
+    @property
+    def default_resource_usage(self) -> ResourceUsage:
+        num_threads = self.config.bcftools_call.num_threads
+        mem_mb = int(3.75 * 1024 * num_threads)
+        return ResourceUsage(threads=num_threads, runtime="2d", mem=f"{mem_mb}MB")
+
+    @dictify
+    def _get_input_files_run(self, wildcards: Wildcards) -> SnakemakeDictItemsGenerator:
+        yield from super()._get_input_files_run(wildcards).items()
+        yield from self.parent.reference_inputs().items()
+
+    def _get_params_run(self, wildcards) -> dict[str, Any]:
+        """The options of the section; ``assembly`` names the ploidy of ``bcftools call``"""
+        return self.config.bcftools_call.model_dump(mode="json")
+
+
+class GatkCallerStepPartBase(VariantCallingStepPart):
+    """Base class for GATK v3/v4 variant callers"""
+
+    @property
+    def default_resource_usage(self) -> ResourceUsage:
+        num_threads = self.config[self.name].num_threads
+        mem_per_thread = 5.5
+        mem_total = int(mem_per_thread * num_threads + 0.5)
+        return ResourceUsage(threads=num_threads, runtime="2d", mem=f"{mem_total}GB")
+
+    @dictify
+    def _get_input_files_run(self, wildcards: Wildcards) -> SnakemakeDictItemsGenerator:
+        """The BAMs and the pedigree, the reference and dbSNP"""
+        yield from super()._get_input_files_run(wildcards).items()
+        yield from self.parent.reference_inputs().items()
+        yield from self.parent.vcf_inputs("dbsnp").items()
+
+
+class GatkJointCallerStepPart(GatkCallerStepPartBase):
+    """Base class of the GATK callers that call an entity in one job; the params are the options
+    of the tool's section"""
+
+    def _get_params_run(self, wildcards) -> dict[str, Any]:
+        return self.tool_section().model_dump()
+
+
+class Gatk3HaplotypeCallerStepPart(GatkJointCallerStepPart):
+    """Germline variant calling with GATK v3 HaplotypeCaller"""
+
+    #: Step name
+    name = "gatk3_hc"
+
+    wrappers = {"run": "gatk3_hc"}
+
+
+class Gatk3UnifiedGenotyperStepPart(GatkJointCallerStepPart):
+    """Germline variant calling with GATK v3 UnifiedGenotyper"""
+
+    #: Step name
+    name = "gatk3_ug"
+
+    wrappers = {"run": "gatk3_ug"}
+
+
+class Gatk4HaplotypeCallerJointStepPart(GatkJointCallerStepPart):
+    """Germline variant calling with GATK 4 HaplotypeCaller doing joint calling per pedigree"""
+
+    name = "gatk4_hc_joint"
+    wrappers = {"run": "gatk4_hc/joint"}
+
+
+class Gatk4HaplotypeCallerGvcfStepPart(GatkCallerStepPartBase):
+    """Germline variant calling with GATK 4 HaplotypeCaller and gVCF workflow"""
+
+    name = "gatk4_hc_gvcf"
+    actions = ("discover", "combine_gvcfs", "genotype")
+
+    wrappers = {
+        "genotype": "gatk4_hc/genotype",
+        "combine_gvcfs": "gatk4_hc/combine_gvcfs",
+        "discover": "gatk4_hc/discover",
+    }
+
+    extra_arguments_action = "discover"
+
+    #: The genotype rule links the combined gVCF as ``{library}.g.vcf.gz``, for re-genotyping
+    result_keys = {
+        "genotype": (
+            "vcf",
+            "vcf_md5",
+            "vcf_tbi",
+            "vcf_tbi_md5",
+            "gvcf",
+            "gvcf_md5",
+            "gvcf_tbi",
+            "gvcf_tbi_md5",
+        )
+    }
+
+    intermediate_outputs = {"discover": ("gvcf", "gvcf_tbi")}
+
+    #: The gVCF of a library, and the combined gVCF of an entity
+    discovered_tpl = "work/{library_name}/out/{library_name}.discover.g.vcf.gz"
+
+    combined_tpl = "work/{library_name}/out/{library_name}.combine_gvcfs.g.vcf.gz"
+
+    @dictify
+    def _get_input_files_discover(self, wildcards):
+        yield from self.parent.reference_inputs().items()
+        yield from self.parent.vcf_inputs("dbsnp").items()
+        alignments = self.parent.get_upstream_paths(
+            "alignments", library_name=wildcards.library_name
+        )
+        yield "bam", alignments.bam
+
+    def _get_output_files_discover(self) -> dict[str, str]:
+        return {"gvcf": self.discovered_tpl, "gvcf_tbi": self.discovered_tpl + ".tbi"}
+
+    def _get_params_discover(self, wildcards) -> dict[str, Any]:
+        return self._params_gvcf("discover")
+
+    @dictify
+    def _get_input_files_combine_gvcfs(self, wildcards: Wildcards) -> SnakemakeDictItemsGenerator:
+        yield from self.parent.reference_inputs().items()
+        rows = self._called_rows(wildcards.library_name)
+        yield "ped", self._ped(wildcards.library_name, rows)
+        gvcfs = [self.discovered_tpl.format(library_name=name) for name in rows["library_name"]]
+        yield "gvcf", gvcfs
+        yield "gvcf_tbi", [f"{gvcf}.tbi" for gvcf in gvcfs]
+
+    def _get_output_files_combine_gvcfs(self) -> dict[str, str]:
+        return {"gvcf": self.combined_tpl, "gvcf_tbi": self.combined_tpl + ".tbi"}
+
+    def _get_params_combine_gvcfs(self, wildcards) -> dict[str, Any]:
+        return self._params_gvcf("combine_gvcfs")
+
+    @dictify
+    def _get_input_files_genotype(self, wildcards) -> SnakemakeDictItemsGenerator:
+        yield from self.parent.reference_inputs().items()
+        gvcf = self.combined_tpl.format(**wildcards)
+        yield "gvcf", gvcf
+        yield "gvcf_tbi", gvcf + ".tbi"
+
+    def _get_output_files_genotype(self) -> dict[str, str]:
+        prefix = "work/{library_name}/out/{library_name}"
+        gvcf = {f"g{key}": path for key, path in vcf_outputs(f"{prefix}.g").items()}
+        return gvcf | vcf_outputs(prefix)
+
+    def _get_params_genotype(self, wildcards) -> dict[str, Any]:
+        return self._params_gvcf("genotype")
+
+    def _params_gvcf(self, action: str) -> dict[str, Any]:
+        config = self.config.gatk4_hc_gvcf
+        return {
+            "window_length": config.window_length,
+            "num_threads": config.num_threads,
+            "allow_seq_dict_incompatibility": config.allow_seq_dict_incompatibility,
+            "ignore_contigs": config.ignore_contigs,
+            "padding": config.padding,
+            "annotation_groups": getattr(config, f"{action}_annotation_groups"),
+        }
+
+
+class Mutect2StepPart(RegionScatter, BaseStepPart):
+    """Somatic calling with Mutect2: each tumor library with its matched normal, scattered over
+    the regions of the genome, which the task's tumors share"""
+
+    name = "mutect2"
+
+    actions = (
+        "scatter",
+        "run",
+        "gather",
+        "filter",
+        "contamination",
+        "pileup_normal",
+        "pileup_tumor",
+    )
+
+    @property
+    def wrappers(self) -> dict[str, str]:
+        """The contamination estimate and its pileups run only when ``contamination`` is enabled"""
+        wrappers = RegionScatter.scatter_wrapper | {
+            "filter": "mutect2/filter",
+            "gather": "mutect2/gather",
+            "run": "mutect2/run",
+        }
+        if self.config.mutect2.contamination.enabled:
+            wrappers |= {
+                "contamination": "mutect2/contamination",
+                "pileup_tumor": "mutect2/pileup",
+                "pileup_normal": "mutect2/pileup",
+            }
+        return wrappers
+
+    #: The sub-sections ``filtration`` and ``contamination`` hold the arguments of the other
+    #: GATK actions
+    extra_arguments_action = "run"
+
+    result_keys = {"filter": ("vcf", "vcf_md5", "vcf_tbi", "vcf_tbi_md5")}
+    temp_outputs = {"scatter": ("regions",), "run": ("vcf", "vcf_tbi", "stats", "f1r2")}
+
+    intermediate_outputs = {
+        "gather": ("vcf", "vcf_tbi", "stats", "orientation"),
+        "pileup_normal": ("pileup",),
+        "pileup_tumor": ("pileup",),
+        "contamination": ("table", "segments"),
+    }
+
+    @property
+    def resource_usage(self) -> dict[str, ResourceUsage]:
+        return {
+            "run": ResourceUsage(threads=self.config.mutect2.num_cores, runtime="5d", mem="8000MB"),
+            "gather": ResourceUsage(threads=1, runtime="4h", mem="32768MB"),
+            "filter": ResourceUsage(threads=2, runtime="4h", mem="15872MB"),
+            "contamination": ResourceUsage(threads=2, runtime="4h", mem="7680MB"),
+            "pileup_normal": ResourceUsage(threads=2, runtime="4h", mem="8000MB"),
+            "pileup_tumor": ResourceUsage(threads=2, runtime="4h", mem="8000MB"),
+        }
+
+    @property
+    def scatter_padding(self) -> int:
+        return self.config.mutect2.padding
+
+    #: The raw calls of a tumor in one part of the genome
+    chunk_tpl = "work/{library_name}/out/{library_name}/calls/{scatteritem}.raw"
+
+    #: The outputs of a part and their extensions
+    _run_outputs = {
+        "vcf": ".vcf.gz",
+        "vcf_tbi": ".vcf.gz.tbi",
+        "stats": ".vcf.stats",
+        "f1r2": ".f1r2.tar.gz",
+    }
+
+    def _get_log_file(self, action):
+        if action == "run":
+            postfix = ".{scatteritem}"
+        elif action == "gather":
+            postfix = ""
+        else:
+            postfix = "." + action
+        return {"log": f"work/{{library_name}}/log/{{library_name}}{postfix}.log"}
+
+    def scatter_ignore_contigs(self) -> list[str]:
+        return sorted(set(self.config.mutect2.ignore_contigs))
+
+    def _get_input_files_run(self, wildcards):
+        tumor = self.parent.get_upstream_paths("alignments", library_name=wildcards.library_name)
+        input_files = {
+            "tumor_bam": tumor.bam,
+            "tumor_bai": tumor.bai,
+            "region": self.region(wildcards),
+        }
+        # ``paired`` mode takes only the tumors with a matched normal (task_library_requirement)
+        normal_library = self.get_normal_lib_name(wildcards)
+        if normal_library and self.config.mutect2.tumor_normal_mode != TumorNormalMode.TUMOR_ONLY:
+            normal = self.parent.get_upstream_paths("alignments", library_name=normal_library)
+            input_files.update({"normal_bam": normal.bam, "normal_bai": normal.bai})
+
+        input_files.update(self.parent.reference_inputs())
+
+        if self.config.depends_on.germline_resource:
+            input_files.update(self.parent.vcf_inputs("germline_resource"))
+        if self.config.depends_on.panel_of_normals:
+            input_files.update(self.parent.vcf_inputs("panel_of_normals"))
+
+        return input_files
+
+    def _get_output_files_run(self):
+        return {key: self.chunk_tpl + ext for key, ext in self._run_outputs.items()}
+
+    def _get_params_run(self, wildcards):
+        return {
+            "normal_lib_name": self.get_normal_lib_name(wildcards),
+            "java_options": self.config.mutect2.java_options,
+            "extra_arguments": self.config.mutect2.extra_arguments,
+        }
+
+    def _get_input_files_gather(self, wildcards):
+        return {
+            key: self.gathered(self.chunk_tpl + ext, wildcards)
+            for key, ext in self._run_outputs.items()
+        }
+
+    def _get_output_files_gather(self):
+        return self._with_exts(
+            {
+                "vcf": ".raw.vcf.gz",
+                "vcf_tbi": ".raw.vcf.gz.tbi",
+                "stats": ".raw.vcf.stats",
+                "orientation": ".raw.read_orientation_model.tar.gz",
+            }
+        )
+
+    def _get_input_files_filter(self, wildcards):
+        base_path = "work/{library_name}/out/{library_name}".format(**wildcards)
+        input_files = {
+            "raw": base_path + ".raw.vcf.gz",
+            "raw_tbi": base_path + ".raw.vcf.gz.tbi",
+            "stats": base_path + ".raw.vcf.stats",
+            "orientation": base_path + ".raw.read_orientation_model.tar.gz",
+            **self.parent.reference_inputs(),
+        }
+        if self.get_normal_lib_name(wildcards):
+            if self.config.mutect2.contamination.enabled:
+                input_files["table"] = base_path + ".contamination.tbl"
+                input_files["segments"] = base_path + ".segments.tbl"
+        return input_files
+
+    def _get_output_files_filter(self):
+        return vcf_outputs("work/{library_name}/out/{library_name}") | self._with_exts(
+            {"full_vcf": ".full.vcf.gz", "full_vcf_tbi": ".full.vcf.gz.tbi"}
+        )
+
+    def _get_params_filter(self, wildcards):
+        return self.config.mutect2.filtration.model_dump(by_alias=True)
+
+    def _get_input_files_contamination(self, wildcards: Wildcards):
+        base_path = "work/{library_name}/out/{library_name}".format(**wildcards)
+        return {"normal": base_path + ".normal.pileup", "tumor": base_path + ".tumor.pileup"}
+
+    def _get_output_files_contamination(self):
+        return self._with_exts({"table": ".contamination.tbl", "segments": ".segments.tbl"})
+
+    def _get_params_contamination(self, wildcards):
+        return {
+            "java_options": self.config.mutect2.contamination.java_options,
+            "extra_arguments": self.config.mutect2.contamination.extra_arguments,
+        }
+
+    def _get_input_files_pileup_normal(self, wildcards):
+        alignments = self.parent.get_upstream_paths(
+            "alignments", library_name=self.get_normal_lib_name(wildcards)
+        )
+        return {
+            "bam": alignments.bam,
+            "bai": alignments.bai,
+            **self.parent.reference_inputs(),
+            **self.parent.vcf_inputs("common_variants"),
+        }
+
+    def _get_output_files_pileup_normal(self):
+        return self._with_exts({"pileup": ".normal.pileup"})
+
+    def _get_params_pileup_normal(self, wildcards):
+        return self.config.mutect2.contamination.pileup.model_dump(by_alias=True) | {
+            "normal_lib_name": self.get_normal_lib_name(wildcards)
+        }
+
+    def _get_input_files_pileup_tumor(self, wildcards):
+        alignments = self.parent.get_upstream_paths(
+            "alignments", library_name=wildcards.library_name
+        )
+        return {
+            "bam": alignments.bam,
+            "bai": alignments.bai,
+            **self.parent.reference_inputs(),
+            **self.parent.vcf_inputs("common_variants"),
+        }
+
+    def _get_output_files_pileup_tumor(self):
+        return self._with_exts({"pileup": ".tumor.pileup"})
+
+    def _get_params_pileup_tumor(self, wildcards):
+        return self.config.mutect2.contamination.pileup.model_dump(by_alias=True) | {
+            "tumor_lib_name": self.get_tumor_lib_name(wildcards)
+        }
+
+    def get_normal_lib_name(self, wildcards):
+        """Return the matched normal library of the tumor library, or None"""
+        return self.parent.matched_normal(wildcards.library_name) or None
+
+    def members(self, library_name: str) -> list[str]:
+        """Return the libraries in the VCF of the tumor ``library_name``: the tumor and its matched normal, if it has one."""
+        normal = self.parent.matched_normal(library_name)
+        return [library_name, normal] if normal else [library_name]
+
+    def get_tumor_lib_name(self, wildcards):
+        return wildcards.library_name
+
+    @staticmethod
+    def _with_exts(exts: dict[str, str]) -> dict[str, str]:
+        return {key: "work/{library_name}/out/{library_name}" + ext for key, ext in exts.items()}
+
+
+class ScatteredCallerStepPart(ScatterGather, BaseStepPart):
+    """Base class of the callers that call an entity in scattered parts and concatenate them
+    with the ``bcftools/concat`` wrapper."""
+
+    #: The calls of one part of an entity, a BCF with its ``.csi``
+    chunk_tpl = "work/{library_name}/out/{library_name}/calls/{scatteritem}"
+
+    def _get_input_files_gather(self, wildcards):
+        return {
+            "vcf": self.gathered(self.chunk_tpl + ".bcf", wildcards),
+            "vcf_csi": self.gathered(self.chunk_tpl + ".bcf.csi", wildcards),
+        }
+
+    def _get_output_files_gather(self):
+        return vcf_outputs("work/{library_name}/out/{library_name}")
+
+    def _get_log_file_gather(self):
+        return {"log": "work/{library_name}/log/{library_name}.gather.log"}
+
+    def members(self, library_name: str) -> list[str]:
+        """Return the libraries called together for the entity ``library_name``: with ``group_by: related`` the pedigree members of its related group (one DNA library per donor, the index first), else the library and its matched normal, if it has one."""
+        if self.parent.effective_group_by == "related":
+            return self.parent.member_libraries(library_name)
+        normal = self.parent.matched_normal(library_name)
+        return [library_name, normal] if normal else [library_name]
+
+
+class FreebayesStepPart(RegionScatter, ScatteredCallerStepPart):
+    """Candidate calling with freebayes, jointly over the libraries of an entity, per genome
+    window; the windows are shared by the task's entities and disjoint (no padding), so no call
+    is made twice"""
+
+    name = "freebayes"
+    actions = ("scatter", "run", "gather")
+    wrappers = RegionScatter.scatter_wrapper | {"gather": "bcftools/concat", "run": "freebayes"}
+    extra_arguments_action = "run"
+    result_keys = {"gather": ("vcf", "vcf_md5", "vcf_tbi", "vcf_tbi_md5")}
+    temp_outputs = {"scatter": ("regions",), "run": ("bcf", "bcf_csi")}
+
+    resource_usage = {
+        "run": ResourceUsage(threads=1, runtime="1d", mem="8GB"),
+        "gather": ResourceUsage(threads=1, runtime="2h", mem="4GB"),
+    }
+
+    def scatter_ignore_contigs(self) -> list[str]:
+        return sorted(set(self.config.freebayes.ignore_contigs))
+
+    def _get_input_files_scatter(self, wildcards):
+        """The genome index and, with ``depends_on.kits``, the targets of the kits of the
+        task's libraries: the windows then hold equal target bases instead of equal lengths"""
+        inputs = super()._get_input_files_scatter(wildcards)
+        if self.config.depends_on.kits:
+            kits = {
+                self.parent.library_kits[name]
+                for entity in self.parent.output_entities
+                for name in self.members(entity)
+                if name in self.parent.library_kits
+            }
+            inputs["targets"] = [
+                self.parent.get_upstream_paths("kits", library_kit=kit).targets
+                for kit in sorted(kits)
+            ]
+        return inputs
+
+    @dictify
+    def _get_input_files_run(self, wildcards):
+        yield from self.parent.reference_inputs().items()
+        members = self.members(wildcards.library_name)
+        alignments = [
+            self.parent.get_upstream_paths("alignments", library_name=name) for name in members
+        ]
+        yield "bam", [aln.bam for aln in alignments]
+        yield "bai", [aln.bai for aln in alignments]
+        yield "region", self.region(wildcards)
+        if self.config.depends_on.kits:
+            kit = self.parent.common_kit("kits", members)
+            yield "targets", self.parent.get_upstream_paths("kits", library_kit=kit).targets
+
+    def _get_output_files_run(self):
+        return {"bcf": self.chunk_tpl + ".bcf", "bcf_csi": self.chunk_tpl + ".bcf.csi"}
+
+    def _get_log_file_run(self):
+        return {"log": "work/{library_name}/log/{library_name}.run.{scatteritem}.log"}
+
+    def _get_params_run(self, wildcards):
+        return {
+            "min_alternate_fraction": self.config.freebayes.min_alternate_fraction,
+            "min_alternate_count": self.config.freebayes.min_alternate_count,
+            "atomize": self.config.freebayes.atomize,
+        }
+
+
 class VarlociraptorStepPart(ScatteredCallerStepPart):
     """Calling with varlociraptor on the candidates of ``depends_on.candidates``: the candidates
     of an entity split into chunks of equal depth, alignment properties per library,
     observations per library and chunk, and calls per chunk against the scenario of the entity"""
 
     name = "varlociraptor"
-
     actions = ("scatter", "alignment_properties", "preprocess", "call", "gather")
+
     wrappers = {
         "gather": "bcftools/concat",
         "call": "varlociraptor/call",
@@ -1052,6 +898,8 @@ class VarlociraptorStepPart(ScatteredCallerStepPart):
     #: The ``preprocess`` section passes its own extra arguments
     extra_arguments_action = "call"
 
+    result_keys = {"gather": ("vcf", "vcf_md5", "vcf_tbi", "vcf_tbi_md5")}
+
     temp_outputs = {
         "scatter": ("candidates",),
         "preprocess": ("bcf",),
@@ -1059,8 +907,6 @@ class VarlociraptorStepPart(ScatteredCallerStepPart):
     }
 
     intermediate_outputs = {"alignment_properties": ("json",)}
-
-    result_keys = {"gather": ("vcf", "vcf_md5", "vcf_tbi", "vcf_tbi_md5")}
 
     resource_usage = {
         "scatter": ResourceUsage(threads=1, runtime="2h", mem="4GB"),
@@ -1106,6 +952,78 @@ class VarlociraptorStepPart(ScatteredCallerStepPart):
             if normal := self.parent.matched_normal(tumor):
                 members.append(normal)
         return members
+
+    def _get_input_files_scatter(self, wildcards):
+        candidates = self.parent.get_upstream_paths(
+            "candidates", library_name=wildcards.library_name
+        )
+        return {"candidates": candidates.vcf}
+
+    def _get_output_files_scatter(self):
+        template = self.candidates_tpl.replace("{library_name}", "{{library_name}}")
+        return {"candidates": self._scattergather("scatter")(template)}
+
+    def _get_log_file_scatter(self):
+        return {"log": "work/{library_name}/log/{library_name}.scatter.log"}
+
+    def _get_input_files_alignment_properties(self, wildcards):
+        alignments = self.parent.get_upstream_paths("alignments", library_name=wildcards.member)
+        return {**self.parent.reference_inputs(), "bam": alignments.bam, "bai": alignments.bai}
+
+    def _get_output_files_alignment_properties(self):
+        return {"json": self.properties_tpl}
+
+    def _get_log_file_alignment_properties(self):
+        return {"log": "work/{member}/log/{member}.alignment_properties.log"}
+
+    def _get_input_files_preprocess(self, wildcards):
+        alignments = self.parent.get_upstream_paths("alignments", library_name=wildcards.member)
+        return {
+            **self.parent.reference_inputs(),
+            "candidates": self.candidates_tpl.format(**wildcards),
+            "alignment_properties": self.properties_tpl.format(**wildcards),
+            "bam": alignments.bam,
+            "bai": alignments.bai,
+        }
+
+    def _get_output_files_preprocess(self):
+        return {"bcf": self.observations_tpl}
+
+    def _get_log_file_preprocess(self):
+        return {
+            "log": "work/{library_name}/log/{library_name}.preprocess.{member}.{scatteritem}.log"
+        }
+
+    def _get_params_preprocess(self, wildcards):
+        preprocess = self.config.varlociraptor.preprocess
+        return {"max_depth": preprocess.max_depth, "extra_arguments": preprocess.extra_arguments}
+
+    def _get_input_files_call(self, wildcards):
+        return {
+            "observations": [
+                self.observations_tpl.format(
+                    library_name=wildcards.library_name,
+                    member=member,
+                    scatteritem=wildcards.scatteritem,
+                )
+                for member in self.members(wildcards.library_name)
+            ]
+        }
+
+    def _get_output_files_call(self):
+        return {"bcf": self.chunk_tpl + ".bcf", "bcf_csi": self.chunk_tpl + ".bcf.csi"}
+
+    def _get_log_file_call(self):
+        return {"log": "work/{library_name}/log/{library_name}.call.{scatteritem}.log"}
+
+    def _get_params_call(self, wildcards):
+        """The sample names of the observations in their order, the scenario,
+        and whether varlociraptor uses the full prior"""
+        return {
+            "obs_names": self.members(wildcards.library_name),
+            "scenario": self.scenario(wildcards.library_name),
+            "full_prior": self.config.varlociraptor.full_prior,
+        }
 
     def other_tumors(self, library_name: str) -> list[str]:
         """The other tumor libraries of the donor of the entity ``library_name`` that the task takes"""
@@ -1254,83 +1172,160 @@ class VarlociraptorStepPart(ScatteredCallerStepPart):
         check_scenario(scenario, members)
         return scenario
 
-    def _get_input_files_scatter(self, wildcards):
-        candidates = self.parent.get_upstream_paths(
-            "candidates", library_name=wildcards.library_name
+
+class ReportStepPart(BaseStepPart):
+    """Base class for the reports on the called variants, one per entity (and donor)"""
+
+    actions = ("run",)
+    entity_wildcard = "library_name"
+
+    #: Whether we generate per-donor files.
+    report_per_donor: bool
+
+    def _get_log_file(self, action: str) -> SnakemakeDict:
+        token = "{library_name}"
+        donor = "{donor_library_name}." if self.report_per_donor else ""
+        return {"log": f"work/{token}/log/{token}.{donor}{self.name}_{action}.log"}
+
+    def _result_wildcards(self, entity: str) -> dict[str, list[str]]:
+        result = super()._result_wildcards(entity)
+        if self.report_per_donor and self.parent.effective_group_by == "related":
+            result["donor_library_name"] = self.parent.called_libraries(entity)
+        return result
+
+
+class BafFileGenerationStepPart(ReportStepPart):
+    """Class for computing B allele fraction files.
+
+    One file is generated per sample in the output VCF files.
+    """
+
+    #: Step name
+    name = "baf_file_generation"
+
+    wrappers = {"run": "baf_file_generation"}
+    result_keys = ("bw", "bw_md5")
+    default_resource_usage = ResourceUsage(threads=1, runtime="2h", mem="1024MB")
+
+    #: Whether to report results per donor
+    report_per_donor = True
+
+    @dictify
+    def _get_input_files_run(self, wildcards) -> SnakemakeDictItemsGenerator:
+        yield (
+            "vcf",
+            "work/{library_name}/out/{library_name}.vcf.gz".format(**wildcards),
         )
-        return {"candidates": candidates.vcf}
+        yield "reference_index", self.parent.get_upstream_paths("reference").fai
 
-    def _get_output_files_scatter(self):
-        template = self.candidates_tpl.replace("{library_name}", "{{library_name}}")
-        return {"candidates": self._scattergather("scatter")(template)}
+    @dictify
+    def _get_output_files_run(self) -> SnakemakeDictItemsGenerator:
+        base_path = "{library_name}/report/baf/{library_name}.{donor_library_name,[^\\.]+}.baf"
+        ext_names = {"bw": ".bw", "bw_md5": ".bw.md5"}
+        work_files = {}
+        for key, ext in ext_names.items():
+            work_files[key] = f"work/{base_path}{ext}"
+        yield from work_files.items()
 
-    def _get_input_files_alignment_properties(self, wildcards):
-        alignments = self.parent.get_upstream_paths("alignments", library_name=wildcards.member)
-        return {**self.parent.reference_inputs(), "bam": alignments.bam, "bai": alignments.bai}
+    def _get_params_run(self, wildcards):
+        return {"min_dp": self.config.baf_file_generation.min_dp}
 
-    def _get_output_files_alignment_properties(self):
-        return {"json": self.properties_tpl}
 
-    def _get_input_files_preprocess(self, wildcards):
-        alignments = self.parent.get_upstream_paths("alignments", library_name=wildcards.member)
+class BcftoolsStatsStepPart(ReportStepPart):
+    """VCF statistics computation with ``bcftools stats``.
+
+    Statistics are computed overall and per-sample
+    """
+
+    name = "bcftools_stats"
+    wrappers = {"run": "bcftools_stats/run"}
+    result_keys = ("txt", "txt_md5")
+    report_outputs = {"run": {"txt": ReportOutput("bcftools stats", caption="bcftools_stats.rst")}}
+    default_resource_usage = ResourceUsage(threads=1, runtime="2h", mem="1024MB")
+    report_per_donor = True
+
+    @dictify
+    def _get_input_files_run(self, wildcards) -> SnakemakeDictItemsGenerator:
+        yield (
+            "vcf",
+            "work/{library_name}/out/{library_name}.vcf.gz".format(**wildcards),
+        )
+
+    @dictify
+    def _get_output_files_run(self) -> SnakemakeDictItemsGenerator:
+        ext_names = {"txt": ".txt", "txt_md5": ".txt.md5"}
+        base_path = "work/{library_name}/report/bcftools_stats/{library_name}.{donor_library_name}"
+        work_files = {key: f"{base_path}{ext}" for key, ext in ext_names.items()}
+        yield from work_files.items()
+
+    def _get_params_run(self, wildcards: Wildcards) -> dict[str, Any]:
+        return {"donor_library_name": wildcards.donor_library_name}
+
+
+class BcftoolsRohStepPart(ReportStepPart):
+    """ROH calling with `bcftools roh`."""
+
+    name = "bcftools_roh"
+    wrappers = {"run": "bcftools_roh"}
+    result_keys = ("txt", "txt_md5")
+    default_resource_usage = ResourceUsage(threads=1, runtime="1h", mem="4GB")
+    report_per_donor = False
+
+    @dictify
+    def _get_input_files_run(self, wildcards) -> SnakemakeDictItemsGenerator:
+        yield (
+            "vcf",
+            "work/{library_name}/out/{library_name}.vcf.gz".format(**wildcards),
+        )
+        yield "path_af_file", self.config.get(self.name).get("path_af_file")
+        if self.parent.config.depends_on.kits:
+            kit = self.parent.common_kit(
+                "kits", self.parent.called_libraries(wildcards.library_name)
+            )
+            yield "path_targets", self.parent.get_upstream_paths("kits", library_kit=kit).targets
+
+    @dictify
+    def _get_output_files_run(self) -> SnakemakeDictItemsGenerator:
+        ext_names = {"txt": ".txt", "txt_md5": ".txt.md5"}
+        base_path = "work/{library_name}/report/roh/{library_name}"
+        for key, ext in ext_names.items():
+            yield key, f"{base_path}{ext}"
+
+    def _get_params_run(self, wildcards):
         return {
-            **self.parent.reference_inputs(),
-            "candidates": self.candidates_tpl.format(**wildcards),
-            "alignment_properties": self.properties_tpl.format(**wildcards),
-            "bam": alignments.bam,
-            "bai": alignments.bai,
-        }
-
-    def _get_params_preprocess(self, wildcards):
-        preprocess = self.config.varlociraptor.preprocess
-        return {"max_depth": preprocess.max_depth, "extra_arguments": preprocess.extra_arguments}
-
-    def _get_output_files_preprocess(self):
-        return {"bcf": self.observations_tpl}
-
-    def _get_input_files_call(self, wildcards):
-        return {
-            "observations": [
-                self.observations_tpl.format(
-                    library_name=wildcards.library_name,
-                    member=member,
-                    scatteritem=wildcards.scatteritem,
-                )
-                for member in self.members(wildcards.library_name)
+            name: self.config.bcftools_roh.get(name)
+            for name in [
+                "ignore_homref",
+                "skip_indels",
+                "rec_rate",
             ]
         }
 
-    def _get_params_call(self, wildcards):
-        """The sample names of the observations in their order, the scenario,
-        and whether varlociraptor uses the full prior"""
-        return {
-            "obs_names": self.members(wildcards.library_name),
-            "scenario": self.scenario(wildcards.library_name),
-            "full_prior": self.config.varlociraptor.full_prior,
+
+class BcftoolsStatsSummaryStepPart(QcSummaryStepPart):
+    """Tables and charts of the ``bcftools stats`` of all samples"""
+
+    report_outputs = {
+        "run": {
+            "html": ReportOutput(
+                "bcftools stats", caption="bcftools_stats_summary.rst", htmlindex="index.html"
+            )
         }
+    }
 
-    def _get_output_files_call(self):
-        return {"bcf": self.chunk_tpl + ".bcf", "bcf_csi": self.chunk_tpl + ".bcf.csi"}
+    source = ("bcftools_stats", "run")
+    source_keys = {"txt": "txt"}
+    format = "bcftools_stats"
 
-    def _get_log_file_scatter(self):
-        return {"log": "work/{library_name}/log/{library_name}.scatter.log"}
-
-    def _get_log_file_alignment_properties(self):
-        return {"log": "work/{member}/log/{member}.alignment_properties.log"}
-
-    def _get_log_file_preprocess(self):
-        return {
-            "log": "work/{library_name}/log/{library_name}.preprocess.{member}.{scatteritem}.log"
-        }
-
-    def _get_log_file_call(self):
-        return {"log": "work/{library_name}/log/{library_name}.call.{scatteritem}.log"}
+    #: One file per sample of the entity's VCF
+    label_wildcard = "donor_library_name"
 
 
 class VariantCallingWorkflow(BaseStep):
     """Workflow implementation for germline variant calling"""
 
     name = "variant_calling"
+
     produces = [
         DataSignature(DataType.VARIANTS, frozenset({"germline", "snv", "indel"})),
         DataSignature(DataType.VARIANTS, frozenset({"somatic", "snv", "indel"})),
@@ -1341,6 +1336,7 @@ class VariantCallingWorkflow(BaseStep):
         DataSignature(DataType.VARIANTS, frozenset({"germline", "sv", "varlociraptor"})),
         DataSignature(DataType.VARIANTS, frozenset({"somatic", "sv", "varlociraptor"})),
     ]
+
     config_model_class = VariantCallingConfigModel
 
     tool_parts = {
@@ -1353,10 +1349,31 @@ class VariantCallingWorkflow(BaseStep):
         Tool.freebayes: FreebayesStepPart,
         Tool.varlociraptor: VarlociraptorStepPart,
     }
+
     helper_parts = (WritePedigreeStepPart,)
+
+    #: Default relationship for somatic (mutect2) callers: resolve matched normal.
+    default_relationships = MATCHED_NORMAL_RELATIONSHIP
 
     #: The reports on the called variants, in the order of their result files
     report_parts = (BafFileGenerationStepPart, BcftoolsStatsStepPart, BcftoolsRohStepPart)
+
+    @classmethod
+    def task_library_requirement(cls, config):
+        """mutect2 and the somatic scenario of varlociraptor call tumor DNA libraries, which
+        need a matched normal or none; ``tumor_normal_mode: paired`` leaves out the tumors
+        without one."""
+        if config.tool == Tool.mutect2:
+            mode = config.mutect2.tumor_normal_mode
+        elif config.tool == Tool.varlociraptor:
+            if config.varlociraptor.scenario != ScenarioKind.somatic:
+                return None
+            mode = config.varlociraptor.tumor_normal_mode
+        else:
+            return None
+        if mode == TumorNormalMode.PAIRED:
+            return MATCHED_NORMAL_REQUIREMENT
+        return "role == 'tumor' and extraction_type == 'dna'"
 
     @classmethod
     def task_produces(cls, config, upstream):
@@ -1374,31 +1391,6 @@ class VariantCallingWorkflow(BaseStep):
             tags = {str(config.varlociraptor.scenario), "varlociraptor", *kinds}
             return (DataSignature(DataType.VARIANTS, frozenset(tags)),)
         return (DataSignature(DataType.VARIANTS, frozenset({"germline", "snv", "indel"})),)
-
-    def called_libraries(self, entity: str) -> list[str]:
-        """Return the libraries in the VCF of an entity, as the task's caller takes them (its ``members``)."""
-        return self.sub_steps[self.config.tool].members(entity)
-
-    @classmethod
-    def default_group_by(cls, config):
-        """The germline callers and the germline scenario of varlociraptor call related
-        libraries (each pedigree) jointly; mutect2, freebayes and the somatic scenario call each
-        library (with its matched normal)."""
-        if config.tool == Tool.varlociraptor:
-            return "related" if config.varlociraptor.scenario == ScenarioKind.germline else None
-        return "related" if config.tool in VARIANT_CALLERS else None
-
-    @classmethod
-    def filter_ids(cls, config):
-        """The FILTER IDs of mutect2 and of the GATK callers; the other callers write none."""
-        if config.tool == Tool.mutect2:
-            return MUTECT2_FILTER_IDS
-        if config.tool in (Tool.bcftools_call, Tool.freebayes, Tool.varlociraptor):
-            return frozenset()
-        return GATK_GERMLINE_FILTER_IDS
-
-    #: Default relationship for somatic (mutect2) callers: resolve matched normal.
-    default_relationships = MATCHED_NORMAL_RELATIONSHIP
 
     @classmethod
     def get_output_paths(cls, config, signature=None, **kwargs) -> dict[str, str]:
@@ -1421,21 +1413,22 @@ class VariantCallingWorkflow(BaseStep):
         return {"vcf": f"{prefix}.vcf.gz", "vcf_tbi": f"{prefix}.vcf.gz.tbi"}
 
     @classmethod
-    def task_library_requirement(cls, config):
-        """mutect2 and the somatic scenario of varlociraptor call tumor DNA libraries, which
-        need a matched normal or none; ``tumor_normal_mode: paired`` leaves out the tumors
-        without one."""
+    def default_group_by(cls, config):
+        """The germline callers and the germline scenario of varlociraptor call related
+        libraries (each pedigree) jointly; mutect2, freebayes and the somatic scenario call each
+        library (with its matched normal)."""
+        if config.tool == Tool.varlociraptor:
+            return "related" if config.varlociraptor.scenario == ScenarioKind.germline else None
+        return "related" if config.tool in VARIANT_CALLERS else None
+
+    @classmethod
+    def filter_ids(cls, config):
+        """The FILTER IDs of mutect2 and of the GATK callers; the other callers write none."""
         if config.tool == Tool.mutect2:
-            mode = config.mutect2.tumor_normal_mode
-        elif config.tool == Tool.varlociraptor:
-            if config.varlociraptor.scenario != ScenarioKind.somatic:
-                return None
-            mode = config.varlociraptor.tumor_normal_mode
-        else:
-            return None
-        if mode == TumorNormalMode.PAIRED:
-            return MATCHED_NORMAL_REQUIREMENT
-        return "role == 'tumor' and extraction_type == 'dna'"
+            return MUTECT2_FILTER_IDS
+        if config.tool in (Tool.bcftools_call, Tool.freebayes, Tool.varlociraptor):
+            return frozenset()
+        return GATK_GERMLINE_FILTER_IDS
 
     def __init__(self, workflow, project, task_name):
         super().__init__(workflow, project, task_name)
@@ -1454,6 +1447,33 @@ class VariantCallingWorkflow(BaseStep):
                 self.common_kit("kits", self.sub_steps["freebayes"].members(library_name))
         if self.config.tool == Tool.varlociraptor:
             self._check_varlociraptor_setup()
+
+    def library_warnings(self) -> list[str]:
+        """The tumors without a matched normal that ``paired`` mode leaves out, and the tumors
+        that the somatic scenario of varlociraptor takes as pure for lack of a purity."""
+        warnings = super().library_warnings()
+        if (
+            self.config.tool == Tool.varlociraptor
+            and self.config.varlociraptor.scenario == ScenarioKind.somatic
+        ):
+            part = self.sub_steps["varlociraptor"]
+            unknown = [
+                name
+                for name in self.output_entities
+                if part.purity(self.primary_library(name)) is None
+            ]
+            if unknown:
+                warnings.append(
+                    f"Task {self.task_name!r} takes the tumors without a purity as pure, with no "
+                    f"contamination by the normal: {', '.join(unknown)}; the sample sheet column "
+                    "purity (a custom field, from 0 to 1) sets it, from the lab, the collaborator "
+                    "or a purity estimate (somatic_purity_ploidy_estimate)"
+                )
+        return warnings
+
+    def called_libraries(self, entity: str) -> list[str]:
+        """Return the libraries in the VCF of an entity, as the task's caller takes them (its ``members``)."""
+        return self.sub_steps[self.config.tool].members(entity)
 
     def _check_varlociraptor_setup(self) -> None:
         """The candidates task writes its calls per entity of this task, and the library names
@@ -1481,29 +1501,6 @@ class VariantCallingWorkflow(BaseStep):
         # not model fails before Snakemake builds the jobs
         for entity in self.output_entities:
             part.scenario(entity)
-
-    def library_warnings(self) -> list[str]:
-        """The tumors without a matched normal that ``paired`` mode leaves out, and the tumors
-        that the somatic scenario of varlociraptor takes as pure for lack of a purity."""
-        warnings = super().library_warnings()
-        if (
-            self.config.tool == Tool.varlociraptor
-            and self.config.varlociraptor.scenario == ScenarioKind.somatic
-        ):
-            part = self.sub_steps["varlociraptor"]
-            unknown = [
-                name
-                for name in self.output_entities
-                if part.purity(self.primary_library(name)) is None
-            ]
-            if unknown:
-                warnings.append(
-                    f"Task {self.task_name!r} takes the tumors without a purity as pure, with no "
-                    f"contamination by the normal: {', '.join(unknown)}; the sample sheet column "
-                    "purity (a custom field, from 0 to 1) sets it, from the lab, the collaborator "
-                    "or a purity estimate (somatic_purity_ploidy_estimate)"
-                )
-        return warnings
 
     def _enabled(self, report: str) -> bool:
         """Whether the config enables the report"""

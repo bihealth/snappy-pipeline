@@ -82,9 +82,8 @@ class BwaIndexStepPart(_IndexToolStepPart):
     actions = ("run",)
     wrappers = {"run": "reference_index/bwa"}
     rule_options = {"run": RuleOptions(cache=True)}
-    output_suffixes = (".amb", ".ann", ".bwt", ".pac", ".sa")
-
     default_resource_usage = ResourceUsage(threads=8, runtime="24h", mem="16GB")
+    output_suffixes = (".amb", ".ann", ".bwt", ".pac", ".sa")
 
     @dictify
     def _get_params_run(self, wildcards):
@@ -96,9 +95,8 @@ class BwaMem2IndexStepPart(_IndexToolStepPart):
     actions = ("run",)
     wrappers = {"run": "reference_index/bwa_mem2"}
     rule_options = {"run": RuleOptions(cache=True)}
-    output_suffixes = (".0123", ".amb", ".ann", ".bwt.2bit.64", ".pac")
-
     default_resource_usage = ResourceUsage(threads=8, runtime="24h", mem="16GB")
+    output_suffixes = (".0123", ".amb", ".ann", ".bwt.2bit.64", ".pac")
 
 
 class BwaMem3IndexStepPart(_IndexToolStepPart):
@@ -106,9 +104,8 @@ class BwaMem3IndexStepPart(_IndexToolStepPart):
     actions = ("run",)
     wrappers = {"run": "reference_index/bwa_mem3"}
     rule_options = {"run": RuleOptions(cache=True)}
-    output_suffixes = (".amb", ".ann", ".bwt.2bit.64", ".pac")
-
     default_resource_usage = ResourceUsage(threads=8, runtime="24h", mem="16GB")
+    output_suffixes = (".amb", ".ann", ".bwt.2bit.64", ".pac")
 
 
 class Minimap2IndexStepPart(_IndexToolStepPart):
@@ -116,9 +113,8 @@ class Minimap2IndexStepPart(_IndexToolStepPart):
     actions = ("run",)
     wrappers = {"run": "reference_index/minimap2"}
     rule_options = {"run": RuleOptions(cache=True)}
-    output_suffixes = (".mmi",)
-
     default_resource_usage = ResourceUsage(threads=8, runtime="12h", mem="16GB")
+    output_suffixes = (".mmi",)
 
 
 class StarIndexStepPart(_IndexToolStepPart):
@@ -126,13 +122,12 @@ class StarIndexStepPart(_IndexToolStepPart):
     actions = ("run",)
     wrappers = {"run": "reference_index/star"}
     rule_options = {"run": RuleOptions(cache=True)}
+    default_resource_usage = ResourceUsage(threads=16, runtime="24h", mem="64GB")
 
     @property
     def output_suffixes(self) -> tuple[str, ...]:
         files = STAR_INDEX_FILES + (STAR_SJDB_FILES if self.config.depends_on.features else ())
         return tuple(f".index/{name}" for name in files)
-
-    default_resource_usage = ResourceUsage(threads=16, runtime="24h", mem="64GB")
 
     @dictify
     def _get_input_files_run(self, wildcards):
@@ -143,6 +138,7 @@ class StarIndexStepPart(_IndexToolStepPart):
 
 class ReferenceIndexWorkflow(BaseStep):
     name = "reference_index"
+
     produces = [
         DataSignature(DataType.INDEX, frozenset({"bwa", "dna"})),
         DataSignature(DataType.INDEX, frozenset({"bwa_mem2", "dna"})),
@@ -175,10 +171,10 @@ class ReferenceIndexWorkflow(BaseStep):
         }
         self.register_sub_step_classes((tool_to_class[self.config.tool],))
 
-    def get_reference_path(self) -> str:
-        return self.get_upstream_paths("reference").fasta
-
     @listify
     def get_result_files(self):
         for path in self.get_output_files(str(self.config.tool), "run").values():
             yield path
+
+    def get_reference_path(self) -> str:
+        return self.get_upstream_paths("reference").fasta

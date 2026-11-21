@@ -121,6 +121,13 @@ LONG_READS = "seq_platform in ['ONT', 'PacBio']"
 class ReadMappingStepPart(BaseStepPart):
     """Base class for read mapping step parts"""
 
+    #: Class available actions. Read mapping step parts only support action "run".
+    actions = ("run",)
+
+    result_keys = ("bam", "bam_bai", "bam_md5", "bam_bai_md5") + tuple(
+        f"report_{report}_txt{suffix}" for report in BAM_REPORTS for suffix in ("", "_md5")
+    )
+
     report_outputs = {
         "run": {
             f"report_{report}_txt": ReportOutput("BAM QC", caption="bam_qc.rst")
@@ -128,30 +135,13 @@ class ReadMappingStepPart(BaseStepPart):
         }
     }
 
-    #: Class available actions. Read mapping step parts only support action "run".
-    actions = ("run",)
-
     #: The BAM, which a BQSR task may process further
     bam_outputs = {"run": ("bam", "bam_bai")}
-
-    result_keys = ("bam", "bam_bai", "bam_md5", "bam_bai_md5") + tuple(
-        f"report_{report}_txt{suffix}" for report in BAM_REPORTS for suffix in ("", "_md5")
-    )
 
     #: The libraries that the tool maps, as a pandas query
     library_requirement: str
 
     base_path_out = "work/{{library_name}}/out/{{library_name}}{ext}"
-
-    def _get_params_run(self, wildcards: Wildcards) -> dict[str, Any]:
-        return {
-            "sample_name": wildcards.library_name,
-        } | reads_params(self.parent, wildcards.library_name)
-
-    def _read_group_names(self, wildcards: Wildcards) -> list[str]:
-        """The read group IDs of the BWA mappers: the names of the discovered read groups, in
-        the order of their files"""
-        return [group.name for group in self.parent.read_groups(wildcards.library_name)]
 
     def _get_input_files_run(self, wildcards):
         return reads_input_files(self.parent, wildcards.library_name)
@@ -175,20 +165,35 @@ class ReadMappingStepPart(BaseStepPart):
     def _get_log_file_run(self):
         return {"log": "work/{library_name}/log/{library_name}.mapping.log"}
 
+    def _get_params_run(self, wildcards: Wildcards) -> dict[str, Any]:
+        return {
+            "sample_name": wildcards.library_name,
+        } | reads_params(self.parent, wildcards.library_name)
+
+    def _read_group_names(self, wildcards: Wildcards) -> list[str]:
+        """The read group IDs of the BWA mappers: the names of the discovered read groups, in
+        the order of their files"""
+        return [group.name for group in self.parent.read_groups(wildcards.library_name)]
+
 
 class BwaStepPart(ReadMappingStepPart):
     """Short-read DNA mapping with BWA; BWA-MEM2 and BWA-MEM3 differ only in their name"""
 
     #: Step name
     name = "bwa"
-    wrappers = {"run": "bwa"}
 
-    library_requirement = f"extraction_type == 'dna' and not {LONG_READS}"
+    wrappers = {"run": "bwa"}
 
     @property
     def default_resource_usage(self) -> ResourceUsage:
         threads = self.tool_section().num_threads_align
         return ResourceUsage(threads=threads, runtime="3d", mem=f"{int(4.5 * 1024 * threads)}MB")
+
+    library_requirement = f"extraction_type == 'dna' and not {LONG_READS}"
+
+    def _get_input_files_run(self, wildcards):
+        inputs = super()._get_input_files_run(wildcards)
+        return inputs | {"index": self.parent.get_index_files(self.name)}
 
     def _get_params_run(self, wildcards: Wildcards) -> dict[str, Any]:
         return (
@@ -196,10 +201,6 @@ class BwaStepPart(ReadMappingStepPart):
             | self.tool_section().model_dump(by_alias=True)
             | {"read_groups": self._read_group_names(wildcards)}
         )
-
-    def _get_input_files_run(self, wildcards):
-        inputs = super()._get_input_files_run(wildcards)
-        return inputs | {"index": self.parent.get_index_files(self.name)}
 
 
 class BwaMem2StepPart(BwaStepPart):
@@ -212,14 +213,40 @@ class BwaMem3StepPart(BwaStepPart):
     wrappers = {"run": "bwa_mem3"}
 
 
+class Minimap2StepPart(ReadMappingStepPart):
+    """Support for performing long-read alignment using minimap2"""
+
+    #: Step name
+    name = "minimap2"
+
+    wrappers = {"run": "minimap2"}
+
+    @property
+    def default_resource_usage(self) -> ResourceUsage:
+        threads = self.config.minimap2.mapping_threads
+        return ResourceUsage(threads=threads, runtime="2d", mem=f"{int(3.5 * threads)}GB")
+
+    library_requirement = f"extraction_type == 'dna' and {LONG_READS}"
+
+    def _get_input_files_run(self, wildcards):
+        inputs = super()._get_input_files_run(wildcards)
+        return inputs | {"index": self.parent.get_index_files("minimap2")}
+
+    def _get_params_run(self, wildcards: Wildcards) -> dict[str, Any]:
+        params = super()._get_params_run(wildcards)
+        params |= self.config.minimap2.model_dump(by_alias=True)
+        params["library_kit"] = self.parent.library_row(wildcards.library_name)["library_kit"]
+        params["library_name"] = wildcards.library_name
+        return params
+
+
 class StarStepPart(ReadMappingStepPart):
     """Support for performing NGS alignment using STAR"""
 
     #: Step name
     name = "star"
-    wrappers = {"run": "star"}
 
-    library_requirement = f"extraction_type == 'rna' and not {LONG_READS}"
+    wrappers = {"run": "star"}
 
     #: The gene counts of STAR (all strands) are input of the strandedness step, whose result
     #: file holds the counts of the inferred strand
@@ -233,6 +260,20 @@ class StarStepPart(ReadMappingStepPart):
     )
 
     intermediate_outputs = {"run": ("gene_counts",)}
+
+    @property
+    def default_resource_usage(self) -> ResourceUsage:
+        threads = self.config.star.num_threads_align
+        return ResourceUsage(threads=threads, runtime="2d", mem=f"{int(3.5 * threads)}GB")
+
+    library_requirement = f"extraction_type == 'rna' and not {LONG_READS}"
+
+    def _get_input_files_run(self, wildcards):
+        inputs = super()._get_input_files_run(wildcards)
+        return inputs | {
+            "features": self.parent.get_upstream_paths("features").gtf,
+            "index": self.parent.get_index_files("star"),
+        }
 
     def _get_output_files_run(self):
         """Override base class' function to make Snakemake aware of extra files for STAR."""
@@ -251,18 +292,6 @@ class StarStepPart(ReadMappingStepPart):
         parent_args = super()._get_params_run(wildcards)
         parent_args.update(self.config.star.model_dump(by_alias=True))
         return parent_args
-
-    def _get_input_files_run(self, wildcards):
-        inputs = super()._get_input_files_run(wildcards)
-        return inputs | {
-            "features": self.parent.get_upstream_paths("features").gtf,
-            "index": self.parent.get_index_files("star"),
-        }
-
-    @property
-    def default_resource_usage(self) -> ResourceUsage:
-        threads = self.config.star.num_threads_align
-        return ResourceUsage(threads=threads, runtime="2d", mem=f"{int(3.5 * threads)}GB")
 
 
 class StrandednessStepPart(BaseStepPart):
@@ -283,14 +312,6 @@ class StrandednessStepPart(BaseStepPart):
         inputs["exon_bed"] = self.parent.get_upstream_paths("exons").bed
         return inputs
 
-    def _get_input_files_counts(self, wildcards):
-        return {
-            "counts": "work/{library_name}/out/{library_name}.ReadsPerGene.tab".format(**wildcards),
-            "decision": "work/{library_name}/strandedness/{library_name}.decision.json".format(
-                **wildcards
-            ),
-        }
-
     def _get_output_files_infer(self):
         tpl = "work/{library_name}/strandedness/{library_name}"
         return {
@@ -299,46 +320,28 @@ class StrandednessStepPart(BaseStepPart):
             "decision_md5": tpl + ".decision.json.md5",
         }
 
+    def _get_log_file_infer(self):
+        return {"log": "work/{library_name}/log/{library_name}.strandedness.log"}
+
+    def _get_params_infer(self, wildcards: Wildcards) -> dict[str, Any]:
+        return strandedness_params(self.config.strandedness, wildcards.library_name)
+
+    def _get_input_files_counts(self, wildcards):
+        return {
+            "counts": "work/{library_name}/out/{library_name}.ReadsPerGene.tab".format(**wildcards),
+            "decision": "work/{library_name}/strandedness/{library_name}.decision.json".format(
+                **wildcards
+            ),
+        }
+
     def _get_output_files_counts(self):
         return {
             "counts": "work/{library_name}/out/{library_name}.GeneCounts.tab",
             "counts_md5": "work/{library_name}/out/{library_name}.GeneCounts.tab.md5",
         }
 
-    def _get_log_file_infer(self):
-        return {"log": "work/{library_name}/log/{library_name}.strandedness.log"}
-
     def _get_log_file_counts(self):
         return {"log": "work/{library_name}/log/{library_name}.gene_counts.log"}
-
-    def _get_params_infer(self, wildcards: Wildcards) -> dict[str, Any]:
-        return strandedness_params(self.config.strandedness, wildcards.library_name)
-
-
-class Minimap2StepPart(ReadMappingStepPart):
-    """Support for performing long-read alignment using minimap2"""
-
-    #: Step name
-    name = "minimap2"
-    wrappers = {"run": "minimap2"}
-
-    library_requirement = f"extraction_type == 'dna' and {LONG_READS}"
-
-    @property
-    def default_resource_usage(self) -> ResourceUsage:
-        threads = self.config.minimap2.mapping_threads
-        return ResourceUsage(threads=threads, runtime="2d", mem=f"{int(3.5 * threads)}GB")
-
-    def _get_input_files_run(self, wildcards):
-        inputs = super()._get_input_files_run(wildcards)
-        return inputs | {"index": self.parent.get_index_files("minimap2")}
-
-    def _get_params_run(self, wildcards: Wildcards) -> dict[str, Any]:
-        params = super()._get_params_run(wildcards)
-        params |= self.config.minimap2.model_dump(by_alias=True)
-        params["library_kit"] = self.parent.library_row(wildcards.library_name)["library_kit"]
-        params["library_name"] = wildcards.library_name
-        return params
 
 
 class BamCollectDocStepPart(BaseStepPart):
@@ -349,6 +352,7 @@ class BamCollectDocStepPart(BaseStepPart):
 
     #: Class available actions
     actions = ("run",)
+
     wrappers = {"run": "maelstrom/bam_collect_doc"}
 
     result_keys = (
@@ -362,16 +366,13 @@ class BamCollectDocStepPart(BaseStepPart):
         "mq_bw_md5",
     )
 
+    default_resource_usage = ResourceUsage(threads=1, runtime="24h", mem="2GB")
+
     @dictify
     def _get_input_files_run(self, wildcards):
         yield "bam", "work/{library_name}/out/{library_name}.bam".format(**wildcards)
         yield "bai", "work/{library_name}/out/{library_name}.bam.bai".format(**wildcards)
         yield from self.parent.reference_inputs().items()
-
-    def _get_params_run(self, wildcards: Wildcards) -> dict[str, Any]:
-        return {
-            "window_length": self.config.bam_collect_doc.window_length,
-        }
 
     @dictify
     def _get_output_files_run(self):
@@ -388,18 +389,14 @@ class BamCollectDocStepPart(BaseStepPart):
     def _get_log_file_run(self):
         return {"log": "work/{library_name}/log/{library_name}.bam_collect_doc.log"}
 
-    default_resource_usage = ResourceUsage(threads=1, runtime="24h", mem="2GB")
+    def _get_params_run(self, wildcards: Wildcards) -> dict[str, Any]:
+        return {
+            "window_length": self.config.bam_collect_doc.window_length,
+        }
 
 
 class BamQcSummaryStepPart(QcSummaryStepPart):
     """Tables and charts of the ``samtools`` statistics of all mapped libraries"""
-
-    source_keys = {
-        "bamstats": "report_bamstats_txt",
-        "flagstats": "report_flagstats_txt",
-        "idxstats": "report_idxstats_txt",
-    }
-    format = "samtools"
 
     report_outputs = {
         "run": {
@@ -411,17 +408,20 @@ class BamQcSummaryStepPart(QcSummaryStepPart):
     def source(self) -> tuple[str, str]:
         return (self.config.tool, "run")
 
+    source_keys = {
+        "bamstats": "report_bamstats_txt",
+        "flagstats": "report_flagstats_txt",
+        "idxstats": "report_idxstats_txt",
+    }
+
+    format = "samtools"
+
 
 class NgsMappingWorkflow(BaseStep):
     """Perform NGS Mapping"""
 
     #: Step name
     name = "ngs_mapping"
-
-    #: All libraries, background included; the tool maps those of its ``library_requirement``
-    #: (short-read DNA, long-read DNA or short-read RNA) and ``library_selection`` narrows them
-    library_default = ""
-    background_results = True
 
     produces = [
         DataSignature(DataType.ALIGNMENTS, frozenset({"dna"})),
@@ -437,6 +437,12 @@ class NgsMappingWorkflow(BaseStep):
         Tool.minimap2: Minimap2StepPart,
         Tool.star: StarStepPart,
     }
+
+    #: All libraries, background included; the tool maps those of its ``library_requirement``
+    #: (short-read DNA, long-read DNA or short-read RNA) and ``library_selection`` narrows them
+    library_default = ""
+
+    background_results = True
 
     @classmethod
     def task_library_requirement(cls, config):

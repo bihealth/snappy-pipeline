@@ -55,16 +55,23 @@ class VarfishAnnotatorExternalStepPart(BaseStepPart):
 
     #: Class available actions
     actions = ("annotate", "merge_vcf")
+
     wrappers = {"annotate": "varfish_annotator/annotate_svs", "merge_vcf": "bcftools/merge_vcf"}
-
     intermediate_outputs = {"merge_vcf": ("vcf", "vcf_tbi")}
+    default_resource_usage = ResourceUsage(threads=1, runtime="2h", mem=f"{7 * 1024 * 2}MB")
 
-    @dictify
-    def _get_input_files_merge_vcf(self, wildcards):
-        if self.config.merge_vcf_flag:
-            yield "vcf", sorted(self._collect_vcfs(wildcards))
-        else:
-            yield "vcf", [self._vcf(self.parent.pedigree_index(wildcards.related_group))]
+    resource_usage = {
+        "annotate": ResourceUsage(threads=2, runtime="4d", mem=f"{7 * 1024 * 2}MB"),
+    }
+
+    def get_result_files(self) -> list[str]:
+        """The files of the export, for each pedigree whose index has a DNA library"""
+        indexes = [p for p in self.parent.pedigrees() if self.parent.pedigree_index(p)]
+        return [
+            path
+            for tpl in self.get_output_files("annotate").values()
+            for path in expand(tpl, related_group=indexes)
+        ]
 
     @dictify
     def _get_input_files_annotate(self, wildcards):
@@ -83,12 +90,6 @@ class VarfishAnnotatorExternalStepPart(BaseStepPart):
             yield key, tpl.format(**wildcards) + ext
 
     @dictify
-    def _get_output_files_merge_vcf(self):
-        tpl = "work/{related_group}/out/{related_group}"
-        for key, ext in KEY_EXT.items():
-            yield key, tpl + ext
-
-    @dictify
     def _get_output_files_annotate(self):
         prefix = "work/varfish_annotated.{related_group}/out/varfish_annotated.{related_group}"
         for infix in INFIXES:
@@ -96,41 +97,12 @@ class VarfishAnnotatorExternalStepPart(BaseStepPart):
             yield key, prefix + f".{infix}.tsv.gz"
             yield key + "_md5", prefix + f".{infix}.tsv.gz.md5"
 
-    def get_result_files(self) -> list[str]:
-        """The files of the export, for each pedigree whose index has a DNA library"""
-        indexes = [p for p in self.parent.pedigrees() if self.parent.pedigree_index(p)]
-        return [
-            path
-            for tpl in self.get_output_files("annotate").values()
-            for path in expand(tpl, related_group=indexes)
-        ]
-
-    @dictify
-    def _get_log_file_merge_vcf(self):
-        yield (
-            "log",
-            "work/{related_group}/log/{related_group}.merge_vcf.log",
-        )
-
     @dictify
     def _get_log_file_annotate(self):
         yield (
             "log",
             "work/varfish_annotated.{related_group}/log/varfish_annotated.{related_group}.log",
         )
-
-    resource_usage = {
-        "annotate": ResourceUsage(threads=2, runtime="4d", mem=f"{7 * 1024 * 2}MB"),
-    }
-    default_resource_usage = ResourceUsage(threads=1, runtime="2h", mem=f"{7 * 1024 * 2}MB")
-
-    def _get_params_merge_vcf(self, wildcards):
-        result = {
-            "sample_names": list(sorted(self._collect_sample_ids(wildcards))),
-            "merge_option": self.config.merge_option,
-            "gvcf_option": False,
-        }
-        return result
 
     def _get_params_annotate(self, wildcards):
         return {
@@ -140,6 +112,34 @@ class VarfishAnnotatorExternalStepPart(BaseStepPart):
                 by_alias=True, exclude={"path_db", "path_refseq_ser", "path_ensembl_ser"}
             ),
         }
+
+    @dictify
+    def _get_input_files_merge_vcf(self, wildcards):
+        if self.config.merge_vcf_flag:
+            yield "vcf", sorted(self._collect_vcfs(wildcards))
+        else:
+            yield "vcf", [self._vcf(self.parent.pedigree_index(wildcards.related_group))]
+
+    @dictify
+    def _get_output_files_merge_vcf(self):
+        tpl = "work/{related_group}/out/{related_group}"
+        for key, ext in KEY_EXT.items():
+            yield key, tpl + ext
+
+    @dictify
+    def _get_log_file_merge_vcf(self):
+        yield (
+            "log",
+            "work/{related_group}/log/{related_group}.merge_vcf.log",
+        )
+
+    def _get_params_merge_vcf(self, wildcards):
+        result = {
+            "sample_names": list(sorted(self._collect_sample_ids(wildcards))),
+            "merge_option": self.config.merge_option,
+            "gvcf_option": False,
+        }
+        return result
 
     def _vcf(self, library_name):
         return self.parent.get_upstream_paths("variants", library_name=library_name).vcf
@@ -161,10 +161,12 @@ class WgsSvExportExternalWorkflow(BaseStep):
 
     #: Workflow name
     name = "wgs_sv_export_external"
+
     produces = [DataSignature(DataType.EXPORTS, frozenset({"external"}))]
+    config_model_class = WgsSvExportExternalConfigModel
+
     #: The pedigrees include the members of background data sets
     uses_background = True
-    config_model_class = WgsSvExportExternalConfigModel
 
     @classmethod
     def get_output_paths(cls, config, signature=None, **kwargs) -> dict[str, str]:

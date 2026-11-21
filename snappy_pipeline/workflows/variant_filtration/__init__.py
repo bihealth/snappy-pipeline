@@ -110,8 +110,6 @@ _OUT_PREFIX = "work/{library_name}/out/{library_name}"
 # ---------------------------------------------------------------------------
 # Base step part
 # ---------------------------------------------------------------------------
-
-
 class VariantFiltrationStepPart(BaseStepPart):
     """Base class for all variant filtration tool step parts.
 
@@ -121,16 +119,19 @@ class VariantFiltrationStepPart(BaseStepPart):
 
     name = "filter"
     actions = ("run",)
+    entity_wildcard = "library_name"
+    result_keys = {"run": tuple(vcf_outputs(_OUT_PREFIX))}
+
+    resource_usage = {
+        "run": ResourceUsage(threads=1, runtime="4h", mem=f"{8 * 1024}MB"),
+    }
 
     def tool_section(self) -> ToolModel:
         """The config section of the task's tool; all filter step parts are named ``filter``"""
         return getattr(self.config, self.config.tool)
 
-    resource_usage = {
-        "run": ResourceUsage(threads=1, runtime="4h", mem=f"{8 * 1024}MB"),
-    }
-    result_keys = {"run": tuple(vcf_outputs(_OUT_PREFIX))}
-    entity_wildcard = "library_name"
+    def _get_log_file(self, action):
+        return {"log": "work/{library_name}/log/{library_name}.log"}
 
     @dictify
     def _get_input_files_run(self, wildcards: Wildcards):
@@ -141,9 +142,6 @@ class VariantFiltrationStepPart(BaseStepPart):
     def _get_output_files_run(self):
         return vcf_outputs(_OUT_PREFIX)
 
-    def _get_log_file(self, action):
-        return {"log": "work/{library_name}/log/{library_name}.log"}
-
     def _get_params_run(self, wildcards: Wildcards) -> dict[str, Any]:
         # The task name keeps FILTER IDs unique along a chain of filter tasks.
         return {"filter_name": self.parent.task_name} | self.tool_section().model_dump(
@@ -152,32 +150,8 @@ class VariantFiltrationStepPart(BaseStepPart):
 
 
 # ---------------------------------------------------------------------------
-# BAM-aware base (dkfz / ebfilter)
-# ---------------------------------------------------------------------------
-
-
-class _BamAwareStepPart(VariantFiltrationStepPart):
-    """Mixin that adds tumor (and optionally normal) BAM inputs."""
-
-    @dictify
-    def _get_input_files_run(self, wildcards: Wildcards):
-        yield from super()._get_input_files_run(wildcards).items()
-
-        yield from self.parent.reference_inputs().items()
-
-        lib = self.parent.primary_library(wildcards.library_name)
-        yield "bam", self.parent.get_upstream_paths("alignments", library_name=lib).bam
-
-        if normal_lib := self.parent.matched_normal(lib):
-            normal = self.parent.get_upstream_paths("alignments", library_name=normal_lib)
-            yield "normal", normal.bam
-
-
-# ---------------------------------------------------------------------------
 # Concrete tool step parts
 # ---------------------------------------------------------------------------
-
-
 class BcftoolsStepPart(VariantFiltrationStepPart):
     """bcftools expression filter."""
 
@@ -188,6 +162,17 @@ class VembraneStepPart(VariantFiltrationStepPart):
     """Unified vembrane tag/filter step."""
 
     wrappers = {"run": "vembrane/tag"}
+
+    @dictify
+    def _get_input_files_run(self, wildcards: Wildcards):
+        yield from super()._get_input_files_run(wildcards).items()
+        cfg = self.config.vembrane
+        if cfg.aux:
+            yield "aux", list(cfg.aux.values())
+        if cfg.context_files:
+            yield "context_files", list(cfg.context_files)
+        if cfg.ontology:
+            yield "ontology", cfg.ontology
 
     def _get_params_run(self, wildcards: Wildcards) -> dict[str, Any]:
         cfg = self.config.vembrane
@@ -203,17 +188,6 @@ class VembraneStepPart(VariantFiltrationStepPart):
             params["expression"] = cfg.expression
         return params
 
-    @dictify
-    def _get_input_files_run(self, wildcards: Wildcards):
-        yield from super()._get_input_files_run(wildcards).items()
-        cfg = self.config.vembrane
-        if cfg.aux:
-            yield "aux", list(cfg.aux.values())
-        if cfg.context_files:
-            yield "context_files", list(cfg.context_files)
-        if cfg.ontology:
-            yield "ontology", cfg.ontology
-
 
 class RegionsStepPart(VariantFiltrationStepPart):
     """Region/BED-based filter via bcftools."""
@@ -228,6 +202,26 @@ class RegionsStepPart(VariantFiltrationStepPart):
 
     def _get_params_run(self, wildcards: Wildcards) -> dict[str, Any]:
         return {"filter_name": self.parent.task_name, "mode": self.config.regions.mode}
+
+
+# ---------------------------------------------------------------------------
+# BAM-aware base (dkfz / ebfilter)
+# ---------------------------------------------------------------------------
+class _BamAwareStepPart(VariantFiltrationStepPart):
+    """Mixin that adds tumor (and optionally normal) BAM inputs."""
+
+    @dictify
+    def _get_input_files_run(self, wildcards: Wildcards):
+        yield from super()._get_input_files_run(wildcards).items()
+
+        yield from self.parent.reference_inputs().items()
+
+        lib = self.parent.primary_library(wildcards.library_name)
+        yield "bam", self.parent.get_upstream_paths("alignments", library_name=lib).bam
+
+        if normal_lib := self.parent.matched_normal(lib):
+            normal = self.parent.get_upstream_paths("alignments", library_name=normal_lib)
+            yield "normal", normal.bam
 
 
 class DkfzStepPart(_BamAwareStepPart):
@@ -252,13 +246,11 @@ class EbfilterStepPart(_BamAwareStepPart):
     actions = ("run", "write_panel")
     wrappers = {"run": "eb_filter"}
     extra_arguments_action = "run"
+
     resource_usage = {
         "run": ResourceUsage(threads=1, runtime="24h", mem=f"{2 * 1024}MB"),
         "write_panel": ResourceUsage(threads=1, runtime="1h", mem=f"{2 * 1024}MB"),
     }
-
-    def _get_input_files_write_panel(self, wildcards):
-        return {}
 
     @dictify
     def _get_input_files_run(self, wildcards: Wildcards):
@@ -269,9 +261,6 @@ class EbfilterStepPart(_BamAwareStepPart):
             panel_file = self._get_output_files_write_panel()["txt"]
         yield "txt", panel_file
 
-    def _get_output_files_write_panel(self):
-        return {"txt": "work/panel_of_normals/out/panel_of_normals.txt"}
-
     def _get_params_run(self, wildcards: Wildcards) -> dict[str, Any]:
         params = super()._get_params_run(wildcards)
         # The panel file and the options that choose it are inputs of the rule, not of EBFilter
@@ -281,11 +270,11 @@ class EbfilterStepPart(_BamAwareStepPart):
             "has_annotation": self.parent.variants_are_annotated,
         }
 
-    def write_panel_of_normals_file(self, wildcards):
-        out_path = self._get_output_files_write_panel()["txt"]
-        with open(out_path, "wt") as fh:
-            for bam in self._get_panel_of_normal_bams(wildcards):
-                print(bam, file=fh)
+    def _get_input_files_write_panel(self, wildcards):
+        return {}
+
+    def _get_output_files_write_panel(self):
+        return {"txt": "work/panel_of_normals/out/panel_of_normals.txt"}
 
     def _get_params_write_panel(self, wildcards):
         """The panel options and the libraries they choose, so that a change writes the panel again"""
@@ -295,6 +284,12 @@ class EbfilterStepPart(_BamAwareStepPart):
             "shuffle_seed": cfg.shuffle_seed,
             "libraries": self._panel_of_normal_libraries(),
         }
+
+    def write_panel_of_normals_file(self, wildcards):
+        out_path = self._get_output_files_write_panel()["txt"]
+        with open(out_path, "wt") as fh:
+            for bam in self._get_panel_of_normal_bams(wildcards):
+                print(bam, file=fh)
 
     def _panel_of_normal_libraries(self) -> list[str]:
         """The normal DNA libraries of the panel: a seeded shuffle, cut to the panel size"""
@@ -330,8 +325,6 @@ class VarlociraptorStepPart(VariantFiltrationStepPart):
 # ---------------------------------------------------------------------------
 # Workflow
 # ---------------------------------------------------------------------------
-
-
 class VariantFiltrationWorkflow(BaseStep):
     """Unified variant filtration - applies a single configurable filter tool to any VCF input.
 
@@ -342,6 +335,7 @@ class VariantFiltrationWorkflow(BaseStep):
 
     name = "variant_filtration"
     produces = [DataSignature(DataType.VARIANTS, frozenset({"filtered"}))]
+    config_model_class = VariantFiltrationConfigModel
 
     tool_parts = {
         Tool.bcftools: BcftoolsStepPart,
@@ -351,6 +345,8 @@ class VariantFiltrationWorkflow(BaseStep):
         Tool.ebfilter: EbfilterStepPart,
         Tool.varlociraptor: VarlociraptorStepPart,
     }
+
+    default_relationships = MATCHED_NORMAL_RELATIONSHIP
 
     @classmethod
     def task_produces(cls, config, upstream):
@@ -366,6 +362,13 @@ class VariantFiltrationWorkflow(BaseStep):
         return (variants.with_tags("filtered"),)
 
     @classmethod
+    def get_output_paths(cls, config, signature=None, **kwargs) -> dict[str, str]:
+        """Return local filtered-variant output paths for downstream consumers."""
+        lib = kwargs.get("library_name", "{library_name}")
+        paths = vcf_outputs(_OUT_PREFIX.format(library_name=lib))
+        return {key: paths[key] for key in ("vcf", "vcf_tbi")}
+
+    @classmethod
     def filter_ids(cls, config):
         """The IDs of the DKFZ bias filter, and the expression names of ``vembrane`` in tag mode."""
         if config.tool == Tool.dkfz:
@@ -373,17 +376,6 @@ class VariantFiltrationWorkflow(BaseStep):
         if config.tool == Tool.vembrane and config.vembrane.mode == "tag":
             return frozenset(config.vembrane.expressions)
         return frozenset()
-
-    config_model_class = VariantFiltrationConfigModel
-
-    default_relationships = MATCHED_NORMAL_RELATIONSHIP
-
-    @classmethod
-    def get_output_paths(cls, config, signature=None, **kwargs) -> dict[str, str]:
-        """Return local filtered-variant output paths for downstream consumers."""
-        lib = kwargs.get("library_name", "{library_name}")
-        paths = vcf_outputs(_OUT_PREFIX.format(library_name=lib))
-        return {key: paths[key] for key in ("vcf", "vcf_tbi")}
 
     def __init__(self, workflow, project, task_name):
         super().__init__(workflow, project, task_name)
