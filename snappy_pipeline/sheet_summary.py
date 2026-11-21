@@ -16,7 +16,8 @@ from jsonschema import Draft202012Validator
 from ruamel.yaml import YAML
 
 from snappy_pipeline.base import ConfigError
-from snappy_pipeline.workflows.abstract import TARGETED_LIBRARY_TYPES, BaseStep
+from snappy_pipeline.workflows.abstract import BaseStep
+from snappy_pipeline.library_table import TARGETED_LIBRARY_TYPES
 
 #: JSON schema of the sample sheet values of one library
 LIBRARY_SCHEMA = os.path.join(os.path.dirname(__file__), "schemas", "library.schema.yaml")

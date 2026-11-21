@@ -86,8 +86,8 @@ from snappy_pipeline.workflows.abstract import (
     DataSignature,
     ReportOutput,
     ResourceUsage,
-    select_libraries,
 )
+from snappy_pipeline.library_table import select_libraries
 from snappy_pipeline.workflows.abstract.protocol import DataType
 from snappy_pipeline.workflows.common.qc_summary import QcSummaryStepPart
 from snappy_pipeline.workflows.common.reads import reads_input_files, reads_params

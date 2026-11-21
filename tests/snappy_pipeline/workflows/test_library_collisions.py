@@ -6,7 +6,8 @@ import pytest
 
 from snappy_pipeline import orchestration
 from snappy_pipeline.base import ConfigError
-from snappy_pipeline.workflows.abstract import BaseStep, select_libraries
+from snappy_pipeline.workflows.abstract import BaseStep
+from snappy_pipeline.library_table import select_libraries
 
 FIX = "library_selection: \"data_set == 'batch1'\""
 

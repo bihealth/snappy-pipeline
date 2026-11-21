@@ -14,7 +14,7 @@ from biomedsheets.io_tsv import read_cancer_tsv_sheet
 
 from snappy_pipeline.models import RelationshipDefinition
 from snappy_pipeline.workflow_registry import WORKFLOW_REGISTRY
-from snappy_pipeline.workflows.abstract import (
+from snappy_pipeline.library_table import (
     select_libraries,
     build_library_dataframe,
     entity_libraries,
@@ -1180,7 +1180,7 @@ def test_siblings_and_grandparents_are_not_primary_so_the_index_names_the_family
 
 def test_the_family_id_of_the_sheet_names_the_pedigree(germline_trio_plus_sheet_tsv):
     from snappy_pipeline.base import ConfigError
-    from snappy_pipeline.workflows.abstract import build_donor_dataframe
+    from snappy_pipeline.library_table import build_donor_dataframe
 
     # P007 is unrelated by the parent columns, but familyId puts it into family2
     gsheet = _parse_germline_sheet(germline_trio_plus_sheet_tsv)
@@ -1284,7 +1284,7 @@ class TestLibraryRequirement:
 
 
 def test_the_donor_table_lists_unsequenced_donors_with_their_parents():
-    from snappy_pipeline.workflows.abstract import build_donor_dataframe
+    from snappy_pipeline.library_table import build_donor_dataframe
 
     # P002, the father, has no library
     tsv = textwrap.dedent(

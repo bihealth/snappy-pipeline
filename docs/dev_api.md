@@ -8,6 +8,12 @@
 :members:
 ```
 
+## snappy_pipeline.library_table
+
+```{automodule} snappy_pipeline.library_table
+:members:
+```
+
 ## snappy_pipeline.reads
 
 ```{automodule} snappy_pipeline.reads

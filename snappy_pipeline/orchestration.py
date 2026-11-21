@@ -93,7 +93,7 @@ class Project:
     @property
     def data_set_infos(self) -> list[Any]:
         """The data sets of the configuration with their loaded sample sheets, once per run"""
-        from snappy_pipeline.workflows.abstract import DataSetInfo
+        from snappy_pipeline.library_table import DataSetInfo
 
         if not self._data_sets and self.model.data_sets:
             self._data_sets.extend(

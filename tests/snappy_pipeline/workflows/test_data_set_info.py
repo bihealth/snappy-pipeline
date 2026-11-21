@@ -6,7 +6,7 @@ import textwrap
 import pytest
 
 from snappy_pipeline.base import ConfigError
-from snappy_pipeline.workflows.abstract import DataSetInfo
+from snappy_pipeline.library_table import DataSetInfo
 
 SHEET = textwrap.dedent(
     """

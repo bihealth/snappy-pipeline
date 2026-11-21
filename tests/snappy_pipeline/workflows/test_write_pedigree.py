@@ -13,8 +13,8 @@ from snappy_pipeline.workflows.abstract import (
     BaseStep,
     WritePedigreeSampleNameStepPart,
     WritePedigreeStepPart,
-    build_library_dataframe,
 )
+from snappy_pipeline.library_table import build_library_dataframe
 from snappy_pipeline.workflows.abstract.protocol import DataSignature, DataType
 
 SHEET = Path(__file__).parents[1] / "fixtures" / "samplesheet_germline.tsv"
