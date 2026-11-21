@@ -10,7 +10,7 @@ args = getattr(snakemake.params, "args", {})
 java_mem_mb = java_heap_mb(snakemake, shards=args["num_threads"])
 shard_intervals = shards.intervals(
     snakemake.input.reference,
-    f"{snakemake.input.reference}.fai",
+    snakemake.input.reference_fai,
     args["window_length"],
     args["padding"],
     args["ignore_contigs"],

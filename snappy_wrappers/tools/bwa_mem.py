@@ -1,10 +1,14 @@
-"""Shell text of the BWA-MEM2 and BWA-MEM3 wrappers, which differ only in the mapper.
+"""The BWA-MEM2 and BWA-MEM3 wrappers, which differ only in the mapper.
 
-A wrapper's template pastes ``read_functions()`` before its mapper function,
-which maps the reads of the read group ``$1`` from standard input,
-and ``mapping_pipeline()`` after it.
-The functions return final shell text: they format the values as Snakemake would.
+``run()`` is the whole wrapper: it reads the inputs and params, pastes ``read_functions()``
+before the mapper function, which maps the reads of the read group ``$1`` from standard input,
+and ``mapping_pipeline()`` after it, and runs the script through ``ShellWrapper``.
+The text functions return final shell text: they format the values as Snakemake would.
 """
+
+import re
+
+from snappy_wrappers.snappy_wrapper import ShellWrapper
 
 # The wrappers run with the Python of their environment, so this stays valid Python 3.7.
 
@@ -195,3 +199,93 @@ def mapping_pipeline(
         memory_bam_sort=memory_bam_sort,
         num_threads_bam_sort=num_threads_bam_sort,
     )
+
+
+#: The template of the wrapper: the read functions, the mapper function and the pipeline
+TEMPLATE = """
+{read_functions_text}
+
+# Run {mapper_upper} on the reads of read group $1
+{mapper_function}() {{
+    set -x
+    i=$1
+
+    # Decide whether to write split reads as supplementary or secondary (-M means secondary)
+    split_as_supp_flag=
+    if [[ "{split_as_secondary}" == "True" ]]; then
+        split_as_supp_flag="-M"
+    fi
+
+    if [[ "{snakemake.params.args[sample_name]}" != "" ]]; then
+        rg_arg="-R @RG\\tID:${{read_groups[$i]}}\\tSM:{snakemake.params.args[sample_name]}\\tPL:{snakemake.params.args[platform]}"
+    else
+        rg_arg=
+    fi
+
+    {mapper} mem \\
+        {path_index} \\
+        $split_as_supp_flag \\
+        $rg_arg \\
+        -p \\
+        -t {num_threads_align} \\
+        -K {bases_per_batch} \\
+        {extra_arguments} \\
+        /dev/stdin
+}}
+
+{mapping_pipeline_text}
+"""
+
+
+def _fill(template: str, **values) -> str:
+    """``template`` with the placeholders of ``values`` filled in, as Snakemake would format them;
+    the other placeholders and the doubled braces stay for ``ShellWrapper``."""
+    return re.sub(
+        r"\{(" + "|".join(map(re.escape, values)) + r")\}",
+        lambda match: str(values[match.group(1)]),
+        template,
+    )
+
+
+def run(snakemake, mapper: str) -> None:
+    """The wrapper of ``mapper`` (``bwa-mem2`` or ``bwa-mem3``): map the reads of every read
+    group of the library, mask duplicates, merge, sort, index and count."""
+    args = getattr(snakemake.params, "args", {})
+
+    # The reads are inputs. If another task wrote them, the input is that task's out directory and
+    # params list the files.
+    reads = args.get("input", {})
+    input_left = snakemake.input.get("reads_left") or reads["reads_left"]
+    input_right = snakemake.input.get("reads_right") or reads.get("reads_right", "")
+
+    mapper_function = "run_" + mapper.replace("-", "_")
+    # The read group IDs, one per read group (file pair) of the library
+    read_groups = " ".join(args["read_groups"])
+    cmd = _fill(
+        TEMPLATE,
+        read_functions_text=read_functions(
+            input_left,
+            input_right,
+            read_groups,
+            args["trim_adapters"],
+            args["num_threads_trimming"],
+            args["mask_duplicates"],
+        ),
+        mapper_upper=mapper.upper(),
+        mapper_function=mapper_function,
+        mapper=mapper,
+        # The index files are inputs, the first one is the .amb file.
+        path_index=snakemake.input.index[0].removesuffix(".amb"),
+        split_as_secondary=args["split_as_secondary"],
+        num_threads_align=args["num_threads_align"],
+        bases_per_batch=args["bases_per_batch"],
+        mapping_pipeline_text=mapping_pipeline(
+            mapper_function,
+            snakemake.output,
+            args["num_threads_bam_view"],
+            args["memory_bam_sort"],
+            args["num_threads_bam_sort"],
+        ),
+    )
+    # ShellWrapper fills in the sample name, the platform and the extra arguments
+    ShellWrapper(snakemake).run(cmd)

@@ -24,6 +24,8 @@ classifiers = [
 ]
 dynamic = ["version"]
 dependencies = [
+    # The command line interface
+    "click >=8.4,<9",
     # Nice, round-trip enabled YAML parsing
     "ruamel.yaml >=0.18.6,<1",
     # We're trying to keep the PyPi package up to date, you might have to install

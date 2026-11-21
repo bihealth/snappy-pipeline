@@ -16,7 +16,7 @@ allow_seq_dict_incompatibility = (
 )
 shard_intervals = shards.intervals(
     snakemake.input.reference,
-    f"{snakemake.input.reference}.fai",
+    snakemake.input.reference_fai,
     args["window_length"],
     args["padding"],
     args["ignore_contigs"],

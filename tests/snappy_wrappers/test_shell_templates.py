@@ -47,6 +47,6 @@ def test_the_shell_text_of_the_tool_modules_is_checked():
         for path in module.SHELL_MODULES
     }
     assert {path: len(lines) for path, lines in found.items()} == {
-        "snappy_wrappers/tools/bwa_mem.py": 2,  # READ_FUNCTIONS, MAPPING_PIPELINE
+        "snappy_wrappers/tools/bwa_mem.py": 3,  # READ_FUNCTIONS, MAPPING_PIPELINE, TEMPLATE
         "snappy_wrappers/tools/shards.py": 3,  # INTERVALS, RUN_SHARDS, GATHER
     }

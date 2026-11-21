@@ -10,7 +10,7 @@ __author__ = "Manuel Holtgrewe <manuel.holtgrewe@bih-charite.de>"
 args = getattr(snakemake.params, "args", {})
 
 reference_path = snakemake.input.reference
-reference_index_path = snakemake.input.reference_index
+reference_index_path = snakemake.input.reference_fai
 
 assembly = args["assembly"]
 
