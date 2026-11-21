@@ -1,6 +1,8 @@
 import enum
 from typing import Annotated
 
+from pydantic import Field
+
 from snappy_pipeline.models import ReadBy, RequiredBy
 from snappy_pipeline.models import EnumField, SnappyModel, SnappyStepModel, ToolModel
 from snappy_pipeline.workflows.abstract.protocol import (
@@ -35,10 +37,15 @@ class Melt(sv_calling_model.Melt):
 
 
 class Popdel(ToolModel):
-    window_size: int = 10000000
+    num_jobs: Annotated[int, Field(ge=1)] = 24
+    """Number of jobs that share the windows in genome order, each at least one window and about equal bases.
+    A reference with fewer windows than jobs is an error."""
+
+    window_size: Annotated[int, Field(ge=1)] = 10000000
+    """Length of the windows that the contigs are cut into from their start; popdel calls each window on its own."""
 
     max_sv_size: int = 20000
-    """== padding"""
+    """Bases added on both sides of each window, within its contig, so that every deletion up to this length lies whole in a padded window."""
 
     profile_regions: list[str] = [
         "chr1:35000000-36000000",

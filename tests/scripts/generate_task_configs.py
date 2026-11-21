@@ -309,6 +309,7 @@ TASK_CONFIG: dict[tuple[str, str | None], dict[str, Any]] = {
     ("variant_calling", "bcftools_call"): {"bcftools_call": {"assembly": "GRCh37"}},
     ("variant_calling", "gatk4_hc_joint"): {"bcftools_stats": {"enabled": Overwrite(True)}},
     ("variant_calling", "freebayes"): {"freebayes": {"num_jobs": 2}},
+    ("sv_calling_wgs", "popdel"): {"popdel": {"num_jobs": 2}},
     ("variant_calling", "mutect2"): {"mutect2": {"contamination": {}}},
     ("variant_calling", "varlociraptor"): {"varlociraptor": {"scenario": "somatic", "num_jobs": 2}},
     ("variant_export_external", None): VARIANT_EXPORT_EXTERNAL,
@@ -505,6 +506,20 @@ EXTRA_TASKS: list[dict[str, Any]] = [
                 "reference": "genome",
             }
         },
+    },
+    # The other sources of reference_download; the generated task downloads from Ensembl
+    {
+        "step": "reference_download",
+        "name": "reference_download_refseq",
+        "config": {
+            "source": "refseq",
+            "refseq": {"assembly_accession": "GCF_000001405.40", "assembly_name": "GRCh38.p14"},
+        },
+    },
+    {
+        "step": "reference_download",
+        "name": "reference_download_ucsc",
+        "config": {"source": "ucsc", "ucsc": {"db": "hg38"}},
     },
 ]
 

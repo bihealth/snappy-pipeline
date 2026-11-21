@@ -131,7 +131,38 @@ def partition_by_targets(
     return partitions
 
 
-def main(fai_path, ignore_contigs, padding, output_regions, target_paths=()):
+def cut_windows(contigs: dict[str, int], window_size: int) -> list[Interval]:
+    """Cut each contig into windows of ``window_size`` bases from its start; its last window is shorter."""
+    return [
+        Interval(contig, start, min(start + window_size, length))
+        for contig, length in contigs.items()
+        for start in range(0, length, window_size)
+    ]
+
+
+def partition_windows(windows: list[Interval], num_partitions: int) -> list[Region]:
+    """Distribute the windows in order over the partitions, about equal bases and at least one window each."""
+    if len(windows) < num_partitions:
+        raise ValueError(
+            f"{len(windows)} windows for {num_partitions} parts: lower the number of jobs or the window size"
+        )
+    total = sum(window.end - window.start for window in windows)
+    partitions: list[Region] = [[] for _ in range(num_partitions)]
+    index = 0  # the partition being filled
+    done = 0  # bases in the partitions up to the current one
+    for i, window in enumerate(windows):
+        # Move on once this partition has its share or the windows left are one per later partition
+        if partitions[index] and (
+            done * num_partitions >= total * (index + 1)
+            or len(windows) - i == num_partitions - index - 1
+        ):
+            index += 1
+        partitions[index].append(window)
+        done += window.end - window.start
+    return partitions
+
+
+def main(fai_path, ignore_contigs, padding, output_regions, target_paths=(), window_size=None):
     with open(fai_path, "rt") as fai:
         csv_reader = csv.reader(fai, delimiter="\t")
         contigs = {
@@ -140,7 +171,9 @@ def main(fai_path, ignore_contigs, padding, output_regions, target_paths=()):
             if not matches_any(contig, ignore_contigs)
         }
     num_regions = len(output_regions)
-    if target_paths:
+    if window_size:
+        regions = partition_windows(cut_windows(contigs, window_size), num_regions)
+    elif target_paths:
         regions = partition_by_targets(contigs, read_targets(target_paths, contigs), num_regions)
     else:
         regions = partition_lengths_with_splits(contigs, num_regions)
@@ -181,6 +214,7 @@ if __name__ == "__main__":
                 args["padding"],
                 snakemake.output.regions,
                 list(snakemake.input.get("targets", [])),
+                args.get("window_size"),
             )
         )
     else:

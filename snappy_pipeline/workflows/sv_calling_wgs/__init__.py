@@ -7,6 +7,7 @@ The ``tool`` field selects the caller:
   The regions in ``depends_on.excluded_regions`` are optional and excluded.
 - ``manta`` calls the variants of all members of a pedigree together.
 - ``popdel`` profiles each library and then calls the deletions of all libraries together.
+  ``popdel.num_jobs`` jobs share its windows of ``popdel.window_size`` bases, padded by ``popdel.max_sv_size``.
 - ``gcnv`` runs GATK gCNV in case mode, with the model of the task in ``depends_on.gcnv_model``.
   That task is a :ref:`step_gcnv_model` task with ``intervals: wgs``, and its intervals are the ones of the calls.
 - ``melt`` calls mobile element insertions, with the genes of the task in ``depends_on.gene_regions``.
@@ -37,13 +38,13 @@ from snappy_pipeline.workflows.common.delly import Delly2StepPart
 from snappy_pipeline.workflows.common.gcnv.gcnv_run import RunGcnvStepPart
 from snappy_pipeline.workflows.common.manta import MantaStepPart
 from snappy_pipeline.workflows.common.melt import MeltStepPart
+from snappy_pipeline.workflows.common.scatter import RegionScatter
 from snappy_pipeline.workflows.common.sv_calling import (
     VCF_OUTPUTS,
     SvCallingGetLogFileMixin,
     SvCallingGetResultFilesMixin,
     SvCallingWorkflow,
 )
-from snappy_wrappers.tools.genome_windows import yield_regions
 
 from .model import SvCallingWgs as SvCallingWgsConfigModel
 from .model import Tool
@@ -51,12 +52,8 @@ from .model import Tool
 __author__ = "Manuel Holtgrewe <manuel.holtgrewe@bih-charite.de>"
 
 
-def escape_dots_dashes(s: str) -> str:
-    """Escape dots and dashes with double-underscore constructs."""
-    return s.replace("_", "__under__").replace(".", "__dot__").replace("-", "__hyphen__")
-
-
 class PopDelStepPart(
+    RegionScatter,
     SvCallingGetResultFilesMixin,
     SvCallingGetLogFileMixin,
     BaseStepPart,
@@ -65,11 +62,12 @@ class PopDelStepPart(
 
     PopDel requires whole-cohort wide calling.  We implement cohort-wise calling to speed
     things up a bit more.
+    The ``call`` jobs share the padded windows of the genome (``scatter``).
     """
 
     name = "popdel"
-    actions = ("profile", "call", "concat_calls", "reorder_vcf")
-    wrappers = {
+    actions = ("profile", "scatter", "call", "concat_calls", "reorder_vcf")
+    wrappers = RegionScatter.scatter_wrapper | {
         "reorder_vcf": "popdel/reorder_vcf",
         "concat_calls": "popdel/concat_calls",
         "call": "popdel/call",
@@ -79,11 +77,25 @@ class PopDelStepPart(
     #: ``profile`` takes no ``extra_arguments``
     extra_arguments_action = "call"
 
-    temp_outputs = {"call": ("vcf", "vcf_tbi")}
+    temp_outputs = {"scatter": ("regions",), "call": ("vcf", "vcf_tbi")}
 
     intermediate_outputs = {"profile": ("profile",), "concat_calls": ("vcf", "vcf_tbi")}
 
     default_resource_usage = ResourceUsage(threads=2, runtime="4d", mem="24GB")
+
+    #: The calls of the cohort in one part of the genome
+    chunk_tpl = "work/cohort/out/cohort/calls/{scatteritem}"
+
+    @property
+    def scatter_window_size(self) -> int:
+        return self.config.popdel.window_size
+
+    @property
+    def scatter_padding(self) -> int:
+        return self.config.popdel.max_sv_size
+
+    def scatter_ignore_contigs(self) -> list[str]:
+        return self.config.ignore_contigs
 
     @dictify
     def _get_input_files_profile(self, wildcards):
@@ -107,41 +119,19 @@ class PopDelStepPart(
             for library_name in dna["library_name"]
         ]
         yield "profile", paths
+        yield "region", self.region(wildcards)
 
-    @dictify
     def _get_output_files_call(self):
-        infix = self._get_log_file_infix_call()
-        yield "vcf", f"work/{infix}/out/{infix}.call.vcf.gz"
-        yield "vcf_tbi", f"work/{infix}/out/{infix}.call.vcf.gz.tbi"
+        return {"vcf": self.chunk_tpl + ".vcf.gz", "vcf_tbi": self.chunk_tpl + ".vcf.gz.tbi"}
 
-    def _get_log_file_infix_call(self):
-        return "{chrom}-{begin}-{end}"
+    def _get_log_file_call(self):
+        return {"log": "work/cohort/log/cohort.call.{scatteritem}.log"}
 
-    @dictify
     def _get_input_files_concat_calls(self, wildcards):
-        window_size = self.config.popdel.window_size
-        padding = self.config.popdel.max_sv_size
-        vcfs = []
-        with open(self._get_fai_path(), "rt") as fai_file:
-            for r in yield_regions(
-                fai_file,
-                window_size=window_size,
-                padding=padding,
-                ignore_contigs=self._get_ignore_contigs(),
-            ):
-                if r.begin == 0:
-                    r.begin = 1
-                chrom = escape_dots_dashes(r.chrom)
-                infix = f"{chrom}-{r.begin}-{r.end}"
-                vcfs.append(f"work/{infix}/out/{infix}.call.vcf.gz")
-        yield "vcf", vcfs
-        yield "vcf_tbi", [f"{vcf}.tbi" for vcf in vcfs]
-
-    def _get_fai_path(self):
-        return self.parent.get_upstream_paths("reference").fai
-
-    def _get_ignore_contigs(self):
-        return self.config.ignore_contigs
+        return {
+            "vcf": self.gathered(self.chunk_tpl + ".vcf.gz", wildcards),
+            "vcf_tbi": self.gathered(self.chunk_tpl + ".vcf.gz.tbi", wildcards),
+        }
 
     @dictify
     def _get_output_files_concat_calls(self):
@@ -162,13 +152,6 @@ class PopDelStepPart(
 
     def _get_params_profile(self, wildcards: Wildcards) -> dict[str, Any]:
         return {"profile_regions": self.config.popdel.profile_regions}
-
-    def _get_params_call(self, wildcards: Wildcards) -> dict[str, Any]:
-        return {
-            "chrom": wildcards.chrom,
-            "begin": wildcards.begin,
-            "end": wildcards.end,
-        }
 
     def _get_params_reorder_vcf(self, wildcards: Wildcards) -> dict[str, Any]:
         """Used in Snakefile to rule ``sv_calling_wgs_popdel_reorder_vcf``"""

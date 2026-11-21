@@ -1,5 +1,8 @@
 # -*- coding: utf-8 -*-
-"""Wrapper for running "popdel call"."""
+"""Wrapper for running "popdel call" on the windows of one part of the genome.
+
+Each line of the ``region`` BED file is a padded window; popdel calls each window on its own.
+"""
 
 import tempfile
 from typing import TYPE_CHECKING
@@ -11,16 +14,6 @@ if TYPE_CHECKING:
 
 __author__ = "Manuel Holtgrewe"
 __email__ = "manuel.holtgrewe@bih-charite.de"
-
-args = getattr(snakemake.params, "args", {})
-
-
-def unescape_dots_dashes(s: str) -> str:
-    """Unescape dots and dashes from double-underscore constructs."""
-    return s.replace("__hyphen__", "-").replace("__dot__", ".").replace("__under__", "_")
-
-
-chrom = unescape_dots_dashes(args["chrom"])
 
 
 with tempfile.NamedTemporaryFile("wt") as tmpf:
@@ -36,11 +29,19 @@ for name in $(cat {tmpf.name}); do
     echo $name >> $TMPDIR/profiles.txt
 done
 
-popdel call \
-    -r {chrom}:{args[begin]}-{args[end]} \
-    -o $TMPDIR/tmp.vcf \
-    {extra_arguments} \
-    $TMPDIR/profiles.txt
+# BED windows (0-based, half-open) become popdel regions (1-based, closed)
+i=0
+while read -r chrom begin end; do
+    i=$((i + 1))
+    popdel call \
+        -r "$chrom:$((begin + 1))-$end" \
+        -o $TMPDIR/window.$i.vcf \
+        {extra_arguments} \
+        $TMPDIR/profiles.txt
+    echo $TMPDIR/window.$i.vcf >> $TMPDIR/windows.txt
+done < {snakemake.input.region}
+
+bcftools concat --file-list $TMPDIR/windows.txt -o $TMPDIR/tmp.vcf
 
 cat > $TMPDIR/header.txt << EOF
 ##INFO=<ID=SVMETHOD,Number=1,Type=String,Description="Type of approach used to detect SV">
