@@ -5,9 +5,13 @@ part (``BaseStep.wrapper_rules``), named ``<step>_<part>_<action>``.
 A step Snakefile defines ``wf`` and includes this file after its global ``wildcard_constraints``.
 It writes only the rules that these cannot express itself: containers, checkpoints, ``run:`` and
 ``shell:`` blocks, and outputs that are no dict (``RuleOptions.explicit``).
-"""
 
-for spec in wf.wrapper_rules():
+The rules are defined in functions, not in the loops: Snakemake evaluates a rule's ``wrapper:``
+expression again when a job runs, so a rule defined in a loop would run the wrapper of the loop's
+last value. snakefmt cannot parse a rule inside a function, hence the ``fmt: off`` region.
+"""
+# fmt: off
+def wrapper_rule(spec):
 
     rule:
         name:
@@ -34,7 +38,7 @@ for spec in wf.wrapper_rules():
 
 
 # Rules cached between workflows cannot have a benchmark
-for spec in wf.wrapper_rules(cached=True):
+def cached_wrapper_rule(spec):
 
     rule:
         name:
@@ -54,3 +58,11 @@ for spec in wf.wrapper_rules(cached=True):
             args=wf.get_params(spec.part, spec.action),
         wrapper:
             wf.get_wrapper(spec.part, spec.action)
+
+
+# fmt: on
+for spec in wf.wrapper_rules():
+    wrapper_rule(spec)
+
+for spec in wf.wrapper_rules(cached=True):
+    cached_wrapper_rule(spec)

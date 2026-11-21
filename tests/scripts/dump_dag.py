@@ -4,7 +4,7 @@
 For every job, the dump records the rule, wildcards, input, output and log files, evaluated
 params, threads, resources and the wrapper. It is the basis of the DAG snapshot tests in
 ``tests/snappy_pipeline/test_generated_configs_dryrun.py``. It fails if a rule with a wrapper
-has no log named ``log``.
+has no log named ``log`` or runs another wrapper than it declares.
 
 Usage: dump_dag.py --directory <project dir with config.yaml> --task <task name> --output <json>
 """
@@ -18,6 +18,7 @@ from pathlib import Path
 from typing import Any
 
 from snakemake.api import SnakemakeApi
+from snakemake.executors.local import RunArgs
 from snakemake.io import is_flagged
 from snakemake.settings.types import ConfigSettings, DAGSettings, OutputSettings, ResourceSettings
 
@@ -77,6 +78,25 @@ def _job_record(job) -> dict[str, Any]:
     return record
 
 
+def _runtime_wrapper(rule) -> str | None:
+    """Return the wrapper that the body of ``rule`` passes to ``wrapper()`` when a job runs.
+
+    Snakemake writes the ``wrapper:`` expression a second time into the rule's body, where it is
+    evaluated again at run time, so a rule defined in a loop runs the wrapper of the loop's last
+    value. ``Rule.wrapper`` holds the value of the definition, a dry run does not tell them apart.
+    """
+    seen: list[str] = []
+    namespace = rule.run_func.__globals__
+    original = namespace["wrapper"]
+    namespace["wrapper"] = lambda path, *args, **kwargs: seen.append(path)
+    try:
+        args = dict.fromkeys(RunArgs.rulefunc_args_attributes())
+        rule.run_func(**args, rule=rule.name, run_args=None)
+    finally:
+        namespace["wrapper"] = original
+    return seen[0] if seen else None
+
+
 def dump_dag(directory: Path, task: str, frozen: bool = False) -> list[dict[str, Any]]:
     """Return the job records of the DAG that ``snappy run --task <task> [--frozen]`` would build."""
     snakefile = Path(snappy_pipeline.__file__).parent / "Snakefile"
@@ -103,6 +123,13 @@ def dump_dag(directory: Path, task: str, frozen: bool = False) -> list[dict[str,
         )
         if unnamed:
             raise SystemExit(f"wrapper rules without a log named 'log': {', '.join(unnamed)}")
+        misbound = sorted(
+            f"{rule.name} runs {_runtime_wrapper(rule)}"
+            for rule in workflow.rules
+            if rule.wrapper and _runtime_wrapper(rule) != rule.wrapper
+        )
+        if misbound:
+            raise SystemExit(f"wrapper rules that run another wrapper: {', '.join(misbound)}")
     return sorted(records, key=lambda r: (r["rule"], json.dumps(r["wildcards"]), r["output"]))
 
 

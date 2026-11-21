@@ -89,7 +89,7 @@ For each action, the step part implements methods that its rule reaches through 
 The shared include `snappy_pipeline/workflows/common/wrapper_rules.rules` writes the rule of every action with a wrapper, so a step Snakefile does not:
 
 ```python
-for spec in wf.wrapper_rules():
+def wrapper_rule(spec):
 
     rule:
         name:
@@ -109,8 +109,13 @@ for spec in wf.wrapper_rules():
             args=wf.get_params(spec.part, spec.action),
         wrapper:
             wf.get_wrapper(spec.part, spec.action)
+
+
+for spec in wf.wrapper_rules():
+    wrapper_rule(spec)
 ```
 
+The rule sits in a function because Snakemake evaluates the `wrapper:` expression again when a job runs; a rule defined in the loop itself would run the wrapper of the loop's last value.
 A step Snakefile defines `wf`, includes that file and writes only the rules the include cannot express: containers, checkpoints, `run:` and `shell:` blocks.
 {ref}`dev_conventions` lists the methods and the per-action methods behind them, and the `rule_options` of a part (`localrule`, `retries`, `cache`, `wildcard_constraints`, `explicit`).
 
