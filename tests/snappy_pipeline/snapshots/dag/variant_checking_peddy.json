@@ -418,7 +418,7 @@
    "partition": "medium",
    "runtime": 120
   },
-  "rule": "variant_checking_peddy_variant_checking_qc_summary",
+  "rule": "variant_checking_peddy_variant_checking_qc_summary_run",
   "temp": [],
   "threads": 1,
   "wildcards": {},

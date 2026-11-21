@@ -1,0 +1,56 @@
+# -*- coding: utf-8 -*-
+"""The rules of the step's wrapper actions, one per action with a wrapper of every registered step
+part (``BaseStep.wrapper_rules``), named ``<step>_<part>_<action>``.
+
+A step Snakefile defines ``wf`` and includes this file after its global ``wildcard_constraints``.
+It writes only the rules that these cannot express itself: containers, checkpoints, ``run:`` and
+``shell:`` blocks, and outputs that are no dict (``RuleOptions.explicit``).
+"""
+
+for spec in wf.wrapper_rules():
+
+    rule:
+        name:
+            spec.name
+        input:
+            unpack(wf.get_input_files(spec.part, spec.action)),
+        output:
+            **wf.get_output_files(spec.part, spec.action),
+        log:
+            **wf.get_log_file(spec.part, spec.action),
+        benchmark:
+            wf.get_benchmark_file(spec.part, spec.action)
+        wildcard_constraints:
+            **spec.options.constraints,
+        retries: spec.options.retries
+        localrule: spec.options.local
+        threads: wf.get_resource(spec.part, spec.action, "threads")
+        resources:
+            **wf.get_resources(spec.part, spec.action),
+        params:
+            args=wf.get_params(spec.part, spec.action),
+        wrapper:
+            wf.get_wrapper(spec.part, spec.action)
+
+
+# Rules cached between workflows cannot have a benchmark
+for spec in wf.wrapper_rules(cached=True):
+
+    rule:
+        name:
+            spec.name
+        input:
+            unpack(wf.get_input_files(spec.part, spec.action)),
+        output:
+            **wf.get_output_files(spec.part, spec.action),
+        log:
+            **wf.get_log_file(spec.part, spec.action),
+        cache: "omit-software"
+        retries: spec.options.retries
+        threads: wf.get_resource(spec.part, spec.action, "threads")
+        resources:
+            **wf.get_resources(spec.part, spec.action),
+        params:
+            args=wf.get_params(spec.part, spec.action),
+        wrapper:
+            wf.get_wrapper(spec.part, spec.action)

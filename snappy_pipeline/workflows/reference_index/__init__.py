@@ -25,7 +25,7 @@ Rules that read the genome take its ``.fai`` and ``.dict`` from next to the FAST
 """
 
 from snappy_pipeline.utils import dictify, listify
-from snappy_pipeline.workflows.abstract import BaseStep, BaseStepPart, ResourceUsage
+from snappy_pipeline.workflows.abstract import RuleOptions, BaseStep, BaseStepPart, ResourceUsage
 from snappy_pipeline.workflows.abstract.protocol import DataSignature, DataType
 
 from .model import ReferenceIndex as ReferenceIndexConfigModel
@@ -81,6 +81,7 @@ class BwaIndexStepPart(_IndexToolStepPart):
     name = "bwa"
     actions = ("run",)
     wrappers = {"run": "reference_index/bwa"}
+    rule_options = {"run": RuleOptions(cache=True)}
     output_suffixes = (".amb", ".ann", ".bwt", ".pac", ".sa")
 
     default_resource_usage = ResourceUsage(threads=8, runtime="24h", mem="16GB")
@@ -94,6 +95,7 @@ class BwaMem2IndexStepPart(_IndexToolStepPart):
     name = "bwa_mem2"
     actions = ("run",)
     wrappers = {"run": "reference_index/bwa_mem2"}
+    rule_options = {"run": RuleOptions(cache=True)}
     output_suffixes = (".0123", ".amb", ".ann", ".bwt.2bit.64", ".pac")
 
     default_resource_usage = ResourceUsage(threads=8, runtime="24h", mem="16GB")
@@ -103,6 +105,7 @@ class BwaMem3IndexStepPart(_IndexToolStepPart):
     name = "bwa_mem3"
     actions = ("run",)
     wrappers = {"run": "reference_index/bwa_mem3"}
+    rule_options = {"run": RuleOptions(cache=True)}
     output_suffixes = (".amb", ".ann", ".bwt.2bit.64", ".pac")
 
     default_resource_usage = ResourceUsage(threads=8, runtime="24h", mem="16GB")
@@ -112,6 +115,7 @@ class Minimap2IndexStepPart(_IndexToolStepPart):
     name = "minimap2"
     actions = ("run",)
     wrappers = {"run": "reference_index/minimap2"}
+    rule_options = {"run": RuleOptions(cache=True)}
     output_suffixes = (".mmi",)
 
     default_resource_usage = ResourceUsage(threads=8, runtime="12h", mem="16GB")
@@ -121,6 +125,7 @@ class StarIndexStepPart(_IndexToolStepPart):
     name = "star"
     actions = ("run",)
     wrappers = {"run": "reference_index/star"}
+    rule_options = {"run": RuleOptions(cache=True)}
 
     @property
     def output_suffixes(self) -> tuple[str, ...]:

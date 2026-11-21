@@ -195,7 +195,7 @@
    "partition": "medium",
    "runtime": 120
   },
-  "rule": "variant_annotation_mehari_variant_annotation_calls_report",
+  "rule": "variant_annotation_mehari_variant_annotation_calls_report_run",
   "temp": [],
   "threads": 1,
   "wildcards": {
@@ -252,7 +252,7 @@
    "partition": "medium",
    "runtime": 20
   },
-  "rule": "variant_annotation_mehari_variant_annotation_mehari",
+  "rule": "variant_annotation_mehari_variant_annotation_mehari_run",
   "temp": [],
   "threads": 1,
   "wildcards": {

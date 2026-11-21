@@ -101,7 +101,7 @@
    "partition": "medium",
    "runtime": 5760
   },
-  "rule": "wgs_cnv_export_external_wgs_cnv_export_external_varfish_annotator_external_annotate_svs",
+  "rule": "wgs_cnv_export_external_wgs_cnv_export_external_varfish_annotator_external_annotate",
   "temp": [],
   "threads": 1,
   "wildcards": {

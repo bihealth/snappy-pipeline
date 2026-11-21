@@ -23,7 +23,7 @@ import os
 from snakemake.io import expand
 
 from snappy_pipeline.utils import dictify, listify
-from snappy_pipeline.workflows.abstract import BaseStep, BaseStepPart, ResourceUsage
+from snappy_pipeline.workflows.abstract import RuleOptions, BaseStep, BaseStepPart, ResourceUsage
 from snappy_pipeline.workflows.abstract.protocol import DataSignature, DataType
 from snappy_pipeline.workflows.ngs_mapping.model import ExpectedAlignments
 from snappy_pipeline.workflows.repeat_expansion.annotate_expansionhunter import (
@@ -48,6 +48,7 @@ class ExpansionHunterStepPart(BaseStepPart):
     #: Valid actions
     actions = ("run", "annotate")
     wrappers = {"run": "expansionhunter"}
+    rule_options = {"run": RuleOptions(constraints={"library_name": r"(?!annotated\.).+"})}
 
     extra_arguments_action = "run"
 

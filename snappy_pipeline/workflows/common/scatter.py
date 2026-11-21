@@ -3,6 +3,7 @@
 
 A step part that processes the genome in parallel inherits :class:`RegionScatter` before ``BaseStepPart``.
 Its ``scatter`` action splits the reference's ``.fai`` into the ``scattergather`` parts named after the step part, with the ``split_regions`` wrapper.
+The parts have about equal lengths, or, with ``scatter_window_size``, hold windows of that length, in genome order.
 The regions are written once per task below ``work/scatter/``, for all entities of the task.
 The step Snakefile declares ``scattergather: <part name>=<number of parts>``.
 """
@@ -11,7 +12,7 @@ from __future__ import annotations
 
 from typing import Any, Callable
 
-from snappy_pipeline.workflows.abstract import ResourceUsage
+from snappy_pipeline.workflows.abstract import ResourceUsage, RuleOptions
 
 
 class ScatterGather:
@@ -36,8 +37,15 @@ class RegionScatter(ScatterGather):
     #: The wrapper of the ``scatter`` action, for the step part's ``wrappers``
     scatter_wrapper = {"scatter": "split_regions"}
 
+    #: The scatter job runs on the submit node
+    rule_options = {"scatter": RuleOptions(local=True)}
+
     #: Bases added on both sides of each region; 0 keeps the regions disjoint
     scatter_padding = 0
+
+    #: The length of the windows the contigs are cut into, or None for parts of equal length;
+    #: the parts share the windows in genome order, each at least one and about equal bases
+    scatter_window_size: int | None = None
 
     scatter_resource_usage = ResourceUsage(threads=1, runtime="2m", mem="1000MB")
 
@@ -54,7 +62,10 @@ class RegionScatter(ScatterGather):
         return {"fai": self.parent.get_upstream_paths("reference").fai}
 
     def _get_params_scatter(self, wildcards) -> dict[str, Any]:
-        return {"ignore_contigs": self.scatter_ignore_contigs(), "padding": self.scatter_padding}
+        params = {"ignore_contigs": self.scatter_ignore_contigs(), "padding": self.scatter_padding}
+        if self.scatter_window_size:
+            params["window_size"] = self.scatter_window_size
+        return params
 
     def _get_output_files_scatter(self) -> dict[str, Any]:
         return {"regions": self._scattergather("scatter")(self.region_tpl)}

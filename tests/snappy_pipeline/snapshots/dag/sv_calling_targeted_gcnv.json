@@ -47,7 +47,7 @@
    "partition": "medium",
    "runtime": 1440
   },
-  "rule": "gcnv_model_targeted_gcnv_model_annotate_gc",
+  "rule": "gcnv_model_targeted_gcnv_model_gcnv_annotate_gc",
   "temp": [
    "tasks/gcnv_model_targeted/work/MedExome/out/MedExome.annotate_gc.tsv"
   ],
@@ -86,7 +86,7 @@
    "partition": "medium",
    "runtime": 1440
   },
-  "rule": "gcnv_model_targeted_gcnv_model_coverage",
+  "rule": "gcnv_model_targeted_gcnv_model_gcnv_coverage",
   "temp": [
    "tasks/gcnv_model_targeted/work/case001subregion-N1-DNA1-WES1/out/case001subregion-N1-DNA1-WES1.coverage.tsv"
   ],
@@ -126,7 +126,7 @@
    "partition": "medium",
    "runtime": 1440
   },
-  "rule": "gcnv_model_targeted_gcnv_model_filter_intervals",
+  "rule": "gcnv_model_targeted_gcnv_model_gcnv_filter_intervals",
   "temp": [
    "tasks/gcnv_model_targeted/work/MedExome/out/MedExome.filter_intervals.interval_list"
   ],
@@ -164,7 +164,7 @@
    "partition": "medium",
    "runtime": 1440
   },
-  "rule": "gcnv_model_targeted_gcnv_model_preprocess_intervals",
+  "rule": "gcnv_model_targeted_gcnv_model_gcnv_preprocess_intervals",
   "temp": [],
   "threads": 1,
   "wildcards": {

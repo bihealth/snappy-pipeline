@@ -247,7 +247,7 @@
    "partition": "medium",
    "runtime": 1440
   },
-  "rule": "variant_annotation_vep_variant_annotation_vep",
+  "rule": "variant_annotation_vep_variant_annotation_vep_run",
   "temp": [],
   "threads": 1,
   "wildcards": {

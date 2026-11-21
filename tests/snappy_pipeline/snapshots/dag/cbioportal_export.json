@@ -78,12 +78,167 @@
     }
    }
   },
-  "resources": {},
-  "rule": "cbioportal_export_cbioportal_export_case_lists",
+  "resources": {
+   "mem": "2 GB",
+   "mem_mb": 2000,
+   "mem_mib": 1908,
+   "partition": "medium",
+   "runtime": 60
+  },
+  "rule": "cbioportal_export_cbioportal_export_cbioportal_case_lists_run",
   "temp": [],
   "threads": 1,
   "wildcards": {},
   "wrapper": "file://<repo>/snappy_wrappers/wrappers/cbioportal/case_lists"
+ },
+ {
+  "benchmark": "tasks/cbioportal_export/benchmarks/cbioportal_clinical_data.run.tsv",
+  "input": [],
+  "local": true,
+  "log": [
+   "tasks/cbioportal_export/work/log/cbioportal_clinical_data.run.log"
+  ],
+  "output": [
+   "tasks/cbioportal_export/work/upload/data_clinical_patient.txt",
+   "tasks/cbioportal_export/work/upload/data_clinical_sample.txt"
+  ],
+  "params": {
+   "args": {
+    "code": "<hash>",
+    "config": {
+     "background_selection": null,
+     "copy_number_alteration": {
+      "enabled": true
+     },
+     "delete_intermediates": [
+      "intermediates"
+     ],
+     "depends_on": {
+      "alignments": "",
+      "copy_number": "somatic_wgs_cnv_calling_cnvkit",
+      "features": "features",
+      "variants": "variant_annotation_pvactools"
+     },
+     "exclude_variant_with_flag": "",
+     "expression": {
+      "enabled": false
+     },
+     "group_by": null,
+     "job_group": null,
+     "library_selection": null,
+     "relationships": null,
+     "sample_info": {},
+     "study": {
+      "cancer_study_id": "AUTO",
+      "reference_genome": "hg19",
+      "study_description": "AUTO",
+      "study_name": "AUTO",
+      "study_name_short": "AUTO",
+      "type_of_cancer": "AUTO"
+     },
+     "vcf2maf": {
+      "Center": "AUTO",
+      "extra_arguments": [],
+      "ncbi_build": "GRCh37"
+     }
+    },
+    "donors": {
+     "case001subregion": {
+      "case001subregion-T1": {
+       "DNA": "case001subregion-T1-DNA1-WES1"
+      }
+     }
+    }
+   }
+  },
+  "resources": {
+   "mem": "2 GB",
+   "mem_mb": 2000,
+   "mem_mib": 1908,
+   "partition": "medium",
+   "runtime": 60
+  },
+  "rule": "cbioportal_export_cbioportal_export_cbioportal_clinical_data_run",
+  "temp": [],
+  "threads": 1,
+  "wildcards": {},
+  "wrapper": "file://<repo>/snappy_wrappers/wrappers/cbioportal/clinical_data"
+ },
+ {
+  "benchmark": "tasks/cbioportal_export/benchmarks/cna/case001subregion-T1-DNA1-WES1/case001subregion-T1-DNA1-WES1.tsv",
+  "input": [
+   "<repo>/.tests/test-workflow/resources/refs/subregion.fa",
+   "tasks/somatic_wgs_cnv_calling_cnvkit/work/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1.dnacopy.seg"
+  ],
+  "log": [
+   "tasks/cbioportal_export/work/cna/case001subregion-T1-DNA1-WES1/log/case001subregion-T1-DNA1-WES1.log"
+  ],
+  "output": [
+   "tasks/cbioportal_export/work/cna/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1.cna"
+  ],
+  "params": {
+   "args": {
+    "code": "<hash>",
+    "pipeline_id": "ENSEMBL"
+   }
+  },
+  "resources": {
+   "mem": "8.19 GB",
+   "mem_mb": 8192,
+   "mem_mib": 7813,
+   "partition": "medium",
+   "runtime": 120
+  },
+  "rule": "cbioportal_export_cbioportal_export_cbioportal_cns2cna_run",
+  "temp": [
+   "tasks/cbioportal_export/work/cna/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1.cna"
+  ],
+  "threads": 1,
+  "wildcards": {
+   "tumor_library": "case001subregion-T1-DNA1-WES1"
+  },
+  "wrapper": "file://<repo>/snappy_wrappers/wrappers/cbioportal/generate_cna"
+ },
+ {
+  "benchmark": "tasks/cbioportal_export/benchmarks/maf/case001subregion-T1-DNA1-WES1/case001subregion-T1-DNA1-WES1.tsv",
+  "input": [
+   "tasks/variant_annotation_pvactools/work/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1.vcf.gz"
+  ],
+  "log": [
+   "tasks/cbioportal_export/work/maf/case001subregion-T1-DNA1-WES1/log/case001subregion-T1-DNA1-WES1.log"
+  ],
+  "output": [
+   "tasks/cbioportal_export/work/maf/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1.maf"
+  ],
+  "params": {
+   "args": {
+    "Center": "AUTO",
+    "code": "<hash>",
+    "extra_arguments": [],
+    "ncbi_build": "GRCh37",
+    "normal_id": "case001subregion-N1",
+    "normal_sample": "case001subregion-N1-DNA1-WES1",
+    "somatic_variant_annotation_tool": "vep",
+    "tumor_id": "case001subregion-T1",
+    "tumor_sample": "case001subregion-T1-DNA1-WES1"
+   }
+  },
+  "resources": {
+   "mem": "5.12 GB",
+   "mem_mb": 5120,
+   "mem_mib": 4883,
+   "partition": "medium",
+   "runtime": 120
+  },
+  "rule": "cbioportal_export_cbioportal_export_cbioportal_vcf2maf_run",
+  "temp": [
+   "tasks/cbioportal_export/work/maf/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1.maf"
+  ],
+  "threads": 1,
+  "wildcards": {
+   "tumor_library": "case001subregion-T1-DNA1-WES1"
+  },
+  "wrapper": "file://<repo>/snappy_wrappers/wrappers/vcf2maf/vcf_to_table"
  },
  {
   "benchmark": "tasks/cbioportal_export/benchmarks/cbioportal_cna.gistic.tsv",
@@ -214,82 +369,6 @@
   "wrapper": "file://<repo>/snappy_wrappers/wrappers/cbioportal/merge_tables"
  },
  {
-  "benchmark": "tasks/cbioportal_export/benchmarks/cna/case001subregion-T1-DNA1-WES1/case001subregion-T1-DNA1-WES1.tsv",
-  "input": [
-   "<repo>/.tests/test-workflow/resources/refs/subregion.fa",
-   "tasks/somatic_wgs_cnv_calling_cnvkit/work/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1.dnacopy.seg"
-  ],
-  "log": [
-   "tasks/cbioportal_export/work/cna/case001subregion-T1-DNA1-WES1/log/case001subregion-T1-DNA1-WES1.log"
-  ],
-  "output": [
-   "tasks/cbioportal_export/work/cna/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1.cna"
-  ],
-  "params": {
-   "args": {
-    "code": "<hash>",
-    "pipeline_id": "ENSEMBL"
-   }
-  },
-  "resources": {
-   "mem": "8.19 GB",
-   "mem_mb": 8192,
-   "mem_mib": 7813,
-   "partition": "medium",
-   "runtime": 120
-  },
-  "rule": "cbioportal_export_cbioportal_export_generate_cna",
-  "temp": [
-   "tasks/cbioportal_export/work/cna/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1.cna"
-  ],
-  "threads": 1,
-  "wildcards": {
-   "tumor_library": "case001subregion-T1-DNA1-WES1"
-  },
-  "wrapper": "file://<repo>/snappy_wrappers/wrappers/cbioportal/generate_cna"
- },
- {
-  "benchmark": "tasks/cbioportal_export/benchmarks/maf/case001subregion-T1-DNA1-WES1/case001subregion-T1-DNA1-WES1.tsv",
-  "input": [
-   "tasks/variant_annotation_pvactools/work/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1.vcf.gz"
-  ],
-  "log": [
-   "tasks/cbioportal_export/work/maf/case001subregion-T1-DNA1-WES1/log/case001subregion-T1-DNA1-WES1.log"
-  ],
-  "output": [
-   "tasks/cbioportal_export/work/maf/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1.maf"
-  ],
-  "params": {
-   "args": {
-    "Center": "AUTO",
-    "code": "<hash>",
-    "extra_arguments": [],
-    "ncbi_build": "GRCh37",
-    "normal_id": "case001subregion-N1",
-    "normal_sample": "case001subregion-N1-DNA1-WES1",
-    "somatic_variant_annotation_tool": "vep",
-    "tumor_id": "case001subregion-T1",
-    "tumor_sample": "case001subregion-T1-DNA1-WES1"
-   }
-  },
-  "resources": {
-   "mem": "5.12 GB",
-   "mem_mb": 5120,
-   "mem_mib": 4883,
-   "partition": "medium",
-   "runtime": 120
-  },
-  "rule": "cbioportal_export_cbioportal_export_generate_mafs",
-  "temp": [
-   "tasks/cbioportal_export/work/maf/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1.maf"
-  ],
-  "threads": 1,
-  "wildcards": {
-   "tumor_library": "case001subregion-T1-DNA1-WES1"
-  },
-  "wrapper": "file://<repo>/snappy_wrappers/wrappers/vcf2maf/vcf_to_table"
- },
- {
   "benchmark": "tasks/cbioportal_export/benchmarks/cbioportal_meta_files.run.tsv",
   "input": [],
   "local": true,
@@ -322,73 +401,6 @@
   "threads": 1,
   "wildcards": {},
   "wrapper": "file://<repo>/snappy_wrappers/wrappers/cbioportal/meta_files"
- },
- {
-  "benchmark": "tasks/cbioportal_export/benchmarks/cbioportal_clinical_data.run.tsv",
-  "input": [],
-  "local": true,
-  "log": [
-   "tasks/cbioportal_export/work/log/cbioportal_clinical_data.run.log"
-  ],
-  "output": [
-   "tasks/cbioportal_export/work/upload/data_clinical_patient.txt",
-   "tasks/cbioportal_export/work/upload/data_clinical_sample.txt"
-  ],
-  "params": {
-   "args": {
-    "code": "<hash>",
-    "config": {
-     "background_selection": null,
-     "copy_number_alteration": {
-      "enabled": true
-     },
-     "delete_intermediates": [
-      "intermediates"
-     ],
-     "depends_on": {
-      "alignments": "",
-      "copy_number": "somatic_wgs_cnv_calling_cnvkit",
-      "features": "features",
-      "variants": "variant_annotation_pvactools"
-     },
-     "exclude_variant_with_flag": "",
-     "expression": {
-      "enabled": false
-     },
-     "group_by": null,
-     "job_group": null,
-     "library_selection": null,
-     "relationships": null,
-     "sample_info": {},
-     "study": {
-      "cancer_study_id": "AUTO",
-      "reference_genome": "hg19",
-      "study_description": "AUTO",
-      "study_name": "AUTO",
-      "study_name_short": "AUTO",
-      "type_of_cancer": "AUTO"
-     },
-     "vcf2maf": {
-      "Center": "AUTO",
-      "extra_arguments": [],
-      "ncbi_build": "GRCh37"
-     }
-    },
-    "donors": {
-     "case001subregion": {
-      "case001subregion-T1": {
-       "DNA": "case001subregion-T1-DNA1-WES1"
-      }
-     }
-    }
-   }
-  },
-  "resources": {},
-  "rule": "cbioportal_export_cbioportal_export_patient_data",
-  "temp": [],
-  "threads": 1,
-  "wildcards": {},
-  "wrapper": "file://<repo>/snappy_wrappers/wrappers/cbioportal/clinical_data"
  },
  {
   "benchmark": null,
@@ -2299,7 +2311,7 @@
    "partition": "medium",
    "runtime": 1440
   },
-  "rule": "variant_annotation_pvactools_variant_annotation_vep",
+  "rule": "variant_annotation_pvactools_variant_annotation_vep_run",
   "temp": [],
   "threads": 1,
   "wildcards": {

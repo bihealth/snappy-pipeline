@@ -233,12 +233,19 @@ The temporary directory of the jobs is `resources.tmpdir` of the project config 
 `homologous_recombination_deficiency` has no `scarHRD.length` and no `depends_on.reference` anymore; scarHRD read neither, only the `seqz` file of the copy number task.
 `somatic_msi_calling` leaves out tumor libraries without a matched normal, with a warning, since MANTIS2 needs the normal.
 
+The rules of the wrapper actions are generated from the step parts and named `<task>_<step>_<part>_<action>`, for example `calling_variant_calling_mutect2_run`; a rule that main named differently (`variant_annotation_vep`, `somatic_msi_calling_mantis_msi2`) now carries its action, so `--until`, `--omit-from` and `--allowed-rules` arguments need the new names.
+
 Profiles are now passed via `--workflow-profile`, which is the recommended approach in Snakemake 9.
 Multiple `--workflow-profile` arguments are layered (later profiles override earlier ones), so the default profile is applied first and the SLURM profile overrides only what it needs to.
 
 `somatic_targeted_seq_cnv_calling` with `tool: purecn` lost `purecn.genome_name` and `purecn.seed`: its PureCN jobs take those of the panel of normals task, like its image.
 `somatic_targeted_seq_cnv_calling` lost `purecn.enrichment_kit_name`, which no wrapper read.
 The `cnvkit` section of `panel_of_normals` lost `genemetrics`, `segmetrics`, `breaks` and `drop_low_coverage`, which the panel report never read.
+
+`sv_calling_wgs` with `tool: popdel` calls with Snakemake's scatter-gather (main: one job per window, with the windows read from the `.fai` when Snakemake built the DAG).
+The windows stay the same: each contig that `ignore_contigs` keeps is cut into windows of `popdel.window_size` bases (10 Mbp) from its start, and each window is padded by `popdel.max_sv_size` bases (20 kbp) on both sides, within its contig.
+The new `popdel.num_jobs` (24) jobs share the windows in genome order, each at least one window and about equal bases, and call them one after the other; a reference with fewer windows than jobs is an error.
+Except at the start of a contig, popdel's region of a window starts one base later than on main, at the first base of the padded window (main passed the 0-based start as the 1-based one), so calls within `popdel.max_sv_size` of a window edge can differ from main.
 
 ## Snakemake 7 to Snakemake 9
 

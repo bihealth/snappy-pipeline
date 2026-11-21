@@ -18,6 +18,47 @@
   "wrapper": null
  },
  {
+  "benchmark": "tasks/create_proteome/benchmarks/PAT_case001subregion/PAT_case001subregion.tsv",
+  "input": [
+   "<repo>/.tests/test-workflow/resources/refs/subregion.fa",
+   "<repo>/.tests/test-workflow/resources/refs/subregion.fa.fai",
+   "<repo>/.tests/test-workflow/resources/refs/subregion.dict",
+   "<repo>/.tests/test-workflow/resources/refs/subregion.fa",
+   "tasks/variant_annotation_vep/work/PAT_case001subregion/out/PAT_case001subregion.vcf.gz"
+  ],
+  "log": [
+   "tasks/create_proteome/work/PAT_case001subregion/log/PAT_case001subregion.log",
+   "tasks/create_proteome/work/PAT_case001subregion/log/PAT_case001subregion.log.md5",
+   "tasks/create_proteome/work/PAT_case001subregion/log/PAT_case001subregion.conda_list.txt",
+   "tasks/create_proteome/work/PAT_case001subregion/log/PAT_case001subregion.conda_list.txt.md5",
+   "tasks/create_proteome/work/PAT_case001subregion/log/PAT_case001subregion.conda_info.txt",
+   "tasks/create_proteome/work/PAT_case001subregion/log/PAT_case001subregion.conda_info.txt.md5"
+  ],
+  "output": [
+   "tasks/create_proteome/work/PAT_case001subregion/out/PAT_case001subregion.fa.gz"
+  ],
+  "params": {
+   "args": {
+    "add_reference": false,
+    "code": "<hash>"
+   }
+  },
+  "resources": {
+   "mem": "4 GB",
+   "mem_mb": 4000,
+   "mem_mib": 3815,
+   "partition": "medium",
+   "runtime": 240
+  },
+  "rule": "create_proteome_create_proteome_create_proteome_run",
+  "temp": [],
+  "threads": 1,
+  "wildcards": {
+   "library_name": "PAT_case001subregion"
+  },
+  "wrapper": "file://<repo>/snappy_wrappers/wrappers/pvactools/create_proteome"
+ },
+ {
   "benchmark": null,
   "input": [
    "tasks/create_proteome/work/PAT_case001subregion/log/PAT_case001subregion.log"
@@ -104,47 +145,6 @@
    "path": "PAT_case001subregion/out"
   },
   "wrapper": null
- },
- {
-  "benchmark": "tasks/create_proteome/benchmarks/PAT_case001subregion/PAT_case001subregion.tsv",
-  "input": [
-   "<repo>/.tests/test-workflow/resources/refs/subregion.fa",
-   "<repo>/.tests/test-workflow/resources/refs/subregion.fa.fai",
-   "<repo>/.tests/test-workflow/resources/refs/subregion.dict",
-   "<repo>/.tests/test-workflow/resources/refs/subregion.fa",
-   "tasks/variant_annotation_vep/work/PAT_case001subregion/out/PAT_case001subregion.vcf.gz"
-  ],
-  "log": [
-   "tasks/create_proteome/work/PAT_case001subregion/log/PAT_case001subregion.log",
-   "tasks/create_proteome/work/PAT_case001subregion/log/PAT_case001subregion.log.md5",
-   "tasks/create_proteome/work/PAT_case001subregion/log/PAT_case001subregion.conda_list.txt",
-   "tasks/create_proteome/work/PAT_case001subregion/log/PAT_case001subregion.conda_list.txt.md5",
-   "tasks/create_proteome/work/PAT_case001subregion/log/PAT_case001subregion.conda_info.txt",
-   "tasks/create_proteome/work/PAT_case001subregion/log/PAT_case001subregion.conda_info.txt.md5"
-  ],
-  "output": [
-   "tasks/create_proteome/work/PAT_case001subregion/out/PAT_case001subregion.fa.gz"
-  ],
-  "params": {
-   "args": {
-    "add_reference": false,
-    "code": "<hash>"
-   }
-  },
-  "resources": {
-   "mem": "4 GB",
-   "mem_mb": 4000,
-   "mem_mib": 3815,
-   "partition": "medium",
-   "runtime": 240
-  },
-  "rule": "create_proteome_create_proteome_run",
-  "temp": [],
-  "threads": 1,
-  "wildcards": {
-   "library_name": "PAT_case001subregion"
-  },
-  "wrapper": "file://<repo>/snappy_wrappers/wrappers/pvactools/create_proteome"
  },
  {
   "benchmark": "tasks/ngs_mapping_bwa/benchmarks/case001subregion-N1-DNA1-WES1/case001subregion-N1-DNA1-WES1.mapping.tsv",
@@ -308,7 +308,7 @@
    "partition": "medium",
    "runtime": 1440
   },
-  "rule": "variant_annotation_vep_variant_annotation_vep",
+  "rule": "variant_annotation_vep_variant_annotation_vep_run",
   "temp": [],
   "threads": 1,
   "wildcards": {

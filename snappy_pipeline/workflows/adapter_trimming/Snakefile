@@ -10,52 +10,5 @@ __author__ = "Eric Blanc <eric.blanc@bihealth.de>"
 
 wf = task_instance(config["__task_name__"])
 
-# Rules =======================================================================
 
-
-# Adapter trimming ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-# bbduk -----------------------------------------------------------------------
-
-
-if wf.config.tool == "bbduk":
-
-    rule adapter_trimming_bbduk_run:
-        input:
-            unpack(wf.get_input_files("bbduk", "run")),
-        output:
-            **wf.get_output_files("bbduk", "run"),
-        log:
-            **wf.get_log_file("bbduk", "run"),
-        benchmark:
-            wf.get_benchmark_file("bbduk", "run")
-        threads: wf.get_resource("bbduk", "run", "threads")
-        resources:
-            **wf.get_resources("bbduk", "run"),
-        params:
-            args=wf.get_params("bbduk", "run"),
-        wrapper:
-            wf.get_wrapper("bbduk", "run")
-
-
-# fastp -----------------------------------------------------------------------
-
-
-if wf.config.tool == "fastp":
-
-    rule adapter_trimming_fastp_run:
-        input:
-            unpack(wf.get_input_files("fastp", "run")),
-        output:
-            **wf.get_output_files("fastp", "run"),
-        log:
-            **wf.get_log_file("fastp", "run"),
-        benchmark:
-            wf.get_benchmark_file("fastp", "run")
-        threads: wf.get_resource("fastp", "run", "threads")
-        resources:
-            **wf.get_resources("fastp", "run"),
-        params:
-            args=wf.get_params("fastp", "run"),
-        wrapper:
-            wf.get_wrapper("fastp", "run")
+include: "../common/wrapper_rules.rules"

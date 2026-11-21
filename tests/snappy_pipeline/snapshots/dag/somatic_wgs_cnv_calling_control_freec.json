@@ -355,7 +355,7 @@
    "partition": "medium",
    "runtime": 2400
   },
-  "rule": "somatic_wgs_cnv_calling_control_freec_somatic_wgs_cnv_calling_control_freec_transform_output",
+  "rule": "somatic_wgs_cnv_calling_control_freec_somatic_wgs_cnv_calling_control_freec_transform",
   "temp": [
    "tasks/somatic_wgs_cnv_calling_control_freec/work/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1.cnr",
    "tasks/somatic_wgs_cnv_calling_control_freec/work/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1.cns"

@@ -10,47 +10,5 @@ __author__ = "Manuel Holtgrewe <manuel.holtgrewe@bihealth.de>"
 
 wf = task_instance(config["__task_name__"])
 
-# Rules =======================================================================
 
-
-# House-Keeping ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-# Somatic Gene Fusion Calling ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-if str(wf.config.tool) == "star_fusion":
-
-    rule somatic_gene_fusion_calling_star_fusion_run:
-        input:
-            unpack(wf.get_input_files("star_fusion", "run")),
-        output:
-            **wf.get_output_files("star_fusion", "run"),
-        log:
-            **wf.get_log_file("star_fusion", "run"),
-        benchmark:
-            wf.get_benchmark_file("star_fusion", "run")
-        threads: wf.get_resource("star_fusion", "run", "threads")
-        resources:
-            **wf.get_resources("star_fusion", "run"),
-        params:
-            args=wf.get_params("star_fusion", "run"),
-        wrapper:
-            wf.get_wrapper("star_fusion", "run")
-
-elif str(wf.config.tool) == "arriba":
-
-    rule somatic_gene_fusion_calling_arriba_run:
-        input:
-            unpack(wf.get_input_files("arriba", "run")),
-        output:
-            **wf.get_output_files("arriba", "run"),
-        log:
-            **wf.get_log_file("arriba", "run"),
-        benchmark:
-            wf.get_benchmark_file("arriba", "run")
-        threads: wf.get_resource("arriba", "run", "threads")
-        resources:
-            **wf.get_resources("arriba", "run"),
-        params:
-            args=wf.get_params("arriba", "run"),
-        wrapper:
-            wf.get_wrapper("arriba", "run")
+include: "../common/wrapper_rules.rules"

@@ -355,7 +355,6 @@ class BcftoolsCallStepPart(VariantCallingStepPart):
     def _get_input_files_run(self, wildcards: Wildcards) -> SnakemakeDictItemsGenerator:
         yield from super()._get_input_files_run(wildcards).items()
         yield from self.parent.reference_inputs().items()
-        yield "reference_index", self.parent.get_upstream_paths("reference").fai
 
     def _get_params_run(self, wildcards) -> dict[str, Any]:
         """The options of the section; ``assembly`` names the ploidy of ``bcftools call``"""
@@ -670,14 +669,22 @@ class Mutect2StepPart(RegionScatter, BaseStepPart):
         "pileup_normal",
         "pileup_tumor",
     )
-    wrappers = RegionScatter.scatter_wrapper | {
-        "filter": "mutect2/filter",
-        "gather": "mutect2/gather",
-        "run": "mutect2/run",
-        "contamination": "mutect2/contamination",
-        "pileup_tumor": "mutect2/pileup",
-        "pileup_normal": "mutect2/pileup",
-    }
+
+    @property
+    def wrappers(self) -> dict[str, str]:
+        """The contamination estimate and its pileups run only when ``contamination`` is enabled"""
+        wrappers = RegionScatter.scatter_wrapper | {
+            "filter": "mutect2/filter",
+            "gather": "mutect2/gather",
+            "run": "mutect2/run",
+        }
+        if self.config.mutect2.contamination.enabled:
+            wrappers |= {
+                "contamination": "mutect2/contamination",
+                "pileup_tumor": "mutect2/pileup",
+                "pileup_normal": "mutect2/pileup",
+            }
+        return wrappers
 
     #: The sub-sections ``filtration`` and ``contamination`` hold the arguments of the other
     #: GATK actions

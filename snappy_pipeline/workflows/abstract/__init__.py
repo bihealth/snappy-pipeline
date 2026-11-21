@@ -10,7 +10,7 @@ import re
 import tempfile
 import typing
 from collections.abc import Mapping
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from fnmatch import fnmatch
 from functools import cached_property, wraps
 from typing import Any, Callable
@@ -78,6 +78,32 @@ class ReportOutput:
     patterns: tuple[str, ...] = ()
 
 
+@dataclass(frozen=True)
+class RuleOptions:
+    """The directives of a generated wrapper rule beyond the standard ones (``BaseStep.wrapper_rules``)"""
+
+    #: ``localrule: True``: the job runs on the submit node
+    local: bool = False
+    #: ``retries``: how often a failed job is restarted (network access)
+    retries: int = 0
+    #: ``cache: "omit-software"``: the output is cached between workflows; such a rule has no benchmark
+    cache: bool = False
+    #: ``wildcard_constraints`` of the rule
+    constraints: dict[str, str] = field(default_factory=dict)
+    #: The step Snakefile writes the rule itself (a container, a checkpoint, an output that is no dict)
+    explicit: bool = False
+
+
+@dataclass(frozen=True)
+class WrapperRule:
+    """One generated wrapper rule: its name, the step part and action it wires, and its options"""
+
+    name: str
+    part: str
+    action: str
+    options: RuleOptions
+
+
 class BaseStepPart:
     """Base class for a part of a pipeline step"""
 
@@ -108,9 +134,13 @@ class BaseStepPart:
     entity_wildcard: str = "library_name"
 
     #: The wrapper of each action that runs one, as a path below ``snappy_wrappers/wrappers``;
-    #: a property where the config picks it. The rule's ``wrapper:`` is ``wf.get_wrapper(...)``,
+    #: a property where the config picks it. The shared include ``common/wrapper_rules.rules``
+    #: writes the rule of each of them (``BaseStep.wrapper_rules``) with ``wf.get_wrapper(...)``,
     #: and the hash of the wrapper's code is the ``code`` param of the rule (its rerun trigger).
     wrappers: dict[str, str] = {}
+
+    #: The directives of the generated rules beyond the standard ones, by action (``RuleOptions``)
+    rule_options: dict[str, RuleOptions] = {}
 
     #: The action whose command gets the ``extra_arguments`` of the tool section; ``None``: the
     #: only action
@@ -252,13 +282,19 @@ class BaseStepPart:
         return {}
 
     def get_input_files(self, action: str) -> Callable[[Wildcards], Inputs]:
-        """Return the input function of the given action: ``self._get_input_files_<action>``
+        """Return the input function of the given action: ``self._get_input_files_<action>``, or
+        ``_no_inputs`` for an action without inputs.
 
         The function takes ``wildcards`` and returns a dict (named inputs, used with
         ``unpack()``), a list or a single path.
         """
         self._validate_action(action)
-        return getattr(self, f"_get_input_files_{action}")
+        return getattr(self, f"_get_input_files_{action}", self._no_inputs)
+
+    @staticmethod
+    def _no_inputs(wildcards) -> list[str]:
+        """The inputs of an action that has none"""
+        return []
 
     def get_output_files(self, action: str) -> Outputs:
         """Return the output files of an action: ``self._get_output_files_<action>()``."""
@@ -1040,23 +1076,33 @@ class BaseStep:
 
     def library_warnings(self) -> list[str]:
         """Return warnings about the libraries of this task, which the main Snakefile prints once
-        per run: by default, the cancer libraries without a matched normal that a task with
-        ``MATCHED_NORMAL_REQUIREMENT`` leaves out."""
-        if self.task_library_requirement(self.config) != MATCHED_NORMAL_REQUIREMENT:
+        per run: the cancer libraries without a matched normal that a task with
+        ``MATCHED_NORMAL_REQUIREMENT`` leaves out, and the libraries of an explicit
+        ``library_selection`` that the step's ``library_requirement`` leaves out."""
+        requirement = self.task_library_requirement(self.config)
+        if not requirement:
             return []
+        warnings = []
         df = self.build_library_dataframe(include_background=self.background_results)
         selection = getattr(self.config, "library_selection", None)
-        default = self.task_library_default(self.config)
-        cancer = select_libraries(df, selection, default, "kind == 'cancer'")
-        if cancer.empty:
-            return []
-        unpaired = sorted(set(cancer["library_name"]) - set(self.libraries["library_name"]))
-        if not unpaired:
-            return []
-        return [
-            f"Task {self.task_name!r} leaves out the libraries without a matched normal: "
-            + ", ".join(unpaired)
-        ]
+        taken = set(self.libraries["library_name"])
+        if requirement == MATCHED_NORMAL_REQUIREMENT:
+            default = self.task_library_default(self.config)
+            cancer = select_libraries(df, selection, default, "kind == 'cancer'")
+            if unpaired := sorted(set(cancer["library_name"]) - taken):
+                warnings.append(
+                    f"Task {self.task_name!r} leaves out the libraries without a matched normal: "
+                    + ", ".join(unpaired)
+                )
+                taken |= set(unpaired)
+        if selection:
+            selected = set(select_libraries(df, selection)["library_name"])
+            if dropped := sorted(selected - taken):
+                warnings.append(
+                    f"Task {self.task_name!r} cannot process these libraries of its "
+                    f"library_selection ({requirement}): " + ", ".join(dropped)
+                )
+        return warnings
 
     def check_config(self):
         """Check the configuration against the sample sheets at setup; raise ``ConfigError`` on
@@ -1375,6 +1421,23 @@ class BaseStep:
     def get_log_file(self, sub_step: str, action: str) -> Outputs:
         """Return the log files of a rule, for ``log: **wf.get_log_file(...)``"""
         return self._get_sub_step(sub_step).get_log_file(action)
+
+    def wrapper_rules(self, cached: bool = False) -> list[WrapperRule]:
+        """Return the rules that the shared include ``common/wrapper_rules.rules`` writes: one per
+        action with a wrapper of every registered step part, named ``<step>_<part>_<action>``,
+        unless the part marks it ``explicit``; ``cached`` selects the rules cached between
+        workflows, which have no benchmark."""
+        rules = []
+        for part in self.sub_steps.values():
+            for action in part.actions:
+                if action not in part.wrappers:
+                    continue
+                options = part.rule_options.get(action, RuleOptions())
+                if options.explicit or options.cache != cached:
+                    continue
+                name = f"{self.step_name}_{part.name}_{action}"
+                rules.append(WrapperRule(name, part.name, action, options))
+        return rules
 
     def get_wrapper(self, sub_step: str, action: str) -> str:
         """Return the wrapper of a rule as a ``file://`` URL: the step part's ``wrappers[action]``"""

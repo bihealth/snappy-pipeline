@@ -9,8 +9,6 @@ wf = task_instance(config["__task_name__"])
 tool = str(wf.config.tool)
 
 
-# Rules =======================================================================
-
-
+include: "../common/wrapper_rules.rules"
 # The rules of the tools of both SV calling steps
 include: "../common/sv_calling.rules"

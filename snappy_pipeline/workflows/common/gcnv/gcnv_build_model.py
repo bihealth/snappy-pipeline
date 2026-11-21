@@ -4,6 +4,7 @@
 from snakemake.io import directory, expand, touch
 
 from snappy_pipeline.utils import dictify, listify
+from snappy_pipeline.workflows.abstract import RuleOptions
 from snappy_pipeline.workflows.common.gcnv.gcnv_common import GcnvCommonStepPart
 
 
@@ -196,6 +197,12 @@ class BuildGcnvModelStepPart(
         "call_cnvs",
         "post_germline_calls",
     )
+    #: The Snakefile writes the scatter_intervals checkpoint itself, and post_germline_calls, whose
+    #: input function needs the checkpoints object
+    rule_options = {
+        "scatter_intervals": RuleOptions(explicit=True),
+        "post_germline_calls": RuleOptions(explicit=True),
+    }
 
     #: The preprocessed interval list is no intermediate: the callers of the model read it
     intermediate_outputs = {

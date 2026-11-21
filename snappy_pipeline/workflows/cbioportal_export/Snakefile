@@ -10,11 +10,12 @@ __author__ = "Clemens Messerschmidt"
 
 wf = task_instance(config["__task_name__"])
 
+
+include: "../common/wrapper_rules.rules"
+
+
 step_config = wf.get_task_config("cbioportal_export")
 exclude_flag = step_config.exclude_variant_with_flag
-
-
-# Rules =======================================================================
 
 
 # cbioportal study metadata ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -32,60 +33,6 @@ rule cbioportal_export_meta_files:
         args=wf.get_params("cbioportal_meta_files", "run"),
     wrapper:
         wf.get_wrapper("cbioportal_meta_files", "run")
-
-
-# cbioportal patient and sample data ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-
-rule cbioportal_export_patient_data:
-    output:
-        **wf.get_output_files("cbioportal_clinical_data", "run"),
-    log:
-        **wf.get_log_file("cbioportal_clinical_data", "run"),
-    benchmark:
-        wf.get_benchmark_file("cbioportal_clinical_data", "run")
-    localrule: True
-    params:
-        args=wf.get_params("cbioportal_clinical_data", "run"),
-    wrapper:
-        wf.get_wrapper("cbioportal_clinical_data", "run")
-
-
-rule cbioportal_export_case_lists:
-    output:
-        **wf.get_output_files("cbioportal_case_lists", "run"),
-    log:
-        **wf.get_log_file("cbioportal_case_lists", "run"),
-    benchmark:
-        wf.get_benchmark_file("cbioportal_case_lists", "run")
-    localrule: True
-    params:
-        args=wf.get_params("cbioportal_case_lists", "run"),
-    wrapper:
-        wf.get_wrapper("cbioportal_case_lists", "run")
-
-
-# Mutation file (data_mutation_extended.txt) ==================================
-
-# Create MAF ------------------------------------------------------------------
-
-
-rule cbioportal_export_generate_mafs:
-    input:
-        unpack(wf.get_input_files("cbioportal_vcf2maf", "run")),
-    output:
-        **wf.get_output_files("cbioportal_vcf2maf", "run"),
-    log:
-        **wf.get_log_file("cbioportal_vcf2maf", "run"),
-    benchmark:
-        wf.get_benchmark_file("cbioportal_vcf2maf", "run")
-    threads: wf.get_resource("cbioportal_vcf2maf", "run", "threads")
-    resources:
-        **wf.get_resources("cbioportal_vcf2maf", "run"),
-    params:
-        args=wf.get_params("cbioportal_vcf2maf", "run"),
-    wrapper:
-        wf.get_wrapper("cbioportal_vcf2maf", "run")
 
 
 # Merge all sample MAF files --------------------------------------------------
@@ -114,23 +61,6 @@ rule cbioportal_export_concatenate_maf:
 if step_config.copy_number_alteration.enabled:
 
     # Create CNA files (discrete, continuous from cns files) ----------------------
-
-    rule cbioportal_export_generate_cna:
-        input:
-            unpack(wf.get_input_files("cbioportal_cns2cna", "run")),
-        output:
-            **wf.get_output_files("cbioportal_cns2cna", "run"),
-        log:
-            **wf.get_log_file("cbioportal_cns2cna", "run"),
-        benchmark:
-            wf.get_benchmark_file("cbioportal_cns2cna", "run")
-        threads: wf.get_resource("cbioportal_cns2cna", "run", "threads")
-        resources:
-            **wf.get_resources("cbioportal_cns2cna", "run"),
-        params:
-            args=wf.get_params("cbioportal_cns2cna", "run"),
-        wrapper:
-            wf.get_wrapper("cbioportal_cns2cna", "run")
 
     # Merge sample-based CNA files to cBioPortal ----------------------------------
     rule cbioportal_export_concatenate_cna_log2:

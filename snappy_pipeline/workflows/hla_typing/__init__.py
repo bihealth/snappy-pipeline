@@ -29,7 +29,13 @@ Downstream tasks read the keys ``txt`` and ``calls_json`` (the ``.json`` file).
 import re
 
 from snappy_pipeline.utils import dictify
-from snappy_pipeline.workflows.abstract import BaseStep, BaseStepPart, ReportOutput, ResourceUsage
+from snappy_pipeline.workflows.abstract import (
+    RuleOptions,
+    BaseStep,
+    BaseStepPart,
+    ReportOutput,
+    ResourceUsage,
+)
 from snappy_pipeline.workflows.abstract.protocol import DataSignature, DataType
 from snappy_pipeline.workflows.common.reads import reads_input_files, reads_params
 
@@ -116,6 +122,7 @@ class ArcasHlaStepPart(BaseStepPart):
     #: Class available actions
     actions = ("prepare_reference", "run")
     wrappers = {"prepare_reference": "arcashla/prepare_reference", "run": "arcashla/run"}
+    rule_options = {"prepare_reference": RuleOptions(retries=2)}
     extra_arguments_action = "run"
 
     result_keys = {"run": tuple(_OUTPUTS)}

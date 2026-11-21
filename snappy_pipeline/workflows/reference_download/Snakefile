@@ -8,76 +8,7 @@ from snappy_pipeline.orchestration import task_instance
 wf = task_instance(config["__task_name__"])
 
 
+include: "../common/wrapper_rules.rules"
+
+
 source = str(wf.config.source)
-if source == "ensembl":
-
-    rule reference_download_ensembl_run:
-        output:
-            **wf.get_output_files("ensembl", "run"),
-        log:
-            **wf.get_log_file("ensembl", "run"),
-        cache: "omit-software"
-        # Network access: downloads and installs fail now and then
-        retries: 2
-        threads: wf.get_resource("ensembl", "run", "threads")
-        resources:
-            **wf.get_resources("ensembl", "run"),
-        params:
-            args=wf.get_params("ensembl", "run"),
-        wrapper:
-            wf.get_wrapper("ensembl", "run")
-
-elif source == "refseq":
-
-    rule reference_download_refseq_run:
-        output:
-            **wf.get_output_files("refseq", "run"),
-        log:
-            **wf.get_log_file("refseq", "run"),
-        cache: "omit-software"
-        # Network access: downloads and installs fail now and then
-        retries: 2
-        threads: wf.get_resource("refseq", "run", "threads")
-        resources:
-            **wf.get_resources("refseq", "run"),
-        params:
-            args=wf.get_params("refseq", "run"),
-        wrapper:
-            wf.get_wrapper("refseq", "run")
-
-elif source == "ucsc":
-
-    rule reference_download_ucsc_run:
-        output:
-            **wf.get_output_files("ucsc", "run"),
-        log:
-            **wf.get_log_file("ucsc", "run"),
-        cache: "omit-software"
-        # Network access: downloads and installs fail now and then
-        retries: 2
-        threads: wf.get_resource("ucsc", "run", "threads")
-        resources:
-            **wf.get_resources("ucsc", "run"),
-        params:
-            args=wf.get_params("ucsc", "run"),
-        wrapper:
-            wf.get_wrapper("ucsc", "run")
-
-
-rule reference_download_sidecars_run:
-    input:
-        unpack(wf.get_input_files("sidecars", "run")),
-    output:
-        **wf.get_output_files("sidecars", "run"),
-    log:
-        **wf.get_log_file("sidecars", "run"),
-    benchmark:
-        wf.get_benchmark_file("sidecars", "run")
-    localrule: True
-    threads: wf.get_resource("sidecars", "run", "threads")
-    resources:
-        **wf.get_resources("sidecars", "run"),
-    params:
-        args=wf.get_params("sidecars", "run"),
-    wrapper:
-        wf.get_wrapper("sidecars", "run")

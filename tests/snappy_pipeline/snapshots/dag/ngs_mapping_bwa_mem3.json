@@ -208,7 +208,7 @@
    "partition": "medium",
    "runtime": 120
   },
-  "rule": "ngs_mapping_bwa_mem3_ngs_mapping_qc_summary",
+  "rule": "ngs_mapping_bwa_mem3_ngs_mapping_qc_summary_run",
   "temp": [],
   "threads": 1,
   "wildcards": {},

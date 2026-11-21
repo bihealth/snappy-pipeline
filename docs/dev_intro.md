@@ -82,36 +82,40 @@ A tool that needs several rules has several actions.
 For example, mutect2 has the actions `scatter`, `run`, `gather`, `filter`, `contamination`, `pileup_normal` and `pileup_tumor`.
 
 A step has a singular `tool` in its task config.
-The workflow class registers only the step part of the selected tool, plus the structural helper step parts.
-The Snakefile defines only the rules of the selected tool.
+The workflow class registers only the step part of the selected tool (`tool_parts`), plus the structural helper step parts (`helper_parts`), so only that tool's rules exist.
 Combining several tools means defining several tasks, not multiplexing within one task.
 
-For each action, the step part implements methods that the Snakefile reaches through the workflow object:
+For each action, the step part implements methods that its rule reaches through the workflow object.
+The shared include `snappy_pipeline/workflows/common/wrapper_rules.rules` writes the rule of every action with a wrapper, so a step Snakefile does not:
 
 ```python
-rule ngs_mapping_bwa_run:
-    input:
-        unpack(wf.get_input_files("bwa", "run")),
-    output:
-        **wf.get_output_files("bwa", "run"),
-    log:
-        **wf.get_log_file("bwa", "run"),
-    benchmark:
-        wf.get_benchmark_file("bwa", "run")
-    threads: wf.get_resource("bwa", "run", "threads")
-    resources:
-        **wf.get_resources("bwa", "run"),
-    params:
-        args=wf.get_params("bwa", "run"),
-    wrapper:
-        wf.get_wrapper("bwa", "run")
+for spec in wf.wrapper_rules():
+
+    rule:
+        name:
+            spec.name
+        input:
+            unpack(wf.get_input_files(spec.part, spec.action)),
+        output:
+            **wf.get_output_files(spec.part, spec.action),
+        log:
+            **wf.get_log_file(spec.part, spec.action),
+        benchmark:
+            wf.get_benchmark_file(spec.part, spec.action)
+        threads: wf.get_resource(spec.part, spec.action, "threads")
+        resources:
+            **wf.get_resources(spec.part, spec.action),
+        params:
+            args=wf.get_params(spec.part, spec.action),
+        wrapper:
+            wf.get_wrapper(spec.part, spec.action)
 ```
 
-{ref}`dev_conventions` lists the methods and the per-action methods behind them.
+A step Snakefile defines `wf`, includes that file and writes only the rules the include cannot express: containers, checkpoints, `run:` and `shell:` blocks.
+{ref}`dev_conventions` lists the methods and the per-action methods behind them, and the `rule_options` of a part (`localrule`, `retries`, `cache`, `wildcard_constraints`, `explicit`).
 
 Business logic belongs in the Python classes.
 Python has tooling for tests, static analysis, documentation and style, and these tools stop at the first `rule` keyword of a Snakefile.
-The Snakefile only wires the Python code into rules.
 
 ## Wrappers
 

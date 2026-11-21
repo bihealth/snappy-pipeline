@@ -413,53 +413,6 @@
   "wrapper": null
  },
  {
-  "benchmark": "tasks/somatic_cnv_checking/benchmarks/case001subregion-T1-DNA1-WES1/case001subregion-T1-DNA1-WES1.report.tsv",
-  "input": [
-   "tasks/somatic_cnv_checking/work/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1.vcf.gz",
-   "tasks/somatic_cnv_checking/work/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1.tsv",
-   "<repo>/.tests/test-workflow/resources/refs/subregion.fa",
-   "<repo>/.tests/test-workflow/resources/refs/subregion.fa.fai",
-   "<repo>/.tests/test-workflow/resources/refs/subregion.dict"
-  ],
-  "log": [
-   "tasks/somatic_cnv_checking/work/case001subregion-T1-DNA1-WES1/log/case001subregion-T1-DNA1-WES1.report.log"
-  ],
-  "output": [
-   "tasks/somatic_cnv_checking/work/case001subregion-T1-DNA1-WES1/report/case001subregion-T1-DNA1-WES1.cnv.pdf",
-   "tasks/somatic_cnv_checking/work/case001subregion-T1-DNA1-WES1/report/case001subregion-T1-DNA1-WES1.cnv.pdf.md5",
-   "tasks/somatic_cnv_checking/work/case001subregion-T1-DNA1-WES1/report/case001subregion-T1-DNA1-WES1.locus.pdf",
-   "tasks/somatic_cnv_checking/work/case001subregion-T1-DNA1-WES1/report/case001subregion-T1-DNA1-WES1.locus.pdf.md5",
-   "tasks/somatic_cnv_checking/work/case001subregion-T1-DNA1-WES1/report/case001subregion-T1-DNA1-WES1.segment.pdf",
-   "tasks/somatic_cnv_checking/work/case001subregion-T1-DNA1-WES1/report/case001subregion-T1-DNA1-WES1.segment.pdf.md5"
-  ],
-  "params": {
-   "args": {
-    "amplification": 7,
-    "code": "<hash>",
-    "tumor_library": "case001subregion-T1-DNA1-WES1"
-   }
-  },
-  "report": [
-   "tasks/somatic_cnv_checking/work/case001subregion-T1-DNA1-WES1/report/case001subregion-T1-DNA1-WES1.cnv.pdf",
-   "tasks/somatic_cnv_checking/work/case001subregion-T1-DNA1-WES1/report/case001subregion-T1-DNA1-WES1.locus.pdf",
-   "tasks/somatic_cnv_checking/work/case001subregion-T1-DNA1-WES1/report/case001subregion-T1-DNA1-WES1.segment.pdf"
-  ],
-  "resources": {
-   "mem": "2 GB",
-   "mem_mb": 2000,
-   "mem_mib": 1908,
-   "partition": "medium",
-   "runtime": 60
-  },
-  "rule": "somatic_cnv_checking_somatic_cnv_checking_cnv_report",
-  "temp": [],
-  "threads": 1,
-  "wildcards": {
-   "tumor_library": "case001subregion-T1-DNA1-WES1"
-  },
-  "wrapper": "file://<repo>/snappy_wrappers/wrappers/somatic_cnv_checking"
- },
- {
   "benchmark": "tasks/somatic_cnv_checking/benchmarks/case001subregion-T1-DNA1-WES1/case001subregion-T1-DNA1-WES1.tsv",
   "input": [
    "tasks/somatic_cnv_checking/work/case001subregion-N1-DNA1-WES1/out/case001subregion-N1-DNA1-WES1.normal.vcf.gz",
@@ -584,6 +537,53 @@
    "tumor_library": "case001subregion-T1-DNA1-WES1"
   },
   "wrapper": "file://<repo>/snappy_wrappers/wrappers/bcftools/pileups"
+ },
+ {
+  "benchmark": "tasks/somatic_cnv_checking/benchmarks/case001subregion-T1-DNA1-WES1/case001subregion-T1-DNA1-WES1.report.tsv",
+  "input": [
+   "tasks/somatic_cnv_checking/work/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1.vcf.gz",
+   "tasks/somatic_cnv_checking/work/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1.tsv",
+   "<repo>/.tests/test-workflow/resources/refs/subregion.fa",
+   "<repo>/.tests/test-workflow/resources/refs/subregion.fa.fai",
+   "<repo>/.tests/test-workflow/resources/refs/subregion.dict"
+  ],
+  "log": [
+   "tasks/somatic_cnv_checking/work/case001subregion-T1-DNA1-WES1/log/case001subregion-T1-DNA1-WES1.report.log"
+  ],
+  "output": [
+   "tasks/somatic_cnv_checking/work/case001subregion-T1-DNA1-WES1/report/case001subregion-T1-DNA1-WES1.cnv.pdf",
+   "tasks/somatic_cnv_checking/work/case001subregion-T1-DNA1-WES1/report/case001subregion-T1-DNA1-WES1.cnv.pdf.md5",
+   "tasks/somatic_cnv_checking/work/case001subregion-T1-DNA1-WES1/report/case001subregion-T1-DNA1-WES1.locus.pdf",
+   "tasks/somatic_cnv_checking/work/case001subregion-T1-DNA1-WES1/report/case001subregion-T1-DNA1-WES1.locus.pdf.md5",
+   "tasks/somatic_cnv_checking/work/case001subregion-T1-DNA1-WES1/report/case001subregion-T1-DNA1-WES1.segment.pdf",
+   "tasks/somatic_cnv_checking/work/case001subregion-T1-DNA1-WES1/report/case001subregion-T1-DNA1-WES1.segment.pdf.md5"
+  ],
+  "params": {
+   "args": {
+    "amplification": 7,
+    "code": "<hash>",
+    "tumor_library": "case001subregion-T1-DNA1-WES1"
+   }
+  },
+  "report": [
+   "tasks/somatic_cnv_checking/work/case001subregion-T1-DNA1-WES1/report/case001subregion-T1-DNA1-WES1.cnv.pdf",
+   "tasks/somatic_cnv_checking/work/case001subregion-T1-DNA1-WES1/report/case001subregion-T1-DNA1-WES1.locus.pdf",
+   "tasks/somatic_cnv_checking/work/case001subregion-T1-DNA1-WES1/report/case001subregion-T1-DNA1-WES1.segment.pdf"
+  ],
+  "resources": {
+   "mem": "2 GB",
+   "mem_mb": 2000,
+   "mem_mib": 1908,
+   "partition": "medium",
+   "runtime": 60
+  },
+  "rule": "somatic_cnv_checking_somatic_cnv_checking_report_run",
+  "temp": [],
+  "threads": 1,
+  "wildcards": {
+   "tumor_library": "case001subregion-T1-DNA1-WES1"
+  },
+  "wrapper": "file://<repo>/snappy_wrappers/wrappers/somatic_cnv_checking"
  },
  {
   "benchmark": "tasks/somatic_wgs_cnv_calling_cnvkit/benchmarks/case001subregion-T1-DNA1-WES1/call.case001subregion-T1-DNA1-WES1.tsv",

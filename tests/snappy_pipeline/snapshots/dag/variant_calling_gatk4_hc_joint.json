@@ -322,7 +322,7 @@
    "partition": "medium",
    "runtime": 120
   },
-  "rule": "variant_calling_gatk4_hc_joint_variant_calling_bcftools_stats_report",
+  "rule": "variant_calling_gatk4_hc_joint_variant_calling_bcftools_stats_run",
   "temp": [],
   "threads": 1,
   "wildcards": {
@@ -360,7 +360,7 @@
    "partition": "medium",
    "runtime": 120
   },
-  "rule": "variant_calling_gatk4_hc_joint_variant_calling_bcftools_stats_report",
+  "rule": "variant_calling_gatk4_hc_joint_variant_calling_bcftools_stats_run",
   "temp": [],
   "threads": 1,
   "wildcards": {
@@ -398,7 +398,7 @@
    "partition": "medium",
    "runtime": 120
   },
-  "rule": "variant_calling_gatk4_hc_joint_variant_calling_bcftools_stats_report",
+  "rule": "variant_calling_gatk4_hc_joint_variant_calling_bcftools_stats_run",
   "temp": [],
   "threads": 1,
   "wildcards": {
@@ -505,7 +505,7 @@
    "partition": "medium",
    "runtime": 120
   },
-  "rule": "variant_calling_gatk4_hc_joint_variant_calling_qc_summary",
+  "rule": "variant_calling_gatk4_hc_joint_variant_calling_qc_summary_run",
   "temp": [],
   "threads": 1,
   "wildcards": {},

@@ -179,7 +179,7 @@
    "partition": "medium",
    "runtime": 60
   },
-  "rule": "repeat_expansion_expansionhunter_repeat_expansion_run_expansionhunter",
+  "rule": "repeat_expansion_expansionhunter_repeat_expansion_expansionhunter_run",
   "temp": [
    "tasks/repeat_expansion_expansionhunter/work/case001subregion-N1-DNA1-WES1/out/case001subregion-N1-DNA1-WES1.json"
   ],

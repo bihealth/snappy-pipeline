@@ -103,12 +103,20 @@ class VarfishAnnotatorAnnotateStepPart(BaseStepPart):
 
     #: Class available actions
     actions = ("annotate", "bam_qc", "gvcf_to_vcf", "merge_vcf")
-    wrappers = {
-        "bam_qc": "varfish_annotator/bam_qc",
-        "annotate": "varfish_annotator/annotate",
-        "merge_vcf": "bcftools/merge_snv_vcf",
-        "gvcf_to_vcf": "bcftools/gvcf_to_vcf",
-    }
+
+    @property
+    def wrappers(self) -> dict[str, str]:
+        """The VCF comes from ``gvcf_to_vcf`` with ``gvcf_option``, else from ``merge_vcf``"""
+        vcf = (
+            {"gvcf_to_vcf": "bcftools/gvcf_to_vcf"}
+            if self.config.gvcf_option
+            else {"merge_vcf": "bcftools/merge_snv_vcf"}
+        )
+        return {
+            "bam_qc": "varfish_annotator/bam_qc",
+            "annotate": "varfish_annotator/annotate",
+            **vcf,
+        }
 
     intermediate_outputs = {"gvcf_to_vcf": ("vcf", "vcf_tbi"), "merge_vcf": ("vcf", "vcf_tbi")}
 

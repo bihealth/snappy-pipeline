@@ -89,3 +89,21 @@ def test_tumors_without_a_matched_normal_are_named_in_a_warning(task):
         assert warnings == [
             f"Task {task!r} leaves out the libraries without a matched normal: P2-T1-DNA1"
         ]
+
+
+class _RnaStep(BaseStep):
+    name = "rna"
+    produces = [DataSignature(DataType.QC)]
+    library_requirement = "extraction_type == 'rna'"
+
+
+def test_a_selection_that_names_libraries_the_step_cannot_process_gets_a_warning():
+    config = SimpleNamespace(
+        library_selection="library_name in ['P1-T1-DNA1']", relationships=None, tool=None
+    )
+    instance = _instance(_RnaStep, "rna", config)
+
+    assert instance.library_warnings() == [
+        "Task 'rna' cannot process these libraries of its library_selection "
+        "(extraction_type == 'rna'): P1-T1-DNA1"
+    ]

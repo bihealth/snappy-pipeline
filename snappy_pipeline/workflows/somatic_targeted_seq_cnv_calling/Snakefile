@@ -6,91 +6,19 @@ from snappy_pipeline.orchestration import task_instance
 __author__ = "Manuel Holtgrewe <manuel.holtgrewe@bihealth.de>"
 
 
-# The software directives are in fmt: off regions, because snakefmt does not know them yet
-
 # WorkflowImpl Object Setup ===================================================
 
 wf = task_instance(config["__task_name__"])
 tool = str(wf.config.tool)
 
 
-# Rules =======================================================================
-
-
-# House-Keeping ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-# Somatic Targeted Sequencing CNV Calling ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-# cnvkit pipeline -------------------------------------------------------------
-
-
-# cnvkit requires a large number of rules, shared with somatic_wgs_cnv_calling
-if tool == "cnvkit":
-
-    include: "../common/cnvkit.rules"
-
-
-# Run sequenza ----------------------------------------------------
-
-
-elif tool == "sequenza":
-
-    rule somatic_targeted_seq_cnv_calling_sequenza_gcreference:
-        input:
-            unpack(wf.get_input_files("sequenza", "gcreference")),
-        output:
-            **wf.get_output_files("sequenza", "gcreference"),
-        log:
-            **wf.get_log_file("sequenza", "gcreference"),
-        benchmark:
-            wf.get_benchmark_file("sequenza", "gcreference")
-        threads: wf.get_resource("sequenza", "gcreference", "threads")
-        resources:
-            **wf.get_resources("sequenza", "gcreference"),
-        params:
-            args=wf.get_params("sequenza", "gcreference"),
-        wrapper:
-            wf.get_wrapper("sequenza", "gcreference")
-
-    rule somatic_targeted_seq_cnv_calling_sequenza_coverage:
-        input:
-            unpack(wf.get_input_files("sequenza", "coverage")),
-        output:
-            **wf.get_output_files("sequenza", "coverage"),
-        log:
-            **wf.get_log_file("sequenza", "coverage"),
-        benchmark:
-            wf.get_benchmark_file("sequenza", "coverage")
-        threads: wf.get_resource("sequenza", "coverage", "threads")
-        resources:
-            **wf.get_resources("sequenza", "coverage"),
-        params:
-            args=wf.get_params("sequenza", "coverage"),
-        wrapper:
-            wf.get_wrapper("sequenza", "coverage")
-
-    rule somatic_targeted_seq_cnv_calling_sequenza_run:
-        input:
-            unpack(wf.get_input_files("sequenza", "run")),
-        output:
-            **wf.get_output_files("sequenza", "run"),
-        log:
-            **wf.get_log_file("sequenza", "run"),
-        benchmark:
-            wf.get_benchmark_file("sequenza", "run")
-        threads: wf.get_resource("sequenza", "run", "threads")
-        resources:
-            **wf.get_resources("sequenza", "run"),
-        params:
-            args=wf.get_params("sequenza", "run"),
-        wrapper:
-            wf.get_wrapper("sequenza", "run")
+include: "../common/wrapper_rules.rules"
 
 
 # Run PureCN ------------------------------------------------------
 
 
-elif tool == "purecn":
+if tool == "purecn":
 
     rule somatic_targeted_seq_cnv_calling_purecn_coverage:
         input:

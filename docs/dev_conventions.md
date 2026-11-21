@@ -36,9 +36,10 @@ wf = task_instance(config["__task_name__"])
 It also returns the config of the upstream task set in `depends_on.<name>`.
 Anything else is an error.
 
+A step Snakefile defines `wf` and its global `wildcard_constraints`, then includes `snappy_pipeline/workflows/common/wrapper_rules.rules`, which writes one rule per action with a wrapper of every registered step part (`BaseStep.wrapper_rules`), named `<step>_<part>_<action>`.
+A part's `rule_options` give an action's `localrule`, `retries`, `cache` (such a rule has no benchmark) and `wildcard_constraints`, or mark it `explicit`: then the Snakefile writes the rule itself, which it does for containers (`software:`), checkpoints, `run:` and `shell:` blocks and outputs that are no dict.
 Snakefiles stay thin and call the workflow object for everything.
-These are the methods a step part provides.
-On the workflow object (`wf`), each method takes the step part name before the action, for example `wf.get_input_files("bwa", "run")`.
+These are the methods a step part provides, which the generated and the explicit rules reach through the workflow object (`wf`); each takes the step part name before the action, for example `wf.get_input_files("bwa", "run")`.
 
 | Method                       | Returns                                                                    | Rule section                                                                            |
 | ---------------------------- | -------------------------------------------------------------------------- | --------------------------------------------------------------------------------------- |
@@ -82,7 +83,7 @@ The wrapper puts `{extra_arguments}` on the tool's command; `ShellWrapper` fills
 A single-tool step without a tool section takes `extra_arguments` on its step model, and its step part's `tool_section()` returns `self.config`.
 `test_tool_wrappers_get_extra_arguments` requires them for every wrapper, except those that `WRAPPERS_WITHOUT_EXTRA_ARGUMENTS` lists with a reason (Python and R code, installers, helpers, secondary actions).
 `test_wrappers_use_the_extra_arguments_they_get` and `test_wrappers_leave_extra_arguments_to_the_base_class` check that wrappers use them.
-Shell text that several wrappers share (the GNU parallel sharding of the GATK callers, the bwa-mem pipeline, the JVM heap) comes from functions in `snappy_wrappers/tools` that return finished shell, which the wrapper pastes into its template; `tests/scripts/shell_templates.py` checks that text with shfmt as well, and flags a `set -x` or `set -euo pipefail` at the top of a template, which the `ShellWrapper` header already sets.
+Shell text that several wrappers share (the GNU parallel sharding of the GATK callers, the bwa-mem pipeline, the JVM heap) comes from functions in `snappy_wrappers/tools` that return finished shell, which the wrapper pastes into its template, or that run the whole wrapper (`bwa_mem.run`); the convention tests read a wrapper's own files and the tool modules behind it (`wrapper_code.code_files`), and `tests/scripts/shell_templates.py` checks the shared shell text with shfmt as well and flags a `set -x` or `set -euo pipefail` at the top of a template, which the `ShellWrapper` header already sets.
 
 Rules that run a wrapper declare `benchmark: wf.get_benchmark_file(part, action)`.
 This is the path of the rule's log below `benchmarks/` (`tasks/<task>/benchmarks/` in a project).

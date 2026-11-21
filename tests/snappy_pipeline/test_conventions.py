@@ -13,6 +13,7 @@ from pathlib import Path
 
 from pydantic import BaseModel
 
+from snappy_pipeline import wrapper_code
 from snappy_pipeline.models import RequiredBy, reader_markers
 from snappy_pipeline.workflow_registry import WORKFLOW_REGISTRY
 from tests.scripts.generate_task_configs import tool_values
@@ -153,6 +154,27 @@ def test_step_snakefiles_fetch_their_workflow_object():
         ):
             found.append(str(path.relative_to(REPO)))
     assert not found, f"use wf = task_instance(config['__task_name__']) only: {found}"
+
+
+def test_step_snakefiles_include_the_generated_wrapper_rules():
+    """A step Snakefile includes ``common/wrapper_rules.rules`` after its global
+    ``wildcard_constraints`` and ``scattergather`` declarations and before its own rules, and
+    writes no standard wrapper rule itself (``RuleOptions.explicit`` marks the exceptions)."""
+    include = 'include: "../common/wrapper_rules.rules"'
+    found = []
+    for path in sorted(WORKFLOWS.glob("*/Snakefile")):
+        text = path.read_text(encoding="utf-8")
+        if path.parent.name == "external_data":
+            continue
+        if include not in text:
+            found.append(f"{path.relative_to(REPO)}: no include")
+            continue
+        before, after = text.split(include, 1)
+        if re.search(r"^\s*(rule|checkpoint)\b", before, re.M):
+            found.append(f"{path.relative_to(REPO)}: a rule before the include")
+        if re.search(r"^\s*(wildcard_constraints|scattergather):", after, re.M):
+            found.append(f"{path.relative_to(REPO)}: a global declaration after the include")
+    assert not found, f"the step Snakefiles include the generated wrapper rules: {found}"
 
 
 def test_local_rules_are_marked_in_the_rule():
@@ -344,6 +366,20 @@ _ARGS_GUARD = (
 )
 
 
+def _wrapper_python_files(wrapper: str) -> list[Path]:
+    """The Python files behind a wrapper: its own and the tool modules of ``snappy_wrappers``
+    that they import or run (``wrapper_code.code_files``), where the shared shell text lives;
+    not the base classes and packages that every wrapper shares."""
+    root = wrapper_code.package_root()
+    return [
+        root / file
+        for file in wrapper_code.code_files(wrapper)
+        if file.endswith(".py")
+        and not file.endswith("__init__.py")
+        and file.startswith(("wrappers/", "tools/"))
+    ]
+
+
 def _wrapper_reads(wrapper: str) -> tuple[set[str], set[str]]:
     """Return the (args keys, top-level params) that a wrapper reads without guard or default.
 
@@ -359,7 +395,7 @@ def _wrapper_reads(wrapper: str) -> tuple[set[str], set[str]]:
     optional. A name guarded anywhere in the wrapper's files is optional in all of them.
     """
     args_keys, top, guarded_args, guarded_top = set(), set(), set(), set()
-    for path in (REPO / "snappy_wrappers" / "wrappers" / wrapper).glob("*.py"):
+    for path in _wrapper_python_files(wrapper):
         text = path.read_text(encoding="utf-8")
         for name in {"args"} | set(_ARGS_ALIAS.findall(text)):
             literal = re.compile(
@@ -432,8 +468,7 @@ def test_wrappers_read_the_params_they_get():
         if wrapper in WRAPPERS_READING_PARAMS_DYNAMICALLY:
             used.add(wrapper)
             continue
-        paths = (REPO / "snappy_wrappers" / "wrappers" / wrapper).glob("*.py")
-        text = "\n".join(path.read_text(encoding="utf-8") for path in paths)
+        text = "\n".join(p.read_text(encoding="utf-8") for p in _wrapper_python_files(wrapper))
         args = params.get("args", {})
         keys = (  # extra_arguments: the base class; code: the rerun trigger of the step
             {key for key in args if key not in ("extra_arguments", "code")}
@@ -554,12 +589,14 @@ WRAPPERS_WITHOUT_BASE_CLASS = {"pvactools/create_proteome": "on hold with create
 
 
 def test_wrappers_use_a_base_class():
-    """Wrappers run through ShellWrapper or PythonWrapper (log, md5)."""
+    """Wrappers run through ShellWrapper or PythonWrapper (log, md5), in their own file or in a
+    module of ``snappy_wrappers`` that holds the whole wrapper (``tools/bwa_mem.py``)."""
     wrappers = REPO / "snappy_wrappers" / "wrappers"
     found, base = [], re.compile(r"\b(ShellWrapper|PythonWrapper)\(")
     for path in sorted(wrappers.rglob("wrapper.py")):
         name = str(path.parent.relative_to(wrappers))
-        if not base.search(path.read_text(encoding="utf-8")):
+        code = "".join(p.read_text(encoding="utf-8") for p in _wrapper_python_files(name))
+        if not base.search(code):
             found.append(name)
     assert sorted(set(found) - set(WRAPPERS_WITHOUT_BASE_CLASS)) == []
     stale = sorted(set(WRAPPERS_WITHOUT_BASE_CLASS) - set(found))
@@ -646,7 +683,9 @@ WRAPPERS_WITHOUT_EXTRA_ARGUMENTS = {
             "qc_summary",
             "popdel/reorder_vcf",
             "pvactools/normalize",
+            "reference_download/refseq",
             "reference_download/sidecars",
+            "reference_download/ucsc",
             "rnaqc/stats",
             "sequenza/gcreference",
             "split_regions",
@@ -732,10 +771,7 @@ def test_wrappers_use_the_extra_arguments_they_get():
         if not job["wrapper"] or not isinstance(args, dict) or "extra_arguments" not in args:
             continue
         wrapper = job["wrapper"].split("/snappy_wrappers/wrappers/", 1)[1]
-        code = "".join(
-            p.read_text(encoding="utf-8")
-            for p in (REPO / "snappy_wrappers" / "wrappers" / wrapper).glob("*.py")
-        )
+        code = "".join(p.read_text(encoding="utf-8") for p in _wrapper_python_files(wrapper))
         if "{extra_arguments}" not in code:
             found.add(wrapper)
     assert not found, f"wrappers that ignore their extra_arguments: {sorted(found)}"

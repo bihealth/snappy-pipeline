@@ -45,6 +45,7 @@ from snakemake.iocontainers import Wildcards
 from snappy_pipeline.base import ConfigError
 from snappy_pipeline.utils import dictify
 from snappy_pipeline.workflows.abstract import (
+    RuleOptions,
     MATCHED_NORMAL_RELATIONSHIP,
     MATCHED_NORMAL_REQUIREMENT,
     BaseStep,
@@ -202,6 +203,7 @@ class PureCNStepPart(BaseStepPart):
     #: Class available actions
     actions = ("coverage", "run")
     wrappers = {"run": "purecn/run", "coverage": "purecn/coverage"}
+    rule_options = {"coverage": RuleOptions(explicit=True), "run": RuleOptions(explicit=True)}
 
     entity_wildcard = "tumor_library"
 

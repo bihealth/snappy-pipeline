@@ -1496,7 +1496,7 @@
    "partition": "medium",
    "runtime": 60
   },
-  "rule": "somatic_variant_signatures_somatic_variant_signatures_deconstructsigs",
+  "rule": "somatic_variant_signatures_somatic_variant_signatures_deconstruct_sigs_run",
   "temp": [],
   "threads": 1,
   "wildcards": {
@@ -1530,7 +1530,7 @@
    "partition": "medium",
    "runtime": 60
   },
-  "rule": "somatic_variant_signatures_somatic_variant_signatures_tabulate_vcf",
+  "rule": "somatic_variant_signatures_somatic_variant_signatures_tabulate_vcf_run",
   "temp": [
    "tasks/somatic_variant_signatures/work/case001subregion-T1-DNA1-WES1/out/tabulate_vcf.case001subregion-T1-DNA1-WES1.tsv"
   ],

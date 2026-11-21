@@ -6,20 +6,11 @@ from snappy_pipeline.orchestration import task_instance
 __author__ = "Manuel Holtgrewe <manuel.holtgrewe@bihealth.de>"
 
 
-# The software directives are in fmt: off regions, because snakefmt does not know them yet
-
 # WorkflowImpl Object Setup ===================================================
 
 wf = task_instance(config["__task_name__"])
 tool = str(wf.config.tool)
 
-
-# Rules =======================================================================
-
-
-# House-Keeping ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-# Panel of normals (Mutect2) ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 # Write out the tumor-only results for the normals ----------------------------
 
@@ -28,190 +19,13 @@ if tool == "mutect2":
     scattergather:
         mutect2=wf.config.mutect2.num_jobs,
 
-    rule panel_of_normals_mutect2_scatter:
-        input:
-            unpack(wf.get_input_files("mutect2", "scatter")),
-        output:
-            **wf.get_output_files("mutect2", "scatter"),
-        log:
-            **wf.get_log_file("mutect2", "scatter"),
-        benchmark:
-            wf.get_benchmark_file("mutect2", "scatter")
-        localrule: True
-        threads: 1
-        resources:
-            **wf.get_resources("mutect2", "scatter"),
-        params:
-            args=wf.get_params("mutect2", "scatter"),
-        wrapper:
-            wf.get_wrapper("mutect2", "scatter")
 
-    rule panel_of_normals_mutect2_prepare_panel:
-        input:
-            unpack(wf.get_input_files("mutect2", "prepare_panel")),
-        output:
-            **wf.get_output_files("mutect2", "prepare_panel"),
-        log:
-            **wf.get_log_file("mutect2", "prepare_panel"),
-        benchmark:
-            wf.get_benchmark_file("mutect2", "prepare_panel")
-        threads: wf.get_resource("mutect2", "prepare_panel", "threads")
-        resources:
-            **wf.get_resources("mutect2", "prepare_panel"),
-        params:
-            args=wf.get_params("mutect2", "prepare_panel"),
-        wrapper:
-            wf.get_wrapper("mutect2", "prepare_panel")
-
-    rule panel_of_normals_mutect2_gather:
-        input:
-            unpack(wf.get_input_files("mutect2", "gather")),
-        output:
-            **wf.get_output_files("mutect2", "gather"),
-        log:
-            **wf.get_log_file("mutect2", "gather"),
-        benchmark:
-            wf.get_benchmark_file("mutect2", "gather")
-        threads: 1
-        resources:
-            **wf.get_resources("mutect2", "gather"),
-        params:
-            args=wf.get_params("mutect2", "gather"),
-        wrapper:
-            wf.get_wrapper("mutect2", "gather")
-
-    rule panel_of_normals_mutect2_create_panel:
-        input:
-            unpack(wf.get_input_files("mutect2", "create_panel")),
-        output:
-            **wf.get_output_files("mutect2", "create_panel"),
-        log:
-            **wf.get_log_file("mutect2", "create_panel"),
-        benchmark:
-            wf.get_benchmark_file("mutect2", "create_panel")
-        threads: wf.get_resource("mutect2", "create_panel", "threads")
-        resources:
-            **wf.get_resources("mutect2", "create_panel"),
-        params:
-            args=wf.get_params("mutect2", "create_panel"),
-        wrapper:
-            wf.get_wrapper("mutect2", "create_panel")
-
-
-# Accessible regions (cnvkit access) ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-elif tool == "access":
-
-    rule panel_of_normals_access_run:
-        input:
-            unpack(wf.get_input_files("access", "run")),
-        output:
-            **wf.get_output_files("access", "run"),
-        log:
-            **wf.get_log_file("access", "run"),
-        benchmark:
-            wf.get_benchmark_file("access", "run")
-        resources:
-            **wf.get_resources("access", "run"),
-        params:
-            args=wf.get_params("access", "run"),
-        wrapper:
-            wf.get_wrapper("access", "run")
-
-
-# Panel of normals (cnvkit) ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-elif tool == "cnvkit":
-
-    rule panel_of_normals_cnvkit_target:
-        input:
-            unpack(wf.get_input_files("cnvkit", "target")),
-        output:
-            **wf.get_output_files("cnvkit", "target"),
-        log:
-            **wf.get_log_file("cnvkit", "target"),
-        benchmark:
-            wf.get_benchmark_file("cnvkit", "target")
-        threads: wf.get_resource("cnvkit", "target", "threads")
-        resources:
-            **wf.get_resources("cnvkit", "target"),
-        params:
-            args=wf.get_params("cnvkit", "target"),
-        wrapper:
-            wf.get_wrapper("cnvkit", "target")
-
-    rule panel_of_normals_cnvkit_antitarget:
-        input:
-            unpack(wf.get_input_files("cnvkit", "antitarget")),
-        output:
-            **wf.get_output_files("cnvkit", "antitarget"),
-        log:
-            **wf.get_log_file("cnvkit", "antitarget"),
-        benchmark:
-            wf.get_benchmark_file("cnvkit", "antitarget")
-        threads: wf.get_resource("cnvkit", "antitarget", "threads")
-        resources:
-            **wf.get_resources("cnvkit", "antitarget"),
-        params:
-            args=wf.get_params("cnvkit", "antitarget"),
-        wrapper:
-            wf.get_wrapper("cnvkit", "antitarget")
-
-    rule panel_of_normals_cnvkit_coverage:
-        input:
-            unpack(wf.get_input_files("cnvkit", "coverage")),
-        output:
-            **wf.get_output_files("cnvkit", "coverage"),
-        log:
-            **wf.get_log_file("cnvkit", "coverage"),
-        benchmark:
-            wf.get_benchmark_file("cnvkit", "coverage")
-        threads: wf.get_resource("cnvkit", "coverage", "threads")
-        resources:
-            **wf.get_resources("cnvkit", "coverage"),
-        params:
-            args=wf.get_params("cnvkit", "coverage"),
-        wrapper:
-            wf.get_wrapper("cnvkit", "coverage")
-
-    rule panel_of_normals_cnvkit_create_panel:
-        input:
-            unpack(wf.get_input_files("cnvkit", "create_panel")),
-        output:
-            **wf.get_output_files("cnvkit", "create_panel"),
-        log:
-            **wf.get_log_file("cnvkit", "create_panel"),
-        benchmark:
-            wf.get_benchmark_file("cnvkit", "create_panel")
-        threads: wf.get_resource("cnvkit", "create_panel", "threads")
-        resources:
-            **wf.get_resources("cnvkit", "create_panel"),
-        params:
-            args=wf.get_params("cnvkit", "create_panel"),
-        wrapper:
-            wf.get_wrapper("cnvkit", "create_panel")
-
-    rule panel_of_normals_cnvkit_report:
-        input:
-            unpack(wf.get_input_files("cnvkit", "report")),
-        output:
-            **wf.get_output_files("cnvkit", "report"),
-        log:
-            **wf.get_log_file("cnvkit", "report"),
-        benchmark:
-            wf.get_benchmark_file("cnvkit", "report")
-        threads: wf.get_resource("cnvkit", "report", "threads")
-        resources:
-            **wf.get_resources("cnvkit", "report"),
-        params:
-            args=wf.get_params("cnvkit", "report"),
-        wrapper:
-            wf.get_wrapper("cnvkit", "report")
+include: "../common/wrapper_rules.rules"
 
 
 # Panel of normals (PureCN) ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-elif tool == "purecn":
+if tool == "purecn":
 
     rule panel_of_normals_purecn_prepare:
         input:

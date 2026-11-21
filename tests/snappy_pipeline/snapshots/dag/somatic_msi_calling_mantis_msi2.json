@@ -249,7 +249,7 @@
    "partition": "medium",
    "runtime": 1440
   },
-  "rule": "somatic_msi_calling_mantis_msi2_somatic_msi_calling_mantis_msi2",
+  "rule": "somatic_msi_calling_mantis_msi2_somatic_msi_calling_mantis_msi2_run",
   "temp": [],
   "threads": 1,
   "wildcards": {

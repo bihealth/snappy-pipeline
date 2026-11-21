@@ -295,7 +295,7 @@
    "partition": "medium",
    "runtime": 60
   },
-  "rule": "somatic_hla_loh_calling_somatic_hla_loh_calling_lohhla",
+  "rule": "somatic_hla_loh_calling_somatic_hla_loh_calling_lohhla_run",
   "temp": [],
   "threads": 1,
   "wildcards": {

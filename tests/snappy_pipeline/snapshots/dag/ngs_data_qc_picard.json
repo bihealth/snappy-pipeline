@@ -207,7 +207,7 @@
    "partition": "medium",
    "runtime": 120
   },
-  "rule": "ngs_data_qc_picard_ngs_data_qc_qc_summary",
+  "rule": "ngs_data_qc_picard_ngs_data_qc_qc_summary_run",
   "temp": [],
   "threads": 1,
   "wildcards": {},

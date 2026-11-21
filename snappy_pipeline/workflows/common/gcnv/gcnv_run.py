@@ -8,6 +8,7 @@ from snakemake.io import directory, touch
 from snakemake.iocontainers import Wildcards
 
 from snappy_pipeline.utils import dictify
+from snappy_pipeline.workflows.abstract import RuleOptions
 from snappy_pipeline.workflows.common.gcnv.gcnv_common import (
     GcnvCommonStepPart,
     InconsistentLibraryKitsWarning,
@@ -261,6 +262,8 @@ class RunGcnvStepPart(
         "joint_germline_cnv_segmentation": "gcnv/joint_germline_cnv_segmentation",
         "merge_multikit_families": "gcnv/merge_multikit_families",
     }
+    #: The Snakefile writes post_germline_calls itself: its input function needs the checkpoints object
+    rule_options = {"post_germline_calls": RuleOptions(explicit=True)}
 
     temp_outputs = {"call_cnvs": ("calls",)}
 

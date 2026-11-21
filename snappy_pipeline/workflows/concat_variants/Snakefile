@@ -5,39 +5,4 @@ from snappy_pipeline.orchestration import task_instance
 wf = task_instance(config["__task_name__"])
 
 
-rule concat_variants_bcftools_run:
-    input:
-        unpack(wf.get_input_files("bcftools", "run")),
-    output:
-        **wf.get_output_files("bcftools", "run"),
-    log:
-        **wf.get_log_file("bcftools", "run"),
-    benchmark:
-        wf.get_benchmark_file("bcftools", "run")
-    threads: wf.get_resource("bcftools", "run", "threads")
-    resources:
-        **wf.get_resources("bcftools", "run"),
-    params:
-        args=wf.get_params("bcftools", "run"),
-    wrapper:
-        wf.get_wrapper("bcftools", "run")
-
-
-if "calls_report" in wf.sub_steps:
-
-    rule concat_variants_calls_report:
-        input:
-            unpack(wf.get_input_files("calls_report", "run")),
-        output:
-            **wf.get_output_files("calls_report", "run"),
-        log:
-            **wf.get_log_file("calls_report", "run"),
-        benchmark:
-            wf.get_benchmark_file("calls_report", "run")
-        threads: wf.get_resource("calls_report", "run", "threads")
-        resources:
-            **wf.get_resources("calls_report", "run"),
-        params:
-            args=wf.get_params("calls_report", "run"),
-        wrapper:
-            wf.get_wrapper("calls_report", "run")
+include: "../common/wrapper_rules.rules"

@@ -77,7 +77,13 @@ A ``somatic_targeted_seq_cnv_calling`` task with ``tool: purecn`` runs its PureC
 
 from snappy_pipeline.models.cnvkit import PanelOfNormals as CnvKitModel
 from snappy_pipeline.utils import dictify
-from snappy_pipeline.workflows.abstract import BaseStep, BaseStepPart, ReportOutput, ResourceUsage
+from snappy_pipeline.workflows.abstract import (
+    RuleOptions,
+    BaseStep,
+    BaseStepPart,
+    ReportOutput,
+    ResourceUsage,
+)
 from snappy_pipeline.workflows.abstract.protocol import DataSignature, DataType, ExpectedAlignments
 from snappy_pipeline.workflows.common import vcf_outputs
 from snappy_pipeline.workflows.common.cnvkit import sex_params
@@ -151,6 +157,11 @@ class PureCnStepPart(PanelOfNormalsStepPart):
         "create_panel": "purecn/create_panel",
         "coverage": "purecn/coverage",
         "prepare": "purecn/prepare",
+    }
+    rule_options = {
+        "prepare": RuleOptions(explicit=True),
+        "coverage": RuleOptions(explicit=True),
+        "create_panel": RuleOptions(explicit=True),
     }
 
     extra_arguments_action = "create_panel"
@@ -273,6 +284,8 @@ class Mutect2StepPart(PanelOfNormalsStepPart):
 
     #: Class available actions
     actions = ("scatter", "prepare_panel", "gather", "create_panel")
+    #: The scatter job runs on the submit node
+    rule_options = {"scatter": RuleOptions(local=True)}
     wrappers = {
         "create_panel": "mutect2/create_panel",
         "gather": "mutect2/gather",

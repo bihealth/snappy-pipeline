@@ -1090,7 +1090,7 @@
    "partition": "medium",
    "runtime": 120
   },
-  "rule": "variant_filtration_varlociraptor_igv_variant_filtration_calls_report",
+  "rule": "variant_filtration_varlociraptor_igv_variant_filtration_calls_report_run",
   "temp": [],
   "threads": 1,
   "wildcards": {

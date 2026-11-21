@@ -4,7 +4,7 @@ from snakemake.io import directory
 from snakemake.iocontainers import Wildcards
 
 from snappy_pipeline.utils import dictify
-from snappy_pipeline.workflows.abstract import BaseStepPart, ResourceUsage
+from snappy_pipeline.workflows.abstract import RuleOptions, BaseStepPart, ResourceUsage
 from snappy_pipeline.workflows.common.sv_calling import VCF_OUTPUTS, SvCallingGetResultFilesMixin
 
 __author__ = "Manuel Holtgrewe <manuel.holtgrewe@bih-charite.de>"
@@ -39,6 +39,14 @@ class MeltStepPart(SvCallingGetResultFilesMixin, BaseStepPart):
         "group_analysis": "melt/group_analysis",
         "indiv_analysis": "melt/indiv_analysis",
         "preprocess": "melt/preprocess",
+    }
+    rule_options = {
+        "preprocess": RuleOptions(constraints={"library_name": r"[^.]+", "me_type": r"[^.]+"}),
+        "indiv_analysis": RuleOptions(constraints={"library_name": r"[^.]+", "me_type": r"[^.]+"}),
+        "group_analysis": RuleOptions(constraints={"related_group": r"[^.]+", "me_type": r"[^.]+"}),
+        "genotype": RuleOptions(constraints={"related_group": r"[^.]+", "me_type": r"[^.]+"}),
+        "make_vcf": RuleOptions(constraints={"related_group": r"[^.]+"}),
+        "merge_vcf": RuleOptions(constraints={"library_name": r"[^.]+"}),
     }
 
     intermediate_outputs = {

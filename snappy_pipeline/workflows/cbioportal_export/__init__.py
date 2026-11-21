@@ -32,6 +32,7 @@ import sys
 from snappy_pipeline.models import ToolModel
 from snappy_pipeline.utils import dictify, listify
 from snappy_pipeline.workflows.abstract import (
+    RuleOptions,
     MATCHED_NORMAL_RELATIONSHIP,
     BaseStep,
     BaseStepPart,
@@ -137,8 +138,9 @@ class cbioportalExportStepPart(BaseStepPart):
 
     @dictify
     def _get_input_files_run(self, wildcards):
-        """Return path of input files for merging"""
-        assert self.input_tpl is not None
+        """Return path of input files for merging; none for the parts without ``input_tpl``"""
+        if self.input_tpl is None:
+            return
         for lib in self._yield_libraries():
             yield lib.sample_name, self.input_tpl.format(library_name=lib.library_name)
 
@@ -271,6 +273,7 @@ class cbioportalCnaFilesStepPart(cbioportalExportStepPart):
     #: Actions
     actions = ("log2", "gistic")
     wrappers = {"gistic": "cbioportal/merge_tables", "log2": "cbioportal/merge_tables"}
+    rule_options = {"log2": RuleOptions(explicit=True), "gistic": RuleOptions(explicit=True)}
 
     default_resource_usage = _TABLE_RESOURCE_USAGE
 
@@ -319,6 +322,7 @@ class cbioportalSegmentStepPart(cbioportalExportStepPart):
     #: Actions
     actions = ("run",)
     wrappers = {"run": "cbioportal/merge_tables"}
+    rule_options = {"run": RuleOptions(explicit=True)}
 
     #: Output file name
     output_file = "work/upload/data_segment.txt"
@@ -350,6 +354,7 @@ class cbioportalExpressionStepPart(cbioportalExportStepPart):
     #: Action
     actions = ("run",)
     wrappers = {"run": "cbioportal/merge_tables"}
+    rule_options = {"run": RuleOptions(explicit=True)}
 
     #: Output file name
     output_file = "work/upload/data_expression.txt"
@@ -387,6 +392,7 @@ class cbioportalMetaFilesStepPart(BaseStepPart):
     #: Actions
     actions = ("run",)
     wrappers = {"run": "cbioportal/meta_files"}
+    rule_options = {"run": RuleOptions(explicit=True)}
 
     _get_log_file = cbioportalExportStepPart._get_log_file
 
@@ -415,6 +421,7 @@ class cbioportalClinicalDataStepPart(cbioportalExportStepPart):
     #: Actions
     actions = ("run",)
     wrappers = {"run": "cbioportal/clinical_data"}
+    rule_options = {"run": RuleOptions(local=True)}
 
     def _get_params_run(self, wildcards):
         donors = {}
@@ -451,6 +458,7 @@ class cbioportalCaseListsStepPart(cbioportalExportStepPart):
     #: Actions
     actions = ("run",)
     wrappers = {"run": "cbioportal/case_lists"}
+    rule_options = {"run": RuleOptions(local=True)}
 
     def _get_params_run(self, wildcards):
         samples = dict(zip(CASE_LIST_FILES.keys(), [[] for _ in range(len(CASE_LIST_FILES))]))

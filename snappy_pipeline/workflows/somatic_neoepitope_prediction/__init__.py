@@ -45,6 +45,7 @@ from snappy_pipeline.base import ConfigError
 from snappy_pipeline.models import RelationshipDefinition
 from snappy_pipeline.utils import dictify, listify
 from snappy_pipeline.workflows.abstract import (
+    RuleOptions,
     MATCHED_NORMAL_RELATIONSHIP,
     BaseStep,
     BaseStepPart,
@@ -117,7 +118,15 @@ class PvacToolsStepPart(NeoepitopeStepPart):
 
     name = "pvactools"
     actions = ("normalize", "hla_types")
-    wrappers = {"hla_types": "pvactools/hla_types", "normalize": "pvactools/normalize"}
+
+    @property
+    def wrappers(self) -> dict[str, str]:
+        """The normalized VCF serves pVACseq and pVACsplice"""
+        tools = self.config.pvactools
+        wrappers = {"hla_types": "pvactools/hla_types"}
+        if tools.pvacseq.enabled or tools.pvacsplice.enabled:
+            wrappers["normalize"] = "pvactools/normalize"
+        return wrappers
 
     resource_usage = {
         "normalize": ResourceUsage(threads=1, runtime="1h", mem="4GB"),
@@ -261,11 +270,17 @@ class PvacSeqStepPart(PredictionStepPart):
 
     name = "pvacseq"
     actions = ("pileup", "add_expression", "run")
-    wrappers = {
-        "run": "pvactools/pvacseq",
-        "add_expression": "pvactools/add_expression",
-        "pileup": "pvactools/pileup",
-    }
+    rule_options = {"run": RuleOptions(explicit=True)}
+
+    @property
+    def wrappers(self) -> dict[str, str]:
+        """The pileup runs with ``pileup`` enabled, the expression step with ``pileup`` or ``expression``"""
+        wrappers = {"run": "pvactools/pvacseq"}
+        if self.cfg.pileup.enabled:
+            wrappers["pileup"] = "pvactools/pileup"
+        if self.cfg.pileup.enabled or self.cfg.expression.enabled:
+            wrappers["add_expression"] = "pvactools/add_expression"
+        return wrappers
 
     resource_usage = {
         "pileup": ResourceUsage(threads=1, runtime="4h", mem="6GB"),
@@ -370,6 +385,7 @@ class PvacFuseStepPart(PredictionStepPart):
 
     name = "pvacfuse"
     wrappers = {"run": "pvactools/pvacfuse"}
+    rule_options = {"run": RuleOptions(explicit=True)}
 
     @dictify
     def _get_input_files_run(self, wildcards):
@@ -393,6 +409,7 @@ class PvacSpliceStepPart(PredictionStepPart):
         "junction": "pvactools/junction",
         "features": "pvactools/features",
     }
+    rule_options = {"run": RuleOptions(explicit=True)}
 
     resource_usage = {
         "features": ResourceUsage(threads=1, runtime="1h", mem="4GB"),
@@ -498,6 +515,7 @@ class NetStabStepPart(PostProcessStepPart):
 
     name = "netstab"
     wrappers = {"run": "pvactools/netstab"}
+    rule_options = {"run": RuleOptions(explicit=True)}
     result_keys = ("netstab", "netstab_md5")
 
     def _get_input_files_run(self, wildcards):

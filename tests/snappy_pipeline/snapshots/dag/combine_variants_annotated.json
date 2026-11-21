@@ -50,7 +50,7 @@
    "partition": "medium",
    "runtime": 240
   },
-  "rule": "combine_variants_annotated_combine_variants_run",
+  "rule": "combine_variants_annotated_combine_variants_combine_run",
   "temp": [],
   "threads": 1,
   "wildcards": {
@@ -1575,7 +1575,7 @@
    "partition": "medium",
    "runtime": 1440
   },
-  "rule": "variant_annotation_pvactools_variant_annotation_vep",
+  "rule": "variant_annotation_pvactools_variant_annotation_vep_run",
   "temp": [],
   "threads": 1,
   "wildcards": {
@@ -1643,7 +1643,7 @@
    "partition": "medium",
    "runtime": 1440
   },
-  "rule": "variant_annotation_vep_variant_annotation_vep",
+  "rule": "variant_annotation_vep_variant_annotation_vep_run",
   "temp": [],
   "threads": 1,
   "wildcards": {

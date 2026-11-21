@@ -144,23 +144,21 @@
   "wrapper": null
  },
  {
-  "benchmark": "tasks/sv_calling_wgs_popdel/benchmarks/12-1-10020000/12-1-10020000.call.tsv",
+  "benchmark": "tasks/sv_calling_wgs_popdel/benchmarks/cohort/cohort.call.1-of-2.tsv",
   "input": [
-   "tasks/sv_calling_wgs_popdel/work/case001subregion-N1-DNA1-WES1/out/case001subregion-N1-DNA1-WES1.profile"
+   "tasks/sv_calling_wgs_popdel/work/case001subregion-N1-DNA1-WES1/out/case001subregion-N1-DNA1-WES1.profile",
+   "tasks/sv_calling_wgs_popdel/work/scatter/1-of-2.region.bed"
   ],
   "log": [
-   "tasks/sv_calling_wgs_popdel/work/12-1-10020000/log/12-1-10020000.call.log"
+   "tasks/sv_calling_wgs_popdel/work/cohort/log/cohort.call.1-of-2.log"
   ],
   "output": [
-   "tasks/sv_calling_wgs_popdel/work/12-1-10020000/out/12-1-10020000.call.vcf.gz",
-   "tasks/sv_calling_wgs_popdel/work/12-1-10020000/out/12-1-10020000.call.vcf.gz.tbi"
+   "tasks/sv_calling_wgs_popdel/work/cohort/out/cohort/calls/1-of-2.vcf.gz",
+   "tasks/sv_calling_wgs_popdel/work/cohort/out/cohort/calls/1-of-2.vcf.gz.tbi"
   ],
   "params": {
    "args": {
-    "begin": "1",
-    "chrom": "12",
     "code": "<hash>",
-    "end": "10020000",
     "extra_arguments": []
    }
   },
@@ -173,35 +171,31 @@
   },
   "rule": "sv_calling_wgs_popdel_sv_calling_wgs_popdel_call",
   "temp": [
-   "tasks/sv_calling_wgs_popdel/work/12-1-10020000/out/12-1-10020000.call.vcf.gz",
-   "tasks/sv_calling_wgs_popdel/work/12-1-10020000/out/12-1-10020000.call.vcf.gz.tbi"
+   "tasks/sv_calling_wgs_popdel/work/cohort/out/cohort/calls/1-of-2.vcf.gz",
+   "tasks/sv_calling_wgs_popdel/work/cohort/out/cohort/calls/1-of-2.vcf.gz.tbi"
   ],
   "threads": 1,
   "wildcards": {
-   "begin": "1",
-   "chrom": "12",
-   "end": "10020000"
+   "scatteritem": "1-of-2"
   },
   "wrapper": "file://<repo>/snappy_wrappers/wrappers/popdel/call"
  },
  {
-  "benchmark": "tasks/sv_calling_wgs_popdel/benchmarks/12-19980000-27500000/12-19980000-27500000.call.tsv",
+  "benchmark": "tasks/sv_calling_wgs_popdel/benchmarks/cohort/cohort.call.2-of-2.tsv",
   "input": [
-   "tasks/sv_calling_wgs_popdel/work/case001subregion-N1-DNA1-WES1/out/case001subregion-N1-DNA1-WES1.profile"
+   "tasks/sv_calling_wgs_popdel/work/case001subregion-N1-DNA1-WES1/out/case001subregion-N1-DNA1-WES1.profile",
+   "tasks/sv_calling_wgs_popdel/work/scatter/2-of-2.region.bed"
   ],
   "log": [
-   "tasks/sv_calling_wgs_popdel/work/12-19980000-27500000/log/12-19980000-27500000.call.log"
+   "tasks/sv_calling_wgs_popdel/work/cohort/log/cohort.call.2-of-2.log"
   ],
   "output": [
-   "tasks/sv_calling_wgs_popdel/work/12-19980000-27500000/out/12-19980000-27500000.call.vcf.gz",
-   "tasks/sv_calling_wgs_popdel/work/12-19980000-27500000/out/12-19980000-27500000.call.vcf.gz.tbi"
+   "tasks/sv_calling_wgs_popdel/work/cohort/out/cohort/calls/2-of-2.vcf.gz",
+   "tasks/sv_calling_wgs_popdel/work/cohort/out/cohort/calls/2-of-2.vcf.gz.tbi"
   ],
   "params": {
    "args": {
-    "begin": "19980000",
-    "chrom": "12",
     "code": "<hash>",
-    "end": "27500000",
     "extra_arguments": []
    }
   },
@@ -214,67 +208,22 @@
   },
   "rule": "sv_calling_wgs_popdel_sv_calling_wgs_popdel_call",
   "temp": [
-   "tasks/sv_calling_wgs_popdel/work/12-19980000-27500000/out/12-19980000-27500000.call.vcf.gz",
-   "tasks/sv_calling_wgs_popdel/work/12-19980000-27500000/out/12-19980000-27500000.call.vcf.gz.tbi"
+   "tasks/sv_calling_wgs_popdel/work/cohort/out/cohort/calls/2-of-2.vcf.gz",
+   "tasks/sv_calling_wgs_popdel/work/cohort/out/cohort/calls/2-of-2.vcf.gz.tbi"
   ],
   "threads": 1,
   "wildcards": {
-   "begin": "19980000",
-   "chrom": "12",
-   "end": "27500000"
-  },
-  "wrapper": "file://<repo>/snappy_wrappers/wrappers/popdel/call"
- },
- {
-  "benchmark": "tasks/sv_calling_wgs_popdel/benchmarks/12-9980000-20020000/12-9980000-20020000.call.tsv",
-  "input": [
-   "tasks/sv_calling_wgs_popdel/work/case001subregion-N1-DNA1-WES1/out/case001subregion-N1-DNA1-WES1.profile"
-  ],
-  "log": [
-   "tasks/sv_calling_wgs_popdel/work/12-9980000-20020000/log/12-9980000-20020000.call.log"
-  ],
-  "output": [
-   "tasks/sv_calling_wgs_popdel/work/12-9980000-20020000/out/12-9980000-20020000.call.vcf.gz",
-   "tasks/sv_calling_wgs_popdel/work/12-9980000-20020000/out/12-9980000-20020000.call.vcf.gz.tbi"
-  ],
-  "params": {
-   "args": {
-    "begin": "9980000",
-    "chrom": "12",
-    "code": "<hash>",
-    "end": "20020000",
-    "extra_arguments": []
-   }
-  },
-  "resources": {
-   "mem": "24 GB",
-   "mem_mb": 24000,
-   "mem_mib": 22889,
-   "partition": "medium",
-   "runtime": 5760
-  },
-  "rule": "sv_calling_wgs_popdel_sv_calling_wgs_popdel_call",
-  "temp": [
-   "tasks/sv_calling_wgs_popdel/work/12-9980000-20020000/out/12-9980000-20020000.call.vcf.gz",
-   "tasks/sv_calling_wgs_popdel/work/12-9980000-20020000/out/12-9980000-20020000.call.vcf.gz.tbi"
-  ],
-  "threads": 1,
-  "wildcards": {
-   "begin": "9980000",
-   "chrom": "12",
-   "end": "20020000"
+   "scatteritem": "2-of-2"
   },
   "wrapper": "file://<repo>/snappy_wrappers/wrappers/popdel/call"
  },
  {
   "benchmark": "tasks/sv_calling_wgs_popdel/benchmarks/cohort/cohort.concat_calls.tsv",
   "input": [
-   "tasks/sv_calling_wgs_popdel/work/12-1-10020000/out/12-1-10020000.call.vcf.gz",
-   "tasks/sv_calling_wgs_popdel/work/12-9980000-20020000/out/12-9980000-20020000.call.vcf.gz",
-   "tasks/sv_calling_wgs_popdel/work/12-19980000-27500000/out/12-19980000-27500000.call.vcf.gz",
-   "tasks/sv_calling_wgs_popdel/work/12-1-10020000/out/12-1-10020000.call.vcf.gz.tbi",
-   "tasks/sv_calling_wgs_popdel/work/12-9980000-20020000/out/12-9980000-20020000.call.vcf.gz.tbi",
-   "tasks/sv_calling_wgs_popdel/work/12-19980000-27500000/out/12-19980000-27500000.call.vcf.gz.tbi"
+   "tasks/sv_calling_wgs_popdel/work/cohort/out/cohort/calls/1-of-2.vcf.gz",
+   "tasks/sv_calling_wgs_popdel/work/cohort/out/cohort/calls/2-of-2.vcf.gz",
+   "tasks/sv_calling_wgs_popdel/work/cohort/out/cohort/calls/1-of-2.vcf.gz.tbi",
+   "tasks/sv_calling_wgs_popdel/work/cohort/out/cohort/calls/2-of-2.vcf.gz.tbi"
   ],
   "log": [
    "tasks/sv_calling_wgs_popdel/work/cohort/log/cohort.concat_calls.log"
@@ -399,5 +348,49 @@
    "library_name": "PAT_case001subregion"
   },
   "wrapper": "file://<repo>/snappy_wrappers/wrappers/popdel/reorder_vcf"
+ },
+ {
+  "benchmark": "tasks/sv_calling_wgs_popdel/benchmarks/scatter/log.tsv",
+  "input": [
+   "<repo>/.tests/test-workflow/resources/refs/subregion.fa.fai"
+  ],
+  "local": true,
+  "log": [
+   "tasks/sv_calling_wgs_popdel/work/scatter/log.log"
+  ],
+  "output": [
+   "tasks/sv_calling_wgs_popdel/work/scatter/1-of-2.region.bed",
+   "tasks/sv_calling_wgs_popdel/work/scatter/2-of-2.region.bed"
+  ],
+  "params": {
+   "args": {
+    "code": "<hash>",
+    "ignore_contigs": [
+     "^NC_007605$",
+     "^hs37d5$",
+     "^chrEBV$",
+     "_decoy$",
+     "^HLA-",
+     "^chrUn_"
+    ],
+    "padding": 20000,
+    "window_size": 10000000
+   }
+  },
+  "resources": {
+   "mem": "1 GB",
+   "mem_mb": 1000,
+   "mem_mib": 954,
+   "partition": "medium",
+   "runtime": 2
+  },
+  "rule": "sv_calling_wgs_popdel_sv_calling_wgs_popdel_scatter",
+  "temp": [
+   "tasks/sv_calling_wgs_popdel/work/scatter/1-of-2.region.bed",
+   "tasks/sv_calling_wgs_popdel/work/scatter/2-of-2.region.bed"
+  ],
+  "threads": 1,
+  "wildcards": {},
+  "wrapper": "file://<repo>/snappy_wrappers/wrappers/split_regions"
  }
 ]

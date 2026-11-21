@@ -12,85 +12,14 @@ wf = task_instance(config["__task_name__"])
 tool = str(wf.config.tool)
 
 
-# Rules =======================================================================
-
-
-# The rules of the tools of both SV calling steps, and RE_NO_DOT
-include: "../common/sv_calling.rules"
-
-
 # PopDel Steps (whole genomes only) -------------------------------------------
 
 if tool == "popdel":
 
-    rule sv_calling_wgs_popdel_profile:
-        input:
-            unpack(wf.get_input_files("popdel", "profile")),
-        output:
-            **wf.get_output_files("popdel", "profile"),
-        log:
-            **wf.get_log_file("popdel", "profile"),
-        benchmark:
-            wf.get_benchmark_file("popdel", "profile")
-        threads: wf.get_resource("popdel", "profile", "threads")
-        resources:
-            **wf.get_resources("popdel", "profile"),
-        params:
-            args=wf.get_params("popdel", "profile"),
-        wrapper:
-            wf.get_wrapper("popdel", "profile")
+    scattergather:
+        popdel=wf.config.popdel.num_jobs,
 
-    rule sv_calling_wgs_popdel_call:
-        input:
-            unpack(wf.get_input_files("popdel", "call")),
-        output:
-            **wf.get_output_files("popdel", "call"),
-        log:
-            **wf.get_log_file("popdel", "call"),
-        benchmark:
-            wf.get_benchmark_file("popdel", "call")
-        wildcard_constraints:
-            chrom=RE_NO_DOT,
-            begin=RE_NO_DOT,
-            end=RE_NO_DOT,
-        threads: wf.get_resource("popdel", "call", "threads")
-        resources:
-            **wf.get_resources("popdel", "call"),
-        params:
-            args=wf.get_params("popdel", "call"),
-        wrapper:
-            wf.get_wrapper("popdel", "call")
 
-    rule sv_calling_wgs_popdel_concat_calls:
-        input:
-            unpack(wf.get_input_files("popdel", "concat_calls")),
-        output:
-            **wf.get_output_files("popdel", "concat_calls"),
-        log:
-            **wf.get_log_file("popdel", "concat_calls"),
-        benchmark:
-            wf.get_benchmark_file("popdel", "concat_calls")
-        threads: wf.get_resource("popdel", "concat_calls", "threads")
-        resources:
-            **wf.get_resources("popdel", "concat_calls"),
-        params:
-            args=wf.get_params("popdel", "concat_calls"),
-        wrapper:
-            wf.get_wrapper("popdel", "concat_calls")
-
-    rule sv_calling_wgs_popdel_reorder_vcf:
-        input:
-            unpack(wf.get_input_files("popdel", "reorder_vcf")),
-        output:
-            **wf.get_output_files("popdel", "reorder_vcf"),
-        log:
-            **wf.get_log_file("popdel", "reorder_vcf"),
-        benchmark:
-            wf.get_benchmark_file("popdel", "reorder_vcf")
-        threads: wf.get_resource("popdel", "reorder_vcf", "threads")
-        resources:
-            **wf.get_resources("popdel", "reorder_vcf"),
-        params:
-            args=wf.get_params("popdel", "reorder_vcf"),
-        wrapper:
-            wf.get_wrapper("popdel", "reorder_vcf")
+include: "../common/wrapper_rules.rules"
+# The rules of the tools of both SV calling steps
+include: "../common/sv_calling.rules"

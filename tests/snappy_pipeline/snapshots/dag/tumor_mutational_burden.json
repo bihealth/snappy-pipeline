@@ -1494,7 +1494,7 @@
    "partition": "medium",
    "runtime": 60
   },
-  "rule": "tumor_mutational_burden_tumor_mutational_burden_calculation",
+  "rule": "tumor_mutational_burden_tumor_mutational_burden_tmb_gathering_run",
   "temp": [],
   "threads": 1,
   "wildcards": {

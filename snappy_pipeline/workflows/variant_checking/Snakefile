@@ -11,10 +11,8 @@ __author__ = "Manuel Holtgrewe <manuel.holtgrewe@bihealth.de>"
 wf = task_instance(config["__task_name__"])
 
 
-# Rules =======================================================================
+include: "../common/wrapper_rules.rules"
 
-
-# Variant Checking ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 # Write out pedigree file -----------------------------------------------------
 
@@ -27,45 +25,3 @@ rule variant_checking_write_pedigree_run:
         args=wf.get_params("write_pedigree", "run"),
     run:
         wf.sub_steps["write_pedigree"].write(params.args, output)
-
-
-# Run peddy -------------------------------------------------------------------
-
-
-rule variant_checking_peddy_run:
-    input:
-        unpack(wf.get_input_files("peddy", "run")),
-    output:
-        **wf.get_output_files("peddy", "run"),
-    log:
-        **wf.get_log_file("peddy", "run"),
-    benchmark:
-        wf.get_benchmark_file("peddy", "run")
-    threads: wf.get_resource("peddy", "run", "threads")
-    resources:
-        **wf.get_resources("peddy", "run"),
-    params:
-        args=wf.get_params("peddy", "run"),
-    wrapper:
-        wf.get_wrapper("peddy", "run")
-
-
-# QC summary of all pedigrees -------------------------------------------------
-
-
-rule variant_checking_qc_summary:
-    input:
-        unpack(wf.get_input_files("qc_summary", "run")),
-    output:
-        **wf.get_output_files("qc_summary", "run"),
-    log:
-        **wf.get_log_file("qc_summary", "run"),
-    benchmark:
-        wf.get_benchmark_file("qc_summary", "run")
-    threads: wf.get_resource("qc_summary", "run", "threads")
-    resources:
-        **wf.get_resources("qc_summary", "run"),
-    params:
-        args=wf.get_params("qc_summary", "run"),
-    wrapper:
-        wf.get_wrapper("qc_summary", "run")

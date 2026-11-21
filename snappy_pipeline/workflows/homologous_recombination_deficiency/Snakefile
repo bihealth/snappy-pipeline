@@ -11,29 +11,4 @@ __author__ = "Eric Blanc"
 wf = task_instance(config["__task_name__"])
 
 
-# Rules =======================================================================
-
-
-# House-Keeping ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-# Homologous Recombination Deficiency score ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-# Run scarHRD -----------------------------------------------------------------
-
-
-rule homologous_recombination_deficiency_scarHRD_run:
-    input:
-        unpack(wf.get_input_files("scarHRD", "run")),
-    output:
-        **wf.get_output_files("scarHRD", "run"),
-    log:
-        **wf.get_log_file("scarHRD", "run"),
-    benchmark:
-        wf.get_benchmark_file("scarHRD", "run")
-    threads: wf.get_resource("scarHRD", "run", "threads")
-    resources:
-        **wf.get_resources("scarHRD", "run"),
-    params:
-        args=wf.get_params("scarHRD", "run"),
-    wrapper:
-        wf.get_wrapper("scarHRD", "run")
+include: "../common/wrapper_rules.rules"
