@@ -1,44 +1,31 @@
 from typing import Annotated
 
-from pydantic import BaseModel
-
 from snappy_pipeline.models import ConfigPath
 from snappy_pipeline.models import RequiredBy, SnappyModel, SnappyStepModel
 from snappy_pipeline.workflows.abstract.protocol import (
     DataSignature,
     DataType,
     Exons,
+    ExpectedAlignments,
     ExpectedPathSchema,
+    ExpectedVcf,
     Kits,
     Reference,
 )
-
-
-class ExpectedExternalVcf(BaseModel):
-    """Consumer-driven contract: the VCF of a library."""
-
-    vcf: str
-
-
-class ExpectedExternalBam(BaseModel):
-    """Consumer-driven contract: the BAM file and index of a library."""
-
-    bam: str
-    bai: str
 
 
 class VariantExportExternalDependsOn(SnappyModel):
     variants: Annotated[
         str,
         DataSignature(DataType.VARIANTS, frozenset({"germline"})),
-        ExpectedPathSchema(ExpectedExternalVcf),
+        ExpectedPathSchema(ExpectedVcf),
     ]
     """``external_data`` task with the (g)VCF of each library."""
 
     alignments: Annotated[
         str,
         DataSignature(DataType.ALIGNMENTS),
-        ExpectedPathSchema(ExpectedExternalBam),
+        ExpectedPathSchema(ExpectedAlignments),
         RequiredBy(when="bam_available_flag"),
     ] = ""
     """``external_data`` task with the BAM file of each library"""
@@ -55,11 +42,11 @@ class VariantExportExternalDependsOn(SnappyModel):
 class VariantExportExternal(SnappyStepModel):
     depends_on: VariantExportExternalDependsOn
 
-    external_tool: str = "dragen"
-    """external tool name."""
-
     bam_available_flag: bool = False
     """BAM QC only possible if BAM files are present."""
+
+    ignore_read_groups: bool = True
+    """BAM QC: the target coverage of all read groups of a library together (``alfred qc --ignore``)"""
 
     merge_vcf_flag: bool = False
     """true if pedigree VCFs still need merging (not recommended)."""

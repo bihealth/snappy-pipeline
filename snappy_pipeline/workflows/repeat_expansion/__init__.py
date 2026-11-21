@@ -19,12 +19,11 @@ The key ``vcf`` is the one downstream tasks read through ``depends_on``.
 """
 
 import os
-from functools import cached_property
 
 from snakemake.io import expand
 
 from snappy_pipeline.utils import dictify, listify
-from snappy_pipeline.workflows.abstract import BaseStep, BaseStepPart
+from snappy_pipeline.workflows.abstract import BaseStep, BaseStepPart, ResourceUsage
 from snappy_pipeline.workflows.abstract.protocol import DataSignature, DataType
 from snappy_pipeline.workflows.ngs_mapping.model import ExpectedAlignments
 from snappy_pipeline.workflows.repeat_expansion.annotate_expansionhunter import (
@@ -32,6 +31,7 @@ from snappy_pipeline.workflows.repeat_expansion.annotate_expansionhunter import 
 )
 
 from .model import RepeatExpansion as RepeatExpansionConfigModel
+from .model import Tool
 
 #: Extensions of files to create as main payload - JSON.
 EXT_JSON = (".json", ".json.md5")
@@ -57,11 +57,8 @@ class ExpansionHunterStepPart(BaseStepPart):
 
     intermediate_outputs = {"run": ("json",)}
 
-    @cached_property
-    def library_name_to_sex(self) -> dict[str, str]:
-        """Return the sex of each library's donor, including background data sets."""
-        df = self.parent.build_library_dataframe(include_background=True)
-        return dict(zip(df["library_name"], df["sex"]))
+    #: The annotation only reads two JSON files
+    resource_usage = {"annotate": ResourceUsage(threads=1, runtime="10m", mem="1GB")}
 
     def _get_input_files_run(self, wildcards):
         """Yield BAM files based on subworkflow `ngs_mapping` results.
@@ -119,7 +116,7 @@ class ExpansionHunterStepPart(BaseStepPart):
 
         :return: Returns donor's sex as found in sample sheet: 'female' or 'male', otherwise None.
         """
-        sex = self.library_name_to_sex[wildcards.library_name]
+        sex = self.parent.library_row(wildcards.library_name)["sex"]
         return {"sex": sex if sex in ("female", "male") else None}
 
     def annotate_results(self, _wildcards, sm_input, sm_output):
@@ -154,10 +151,7 @@ class RepeatExpansionWorkflow(BaseStep):
 
     config_model_class = RepeatExpansionConfigModel
 
-    def __init__(self, workflow, project, task_name):
-        super().__init__(workflow, project, task_name)
-        # Register sub step classes so the sub steps are available
-        self.register_sub_step_classes((ExpansionHunterStepPart,))
+    tool_parts = {Tool.expansionhunter: ExpansionHunterStepPart}
 
     @classmethod
     def get_output_paths(cls, config, signature=None, **kwargs) -> dict[str, str]:

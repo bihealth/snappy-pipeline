@@ -186,6 +186,7 @@ def test_the_bam_qc_table_holds_the_stats_of_every_library_as_json(tmp_path):
         json.dump(alfred, f)
 
     table = bam_qc.bam_qc_table(
+        ["L1"],
         [str(tmp_path / "L1.bam.bamstats.txt")],
         [str(tmp_path / "L1.bam.idxstats.txt")],
         [str(tmp_path / "L1.target_coverage.json.gz")],
@@ -211,7 +212,7 @@ def test_the_bam_qc_without_coverage_has_only_the_samtools_stats(tmp_path):
     (tmp_path / "L2.bam.idxstats.txt").write_text("1\t10\t5\t0\n")
 
     table = bam_qc.bam_qc_table(
-        [str(tmp_path / "L2.bam.bamstats.txt")], [str(tmp_path / "L2.bam.idxstats.txt")], []
+        ["L2"], [str(tmp_path / "L2.bam.bamstats.txt")], [str(tmp_path / "L2.bam.idxstats.txt")], []
     )
 
     assert json.loads(table.split("\n")[1].split("\t")[2].replace('"""', '"')) == {

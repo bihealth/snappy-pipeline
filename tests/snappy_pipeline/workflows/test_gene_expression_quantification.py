@@ -121,6 +121,20 @@ def test_strandedness_requires_exons():
         GeneExpressionQuantification(tool="strandedness", depends_on=depends_on, strandedness={})
 
 
+def test_strandedness_forces_the_strand_in_its_section():
+    # Like ngs_mapping with STAR; the step's strand is that of the quantifiers
+    depends_on = {"alignments": "mapping", "exons": "exons"}
+    with pytest.raises(pydantic.ValidationError, match="strandedness.strand"):
+        GeneExpressionQuantification(
+            tool="strandedness", depends_on=depends_on, strandedness={}, strand=1
+        )
+    config = GeneExpressionQuantification(
+        tool="strandedness", depends_on=depends_on, strandedness={"strand": 1}
+    )
+
+    assert config.strandedness.strand == 1
+
+
 def test_featurecounts_passes_its_settings():
     # The params only read the config, so skip the full step setup.
     part = object.__new__(FeatureCountsStepPart)

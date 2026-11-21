@@ -8,11 +8,11 @@ from snappy_pipeline.workflows.abstract.protocol import (
     DataType,
     Exons,
     ExpectedPathSchema,
+    ExpectedVariants,
     Reference,
 )
 from snappy_pipeline.workflows.ngs_data_qc.model import ExpectedAlfredQc
 from snappy_pipeline.workflows.ngs_mapping.model import ExpectedAlignmentQc
-from snappy_pipeline.workflows.variant_calling.model import ExpectedGermlineVariants
 
 
 class ExpectedMehariDatabase(SnappyModel):
@@ -64,13 +64,14 @@ class VarfishExportDependsOn(SnappyModel):
         str,
         DataSignature(DataType.VARIANTS, frozenset({"germline"})),
         RELATED_LEVEL,
-        ExpectedPathSchema(ExpectedGermlineVariants),
+        ExpectedPathSchema(ExpectedVariants),
     ]
     """The germline calls of each pedigree"""
 
     structural_variants: Annotated[
         str,
         DataSignature(DataType.VARIANTS, frozenset({"germline", "sv"})),
+        ExpectedPathSchema(ExpectedVariants),
     ] = ""
     """Optional ``sv_calling_targeted`` or ``sv_calling_wgs`` task whose calls are exported"""
 

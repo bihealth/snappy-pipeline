@@ -1,31 +1,24 @@
 # -*- coding: utf-8 -*-
 """Implementation of the gCNV CASE mode run methods."""
 
-import re
 import warnings
 from pathlib import Path
 
-from snakemake.io import directory, expand, touch
+from snakemake.io import directory, touch
 from snakemake.iocontainers import Wildcards
 
-from snappy_pipeline.utils import dictify, flatten, listify
+from snappy_pipeline.utils import dictify
 from snappy_pipeline.workflows.common.gcnv.gcnv_common import (
     GcnvCommonStepPart,
     InconsistentLibraryKitsWarning,
     build_ngs_library_to_kit,
 )
+from snappy_pipeline.workflows.common.sv_calling import VCF_OUTPUTS, SvCallingGetResultFilesMixin
 
-#: Predefined file name keys and extensions for the overall results files.
+#: Predefined file name keys and extensions of the joint segmentation per kit
 RESULT_EXTENSIONS = {
     "vcf": ".vcf.gz",
     "vcf_tbi": ".vcf.gz.tbi",
-}
-
-#: The result files with their md5 files.
-RESULT_EXTENSIONS_WITH_MD5 = {
-    **RESULT_EXTENSIONS,
-    "vcf_md5": ".vcf.gz.md5",
-    "vcf_tbi_md5": ".vcf.gz.tbi.md5",
 }
 
 
@@ -195,13 +188,8 @@ class MergeMultikitFamiliesMixin:
     to the output.
     """
 
-    @dictify
     def _get_output_files_merge_multikit_families(self):
-        prefix = "work/{library_name}/out/{library_name}"
-        work_files = {}
-        for key, suffix in RESULT_EXTENSIONS_WITH_MD5.items():
-            work_files[key] = f"{prefix}{suffix}"
-        yield from work_files.items()
+        return dict(VCF_OUTPUTS)
 
     def _get_log_file_merge_multikit_families(self):
         """Return log file **pattern** for the step ``merge_multikit_families``."""
@@ -244,6 +232,7 @@ class ShardsMixin:
 
 
 class RunGcnvStepPart(
+    SvCallingGetResultFilesMixin,
     ShardsMixin,
     ContigPloidyMixin,
     CallCnvsMixin,
@@ -298,33 +287,15 @@ class RunGcnvStepPart(
         """Return the interval list of the model task, which also fixes the intervals of the calls."""
         return self.parent.get_upstream_paths("gcnv_model", library_kit=library_kit).interval_list
 
-    @listify
-    def get_result_files(self):
-        """Return list of **concrete** paths to result files for the given configuration and sample sheets.
-
-        The function will skip pedigrees where samples have inconsistent library kits and print a warning.
-        """
-        if self.config.tool != "gcnv":
-            return
-
-        # Get list with all result path template strings.
-        result_path_tpls = [
-            re.sub(r"^work/", "output/", path)
-            for path in flatten(self._get_output_files_merge_multikit_families().values())
-        ]
-
-        # Iterate over all pedigrees.  Check library kit consistency for each pedigree.  In case of inconsistent
-        # library kits within one pedigree, raise a warning about the quality in this pedigree.
-        for pedigree, library_names in self.parent.pedigrees(include_background=True).items():
-            library_kits = [self.ngs_library_to_kit[library_name] for library_name in library_names]
-            if len(set(library_kits)) != 1:
-                names_kits = list(zip(library_names, library_kits))
-                msg = (
-                    "Found inconsistent library kits (more than one kit!) for pedigree "
-                    f"{pedigree}.  The library name/kit pairs are {names_kits}.  SNAPPY "
-                    "will attempt to merge the results but the result may contain artifacts."
-                )
-                warnings.warn(InconsistentLibraryKitsWarning(msg))
-            # Yield all concrete output paths, replacing prefix "work/" by "output/".
-            for path_tpl in result_path_tpls:
-                yield from expand(path_tpl, library_name=[pedigree])
+    def check_pedigree(self, pedigree: str, library_names: list[str]) -> None:
+        """Warn about a pedigree whose libraries have more than one kit: the results are merged,
+        but may contain artifacts."""
+        library_kits = [self.ngs_library_to_kit[library_name] for library_name in library_names]
+        if len(set(library_kits)) != 1:
+            names_kits = list(zip(library_names, library_kits))
+            msg = (
+                "Found inconsistent library kits (more than one kit!) for pedigree "
+                f"{pedigree}.  The library name/kit pairs are {names_kits}.  SNAPPY "
+                "will attempt to merge the results but the result may contain artifacts."
+            )
+            warnings.warn(InconsistentLibraryKitsWarning(msg))

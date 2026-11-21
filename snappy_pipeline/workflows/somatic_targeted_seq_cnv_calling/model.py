@@ -1,18 +1,18 @@
 import enum
-from typing import Annotated, Any, Literal
+from typing import Annotated, Any
 
 from pydantic import BaseModel, ConfigDict, Field
 
 from snappy_pipeline.models import EnumField, RequiredBy, SnappyModel, SnappyStepModel, ToolModel
 from snappy_pipeline.models.cnvkit import Cnvkit
 from snappy_pipeline.workflows.abstract.protocol import (
+    ExpectedVariants,
     DataSignature,
     DataType,
+    DnaAlignments,
     ExpectedPathSchema,
     Reference,
 )
-from snappy_pipeline.workflows.ngs_mapping.model import ExpectedAlignments
-from snappy_pipeline.workflows.variant_calling.model import ExpectedSomaticVariants
 
 
 class ExpectedPonPaths(BaseModel):
@@ -119,9 +119,7 @@ class Sequenza(ToolModel):
     assembly: str = "hg19"
     """Must be hg38 for GRCh38. See copynumber for complete list (augmented with hg38)"""
 
-    extra_args: Annotated[SequenzaExtraArgs | dict[str, Any], Field(union_mode="left_to_right")] = (
-        SequenzaExtraArgs()
-    )
+    extra_args: SequenzaExtraArgs = SequenzaExtraArgs()
     """Extra arguments for sequenza bam2seqz"""
 
     ignore_contigs: list[str] = [
@@ -137,40 +135,14 @@ class Sequenza(ToolModel):
     ]
     """Regular expressions matched with ``re.search`` against contig names; matching contigs are ignored."""
 
-    extra_args_extract: Annotated[
-        SequenzaExtractExtraArgs | dict[str, Any], Field(union_mode="left_to_right")
-    ] = SequenzaExtractExtraArgs()
+    extra_args_extract: SequenzaExtractExtraArgs = SequenzaExtractExtraArgs()
     """Valid arguments: see ?sequenza::sequenza.extract in R"""
 
-    extra_args_fit: Annotated[
-        SequenzaFitExtraArgs | dict[str, Any], Field(union_mode="left_to_right")
-    ] = SequenzaFitExtraArgs()
+    extra_args_fit: SequenzaFitExtraArgs = SequenzaFitExtraArgs()
     """Valid arguments: see ?sequenza::sequenza.fit in R"""
 
 
-class GenomeName(enum.StrEnum):
-    hg18 = "hg18"
-    hg19 = "hg19"
-    hg38 = "hg38"
-    mm9 = "mm9"
-    mm10 = "mm10"
-    rn4 = "rn4"
-    rn5 = "rn5"
-    rn6 = "rn6"
-    canFam3 = "canFam3"
-
-
 class PureCn(ToolModel):
-    genome_name: Annotated[
-        GenomeName | Literal["unknown"],
-        EnumField(GenomeName, json_schema_extra={"options": {"unknown"}}),
-    ] = "unknown"
-    """Must be one from hg18, hg19, hg38, mm9, mm10, rn4, rn5, rn6, canFam3"""
-
-    enrichment_kit_name: str = "unknown"
-    """For filename only..."""
-
-    seed: int = 1234567
     extra_commands: dict[str, Any] = {
         "model": "betabin",
         "fun-segmentation": "PSCBS",
@@ -183,16 +155,12 @@ class SomaticTargetedSeqCnvCallingDependsOn(SnappyModel):
     variants: Annotated[
         str,
         DataSignature(DataType.VARIANTS, frozenset({"somatic", ("snv", "indel")})),
-        ExpectedPathSchema(ExpectedSomaticVariants),
+        ExpectedPathSchema(ExpectedVariants),
         RequiredBy(Tool.purecn),
     ] = ""
     """Mutect2 calls that include the germline variants (``--genotype-germline-sites true
     --genotype-pon-sites true``)"""
-    alignments: Annotated[
-        str,
-        DataSignature(DataType.ALIGNMENTS, frozenset({"dna"})),
-        ExpectedPathSchema(ExpectedAlignments),
-    ]
+    alignments: DnaAlignments
     panel_of_normals: Annotated[
         str,
         DataSignature(DataType.MODELS, frozenset({"pon", ("cnvkit", "purecn")})),

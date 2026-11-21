@@ -1,10 +1,7 @@
 from enum import StrEnum
 from typing import Annotated
 
-from pydantic import (
-    BaseModel,
-    model_validator,
-)
+from pydantic import BaseModel
 
 from snappy_pipeline.models import (
     ReadBy,
@@ -18,10 +15,7 @@ from snappy_pipeline.workflows.abstract.protocol import (
     ExpectedPathSchema,
     Features,
 )
-from snappy_pipeline.workflows.reference_download.model import (
-    ExpectedReferenceDownloadFiles,
-    Molecule,
-)
+from snappy_pipeline.workflows.reference_download.model import ExpectedReferenceDownloadFiles
 
 
 class ExpectedIndex(BaseModel):
@@ -79,21 +73,8 @@ class ReferenceIndex(SnappyStepModel):
     tool: Tool
     """Index family to build for this task (one tool per task)."""
 
-    reference_molecule: Molecule = Molecule.dna
-    """Molecule class of the input reference used for index generation."""
-
     bwa: Bwa = Bwa()
     bwa_mem2: BwaMem2 = BwaMem2()
     bwa_mem3: BwaMem3 = BwaMem3()
     minimap2: Minimap2 = Minimap2()
     star: Star = Star()
-
-    @model_validator(mode="after")
-    def validate_tool_vs_reference_molecule(self):
-        if self.tool == Tool.star and self.reference_molecule != Molecule.rna:
-            raise ValueError("tool='star' requires reference_molecule='rna'")
-        if self.tool != Tool.star and self.reference_molecule != Molecule.dna:
-            raise ValueError(
-                "tool in {bwa,bwa_mem2,bwa_mem3,minimap2} requires reference_molecule='dna'"
-            )
-        return self

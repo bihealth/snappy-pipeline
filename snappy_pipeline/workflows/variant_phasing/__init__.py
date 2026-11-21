@@ -43,20 +43,19 @@ from snappy_pipeline.workflows.abstract import (
     ResourceUsage,
     WritePedigreeStepPart,
 )
+from snappy_pipeline.workflows.common import vcf_outputs
 from snappy_pipeline.workflows.common.calls_report import CallsReportStepPart
-from snappy_pipeline.workflows.abstract.protocol import DataSignature, DataType, select_signature
+from snappy_pipeline.workflows.common.scatter import RegionScatter
+from snappy_pipeline.workflows.abstract.protocol import DataSignature, DataType
 
+from .model import Tool
 from .model import VariantPhasing as VariantPhasingConfigModel
 
-#: Output keys and extensions of a phased VCF
-_OUTPUTS = {
-    "vcf": ".vcf.gz",
-    "vcf_tbi": ".vcf.gz.tbi",
-    "vcf_md5": ".vcf.gz.md5",
-    "vcf_tbi_md5": ".vcf.gz.tbi.md5",
-}
-
+#: The phased VCF of an entity, without ``.vcf.gz``
 _BASE_PATH_OUT = "work/{library_name}/out/{library_name}"
+
+#: Output keys of a phased VCF
+_OUTPUTS = tuple(vcf_outputs(_BASE_PATH_OUT))
 
 
 class WriteTrioPedigreeStepPart(WritePedigreeStepPart):
@@ -114,7 +113,7 @@ class PhaseByTransmissionStepPart(VariantPhasingBaseStep):
     name = "gatk_phase_by_transmission"
     wrappers = {"run": "gatk_phase_by_transmission"}
 
-    result_keys = tuple(_OUTPUTS)
+    result_keys = _OUTPUTS
 
     @dictify
     def _get_input_files_run(self, wildcards):
@@ -126,10 +125,8 @@ class PhaseByTransmissionStepPart(VariantPhasingBaseStep):
         yield from self._yield_vcf(wildcards)
         yield from self.parent.reference_inputs().items()
 
-    @dictify
     def _get_output_files_run(self):
-        for key, ext in _OUTPUTS.items():
-            yield key, _BASE_PATH_OUT + ext
+        return vcf_outputs(_BASE_PATH_OUT)
 
     def _get_params_run(self, wildcards) -> dict[str, Any]:
         config = self.config.gatk_phase_by_transmission
@@ -142,7 +139,7 @@ class PhaseByTransmissionStepPart(VariantPhasingBaseStep):
     default_resource_usage = ResourceUsage(threads=1, runtime="1d", mem=f"{14 * 1024}MB")
 
 
-class ReadBackedPhasingStepPart(VariantPhasingBaseStep):
+class ReadBackedPhasingStepPart(RegionScatter, VariantPhasingBaseStep):
     """Read-backed phasing, scattered over chunks of the genome and gathered per child."""
 
     #: Name of the step in the pipeline.
@@ -150,31 +147,27 @@ class ReadBackedPhasingStepPart(VariantPhasingBaseStep):
 
     #: Class available actions
     actions = ("scatter", "run", "gather")
-    wrappers = {
+    wrappers = RegionScatter.scatter_wrapper | {
         "gather": "bcftools/concat",
         "run": "gatk_read_backed_phasing",
-        "scatter": "split_regions",
     }
 
     extra_arguments_action = "run"
 
-    result_keys = {"gather": tuple(_OUTPUTS)}
+    result_keys = {"gather": _OUTPUTS}
 
     temp_outputs = {"scatter": ("regions",), "run": ("vcf", "vcf_tbi")}
 
     resource_usage = {
-        "scatter": ResourceUsage(threads=1, runtime="2m", mem="1000MB"),
         "run": ResourceUsage(threads=1, runtime="4h", mem="14336MB"),
         "gather": ResourceUsage(threads=1, runtime="4h", mem="2048MB"),
     }
 
-    def __init__(self, parent):
-        super().__init__(parent)
-        self.region_tpl = "work/scatter/{scatteritem}.region.bed"
-        self.chunk_tpl = "work/{library_name}/chunks/{scatteritem}"
+    #: The phased variants of a child in one part of the genome
+    chunk_tpl = "work/{library_name}/chunks/{scatteritem}"
 
-    def _scattergather(self, kind):
-        return getattr(self.parent.workflow.globals.get(kind), self.name)
+    def scatter_ignore_contigs(self) -> list[str]:
+        return self.config.ignore_contigs
 
     def _yield_bams(self, wildcards):
         """Yield the alignments of the trio"""
@@ -189,23 +182,18 @@ class ReadBackedPhasingStepPart(VariantPhasingBaseStep):
         yield "bam", [aln.bam for aln in alignments]
         yield "bai", [aln.bai for aln in alignments]
 
-    def _get_input_files_scatter(self, wildcards):
-        return {"fai": self.parent.get_upstream_paths("reference").fai}
-
     @dictify
     def _get_input_files_run(self, wildcards):
         yield from self._yield_bams(wildcards)
         yield from self._yield_vcf(wildcards)
         yield from self.parent.reference_inputs().items()
-        yield "region", self.region_tpl.format(**wildcards)
+        yield "region", self.region(wildcards)
 
     def _get_input_files_gather(self, wildcards):
-        gather = self._scattergather("gather")
-        chunk = self.chunk_tpl.replace("{scatteritem}", "{{scatteritem}}").format(**wildcards)
-        return {"vcf": gather(chunk + ".vcf.gz"), "vcf_tbi": gather(chunk + ".vcf.gz.tbi")}
-
-    def _get_params_scatter(self, wildcards):
-        return {"ignore_contigs": self.config.ignore_contigs, "padding": 0}
+        return {
+            "vcf": self.gathered(self.chunk_tpl + ".vcf.gz", wildcards),
+            "vcf_tbi": self.gathered(self.chunk_tpl + ".vcf.gz.tbi", wildcards),
+        }
 
     def _get_params_run(self, wildcards):
         config = self.config.gatk_read_backed_phasing
@@ -215,22 +203,14 @@ class ReadBackedPhasingStepPart(VariantPhasingBaseStep):
             "max_variants_per_window": config.max_variants_per_window,
         }
 
-    def _get_output_files_scatter(self):
-        return {"regions": self._scattergather("scatter")(self.region_tpl)}
-
     def _get_output_files_run(self):
         return {
             "vcf": self.chunk_tpl + ".vcf.gz",
             "vcf_tbi": self.chunk_tpl + ".vcf.gz.tbi",
         }
 
-    @dictify
     def _get_output_files_gather(self):
-        for key, ext in _OUTPUTS.items():
-            yield key, _BASE_PATH_OUT + ext
-
-    def _get_log_file_scatter(self):
-        return {"log": "work/scatter/log.log"}
+        return vcf_outputs(_BASE_PATH_OUT)
 
     def _get_log_file_run(self):
         return {"log": "work/{library_name}/log/{library_name}.chunks/{scatteritem}.log"}
@@ -242,7 +222,7 @@ class ReadBackedPhasingStepPart(VariantPhasingBaseStep):
 class TumorPhasingStepPart(VariantPhasingBaseStep):
     """Phasing of a tumor library's combined somatic and germline variants with its alignments."""
 
-    result_keys = tuple(_OUTPUTS)
+    result_keys = _OUTPUTS
 
     default_resource_usage = ResourceUsage(threads=1, runtime="1d", mem="32GB")
 
@@ -261,10 +241,8 @@ class TumorPhasingStepPart(VariantPhasingBaseStep):
             **self.parent.reference_inputs(),
         }
 
-    @dictify
     def _get_output_files_run(self):
-        for key, ext in _OUTPUTS.items():
-            yield key, _BASE_PATH_OUT + ext
+        return vcf_outputs(_BASE_PATH_OUT)
 
 
 class TumorReadBackedPhasingStepPart(TumorPhasingStepPart):
@@ -281,15 +259,8 @@ class TumorWhatshapStepPart(TumorPhasingStepPart):
     wrappers = {"run": "whatshap/phase"}
 
 
-_TOOL_STEP_PART = {
-    "gatk_phase_by_transmission": PhaseByTransmissionStepPart,
-    "gatk_read_backed_phasing": ReadBackedPhasingStepPart,
-    "gatk_read_backed_phasing_tumor": TumorReadBackedPhasingStepPart,
-    "whatshap_tumor": TumorWhatshapStepPart,
-}
-
 #: The tools that phase tumor libraries instead of pedigrees
-_TUMOR_TOOLS = ("gatk_read_backed_phasing_tumor", "whatshap_tumor")
+_TUMOR_TOOLS = (Tool.gatk_read_backed_phasing_tumor, Tool.whatshap_tumor)
 
 
 class VariantPhasingWorkflow(BaseStep):
@@ -301,6 +272,14 @@ class VariantPhasingWorkflow(BaseStep):
         DataSignature(DataType.VARIANTS, frozenset({"combined", "phased"})),
     ]
     config_model_class = VariantPhasingConfigModel
+
+    tool_parts = {
+        Tool.gatk_phase_by_transmission: PhaseByTransmissionStepPart,
+        Tool.gatk_read_backed_phasing: ReadBackedPhasingStepPart,
+        Tool.gatk_read_backed_phasing_tumor: TumorReadBackedPhasingStepPart,
+        Tool.whatshap_tumor: TumorWhatshapStepPart,
+    }
+    helper_parts = (WriteTrioPedigreeStepPart,)
 
     @classmethod
     def task_produces(cls, config, upstream):
@@ -324,23 +303,18 @@ class VariantPhasingWorkflow(BaseStep):
     def get_output_paths(cls, config, signature=None, **kwargs) -> dict[str, str]:
         """Return local phased-variant output paths for downstream consumers."""
         lib = kwargs.get("library_name", "{library_name}")
-        prefix = f"work/{lib}/out/{lib}"
-        return {"vcf": f"{prefix}.vcf.gz", "vcf_tbi": f"{prefix}.vcf.gz.tbi"}
+        paths = vcf_outputs(_BASE_PATH_OUT.format(library_name=lib))
+        return {key: paths[key] for key in ("vcf", "vcf_tbi")}
 
     def __init__(self, workflow, project, task_name):
         super().__init__(workflow, project, task_name)
-        self.register_sub_step_classes(
-            (WriteTrioPedigreeStepPart, _TOOL_STEP_PART[self.config.tool])
-        )
         if self.config.calls_report:
             self.register_sub_step_classes((CallsReportStepPart,))
 
     @cached_property
     def variants_are_phased(self) -> bool:
         """Whether ``depends_on.variants`` is a phasing task, whose results are per child."""
-        dependency = self.resolve_dependency("variants")
-        produced = self.project.signatures[dependency.task_name]
-        return "phased" in select_signature(produced, dependency.signature).tags
+        return "phased" in self.upstream_signature("variants").tags
 
     @cached_property
     def output_entities(self) -> list[str]:

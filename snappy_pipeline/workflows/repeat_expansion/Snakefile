@@ -36,8 +36,8 @@ rule repeat_expansion_annotate_expansionhunter:
         unpack(wf.get_input_files("expansionhunter", "annotate")),
     output:
         **wf.get_output_files("expansionhunter", "annotate"),
-    threads: wf.get_resource("expansionhunter", "run", "threads")
+    threads: wf.get_resource("expansionhunter", "annotate", "threads")
     resources:
-        **wf.get_resources("expansionhunter", "run"),
+        **wf.get_resources("expansionhunter", "annotate"),
     run:
         wf.sub_steps["expansionhunter"].annotate_results(wildcards, input, output)

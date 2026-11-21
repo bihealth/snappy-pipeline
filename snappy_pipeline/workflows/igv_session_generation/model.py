@@ -7,12 +7,10 @@ from snappy_pipeline.workflows.abstract.protocol import (
     RELATED_LEVEL,
     DataSignature,
     DataType,
+    ExpectedAlignments,
     ExpectedPathSchema,
+    ExpectedVariants,
 )
-from snappy_pipeline.workflows.ngs_mapping.model import ExpectedAlignments
-from snappy_pipeline.workflows.variant_annotation.model import ExpectedAnnotatedVariants
-from snappy_pipeline.workflows.variant_calling.model import ExpectedGermlineVariants
-from snappy_pipeline.workflows.variant_phasing.model import ExpectedPhasedVariants
 
 
 class IgvSessionGenerationDependsOn(SnappyModel):
@@ -24,21 +22,21 @@ class IgvSessionGenerationDependsOn(SnappyModel):
     phased_variants: Annotated[
         str,
         DataSignature(DataType.VARIANTS, frozenset({"germline", "phased"})),
-        ExpectedPathSchema(ExpectedPhasedVariants),
+        ExpectedPathSchema(ExpectedVariants),
     ] = ""
     """Phased variants; set exactly one of the three variant fields"""
     annotated_variants: Annotated[
         str,
         DataSignature(DataType.VARIANTS, frozenset({"germline", "annotated"})),
         RELATED_LEVEL,
-        ExpectedPathSchema(ExpectedAnnotatedVariants),
+        ExpectedPathSchema(ExpectedVariants),
     ] = ""
     """Annotated variants; set exactly one of the three variant fields"""
     variants: Annotated[
         str,
         DataSignature(DataType.VARIANTS, frozenset({"germline"})),
         RELATED_LEVEL,
-        ExpectedPathSchema(ExpectedGermlineVariants),
+        ExpectedPathSchema(ExpectedVariants),
     ] = ""
     """Variant calls; set exactly one of the three variant fields"""
 

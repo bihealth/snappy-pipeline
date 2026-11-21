@@ -42,6 +42,7 @@ def _part(group_by="library", kits="", **settings):
         member_libraries=lambda name: PRIMARY_DNA["library_name"].tolist(),
         primary_library=lambda name: name,
         library_row=lambda name: ROWS[name],
+        matched_normal=lambda name: ROWS[name]["matched_normal_lib"],
         get_upstream_paths=_alignments,
         reference_inputs=lambda: {"reference": "ref.fa"},
         common_kit=lambda field, names: "MedExome",

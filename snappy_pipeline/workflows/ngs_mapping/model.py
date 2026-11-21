@@ -1,4 +1,3 @@
-import enum
 from enum import StrEnum
 from typing import Annotated
 
@@ -17,18 +16,13 @@ from snappy_pipeline.workflows.abstract.protocol import (
     DataType,
     Exons,
     ExpectedPathSchema,
+    ExpectedAlignments,  # noqa: F401  re-exported for the consumers of the alignments
     Features,
     Reference,
     TOOL,
 )
+from snappy_pipeline.workflows.common.strandedness import Strandedness
 from snappy_pipeline.workflows.reference_index.model import ExpectedIndex
-
-
-class ExpectedAlignments(BaseModel):
-    """Consumer-driven contract: expected output keys from an ngs_mapping upstream task."""
-
-    bam: str
-    bai: str
 
 
 class ExpectedAlignmentQc(BaseModel):
@@ -62,22 +56,6 @@ class Tool(StrEnum):
 
     def is_dna(self):
         return self in {self.bwa, self.bwa_mem2, self.bwa_mem3, self.minimap2}
-
-    def is_rna(self):
-        return self in {self.star}
-
-    def supports_long_reads(self):
-        return self in {self.bwa_mem2, self.bwa_mem3, self.minimap2}
-
-    def get_tags(self):
-        tags = set()
-        if self.is_dna():
-            tags |= {"dna"}
-        if self.is_rna():
-            tags |= {"rna"}
-        if self.supports_long_reads():
-            tags |= {"long_read"}
-        return tags
 
 
 class NgsMappingDependsOn(SnappyModel):
@@ -187,22 +165,6 @@ class Star(ToolModel):
     trim_adapters: bool = False
     mask_duplicates: bool = False
     include_unmapped: bool = True
-
-
-class Strand(enum.IntEnum):
-    UNKNOWN = -1
-    INFER = 0
-    UNSTRANDED = 0
-    FORWARD = 1
-    REVERSE = 2
-
-
-class Strandedness(ToolModel):
-    strand: Strand = Strand.UNKNOWN
-    """-1: unknown value, use infer_, 0: unstranded, 1: forward, 2: reverse (from featurecounts)"""
-
-    threshold: float = 0.85
-    """Minimum proportion of reads mapped to forward/reverse direction to call the protocol"""
 
 
 class Minimap2(ToolModel):

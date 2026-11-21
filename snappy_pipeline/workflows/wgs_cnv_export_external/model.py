@@ -1,28 +1,21 @@
 from typing import Annotated
 
-from pydantic import BaseModel
-
 from snappy_pipeline.models import ConfigPath
 from snappy_pipeline.models import SnappyModel, SnappyStepModel
 from snappy_pipeline.workflows.abstract.protocol import (
     DataSignature,
     DataType,
     ExpectedPathSchema,
+    ExpectedVcf,
     Reference,
 )
-
-
-class ExpectedExternalVcf(BaseModel):
-    """Consumer-driven contract: the VCF of a library."""
-
-    vcf: str
 
 
 class WgsCnvExportExternalDependsOn(SnappyModel):
     variants: Annotated[
         str,
         DataSignature(DataType.VARIANTS, frozenset({"cnv"})),
-        ExpectedPathSchema(ExpectedExternalVcf),
+        ExpectedPathSchema(ExpectedVcf),
     ]
     """``external_data`` task with the CNV VCF of each library."""
 

@@ -16,35 +16,20 @@ from snappy_pipeline.models import (
 )
 from snappy_pipeline.models.calls_report import CallsReport
 from snappy_pipeline.models.gatk import GATK
-from snappy_pipeline.models.parallel import Parallel
 from snappy_pipeline.workflows.abstract.protocol import (
     DataSignature,
     DataType,
     CommonVariants,
     Dbsnp,
+    DnaAlignments,
     ExpectedPathSchema,
     ExpectedVcf,
     GermlineResource,
     Kits,
     Reference,
 )
-from snappy_pipeline.workflows.ngs_mapping.model import ExpectedAlignments
 
 logger = logging.getLogger(__name__)
-
-
-class ExpectedGermlineVariants(BaseModel):
-    """Consumer-driven contract: expected output keys from a variant_calling upstream task."""
-
-    vcf: str
-    vcf_tbi: str
-
-
-class ExpectedSomaticVariants(BaseModel):
-    """Consumer-driven contract: expected output keys from a variant_calling upstream task."""
-
-    vcf: str
-    vcf_tbi: str
 
 
 class ExpectedCandidates(BaseModel):
@@ -97,11 +82,30 @@ class IntervalPadding(SnappyModel):
     """Bases added on both sides of each window (the windows then overlap; duplicate calls are merged)"""
 
 
-class BcftoolsCall(ToolModel, IgnoreContigs, IntervalPadding):
-    max_depth: int = 250
-    max_indel_depth: int = 250
+class WindowedCaller(ToolModel, IgnoreContigs, IntervalPadding):
+    """A caller that processes the windows of the genome in parallel"""
+
     window_length: int = 10000000
     num_threads: int = 16
+
+
+class GatkCaller(WindowedCaller):
+    """A GATK caller"""
+
+    allow_seq_dict_incompatibility: bool = False
+
+
+class Assembly(enum.StrEnum):
+    GRCh37 = "GRCh37"
+    GRCh38 = "GRCh38"
+
+
+class BcftoolsCall(WindowedCaller):
+    assembly: Annotated[Assembly, EnumField(Assembly)]
+    """The genome build: the ploidy of chrX and chrY by sex (``bcftools call --ploidy``)"""
+
+    max_depth: int = 250
+    max_indel_depth: int = 250
 
     annotate: str = "FORMAT/AD,FORMAT/DP"
     """Tags that ``bcftools mpileup`` adds (``--annotate``)"""
@@ -116,39 +120,24 @@ class BcftoolsCall(ToolModel, IgnoreContigs, IntervalPadding):
     """Output variant sites only (``bcftools call --variants-only``)"""
 
 
-class Gatk3Hc(ToolModel, IgnoreContigs, IntervalPadding):
-    num_threads: int = 16
-    window_length: int = 10000000
-    allow_seq_dict_incompatibility: bool = False
-
+class Gatk3Hc(GatkCaller):
     sample_ploidy: Annotated[int, Field(ge=1)] = 2
     """Ploidy of the samples (``--sample_ploidy``)"""
 
 
-class Gatk3Ug(ToolModel, IgnoreContigs, IntervalPadding):
-    num_threads: int = 16
-    window_length: int = 10000000
-    allow_seq_dict_incompatibility: bool = False
+class Gatk3Ug(GatkCaller):
     downsample_to_coverage: int = 250
 
     sample_ploidy: Annotated[int, Field(ge=1)] = 2
     """Ploidy of the samples (``--sample_ploidy``)"""
 
 
-class Gatk4HcJoint(ToolModel, IgnoreContigs, IntervalPadding):
-    window_length: int = 10000000
-    num_threads: int = 16
-    allow_seq_dict_incompatibility: bool = False
-
+class Gatk4HcJoint(GatkCaller):
     annotation_groups: list[str] = ["StandardAnnotation", "StandardHCAnnotation"]
     """Annotation groups of ``HaplotypeCaller`` (``-G``)"""
 
 
-class Gatk4HcGvcf(ToolModel, IgnoreContigs, IntervalPadding):
-    window_length: int = 10000000
-    num_threads: int = 16
-    allow_seq_dict_incompatibility: bool = False
-
+class Gatk4HcGvcf(GatkCaller):
     discover_annotation_groups: list[str] = [
         "StandardAnnotation",
         "AS_StandardAnnotation",
@@ -188,7 +177,13 @@ class Contamination(ToggleModel, GATK):
     """Parameters for GetPileupSummaries used on the tumor bam (& normalk if present)"""
 
 
-class Mutect2(Parallel, GATK, IgnoreContigs):
+class Mutect2(GATK, IgnoreContigs):
+    num_jobs: Annotated[int, Field(ge=1)] = 24
+    """The number of regions the genome is split into for scattered calling"""
+
+    num_cores: Annotated[int, Field(ge=1)] = 2
+    """The threads of each scattered calling job"""
+
     contamination: Contamination
     """Estimation of contamination using GetPileupSummaries & CalculateContamination"""
 
@@ -302,11 +297,7 @@ class Varlociraptor(ToolModel):
 
 
 class VariantCallingDependsOn(SnappyModel):
-    alignments: Annotated[
-        str,
-        DataSignature(DataType.ALIGNMENTS, frozenset({"dna"})),
-        ExpectedPathSchema(ExpectedAlignments),
-    ]
+    alignments: DnaAlignments
 
     reference: Reference
 

@@ -17,15 +17,18 @@ import os
 
 from snakemake.io import expand
 
-from snappy_pipeline.base import ConfigError
 from snappy_pipeline.utils import dictify, listify
 from snappy_pipeline.workflows.abstract import (
     BaseStep,
     BaseStepPart,
     ResourceUsage,
 )
-from snappy_pipeline.workflows.abstract.protocol import DataSignature, DataType
-from snappy_pipeline.workflows.ngs_mapping.model import ExpectedAlignments
+from snappy_pipeline.workflows.abstract.protocol import (
+    DataSignature,
+    DataType,
+    ExpectedAlignments,
+)
+from snappy_pipeline.workflows.common import vcf_outputs
 
 from .model import TargetedSeqMeiCalling as TargetedSeqMeiCallingConfigModel
 
@@ -49,9 +52,6 @@ class ScrambleStepPart(BaseStepPart):
     intermediate_outputs = {"cluster": ("txt",)}
 
     default_resource_usage = ResourceUsage(threads=1, runtime="6h", mem=f"{8 * 1024}MB")
-
-    def __init__(self, parent):
-        super().__init__(parent)
 
     def _get_log_file(self, action):
         return {"log": f"work/{{library_name}}/log/{{library_name}}.{action}.log"}
@@ -88,40 +88,13 @@ class ScrambleStepPart(BaseStepPart):
         """Return output files' patterns for scramble cluster call."""
         return {"txt": "work/{library_name}/out/{library_name}.cluster.txt"}
 
-    @dictify
     def _get_output_files_analysis(self):
-        """Yield output files' patterns for scramble call."""
-        ext_dict = {
-            "txt": ".MEIs.txt",
-            "vcf": ".vcf",
-            "vcf_gz": ".vcf.gz",
-            "vcf_gz_md5": ".vcf.gz.md5",
-            "vcf_tbi": ".vcf.gz.tbi",
-            "vcf_tbi_md5": ".vcf.gz.tbi.md5",
-        }
-        for key, ext in ext_dict.items():
-            yield key, f"work/{{library_name}}/out/{{library_name}}{ext}"
+        """The table and the VCF of scramble, and the VCF bgzipped"""
+        prefix = "work/{library_name}/out/{library_name}"
+        return {"txt": prefix + ".MEIs.txt", "plain_vcf": prefix + ".vcf", **vcf_outputs(prefix)}
 
     def _get_params_analysis(self, wildcards):
-        """Get parameters.
-
-        :param wildcards: Snakemake rule wildcards (unused).
-        :type wildcards: snakemake.io.Wildcards
-
-        :return: Returns parameters required to run analysis part of scramble.
-
-        :raises ConfigError: if information provided in configuration isn't enough to run
-        the analysis.
-        """
-        blast_ref_path = self.config.scramble.blast_ref
-        try:
-            if not os.path.isfile(blast_ref_path):
-                raise ConfigError(
-                    f"Provided path to reference genome ('blast_ref') "
-                    f"is not a real file: {blast_ref_path}"
-                )
-        except TypeError as e:
-            raise TypeError("Path to reference genome ('blast_ref') cannot be empty.") from e
+        """The scores and thresholds of scramble's analysis"""
         params = {
             "n_cluster": self.config.scramble.n_cluster,
             "mei_score": self.config.scramble.mei_score,

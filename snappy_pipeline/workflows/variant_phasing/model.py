@@ -15,11 +15,11 @@ from snappy_pipeline.workflows.abstract.protocol import (
     RELATED_LEVEL,
     DataSignature,
     DataType,
+    ExpectedAlignments,
     ExpectedPathSchema,
+    ExpectedVariants,
     Reference,
 )
-from snappy_pipeline.workflows.ngs_mapping.model import ExpectedAlignments
-from snappy_pipeline.workflows.variant_annotation.model import ExpectedAnnotatedVariants
 
 
 class Tool(enum.StrEnum):
@@ -34,7 +34,7 @@ class GatkReadBackedPhasing(ToolModel):
     phase_quality_threshold: float = 20.0
     """quality threshold for phasing"""
 
-    num_jobs: int = 24
+    num_jobs: Annotated[int, Field(ge=1)] = 24
     """number of chunks the genome is split into, each phased in its own job"""
 
     window_size: Annotated[int, Field(ge=1)] = 10000
@@ -55,20 +55,6 @@ class GatkPhaseByTransmission(ToolModel):
     """write the paternal allele first in phased genotypes (``--FatherAlleleFirst``)"""
 
 
-class ExpectedPhasedVariants(SnappyModel):
-    """Consumer-driven contract: expected output keys from variant_phasing."""
-
-    vcf: str
-    vcf_tbi: str
-
-
-class ExpectedCombinedVariants(SnappyModel):
-    """Consumer-driven contract: the combined somatic and germline variants of a tumor library."""
-
-    vcf: str
-    vcf_tbi: str
-
-
 class VariantPhasingDependsOn(SnappyModel):
     alignments: Annotated[
         str,
@@ -83,7 +69,7 @@ class VariantPhasingDependsOn(SnappyModel):
         str,
         DataSignature(DataType.VARIANTS, frozenset({"germline", ("annotated", "phased")})),
         RELATED_LEVEL,
-        ExpectedPathSchema(ExpectedAnnotatedVariants),
+        ExpectedPathSchema(ExpectedVariants),
         RequiredBy(Tool.gatk_phase_by_transmission, Tool.gatk_read_backed_phasing),
     ] = ""
     """Annotated germline variants, or the phased variants of a ``gatk_phase_by_transmission``
@@ -92,7 +78,7 @@ class VariantPhasingDependsOn(SnappyModel):
     combined_variants: Annotated[
         str,
         DataSignature(DataType.VARIANTS, frozenset({"combined"})),
-        ExpectedPathSchema(ExpectedCombinedVariants),
+        ExpectedPathSchema(ExpectedVariants),
         RequiredBy(Tool.gatk_read_backed_phasing_tumor, Tool.whatshap_tumor),
     ] = ""
     """The combined somatic and germline variants of the tumor libraries"""

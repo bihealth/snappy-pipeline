@@ -71,6 +71,9 @@ class BamReportsExternalStepPart(BaseStepPart):
         yield from self.parent.reference_inputs().items()
         yield "targets_bed", self.parent.library_kit_paths("kits", wildcards.library_name).targets
 
+    def _get_params_run(self, wildcards):
+        return {"ignore_read_groups": self.config.ignore_read_groups}
+
     def _get_output_files_run(self):
         """The alfred report, without md5: it is no result file."""
         return {"json": "work/{library_name}/out/{library_name}.target_coverage.json.gz"}
@@ -129,20 +132,8 @@ class VarfishAnnotatorAnnotateStepPart(BaseStepPart):
         "vcf_tbi": ".vcf.gz.tbi",
     }
 
-    def __init__(self, parent):
-        super().__init__(parent)
-        # External tool prefix - included in merged VCF name
-        self.external_tool_prefix = self._get_external_source_prefix()
-
-    def _get_external_source_prefix(self):
-        """Get external source prefix
-
-        :return: Returns external tool prefix if any provided, example: "dragen.". Otherwise,
-        returns empty string.
-        """
-        if self.config.external_tool:
-            return self.config.external_tool.lower() + "."
-        return ""
+    #: The (merged) VCF of a pedigree, without the extension
+    vcf_tpl = "work/{related_group}/out/{related_group}"
 
     def _vcf(self, library_name):
         return self.parent.get_upstream_paths("variants", library_name=library_name).vcf
@@ -175,12 +166,8 @@ class VarfishAnnotatorAnnotateStepPart(BaseStepPart):
         if self.config.depends_on.exons:
             yield "exon_bed", self.parent.get_upstream_paths("exons").bed
         # VCF
-        tpl = (
-            f"work/{self.external_tool_prefix}{{related_group}}/out/"
-            f"{self.external_tool_prefix}{{related_group}}"
-        )
         for key, ext in self.vcf_key_ext_dict.items():
-            yield key, tpl.format(**wildcards) + ext
+            yield key, self.vcf_tpl.format(**wildcards) + ext
 
     def _get_input_files_bam_qc(self, wildcards):
         # Get names of primary libraries of the selected pedigree.  The pedigree is selected
@@ -198,12 +185,8 @@ class VarfishAnnotatorAnnotateStepPart(BaseStepPart):
 
     @dictify
     def _get_output_files_gvcf_to_vcf(self):
-        tpl = (
-            f"work/{self.external_tool_prefix}{{related_group}}/out/"
-            f"{self.external_tool_prefix}{{related_group}}"
-        )
         for key, ext in self.vcf_key_ext_dict.items():
-            yield key, tpl + ext
+            yield key, self.vcf_tpl + ext
 
     _get_output_files_merge_vcf = _get_output_files_gvcf_to_vcf
 
@@ -227,10 +210,7 @@ class VarfishAnnotatorAnnotateStepPart(BaseStepPart):
 
     def _get_log_file(self, action):
         if action in ("gvcf_to_vcf", "merge_vcf"):
-            prefix = (
-                f"work/{self.external_tool_prefix}{{related_group}}/"
-                f"log/{self.external_tool_prefix}{{related_group}}.{action}"
-            )
+            prefix = f"work/{{related_group}}/log/{{related_group}}.{action}"
         else:
             prefix = (
                 f"work/varfish_annotated.{{related_group}}/log/"
@@ -265,29 +245,10 @@ class VarfishAnnotatorAnnotateStepPart(BaseStepPart):
         }
 
     def _get_params_bam_qc(self, wildcards):
-        """Get parameters for wrapper ``variant_annotator/bam_qc``
-
-        Creates dictionary that links library name to identifier that should be used in output file.
-        The wrapper will derive the library name from the input file name, for analysis using
-        externally generated data, the values will be the sample name as provided by the external
-        source (sample name). For snappy-based analysis, both keys and values will be the
-        library name.
-
-        Dictionary expected structure:
-        {
-            "P001-N1-DNA1-WGS1": "P001",
-            "P002-N1-DNA1-WGS1": "P002",
-            "P003-N1-DNA1-WGS1": "P003",
-        }
-
-        :return: Dictionary linking library name to identifier that should be used in output file.
-        Key: library name; Value: identifier to be used in file.
-        """
+        """The names of the pedigree members in the table, the sample names of the external
+        source, in the order of the ``bamstats``, ``flagstats`` and ``idxstats`` inputs"""
         members = self.parent.pedigree_members(wildcards.related_group, include_background=True)
-        return {
-            library_name: secondary_id
-            for library_name, secondary_id in zip(members["library_name"], members["secondary_id"])
-        }
+        return {"sample_names": members["secondary_id"].tolist()}
 
     def _collect_gvcf(self, wildcards):
         """Yield the path of the index's gVCF"""

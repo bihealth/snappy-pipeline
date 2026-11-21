@@ -1,10 +1,14 @@
 # -*- coding: utf-8 -*-
 """Tests for the config model of the ``ngs_mapping`` step."""
 
+from types import SimpleNamespace
+
+import pandas as pd
 import pydantic
 import pytest
 
 from snappy_pipeline.models import SnappyStepModel
+from snappy_pipeline.workflows.ngs_mapping import NgsMappingWorkflow
 from snappy_pipeline.workflows.ngs_mapping.model import NgsMapping
 
 STAR_DEPENDS_ON = {
@@ -28,6 +32,23 @@ def test_star_infers_the_strand_without_a_strandedness_section():
         "threshold": 0.85,
         "extra_arguments": [],
     }
+
+
+@pytest.mark.parametrize(
+    "tool, mapped",
+    [("bwa", ["dna"]), ("bwa_mem3", ["dna"]), ("minimap2", ["long"]), ("star", ["rna"])],
+)
+def test_each_mapper_takes_the_libraries_it_maps(tool, mapped):
+    libraries = pd.DataFrame(
+        [
+            {"library_name": "dna", "extraction_type": "dna", "seq_platform": "Illumina"},
+            {"library_name": "long", "extraction_type": "dna", "seq_platform": "PacBio"},
+            {"library_name": "rna", "extraction_type": "rna", "seq_platform": "Illumina"},
+        ]
+    )
+    requirement = NgsMappingWorkflow.task_library_requirement(SimpleNamespace(tool=tool))
+
+    assert libraries.query(requirement)["library_name"].tolist() == mapped
 
 
 def test_only_steps_with_a_bam_for_other_tasks_delete_it():

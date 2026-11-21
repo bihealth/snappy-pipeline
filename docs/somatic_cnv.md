@@ -165,11 +165,9 @@ tasks:
         variants: calling_for_purecn
         panel_of_normals: pon_purecn
       tool: purecn
-      purecn:
-        genome_name: hg19
-        enrichment_kit_name: exome
+      purecn: {}
 ```
 
-The `cnv_purecn` task reads the normal database, the mapping bias and the intervals from `pon_purecn`, and runs PureCN in its image.
+The `cnv_purecn` task reads the normal database, the mapping bias and the intervals from `pon_purecn`, runs PureCN in its image, and takes the genome and the seed from the panel task's `purecn` section, so that the panel and the calls agree.
 The intervals depend only on the genome and the exome kit.
 The normal database and the mapping bias can change with the mapper.

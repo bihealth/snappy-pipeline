@@ -44,21 +44,17 @@ from snappy_pipeline.workflows.abstract import (
     ReportOutput,
     ResourceUsage,
 )
+from snappy_pipeline.workflows.common import vcf_outputs
 from snappy_pipeline.workflows.common.calls_report import CallsReportStepPart
 from snappy_pipeline.workflows.abstract.protocol import DataSignature, DataType
 
-from .model import ExpectedVariantVcf
+from .model import Tool
 from .model import VariantAnnotation as VariantAnnotationConfigModel
 
 __author__ = "Manuel Holtgrewe <manuel.holtgrewe@bih-charite.de>"
 
-#: Output keys and extensions of the annotated VCF
-_OUTPUTS = {
-    "vcf": ".vcf.gz",
-    "vcf_tbi": ".vcf.gz.tbi",
-    "vcf_md5": ".vcf.gz.md5",
-    "vcf_tbi_md5": ".vcf.gz.tbi.md5",
-}
+#: The annotated VCF of an entity, without ``.vcf.gz``
+_OUT_PREFIX = "work/{library_name}/out/{library_name}"
 
 
 class VariantAnnotationStepPart(BaseStepPart):
@@ -66,28 +62,20 @@ class VariantAnnotationStepPart(BaseStepPart):
 
     actions = ("run",)
 
-    result_keys = tuple(_OUTPUTS)
+    result_keys = tuple(vcf_outputs(_OUT_PREFIX))
 
     @dictify
     def _get_input_files_run(self, wildcards):
-        lib = wildcards.library_name
-        variant = ExpectedVariantVcf.model_validate(
-            self.parent.get_upstream_paths("variants", library_name=lib)
-        )
+        variant = self.parent.get_upstream_paths("variants", library_name=wildcards.library_name)
         yield "vcf", variant.vcf
         yield "vcf_tbi", variant.vcf_tbi
         yield from self.parent.reference_inputs().items()
 
     def _get_output_files_run(self):
-        return {
-            key: f"work/{{library_name}}/out/{{library_name}}{ext}" for key, ext in _OUTPUTS.items()
-        }
+        return vcf_outputs(_OUT_PREFIX)
 
     def _get_log_file_run(self):
         return {"log": "work/{library_name}/log/{library_name}.log"}
-
-    def _get_params_run(self, wildcards):
-        return {"config": getattr(self.config, self.name).model_dump(by_alias=True)}
 
 
 class VepStepPart(VariantAnnotationStepPart):
@@ -144,12 +132,6 @@ class MehariStepPart(VariantAnnotationStepPart):
         return ResourceUsage(threads=self.config.mehari.threads, runtime="20m", mem="8GB")
 
 
-_TOOL_STEP_PART = {
-    "vep": VepStepPart,
-    "mehari": MehariStepPart,
-}
-
-
 class VariantAnnotationWorkflow(BaseStep):
     """Annotate germline or somatic variant calls with a single selected tool."""
 
@@ -170,18 +152,16 @@ class VariantAnnotationWorkflow(BaseStep):
 
     config_model_class = VariantAnnotationConfigModel
 
+    tool_parts = {Tool.vep: VepStepPart, Tool.mehari: MehariStepPart}
+
     @classmethod
     def get_output_paths(cls, config, signature=None, **kwargs) -> dict[str, str]:
         """Return local annotated VCF output paths for somatic or germline variants."""
         lib = kwargs.get("library_name", "{library_name}")
-        return {
-            "vcf": f"work/{lib}/out/{lib}.vcf.gz",
-            "vcf_tbi": f"work/{lib}/out/{lib}.vcf.gz.tbi",
-        }
+        paths = vcf_outputs(_OUT_PREFIX.format(library_name=lib))
+        return {key: paths[key] for key in ("vcf", "vcf_tbi")}
 
     def __init__(self, workflow, project, task_name):
         super().__init__(workflow, project, task_name)
-        tool_cls = _TOOL_STEP_PART[self.config.tool]
-        self.register_sub_step_classes((tool_cls,))
         if self.config.calls_report:
             self.register_sub_step_classes((CallsReportStepPart,))

@@ -7,8 +7,8 @@ from snappy_pipeline.workflows.abstract.protocol import (
     DataSignature,
     DataType,
     ExpectedPathSchema,
+    ExpectedVariants,
 )
-from snappy_pipeline.workflows.variant_calling.model import ExpectedGermlineVariants
 
 
 class Tool(enum.StrEnum):
@@ -20,7 +20,7 @@ class VariantCheckingDependsOn(SnappyModel):
         str,
         DataSignature(DataType.VARIANTS, frozenset({"germline"})),
         RELATED_LEVEL,
-        ExpectedPathSchema(ExpectedGermlineVariants),
+        ExpectedPathSchema(ExpectedVariants),
     ]
 
 

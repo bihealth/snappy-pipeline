@@ -6,7 +6,6 @@ from snappy_pipeline.workflows.abstract.protocol import (
     DataSignature,
     DataType,
     ExpectedPathSchema,
-    Reference,
 )
 
 
@@ -31,9 +30,6 @@ class ScarHRD(SnappyModel):
 
     chr_prefix: bool = False
 
-    length: int = 50
-    """Wiggle track for GC reference file"""
-
 
 class HomologousRecombinationDeficiencyDependsOn(SnappyModel):
     copy_number: Annotated[
@@ -41,8 +37,6 @@ class HomologousRecombinationDeficiencyDependsOn(SnappyModel):
         DataSignature(DataType.VARIANTS, frozenset({"somatic", "cnv"})),
         ExpectedPathSchema(ExpectedSomaticCnvCalls),
     ]
-
-    reference: Reference
 
 
 class HomologousRecombinationDeficiency(SnappyStepModel):

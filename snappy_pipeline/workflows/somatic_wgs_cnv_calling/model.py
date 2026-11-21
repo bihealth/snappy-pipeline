@@ -8,10 +8,10 @@ from snappy_pipeline.workflows.abstract.protocol import (
     TOOL,
     DataSignature,
     DataType,
+    DnaAlignments,
     ExpectedPathSchema,
     Reference,
 )
-from snappy_pipeline.workflows.ngs_mapping.model import ExpectedAlignments
 
 
 class Tool(enum.StrEnum):
@@ -127,11 +127,7 @@ class ExpectedCnvkitPanelOfNormals(SnappyModel):
 
 
 class SomaticWgsCnvCallingDependsOn(SnappyModel):
-    alignments: Annotated[
-        str,
-        DataSignature(DataType.ALIGNMENTS, frozenset({"dna"})),
-        ExpectedPathSchema(ExpectedAlignments),
-    ]
+    alignments: DnaAlignments
 
     reference: Annotated[Reference, RequiredBy(Tool.cnvetti, Tool.cnvkit)] = ""
 

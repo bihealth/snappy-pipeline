@@ -3,15 +3,19 @@ import enum
 from typing import Annotated
 
 from snappy_pipeline.models import SnappyModel, SnappyStepModel, ToolModel
-from snappy_pipeline.workflows.abstract.protocol import DataSignature, DataType, ExpectedPathSchema
-from snappy_pipeline.workflows.variant_calling.model import ExpectedSomaticVariants
+from snappy_pipeline.workflows.abstract.protocol import (
+    DataSignature,
+    DataType,
+    ExpectedPathSchema,
+    ExpectedVariants,
+)
 
 
 class SomaticVariantSignaturesDependsOn(SnappyModel):
     variants: Annotated[
         str,
         DataSignature(DataType.VARIANTS, frozenset({"somatic"})),
-        ExpectedPathSchema(ExpectedSomaticVariants),
+        ExpectedPathSchema(ExpectedVariants),
     ]
 
 

@@ -34,9 +34,7 @@ from snappy_pipeline.workflows.abstract.protocol import DataSignature, DataType
 from snappy_pipeline.workflows.common.reads import reads_input_files, reads_params
 
 from .model import AdapterTrimming as AdapterTrimmingConfigModel
-
-#: Adatper trimming tools
-TRIMMERS = ("bbduk", "fastp")
+from .model import Tool
 
 
 class AdapterTrimmingStepPart(BaseStepPart):
@@ -63,9 +61,6 @@ class AdapterTrimmingStepPart(BaseStepPart):
 
     @dictify
     def _get_output_files_run(self):
-        tool = self.config.tool
-        if self.name != tool:
-            return []
         # The tool writes one file per input file, named by params: directories, not files
         return (
             ("out", directory("work/{library_name}/out")),
@@ -73,12 +68,8 @@ class AdapterTrimmingStepPart(BaseStepPart):
             ("rejected", directory("work/{library_name}/rejected")),
         )
 
-    @dictify
     def _get_log_file(self, action):
-        tool = self.config.tool
-        if self.name != tool:
-            return []
-        yield "log", "work/{library_name}/log/{library_name}.log"
+        return {"log": "work/{library_name}/log/{library_name}.log"}
 
     def _get_params_run(self, wildcards):
         # The trimmed files keep the sub-directory and name of each input file, in input order.
@@ -93,7 +84,6 @@ class AdapterTrimmingStepPart(BaseStepPart):
                         }
                     )
         return {
-            "library_name": wildcards.library_name,
             "output_left": output["left"],
             "output_right": output["right"],
             "config": {
@@ -137,18 +127,9 @@ class AdapterTrimmingWorkflow(BaseStep):
 
     config_model_class = AdapterTrimmingConfigModel
 
+    tool_parts = {Tool.BBDUK: BbdukStepPart, Tool.FASTP: FastpStepPart}
+
     @classmethod
     def get_output_paths(cls, config, signature=None, **kwargs) -> dict[str, str]:
         """Return local output paths for trimmed/raw FASTQ consumption."""
         return {"fastq_dir": "work"}
-
-    def __init__(self, workflow, project, task_name):
-        super().__init__(workflow, project, task_name)
-        match self.config.tool:
-            case "bbduk":
-                selected = BbdukStepPart
-            case "fastp":
-                selected = FastpStepPart
-            case _:
-                raise NotImplementedError(f"Unknown tool: {self.config.tool}")
-        self.register_sub_step_classes((selected,))

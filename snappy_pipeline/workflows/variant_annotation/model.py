@@ -8,31 +8,18 @@ from snappy_pipeline.models.annotation import Mehari, Vep
 from snappy_pipeline.workflows.abstract.protocol import (
     DataSignature,
     DataType,
+    DnaAlignments,
     ExpectedPathSchema,
+    ExpectedVariants,
     Reference,
     TOOL,
 )
 from snappy_pipeline.models.calls_report import CallsReport
-from snappy_pipeline.workflows.ngs_mapping.model import ExpectedAlignments
 
 
 class Tool(enum.StrEnum):
     vep = "vep"
     mehari = "mehari"
-
-
-class ExpectedVariantVcf(SnappyModel):
-    """Generic VCF contract consumed by the unified variant_annotation step."""
-
-    vcf: str
-    vcf_tbi: str
-
-
-class ExpectedAnnotatedVariants(SnappyModel):
-    """Consumer-driven contract: expected annotated-variant output keys."""
-
-    vcf: str
-    vcf_tbi: str
 
 
 class ExpectedVepDatabase(SnappyModel):
@@ -53,17 +40,12 @@ class VariantAnnotationDependsOn(SnappyModel):
     variants: Annotated[
         str,
         DataSignature(DataType.VARIANTS),
-        ExpectedPathSchema(ExpectedVariantVcf),
+        ExpectedPathSchema(ExpectedVariants),
     ]
 
     reference: Reference
 
-    alignments: Annotated[
-        str,
-        DataSignature(DataType.ALIGNMENTS, frozenset({"dna"})),
-        ExpectedPathSchema(ExpectedAlignments),
-        RequiredBy(when="calls_report.igv"),
-    ] = ""
+    alignments: Annotated[DnaAlignments, RequiredBy(when="calls_report.igv")] = ""
     """The BAMs of the libraries, for the IGV views of ``calls_report.igv``"""
 
     database: Annotated[

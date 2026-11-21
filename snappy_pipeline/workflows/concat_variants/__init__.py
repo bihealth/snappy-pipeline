@@ -29,22 +29,14 @@ from snappy_pipeline.workflows.abstract import (
     BaseStep,
     BaseStepPart,
     ResourceUsage,
-    _declared_group_by,
 )
+from snappy_pipeline.workflows.common import vcf_outputs
 from snappy_pipeline.workflows.common.calls_report import CallsReportStepPart
 from snappy_pipeline.workflows.abstract.protocol import DataSignature, DataType
 
 from .model import ConcatVariants as ConcatVariantsConfigModel
 
 _OUT_PREFIX = "work/{library_name}/out/{library_name}"
-
-#: Output keys and extensions of the concatenated VCF
-_OUTPUTS = {
-    "vcf": ".vcf.gz",
-    "vcf_tbi": ".vcf.gz.tbi",
-    "vcf_md5": ".vcf.gz.md5",
-    "vcf_tbi_md5": ".vcf.gz.tbi.md5",
-}
 
 #: Tags that name a kind of variant; the output carries those of any input
 VARIANT_KINDS = frozenset({"snv", "indel", "mnv", "sv", "cnv", "mei", "repeats", "fusion"})
@@ -57,7 +49,7 @@ class BcftoolsConcatStepPart(BaseStepPart):
     actions = ("run",)
     wrappers = {"run": "bcftools/concat_variants"}
 
-    result_keys = {"run": tuple(_OUTPUTS)}
+    result_keys = {"run": tuple(vcf_outputs(_OUT_PREFIX))}
 
     default_resource_usage = ResourceUsage(threads=1, mem="2G", runtime="2h")
 
@@ -74,7 +66,7 @@ class BcftoolsConcatStepPart(BaseStepPart):
         yield "vcf_tbi", tbi
 
     def _get_output_files_run(self) -> dict[str, str]:
-        return {key: f"{_OUT_PREFIX}{ext}" for key, ext in _OUTPUTS.items()}
+        return vcf_outputs(_OUT_PREFIX)
 
     def _get_params_run(self, wildcards: Wildcards) -> dict[str, Any]:
         return {}  # the base class adds the extra_arguments of the tool section
@@ -101,10 +93,8 @@ class ConcatVariantsWorkflow(BaseStep):
     @classmethod
     def get_output_paths(cls, config, signature=None, **kwargs) -> dict[str, str]:
         lib = kwargs.get("library_name", "{library_name}")
-        return {
-            "vcf": f"work/{lib}/out/{lib}.vcf.gz",
-            "vcf_tbi": f"work/{lib}/out/{lib}.vcf.gz.tbi",
-        }
+        paths = vcf_outputs(_OUT_PREFIX.format(library_name=lib))
+        return {key: paths[key] for key in ("vcf", "vcf_tbi")}
 
     def __init__(self, workflow, project, task_name):
         super().__init__(workflow, project, task_name)
@@ -117,7 +107,7 @@ class ConcatVariantsWorkflow(BaseStep):
         grouping of this task."""
         group_by = self.effective_group_by
         for task in self.upstream_task_names("variants"):
-            declared = _declared_group_by(self.project, task, frozenset()) or "library"
+            declared = self.project.group_by[task]
             if declared != group_by:
                 raise ConfigError(
                     f"the task concatenates with group_by: {group_by}, but its input task "

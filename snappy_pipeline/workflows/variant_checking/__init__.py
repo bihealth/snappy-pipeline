@@ -30,16 +30,12 @@ from snappy_pipeline.workflows.abstract import (
     ResourceUsage,
     WritePedigreeStepPart,
 )
-from snappy_pipeline.workflows.abstract.protocol import DataSignature, DataType
+from snappy_pipeline.workflows.abstract.protocol import DataSignature, DataType, ExpectedVariants
 from snappy_pipeline.workflows.common.qc_summary import QcSummaryStepPart
-from snappy_pipeline.workflows.variant_calling.model import ExpectedGermlineVariants
 
 from .model import VariantChecking as VariantCheckingConfigModel
 
 __author__ = "Manuel Holtgrewe <manuel.holtgrewe@bih-charite.de>"
-
-#: Available tools for checking variants
-VARIANT_CHECKERS = "peddy"
 
 #: Output keys and extensions of the peddy step
 _OUTPUTS = {
@@ -78,7 +74,7 @@ class PeddyStepPart(BaseStepPart):
         index = wildcards.related_group
         yield "ped", f"work/write_pedigree.{index}/out/{index}.ped"
 
-        calling: ExpectedGermlineVariants = self.parent.get_upstream_paths(
+        calling: ExpectedVariants = self.parent.get_upstream_paths(
             "variants",
             library_name=index,
         )

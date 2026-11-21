@@ -192,7 +192,7 @@ elif tool == "gatk4_hc_gvcf":
 # Generate BCFtools stats report ----------------------------------------------
 
 
-if wf.config.bcftools_stats and wf.config.bcftools_stats.enabled:
+if "bcftools_stats" in wf.sub_steps:
 
     rule variant_calling_bcftools_stats_report:
         input:
@@ -232,7 +232,7 @@ if wf.config.bcftools_stats and wf.config.bcftools_stats.enabled:
 # Generate B allele fraction files --------------------------------------------
 
 
-if wf.config.baf_file_generation and wf.config.baf_file_generation.enabled:
+if "baf_file_generation" in wf.sub_steps:
 
     rule variant_calling_baf_file_generation:
         input:
@@ -255,7 +255,7 @@ if wf.config.baf_file_generation and wf.config.baf_file_generation.enabled:
 # Run bcftools roh ------------------------------------------------------------
 
 
-if wf.config.bcftools_roh and wf.config.bcftools_roh.enabled:
+if "bcftools_roh" in wf.sub_steps:
 
     rule variant_calling_bcftools_roh:
         input:
@@ -336,11 +336,7 @@ if tool == "mutect2":
                 wf.get_wrapper("mutect2", "contamination")
 
     scattergather:
-        mutect2=(
-            getattr(wf.config.mutect2, "num_jobs", 24)
-            if getattr(wf.config, "mutect2", None)
-            else 24
-        ),
+        mutect2=wf.config.mutect2.num_jobs,
 
     rule variant_calling_mutect2_scatter:
         input:

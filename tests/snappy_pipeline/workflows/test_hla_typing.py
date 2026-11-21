@@ -38,7 +38,7 @@ def test_optitype_passes_its_settings(monkeypatch):
 
     monkeypatch.setattr(hla_typing, "reads_params", lambda parent, library_name: {})
     part = object.__new__(OptiTypeStepPart)
-    part.parent = SimpleNamespace(extraction_types={"lib": "dna"})
+    part.parent = SimpleNamespace(library_row=lambda library_name: {"extraction_type": "dna"})
     part.config = SimpleNamespace(optitype=Optitype(solver="cbc", unpaired_weight=0.5))
 
     params = part._get_params_run(SimpleNamespace(library_name="lib"))

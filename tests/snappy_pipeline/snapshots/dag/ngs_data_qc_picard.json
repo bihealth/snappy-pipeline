@@ -3,12 +3,12 @@
   "benchmark": null,
   "input": [
    "tasks/ngs_data_qc_picard/work/case001subregion-N1-DNA1-WES1/report/case001subregion-N1-DNA1-WES1.CollectMultipleMetrics.alignment_summary_metrics.txt",
-   "tasks/ngs_data_qc_picard/work/case001subregion-N1-DNA1-WES1/report/case001subregion-N1-DNA1-WES1.CollectMultipleMetrics.alignment_summary_metrics.txt.md5",
-   "tasks/ngs_data_qc_picard/work/case001subregion-N1-DNA1-WES1/report/case001subregion-N1-DNA1-WES1.CollectHsMetrics.txt",
-   "tasks/ngs_data_qc_picard/work/case001subregion-N1-DNA1-WES1/report/case001subregion-N1-DNA1-WES1.CollectHsMetrics.txt.md5",
    "tasks/ngs_data_qc_picard/work/case001subregion-T1-DNA1-WES1/report/case001subregion-T1-DNA1-WES1.CollectMultipleMetrics.alignment_summary_metrics.txt",
+   "tasks/ngs_data_qc_picard/work/case001subregion-N1-DNA1-WES1/report/case001subregion-N1-DNA1-WES1.CollectMultipleMetrics.alignment_summary_metrics.txt.md5",
    "tasks/ngs_data_qc_picard/work/case001subregion-T1-DNA1-WES1/report/case001subregion-T1-DNA1-WES1.CollectMultipleMetrics.alignment_summary_metrics.txt.md5",
+   "tasks/ngs_data_qc_picard/work/case001subregion-N1-DNA1-WES1/report/case001subregion-N1-DNA1-WES1.CollectHsMetrics.txt",
    "tasks/ngs_data_qc_picard/work/case001subregion-T1-DNA1-WES1/report/case001subregion-T1-DNA1-WES1.CollectHsMetrics.txt",
+   "tasks/ngs_data_qc_picard/work/case001subregion-N1-DNA1-WES1/report/case001subregion-N1-DNA1-WES1.CollectHsMetrics.txt.md5",
    "tasks/ngs_data_qc_picard/work/case001subregion-T1-DNA1-WES1/report/case001subregion-T1-DNA1-WES1.CollectHsMetrics.txt.md5",
    "tasks/ngs_data_qc_picard/work/qc_summary/out/qc_summary.tsv",
    "tasks/ngs_data_qc_picard/work/qc_summary/out/qc_summary.tsv.md5",
@@ -217,12 +217,12 @@
   "benchmark": null,
   "input": [
    "tasks/ngs_data_qc_picard/work/case001subregion-N1-DNA1-WES1/report/case001subregion-N1-DNA1-WES1.CollectMultipleMetrics.alignment_summary_metrics.txt",
-   "tasks/ngs_data_qc_picard/work/case001subregion-N1-DNA1-WES1/report/case001subregion-N1-DNA1-WES1.CollectMultipleMetrics.alignment_summary_metrics.txt.md5",
-   "tasks/ngs_data_qc_picard/work/case001subregion-N1-DNA1-WES1/report/case001subregion-N1-DNA1-WES1.CollectHsMetrics.txt",
-   "tasks/ngs_data_qc_picard/work/case001subregion-N1-DNA1-WES1/report/case001subregion-N1-DNA1-WES1.CollectHsMetrics.txt.md5",
    "tasks/ngs_data_qc_picard/work/case001subregion-T1-DNA1-WES1/report/case001subregion-T1-DNA1-WES1.CollectMultipleMetrics.alignment_summary_metrics.txt",
+   "tasks/ngs_data_qc_picard/work/case001subregion-N1-DNA1-WES1/report/case001subregion-N1-DNA1-WES1.CollectMultipleMetrics.alignment_summary_metrics.txt.md5",
    "tasks/ngs_data_qc_picard/work/case001subregion-T1-DNA1-WES1/report/case001subregion-T1-DNA1-WES1.CollectMultipleMetrics.alignment_summary_metrics.txt.md5",
+   "tasks/ngs_data_qc_picard/work/case001subregion-N1-DNA1-WES1/report/case001subregion-N1-DNA1-WES1.CollectHsMetrics.txt",
    "tasks/ngs_data_qc_picard/work/case001subregion-T1-DNA1-WES1/report/case001subregion-T1-DNA1-WES1.CollectHsMetrics.txt",
+   "tasks/ngs_data_qc_picard/work/case001subregion-N1-DNA1-WES1/report/case001subregion-N1-DNA1-WES1.CollectHsMetrics.txt.md5",
    "tasks/ngs_data_qc_picard/work/case001subregion-T1-DNA1-WES1/report/case001subregion-T1-DNA1-WES1.CollectHsMetrics.txt.md5",
    "tasks/ngs_data_qc_picard/work/qc_summary/out/qc_summary.tsv",
    "tasks/ngs_data_qc_picard/work/qc_summary/out/qc_summary.tsv.md5"
@@ -379,10 +379,7 @@
  {
   "benchmark": null,
   "input": [
-   "<repo>/.tests/test-workflow/resources/refs/subregion.fa",
-   "tasks/reference_index_bwa/work/reference_index/out/reference.fa.fai",
-   "tasks/reference_index_bwa/work/reference_index/out/reference.dict",
-   "tasks/reference_index_bwa/work/reference_index/out/reference.fa.genome"
+   "<repo>/.tests/test-workflow/resources/refs/subregion.fa"
   ],
   "log": [
    "tasks/reference_index_bwa/work/reference_index/log/reference_index.index.log"
@@ -413,37 +410,5 @@
   "threads": 1,
   "wildcards": {},
   "wrapper": "file://<repo>/snappy_wrappers/wrappers/reference_index/bwa"
- },
- {
-  "benchmark": null,
-  "input": [
-   "<repo>/.tests/test-workflow/resources/refs/subregion.fa"
-  ],
-  "local": true,
-  "log": [
-   "tasks/reference_index_bwa/work/reference_index/log/reference_index.common.log"
-  ],
-  "output": [
-   "tasks/reference_index_bwa/work/reference_index/out/reference.fa.fai",
-   "tasks/reference_index_bwa/work/reference_index/out/reference.dict",
-   "tasks/reference_index_bwa/work/reference_index/out/reference.fa.genome"
-  ],
-  "params": {
-   "args": {
-    "code": "<hash>"
-   }
-  },
-  "resources": {
-   "mem": "2 GB",
-   "mem_mb": 2000,
-   "mem_mib": 1908,
-   "partition": "medium",
-   "runtime": 120
-  },
-  "rule": "reference_index_bwa_reference_index_common_run",
-  "temp": [],
-  "threads": 1,
-  "wildcards": {},
-  "wrapper": "file://<repo>/snappy_wrappers/wrappers/reference_index/common"
  }
 ]

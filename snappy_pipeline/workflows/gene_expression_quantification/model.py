@@ -1,7 +1,7 @@
 import enum
 from typing import Annotated
 
-from pydantic import Field
+from pydantic import Field, model_validator
 
 from snappy_pipeline.models import RequiredBy, SnappyModel, SnappyStepModel, ToolModel
 from snappy_pipeline.workflows.abstract.protocol import (
@@ -12,13 +12,8 @@ from snappy_pipeline.workflows.abstract.protocol import (
     Features,
     Reference,
 )
+from snappy_pipeline.workflows.common.strandedness import Strand, Strandedness
 from snappy_pipeline.workflows.ngs_mapping.model import ExpectedAlignments
-
-
-class Strand(enum.IntEnum):
-    unstranded = 0
-    forward = 1
-    reverse = 2
 
 
 class Featurecounts(ToolModel):
@@ -33,10 +28,6 @@ class Featurecounts(ToolModel):
 
     min_mapq: int = 255
     """Minimum mapping quality of the reads (``samtools view -q``); 255 keeps the uniquely mapped reads of STAR"""
-
-
-class Strandedness(ToolModel):
-    threshold: float = 0.85
 
 
 class RnaSeqC(ToolModel):
@@ -147,8 +138,9 @@ class GeneExpressionQuantification(SnappyStepModel):
 
     tool: Tool
 
-    strand: Strand | int = -1
-    """Use 0, 1 or 2 to force unstranded, forward or reverse strand. Use -1 to guess."""
+    strand: Strand = Strand.infer
+    """Use 0, 1 or 2 to force unstranded, forward or reverse strand for ``featurecounts``, ``dupradar`` and ``salmon``.
+    Use -1 to take the decision of ``depends_on.strandedness`` (``salmon``: to guess)."""
 
     featurecounts: Featurecounts | None = None
 
@@ -163,3 +155,12 @@ class GeneExpressionQuantification(SnappyStepModel):
     stats: Stats | None = None
 
     salmon: Salmon | None = None
+
+    @model_validator(mode="after")
+    def _strandedness_forces_its_own_strand(self):
+        """``tool: strandedness`` forces the strand with ``strandedness.strand``, like ``ngs_mapping``"""
+        if self.tool == Tool.strandedness and self.strand != Strand.infer:
+            raise ValueError(
+                "tool=strandedness takes a forced strand from strandedness.strand, not strand"
+            )
+        return self

@@ -13,6 +13,7 @@ from snappy_pipeline.models import (
     ToolModel,
 )
 from snappy_pipeline.workflows.abstract.protocol import (
+    ExpectedVariants,
     DataSignature,
     DataType,
     ExpectedPathSchema,
@@ -22,7 +23,6 @@ from snappy_pipeline.workflows.abstract.protocol import (
 )
 from snappy_pipeline.workflows.hla_typing.model import ExpectedHlaTyping
 from snappy_pipeline.workflows.ngs_mapping.model import ExpectedRnaAlignments
-from snappy_pipeline.workflows.variant_phasing.model import ExpectedPhasedVariants
 
 
 class Tool(enum.StrEnum):
@@ -236,7 +236,7 @@ class SomaticNeoepitopePredictionDependsOn(SnappyModel):
     phased_variants: Annotated[
         str,
         DataSignature(DataType.VARIANTS, frozenset({"combined", "phased", "annotated", "vep"})),
-        ExpectedPathSchema(ExpectedPhasedVariants),
+        ExpectedPathSchema(ExpectedVariants),
         RequiredBy(when="pvactools.pvacseq.phasing"),
     ] = ""
     """Somatic and germline variants, combined, annotated by VEP and phased with the tumor DNA,

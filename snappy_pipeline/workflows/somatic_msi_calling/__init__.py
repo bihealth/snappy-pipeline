@@ -6,7 +6,8 @@ The ``tool`` field has the value ``mantis_msi2``, which runs `MANTIS2 <https://g
 MANTIS is not maintained anymore, and MANTIS2 is the only supported version.
 The fields ``min_read_length``, ``min_read_quality``, ``min_locus_quality``, ``min_locus_coverage`` and ``min_repeat_reads`` set the MANTIS thresholds; the defaults are the values that its authors recommend for exomes.
 The microsatellite loci come from the task in ``depends_on.microsatellites``.
-The task gives one result per tumor DNA library.
+The task gives one result per tumor DNA library with a matched normal.
+It leaves out the other tumor libraries, with a warning.
 
 Outputs
 -------
@@ -19,18 +20,22 @@ The task links the following result files below ``tasks/<task>/output/`` as syml
 Downstream tasks read the key ``results``.
 """
 
-from snappy_pipeline.models import RelationshipDefinition, ToolModel
+from snappy_pipeline.models import ToolModel
 from snappy_pipeline.workflows.abstract import (
+    MATCHED_NORMAL_RELATIONSHIP,
+    MATCHED_NORMAL_REQUIREMENT,
     BaseStep,
     BaseStepPart,
     ResourceUsage,
 )
 from snappy_pipeline.workflows.abstract.protocol import DataSignature, DataType
-from snappy_pipeline.workflows.ngs_mapping.model import ExpectedAlignments
 
 from .model import SomaticMsiCalling as SomaticMsiCallingConfigModel
 
 __author__ = "Clemens Messerschmidt <clemens.messerschmidt@bih-charite.de>"
+
+#: The path of the MANTIS2 results without suffix
+_PREFIX = "work/{library}/out/{library}"
 
 #: Output keys and extensions of the MANTIS2 results
 _OUTPUTS = {
@@ -61,38 +66,15 @@ class Mantis2StepPart(BaseStepPart):
     default_resource_usage = ResourceUsage(threads=1, runtime="24h", mem=f"{30 * 1024 * 3}MB")
 
     def _get_input_files_run(self, wildcards):
-        # Get names of primary libraries of the selected cancer bio sample and the
-        # corresponding primary normal sample
-        normal_lib = self.get_normal_lib_name(wildcards)
-        tumor_lib = wildcards.tumor_library
-        normal: ExpectedAlignments = self.parent.get_upstream_paths(
-            "alignments", library_name=normal_lib
-        )
-        tumor: ExpectedAlignments = self.parent.get_upstream_paths(
-            "alignments", library_name=tumor_lib
-        )
         return {
-            "normal_bam": normal.bam,
-            "normal_bai": normal.bai,
-            "tumor_bam": tumor.bam,
-            "tumor_bai": tumor.bai,
+            **self.parent.tumor_normal_alignments(wildcards.tumor_library),
             **self.parent.reference_inputs(),
             "loci_bed": self.parent.get_upstream_paths("microsatellites").bed,
         }
 
-    def get_normal_lib_name(self, wildcards):
-        """Return name of normal (non-cancer) library"""
-        df = self.parent.build_library_dataframe()
-        tumor_df = df[df["library_name"] == wildcards.tumor_library]
-        if tumor_df.empty:
-            return None
-        return tumor_df.iloc[0].get("matched_normal_lib") or None
-
     def _get_output_files_run(self):
-        return {
-            key: f"work/{{tumor_library}}/out/{{tumor_library}}{ext}"
-            for key, ext in _OUTPUTS.items()
-        }
+        prefix = _PREFIX.format(library="{tumor_library}")
+        return {key: prefix + ext for key, ext in _OUTPUTS.items()}
 
     def _get_params_run(self, wildcards):
         return {
@@ -119,20 +101,15 @@ class SomaticMsiCallingWorkflow(BaseStep):
 
     config_model_class = SomaticMsiCallingConfigModel
 
-    library_requirement = "kind == 'cancer'"
+    library_requirement = MATCHED_NORMAL_REQUIREMENT
 
-    default_relationships = {
-        "matched_normal_lib": RelationshipDefinition(
-            via="donor_name",
-            target="role == 'normal' and extraction_type == 'dna'",
-        )
-    }
+    default_relationships = MATCHED_NORMAL_RELATIONSHIP
 
     @classmethod
     def get_output_paths(cls, config, signature=None, **kwargs) -> dict[str, str]:
         """Return local MSI calling output paths for downstream consumers."""
-        lib = kwargs.get("library_name", "{library_name}")
-        return {"results": f"work/{lib}/out/{lib}.results.txt"}
+        prefix = _PREFIX.format(library=kwargs.get("library_name", "{library_name}"))
+        return {"results": prefix + _OUTPUTS["result"]}
 
     def __init__(self, workflow, project, task_name):
         super().__init__(workflow, project, task_name)

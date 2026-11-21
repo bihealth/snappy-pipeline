@@ -7,13 +7,13 @@ from snappy_pipeline.models import EnumField, RequiredBy, SnappyModel, SnappySte
 from snappy_pipeline.workflows.abstract.protocol import (
     DataSignature,
     DataType,
+    DnaAlignments,
     ExpectedIndexedRegions,
     ExpectedPathSchema,
     ExpectedRegions,
     Kits,
     Reference,
 )
-from snappy_pipeline.workflows.ngs_mapping.model import ExpectedAlignments
 
 
 class Intervals(enum.StrEnum):
@@ -52,11 +52,7 @@ class ExpectedGcnvModel(BaseModel):
 
 
 class GcnvModelDependsOn(SnappyModel):
-    alignments: Annotated[
-        str,
-        DataSignature(DataType.ALIGNMENTS, frozenset({"dna"})),
-        ExpectedPathSchema(ExpectedAlignments),
-    ]
+    alignments: DnaAlignments
 
     reference: Reference
 

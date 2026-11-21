@@ -153,8 +153,7 @@ def test_the_fingerprint_checks_pass_the_sheet_facts_as_options():
         ]
     )
     part.parent = SimpleNamespace(
-        build_library_dataframe=lambda: table,
-        dna_libraries=lambda: ["idx-N1-DNA1-WES1", "mo-N1-DNA1-WES1"],
+        library_row=lambda name: table.set_index("library_name", drop=False).loc[name].to_dict(),
         pedigree_donors=lambda pedigree: donors,
         output_entities=["idx-N1-DNA1-WES1", "mo-N1-DNA1-WES1"],
         sub_steps={},

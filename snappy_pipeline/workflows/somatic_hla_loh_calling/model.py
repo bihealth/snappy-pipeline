@@ -2,17 +2,17 @@ from typing import Annotated
 
 from snappy_pipeline.models import ConfigPath
 from snappy_pipeline.models import SnappyModel, SnappyStepModel, ToolModel
-from snappy_pipeline.workflows.abstract.protocol import DataSignature, DataType, ExpectedPathSchema
+from snappy_pipeline.workflows.abstract.protocol import (
+    DataSignature,
+    DataType,
+    DnaAlignments,
+    ExpectedPathSchema,
+)
 from snappy_pipeline.workflows.hla_typing.model import ExpectedHlaTyping
-from snappy_pipeline.workflows.ngs_mapping.model import ExpectedAlignments
 
 
 class SomaticHlaLohCallingDependsOn(SnappyModel):
-    alignments: Annotated[
-        str,
-        DataSignature(DataType.ALIGNMENTS, frozenset({"dna"})),
-        ExpectedPathSchema(ExpectedAlignments),
-    ]
+    alignments: DnaAlignments
     hla_types: Annotated[
         str,
         DataSignature(DataType.TABULAR, frozenset({"hla"})),

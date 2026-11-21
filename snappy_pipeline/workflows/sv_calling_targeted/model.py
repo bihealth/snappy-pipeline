@@ -1,20 +1,24 @@
 import enum
 from typing import Annotated
 
-from pydantic import Field
-
-from snappy_pipeline.models import ConfigPath, ReadBy, RequiredBy
-from snappy_pipeline.models import EnumField, SnappyModel, SnappyStepModel, ToolModel
+from snappy_pipeline.models import ReadBy, RequiredBy
+from snappy_pipeline.models import EnumField, SnappyModel, SnappyStepModel
 from snappy_pipeline.workflows.abstract.protocol import (
     DataSignature,
     DataType,
+    DnaAlignments,
     ExpectedPathSchema,
     Reference,
     Regions,
 )
-from snappy_pipeline.workflows.common.sv_calling_model import GeneRegions
-from snappy_pipeline.workflows.gcnv_model.model import ExpectedGcnvModel, GcnvPostprocess
-from snappy_pipeline.workflows.ngs_mapping.model import ExpectedAlignments
+from snappy_pipeline.workflows.common.sv_calling_model import (
+    Delly2,
+    Gcnv,
+    GeneRegions,
+    Manta,
+    Melt,
+)
+from snappy_pipeline.workflows.gcnv_model.model import ExpectedGcnvModel
 
 
 class Tool(enum.StrEnum):
@@ -24,74 +28,8 @@ class Tool(enum.StrEnum):
     melt = "melt"
 
 
-class Gcnv(ToolModel, GcnvPostprocess):
-    extra_arguments: list[str] = []
-    """Additional arguments for ``GermlineCNVCaller``, the other GATK commands take none"""
-
-    skip_libraries: list[str] = []
-    """
-    Skip processing of the following libraries.
-    If the library is in family/pedigree then all of the family/pedigree will be skipped.
-    """
-
-
-class Delly2(ToolModel):
-    map_qual: int = 1
-
-    geno_qual: int = 5
-
-    qual_tra: int = 20
-
-    mad_cutoff: int = 9
-
-    skip_libraries: list[str] = []
-    """
-    Skip processing of the following libraries.
-    If the library is in family/pedigree then all of the family/pedigree will be skipped.
-    """
-
-
-class Manta(ToolModel):
-    num_threads: int = 16
-
-    skip_libraries: list[str] = []
-    """
-    Skip processing of the following libraries.
-    If the library is in family/pedigree then all of the family/pedigree will be skipped.
-    """
-
-
-class Melt(ToolModel):
-    me_refs_infix: str = Field(examples=["1KGP_Hg19"])
-
-    me_types: list[str] = ["ALU", "LINE1", "SVA"]
-
-    exclude_contigs: list[str] = ["hs37d5", "NC_007605"]
-    """Contigs that IndivAnalysis ignores (MELT's ``-b``), here the GRCh37 decoy and EBV"""
-
-    read_length: int = 150
-    """Read length, for IndivAnalysis and GroupAnalysis (MELT's ``-r``)"""
-
-    max_no_call_percent: int = 100
-    """Percentage of samples with a no-call genotype that MakeVCF tolerates at a site (MELT's ``-j``)"""
-
-    jar_file: ConfigPath = Field(examples=["MELT.jar"])
-
-    me_refs_path: ConfigPath = Field(examples=["me_refs"])
-
-    skip_libraries: list[str] = []
-    """
-    Skip processing of the following libraries.
-    If the library is in family/pedigree then all of the family/pedigree will be skipped.
-    """
-
-
 class SvCallingTargetedDependsOn(SnappyModel):
-    alignments: Annotated[
-        str,
-        DataSignature(DataType.ALIGNMENTS, frozenset({"dna"})),
-        ExpectedPathSchema(ExpectedAlignments),
-    ]
+    alignments: DnaAlignments
 
     reference: Reference
 

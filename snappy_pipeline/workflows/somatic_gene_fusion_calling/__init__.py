@@ -33,7 +33,7 @@ There is no standard format for gene fusions, so the files depend on the tool.
 
 from snakemake.io import directory
 
-from snappy_pipeline.utils import dictify, listify
+from snappy_pipeline.utils import dictify
 from snappy_pipeline.workflows.abstract import (
     BaseStep,
     BaseStepPart,
@@ -46,6 +46,12 @@ from .model import SomaticGeneFusionCalling as SomaticGeneFusionCallingConfigMod
 from .model import Tool
 
 __author__ = "Manuel Holtgrewe <manuel.holtgrewe@bih-charite.de>"
+
+#: The output directory of a library
+_OUT = "work/{library}/out"
+
+#: The tables of arriba by output key: the fusions and the discarded candidates
+ARRIBA_TABLES = {"fusions": "fusions.tsv", "discarded": "discarded_fusions.tsv.gz"}
 
 
 class SomaticGeneFusionCallingStepPart(BaseStepPart):
@@ -69,6 +75,8 @@ class StarFusionStepPart(SomaticGeneFusionCallingStepPart):
     name = "star_fusion"
     wrappers = {"run": "star_fusion"}
 
+    result_keys = ("out",)
+
     @dictify
     def _get_input_files_run(self, wildcards):
         yield from super()._get_input_files_run(wildcards).items()
@@ -81,7 +89,7 @@ class StarFusionStepPart(SomaticGeneFusionCallingStepPart):
 
     def _get_output_files_run(self):
         # STAR-Fusion writes many files that the step does not name
-        return {"out": directory("work/{library_name}/out")}
+        return {"out": directory(_OUT.format(library="{library_name}"))}
 
     default_resource_usage = ResourceUsage(threads=4, runtime="5d", mem=f"{30 * 1024 * 4}MB")
 
@@ -92,6 +100,8 @@ class ArribaStepPart(SomaticGeneFusionCallingStepPart):
     #: Step name
     name = "arriba"
     wrappers = {"run": "arriba/run"}
+
+    result_keys = ("fusions", "fusions_md5", "discarded", "discarded_md5")
 
     @dictify
     def _get_input_files_run(self, wildcards):
@@ -105,28 +115,19 @@ class ArribaStepPart(SomaticGeneFusionCallingStepPart):
                 if path := getattr(database, key):
                     yield key, path
 
-    def get_params(self, action):
-        """Return function that maps wildcards to dict for input files"""
-
-        def args_function(wildcards):
-            return {
-                "trim_adapters": self.config.arriba.trim_adapters,
-                "num_threads_trimming": self.config.arriba.num_threads_trimming,
-                "num_threads": self.config.arriba.num_threads,
-                "star_parameters": self.config.arriba.star_parameters,
-            } | reads_params(self.parent, wildcards.library_name)
-
-        assert action == "run", "Unsupported actions"
-        return args_function
+    def _get_params_run(self, wildcards):
+        return {
+            "trim_adapters": self.config.arriba.trim_adapters,
+            "num_threads_trimming": self.config.arriba.num_threads_trimming,
+            "num_threads": self.config.arriba.num_threads,
+            "star_parameters": self.config.arriba.star_parameters,
+        } | reads_params(self.parent, wildcards.library_name)
 
     @dictify
     def _get_output_files_run(self):
-        key_ext = (
-            ("fusions", "fusions.tsv"),
-            ("discarded", "discarded_fusions.tsv.gz"),
-        )
-        for key, ext in key_ext:
-            path = f"work/{{library_name}}/out/{{library_name}}.{ext}"
+        out = _OUT.format(library="{library_name}")
+        for key, suffix in ARRIBA_TABLES.items():
+            path = f"{out}/{{library_name}}.{suffix}"
             yield key, path
             yield key + "_md5", path + ".md5"
 
@@ -163,38 +164,14 @@ class SomaticGeneFusionCallingWorkflow(BaseStep):
     library_requirement = "kind == 'cancer' and extraction_type == 'rna'"
     library_default = ""
 
+    tool_parts = {Tool.star_fusion: StarFusionStepPart, Tool.arriba: ArribaStepPart}
+
     @classmethod
     def get_output_paths(cls, config, signature=None, **kwargs) -> dict[str, str]:
         """Return local fusion-calling output paths for downstream consumers: the fusions table
         of arriba, the output directory of STAR-Fusion."""
         lib = kwargs.get("library_name", "{library_name}")
+        out = _OUT.format(library=lib)
         if config.tool == Tool.arriba:
-            return {"fusions": f"work/{lib}/out/{lib}.fusions.tsv"}
-        return {"out": f"work/{lib}/out"}
-
-    def __init__(self, workflow, project, task_name):
-        super().__init__(workflow, project, task_name)
-        selected_tool = self.config.tool
-        match selected_tool:
-            case Tool.star_fusion:
-                selected_sub_step = StarFusionStepPart
-            case Tool.arriba:
-                selected_sub_step = ArribaStepPart
-            case _:
-                raise NotImplementedError(f"Unknown tool: {selected_tool}")
-        self.register_sub_step_classes((selected_sub_step,))
-
-    @listify
-    def get_result_files(self):
-        """Return list of result files for the NGS mapping workflow
-
-        We will process all NGS libraries of all test samples in all sample
-        sheets.
-        """
-        for library_name in self.output_entities:
-            if self.config.tool == Tool.arriba:
-                for ext in ("fusions.tsv", "discarded_fusions.tsv.gz"):
-                    yield f"output/{library_name}/out/{library_name}.{ext}"
-                    yield f"output/{library_name}/out/{library_name}.{ext}.md5"
-            else:
-                yield f"output/{library_name}/out"
+            return {"fusions": f"{out}/{lib}.{ARRIBA_TABLES['fusions']}"}
+        return {"out": out}

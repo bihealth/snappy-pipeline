@@ -30,13 +30,14 @@ Downstream tasks read the keys ``meta_study`` and ``clinical_patient``.
 
 import re
 import sys
-from collections import namedtuple
-
-from snakemake.iocontainers import Wildcards
-
 from snappy_pipeline.models import ToolModel
 from snappy_pipeline.utils import dictify, listify
-from snappy_pipeline.workflows.abstract import BaseStep, BaseStepPart, ResourceUsage
+from snappy_pipeline.workflows.abstract import (
+    MATCHED_NORMAL_RELATIONSHIP,
+    BaseStep,
+    BaseStepPart,
+    ResourceUsage,
+)
 from snappy_pipeline.workflows.abstract.protocol import DataSignature, DataType
 
 from .model import CbioportalExport as CbioportalExportConfigModel
@@ -97,10 +98,6 @@ CASE_LIST_FILES = {
 
 #: Resources of the steps that merge or convert copy number and expression tables
 _TABLE_RESOURCE_USAGE = ResourceUsage(threads=2, runtime="2h", mem="8192MB")
-
-#: A library with the name of its bio sample
-Library = namedtuple("Library", ("name", "sample_name"))
-LibraryPair = namedtuple("LibraryPair", ("normal", "tumor"))
 
 
 # ================================================================================================
@@ -180,28 +177,6 @@ class cbioportalVcf2MafStepPart(BaseStepPart):
         """The config section is named ``vcf2maf``"""
         return self.config.vcf2maf
 
-    def __init__(self, parent):
-        super().__init__(parent)
-
-        # Build shortcut from tumor library name to matched normal and tumor library
-        df = self.parent.build_library_dataframe()
-        dna = df[df["extraction_type"] == "dna"]
-        self.tumor_ngs_library_to_sample_pair: dict[str, LibraryPair] = {}
-        for donor_name, rows in dna.groupby("donor_name", sort=False):
-            libraries = {
-                role: [Library(r.library_name, r.sample_name) for r in group.itertuples()]
-                for role, group in rows.groupby("role", sort=False)
-            }
-            assert len(libraries.get("normal", [])) <= 1, f"Multiple normals for donor {donor_name}"
-            normal = next(iter(libraries.get("normal", [])), None)
-            for tumor in libraries.get("tumor", []):
-                self.tumor_ngs_library_to_sample_pair[tumor.name] = LibraryPair(
-                    normal=normal, tumor=tumor
-                )
-
-    def _get_pair(self, wildcards: Wildcards) -> LibraryPair:
-        return self.tumor_ngs_library_to_sample_pair[wildcards.tumor_library]
-
     def _get_output_files_run(self):
         """Return maf output file"""
         return {"maf": "work/maf/{tumor_library}/out/{tumor_library}.maf"}
@@ -217,28 +192,19 @@ class cbioportalVcf2MafStepPart(BaseStepPart):
         return {"log": "work/maf/{tumor_library}/log/{tumor_library}.log"}
 
     def _get_params_run(self, wildcards):
+        """The VCF samples are the libraries, the MAF ids their bio samples."""
+        tumor = wildcards.tumor_library
+        normal = self.parent.matched_normal(tumor)
         return {
-            "tumor_sample": wildcards.tumor_library,
-            "normal_sample": self._get_normal_lib_name(wildcards),
-            "tumor_id": self._get_tumor_bio_sample(wildcards),
-            "normal_id": self._get_normal_bio_sample(wildcards),
+            "tumor_sample": tumor,
+            "normal_sample": normal,
+            "tumor_id": self.parent.library_row(tumor)["sample_name"],
+            "normal_id": normal and self.parent.library_row(normal)["sample_name"],
             # depends_on.variants requires VEP annotations
             "somatic_variant_annotation_tool": "vep",
             "ncbi_build": self.config.vcf2maf.ncbi_build,
             "Center": self.config.vcf2maf.Center,
         }
-
-    def _get_normal_lib_name(self, wildcards):
-        """Return name of normal (non-cancer) library"""
-        return (n := self._get_pair(wildcards).normal) and n.name
-
-    def _get_tumor_bio_sample(self, wildcards):
-        """Return bio sample to tumor dna ngs library"""
-        return self._get_pair(wildcards).tumor.sample_name
-
-    def _get_normal_bio_sample(self, wildcards):
-        """Return normal bio sample to tumor dna ngs library"""
-        return (n := self._get_pair(wildcards).normal) and n.sample_name
 
 
 class cbioportalMutationsStepPart(cbioportalExportStepPart):
@@ -548,6 +514,8 @@ class cbioportalExportWorkflow(BaseStep):
     library_default = ""
 
     config_model_class = CbioportalExportConfigModel
+
+    default_relationships = MATCHED_NORMAL_RELATIONSHIP
 
     produces = [DataSignature(DataType.EXPORTS, frozenset({"cbioportal"}))]
 

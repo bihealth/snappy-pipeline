@@ -26,13 +26,14 @@ from snakemake.io import expand
 from snakemake.iocontainers import Wildcards
 
 from snappy_pipeline.base import ConfigError
-from snappy_pipeline.models import RelationshipDefinition
 from snappy_pipeline.utils import dictify
 from snappy_pipeline.workflows.abstract import (
+    MATCHED_NORMAL_RELATIONSHIP,
     BaseStep,
     BaseStepPart,
     ResourceUsage,
 )
+from snappy_pipeline.workflows.common import vcf_outputs
 from snappy_pipeline.workflows.common.calls_report import CallsReportStepPart
 from snappy_pipeline.workflows.abstract.protocol import DataSignature, DataType
 
@@ -44,14 +45,6 @@ __author__ = "Eric Blanc <eric.blanc@bih-charite.de>"
 
 _OUT_PREFIX = "work/{tumor_library}/out/{tumor_library}"
 _LOG_PREFIX = "work/{tumor_library}/log/{tumor_library}"
-
-#: Output keys and extensions of the combined VCF
-_OUTPUTS = {
-    "vcf": ".vcf.gz",
-    "vcf_tbi": ".vcf.gz.tbi",
-    "vcf_md5": ".vcf.gz.md5",
-    "vcf_tbi_md5": ".vcf.gz.tbi.md5",
-}
 
 
 class CombineVariantsStepPart(BaseStepPart):
@@ -81,9 +74,7 @@ class CombineVariantsStepPart(BaseStepPart):
 
     def get_normal_lib_name(self, tumor_library: str) -> str:
         """Return the matched normal library of the tumor library; fail if there is none"""
-        df = self.parent.build_library_dataframe()
-        tumor_df = df[df["library_name"] == tumor_library]
-        normal_lib = None if tumor_df.empty else tumor_df.iloc[0].get("matched_normal_lib")
+        normal_lib = self.parent.matched_normal(tumor_library)
         if not normal_lib:
             raise ConfigError(
                 f"Tumor library {tumor_library!r} has no matched normal library, "
@@ -92,7 +83,7 @@ class CombineVariantsStepPart(BaseStepPart):
         return normal_lib
 
     def _get_output_files_run(self) -> dict[str, str]:
-        return {key: f"{_OUT_PREFIX}{ext}" for key, ext in _OUTPUTS.items()}
+        return vcf_outputs(_OUT_PREFIX)
 
     def _get_params_run(self, wildcards: Wildcards) -> dict[str, Any]:
         if name_origin := self.config.rename_combined:
@@ -140,20 +131,13 @@ class CombineVariantsWorkflow(BaseStep):
 
     config_model_class = CombineVariantsConfigModel
 
-    default_relationships = {
-        "matched_normal_lib": RelationshipDefinition(
-            via="donor_name",
-            target="role == 'normal' and extraction_type == 'dna'",
-        )
-    }
+    default_relationships = MATCHED_NORMAL_RELATIONSHIP
 
     @classmethod
     def get_output_paths(cls, config, signature=None, **kwargs) -> dict[str, str]:
         lib = kwargs.get("library_name", "{library_name}")
-        return {
-            "vcf": f"work/{lib}/out/{lib}.vcf.gz",
-            "vcf_tbi": f"work/{lib}/out/{lib}.vcf.gz.tbi",
-        }
+        paths = vcf_outputs(_OUT_PREFIX.format(tumor_library=lib))
+        return {key: paths[key] for key in ("vcf", "vcf_tbi")}
 
     def __init__(self, workflow, project, task_name):
 

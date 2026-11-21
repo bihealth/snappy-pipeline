@@ -28,8 +28,7 @@ from snappy_pipeline.workflows.abstract import (
     BaseStepPart,
     ResourceUsage,
 )
-from snappy_pipeline.workflows.abstract.protocol import DataSignature, DataType
-from snappy_pipeline.workflows.variant_calling.model import ExpectedSomaticVariants
+from snappy_pipeline.workflows.abstract.protocol import DataSignature, DataType, ExpectedVariants
 
 from .model import TumorMutationalBurden as TumorMutationalBurdenConfigModel
 
@@ -50,7 +49,7 @@ class TumorMutationalBurdenCalculationStepPart(BaseStepPart):
 
     @dictify
     def _get_input_files_run(self, wildcards):
-        variants: ExpectedSomaticVariants = self.parent.get_upstream_paths(
+        variants: ExpectedVariants = self.parent.get_upstream_paths(
             "variants", library_name=wildcards.tumor_library
         )
         yield "vcf", variants.vcf

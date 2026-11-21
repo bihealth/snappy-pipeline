@@ -65,7 +65,7 @@ class DownloadCommon(SnappyModel):
     """Optional regular expression to keep contigs by name."""
 
     molecule: Molecule = Molecule.dna
-    """Molecule class of the downloaded reference payload."""
+    """Molecule of the downloaded sequences, a tag of the task's output."""
 
     @model_validator(mode="after")
     def validate_url_exclusivity(self) -> "DownloadCommon":
@@ -130,7 +130,8 @@ class Ucsc(DownloadCommon):
 
 
 class ReferenceDownload(SnappyStepModel):
-    source: Source = Source.ensembl
+    source: Source
+    """Source of the download; its section selects the file."""
 
     ensembl: Ensembl = Ensembl()
     refseq: Refseq = Refseq()

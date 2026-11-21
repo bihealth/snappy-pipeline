@@ -28,14 +28,13 @@ Downstream tasks read the keys ``txt`` and ``calls_json`` (the ``.json`` file).
 
 import re
 
-from snakemake.io import expand
-
-from snappy_pipeline.utils import dictify, listify
+from snappy_pipeline.utils import dictify
 from snappy_pipeline.workflows.abstract import BaseStep, BaseStepPart, ReportOutput, ResourceUsage
 from snappy_pipeline.workflows.abstract.protocol import DataSignature, DataType
 from snappy_pipeline.workflows.common.reads import reads_input_files, reads_params
 
 from .model import HlaTyping as HlaTypingConfigModel
+from .model import Tool
 
 #: Output keys and extensions of the main payload
 _OUTPUTS = {"txt": ".txt", "txt_md5": ".txt.md5", "json": ".json", "json_md5": ".json.md5"}
@@ -49,9 +48,6 @@ _OPTITYPE_OUTPUTS = {
 }
 
 _OUT_PATTERN = "work/{library_name}/out/{library_name}"
-
-#: HLA typing tools
-HLA_TYPERS = ("optitype", "arcashla")
 
 
 class OptiTypeStepPart(BaseStepPart):
@@ -70,19 +66,17 @@ class OptiTypeStepPart(BaseStepPart):
     actions = ("run",)
     wrappers = {"run": "optitype"}
 
+    result_keys = tuple(_OUTPUTS | _OPTITYPE_OUTPUTS)
+
     def _get_input_files_run(self, wildcards):
         """Return input files"""
         return reads_input_files(self.parent, wildcards.library_name)
 
     def _get_output_files_run(self):
-        if self.name != str(self.config.tool):
-            return {}
         outputs = _OUTPUTS | _OPTITYPE_OUTPUTS
         return {key: _OUT_PATTERN + ext for key, ext in outputs.items()}
 
     def _get_log_file_run(self):
-        if self.name != str(self.config.tool):
-            return {}
         return {"log": "work/{library_name}/log/{library_name}.log"}
 
     def _get_params_run(self, wildcards):
@@ -101,9 +95,12 @@ class OptiTypeStepPart(BaseStepPart):
 
     def _get_seq_type(self, wildcards):
         """Return sequence type for the library name in wildcards"""
-        return self.parent.extraction_types[wildcards.library_name]
+        return self.parent.library_row(wildcards.library_name)["extraction_type"]
 
-    default_resource_usage = ResourceUsage(threads=6, runtime="40h", mem="45000MB")
+    @property
+    def default_resource_usage(self) -> ResourceUsage:
+        threads = self.config.optitype.num_mapping_threads
+        return ResourceUsage(threads=threads, runtime="40h", mem="45000MB")
 
 
 class ArcasHlaStepPart(BaseStepPart):
@@ -120,6 +117,8 @@ class ArcasHlaStepPart(BaseStepPart):
     actions = ("prepare_reference", "run")
     wrappers = {"prepare_reference": "arcashla/prepare_reference", "run": "arcashla/run"}
     extra_arguments_action = "run"
+
+    result_keys = {"run": tuple(_OUTPUTS)}
 
     PAIRED_PATTERN: re.Pattern = re.compile(
         r"^(?P<passPairs>[0-9]+) \+ (?P<failPairs>[0-9]+) paired in sequencing$"
@@ -144,8 +143,6 @@ class ArcasHlaStepPart(BaseStepPart):
         return {"reference_version": self.config.arcashla.reference_version}
 
     def _get_output_files_run(self):
-        if self.name != str(self.config.tool):
-            return {}
         return {key: _OUT_PATTERN + ext for key, ext in _OUTPUTS.items()}
 
     def _get_log_file_run(self):
@@ -162,10 +159,6 @@ class ArcasHlaStepPart(BaseStepPart):
     resource_usage = {"prepare_reference": ResourceUsage(threads=1, runtime="4h", mem="8GB")}
 
 
-#: The step part of each tool
-_TOOL_STEP_PART = {"optitype": OptiTypeStepPart, "arcashla": ArcasHlaStepPart}
-
-
 class HlaTypingWorkflow(BaseStep):
     """Perform HLA Typing"""
 
@@ -176,6 +169,8 @@ class HlaTypingWorkflow(BaseStep):
     #: config_model_class
     config_model_class = HlaTypingConfigModel
 
+    tool_parts = {Tool.optitype: OptiTypeStepPart, Tool.arcashla: ArcasHlaStepPart}
+
     @classmethod
     def get_output_paths(cls, config, signature=None, **kwargs) -> dict[str, str]:
         """Return local HLA typing output paths for downstream consumers."""
@@ -185,40 +180,14 @@ class HlaTypingWorkflow(BaseStep):
     @classmethod
     def mhc_classes(cls, config) -> tuple[str, ...]:
         """The MHC classes that a task of this step types."""
-        return _TOOL_STEP_PART[config.tool].mhc_classes
+        return cls.tool_parts[config.tool].mhc_classes
 
     @classmethod
     def task_library_requirement(cls, config):
         """The libraries whose extraction type the tool supports."""
-        return f"extraction_type in {list(_TOOL_STEP_PART[config.tool].supported_extraction_types)}"
+        return f"extraction_type in {list(cls.tool_parts[config.tool].supported_extraction_types)}"
 
     @classmethod
     def task_library_default(cls, config):
         """arcashla takes all RNA libraries, which are all it supports."""
         return "" if config.tool == "arcashla" else None
-
-    def __init__(self, workflow, project, task_name):
-        super().__init__(workflow, project, task_name)
-        if self.config.tool not in _TOOL_STEP_PART:
-            raise NotImplementedError(f"Unknown tool: {self.config.tool}")
-        self.register_sub_step_classes((_TOOL_STEP_PART[self.config.tool],))
-        #: Mapping from library name to lower-case extraction type
-        df = self.build_library_dataframe()
-        self.extraction_types = dict(zip(df["library_name"], df["extraction_type"]))
-
-    @listify
-    def get_result_files(self):
-        """Return list of result files for the NGS mapping workflow
-
-        We will process all NGS libraries of all test samples in all sample
-        sheets.
-        """
-        outputs = _OUTPUTS | _OPTITYPE_OUTPUTS if self.config.tool == "optitype" else _OUTPUTS
-        yield from self._yield_result_files(
-            "output/{library_name}/out/{library_name}{ext}", ext=outputs.values()
-        )
-
-    def _yield_result_files(self, tpl, **kwargs):
-        """Build output paths from path template and extension list"""
-        for library_name in self.output_entities:
-            yield from expand(tpl, library_name=[library_name], **kwargs)

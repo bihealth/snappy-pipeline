@@ -12,7 +12,6 @@ wf = task_instance(config["__task_name__"])
 
 
 wildcard_constraints:
-    cancer_library=r"[^./]+",
     library_name=r"[^./]+",
     tumor_library=r"[^./]+",
 
@@ -136,4 +135,4 @@ elif str(wf.config.tool) == "control_freec":
 
 elif str(wf.config.tool) == "cnvkit":
 
-    include: "cnvkit.rules"
+    include: "../common/cnvkit.rules"

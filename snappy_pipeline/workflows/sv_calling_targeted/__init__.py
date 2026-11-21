@@ -13,7 +13,6 @@ The ``tool`` field selects the caller:
 
 The task gives one result per pedigree, named after the pedigree (its ``related_group``).
 ``skip_libraries`` of a tool skips the whole pedigree of a library.
-The step gives no results if the mapper of the alignments is not a DNA mapper.
 
 Outputs
 -------
@@ -28,12 +27,11 @@ Here ``library_name`` is the name of the pedigree.
 Downstream tasks read the key ``vcf``.
 """
 
-from snappy_pipeline.workflows.abstract import BaseStep, WritePedigreeStepPart
-from snappy_pipeline.workflows.abstract.protocol import DataSignature, DataType
 from snappy_pipeline.workflows.common.delly import Delly2StepPart
 from snappy_pipeline.workflows.common.gcnv.gcnv_run import RunGcnvStepPart
 from snappy_pipeline.workflows.common.manta import MantaStepPart
 from snappy_pipeline.workflows.common.melt import MeltStepPart
+from snappy_pipeline.workflows.common.sv_calling import SvCallingWorkflow
 
 from .model import SvCallingTargeted as SvCallingTargetedConfigModel
 from .model import Tool
@@ -41,43 +39,19 @@ from .model import Tool
 __author__ = "Manuel Holtgrewe <manuel.holtgrewe@bih-charite.de>"
 
 
-class SvCallingTargetedWorkflow(BaseStep):
+class SvCallingTargetedWorkflow(SvCallingWorkflow):
     """Perform germline targeted sequencing CNV calling"""
 
     #: Workflow name
     name = "sv_calling_targeted"
     #: Exomes and panels: the callers take the target regions into account
     targeted = True
-    #: The pedigrees of background data sets are called, too
-    uses_background = True
 
     config_model_class = SvCallingTargetedConfigModel
-    produces = [DataSignature(DataType.VARIANTS, frozenset({"germline", "sv"}))]
 
-    def __init__(self, workflow, project, task_name):
-        super().__init__(workflow, project, task_name)
-        selected_tool = self.config.tool
-        match selected_tool:
-            case Tool.gcnv:
-                selected_sub_step = RunGcnvStepPart
-            case Tool.delly2:
-                selected_sub_step = Delly2StepPart
-            case Tool.manta:
-                selected_sub_step = MantaStepPart
-            case Tool.melt:
-                selected_sub_step = MeltStepPart
-            case _:
-                raise NotImplementedError(f"Unknown tool: {selected_tool}")
-        # Register only the selected tool's step part.
-        self.register_sub_step_classes((WritePedigreeStepPart, selected_sub_step))
-
-    @classmethod
-    def default_group_by(cls, config):
-        """The callers write one result per pedigree, named after the pedigree."""
-        return "related"
-
-    @classmethod
-    def get_output_paths(cls, config, signature=None, **kwargs) -> dict[str, str]:
-        """Return local targeted SV output paths for downstream consumers."""
-        library_name = kwargs.get("library_name", "{library_name}")
-        return {"vcf": f"work/{library_name}/out/{library_name}.vcf.gz"}
+    tool_parts = {
+        Tool.gcnv: RunGcnvStepPart,
+        Tool.delly2: Delly2StepPart,
+        Tool.manta: MantaStepPart,
+        Tool.melt: MeltStepPart,
+    }

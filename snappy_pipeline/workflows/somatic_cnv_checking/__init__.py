@@ -29,20 +29,23 @@ from typing import Any
 
 from snakemake.iocontainers import Wildcards
 
-from snappy_pipeline.models import RelationshipDefinition
-from snappy_pipeline.utils import dictify
 from snappy_pipeline.workflows.abstract import (
     BaseStep,
     BaseStepPart,
+    MATCHED_NORMAL_RELATIONSHIP,
     MATCHED_NORMAL_REQUIREMENT,
     ReportOutput,
     ResourceUsage,
 )
 from snappy_pipeline.workflows.abstract.protocol import DataSignature, DataType
+from snappy_pipeline.workflows.common import vcf_outputs
 
 from .model import SomaticCnvChecking as SomaticCnvCheckingConfigModel
 
 __author__ = "Eric Blanc <eric.blanc@bih-charite.de>"
+
+#: The path of a tumor's merged variants and table, without suffix
+_PREFIX = "work/{library}/out/{library}"
 
 
 class SomaticCnvCheckingPileupStepPart(BaseStepPart):
@@ -73,7 +76,7 @@ class SomaticCnvCheckingPileupStepPart(BaseStepPart):
         alignments = self.parent.get_upstream_paths(
             "alignments", library_name=wildcards.tumor_library
         )
-        normal_lib = self.parent._get_normal_lib(wildcards.tumor_library)
+        normal_lib = self.parent.matched_normal(wildcards.tumor_library)
         return {
             "locii": "work/{normal_library}/out/{normal_library}.normal.vcf.gz".format(
                 normal_library=normal_lib, **wildcards
@@ -122,10 +125,10 @@ class SomaticCnvCheckingCnvStepPart(BaseStepPart):
 
     entity_wildcard = "tumor_library"
 
-    result_keys = ("vcf", "vcf_md5", "tbi", "tbi_md5", "tsv", "tsv_md5")
+    result_keys = ("vcf", "vcf_tbi", "vcf_md5", "vcf_tbi_md5", "tsv", "tsv_md5")
 
     def _get_input_files_run(self, wildcards):
-        normal_library = self.parent._get_normal_lib(wildcards.tumor_library)
+        normal_library = self.parent.matched_normal(wildcards.tumor_library)
         filenames = {}
         name_pattern = "{normal_library}"
         tpl = os.path.join("work", name_pattern, "out", name_pattern + ".normal.vcf.gz")
@@ -142,12 +145,9 @@ class SomaticCnvCheckingCnvStepPart(BaseStepPart):
             filenames["excluded_regions"] = self.parent.get_upstream_paths("excluded_regions").bed
         return filenames
 
-    @dictify
     def _get_output_files_run(self):
-        key_ext = {"vcf": ".vcf.gz", "tbi": ".vcf.gz.tbi", "tsv": ".tsv"}
-        for key, ext in key_ext.items():
-            yield key, "work/{tumor_library}/out/{tumor_library}" + ext
-            yield key + "_md5", "work/{tumor_library}/out/{tumor_library}" + ext + ".md5"
+        prefix = _PREFIX.format(library="{tumor_library}")
+        return {**vcf_outputs(prefix), "tsv": prefix + ".tsv", "tsv_md5": prefix + ".tsv.md5"}
 
     def _get_params_run(self, wildcards: Wildcards) -> dict[str, Any]:
         return {"tumor_library": wildcards.tumor_library}
@@ -222,18 +222,13 @@ class SomaticCnvCheckingWorkflow(BaseStep):
 
     library_requirement = MATCHED_NORMAL_REQUIREMENT
 
-    default_relationships = {
-        "matched_normal_lib": RelationshipDefinition(
-            via="donor_name",
-            target="role == 'normal' and extraction_type == 'dna'",
-        )
-    }
+    default_relationships = MATCHED_NORMAL_RELATIONSHIP
 
     @classmethod
     def get_output_paths(cls, config, signature=None, **kwargs) -> dict[str, str]:
         """Return local CNV checking output paths for downstream consumers."""
-        lib = kwargs.get("tumor_library", "{tumor_library}")
-        return {"vcf": f"work/{lib}/out/{lib}.vcf.gz"}
+        prefix = _PREFIX.format(library=kwargs.get("library_name", "{library_name}"))
+        return {"vcf": vcf_outputs(prefix)["vcf"]}
 
     def __init__(self, workflow, project, task_name):
         super().__init__(workflow, project, task_name)
@@ -243,11 +238,3 @@ class SomaticCnvCheckingWorkflow(BaseStep):
         if self.has_cnv_calling:
             sub_steps += [SomaticCnvCheckingCnvStepPart, SomaticCnvCheckingReportStepPart]
         self.register_sub_step_classes(tuple(sub_steps))
-
-    def _get_normal_lib(self, tumor_library: str) -> str | None:
-        """Resolve matched normal library for a tumor library via the DataFrame."""
-        df = self.build_library_dataframe()
-        tumor_df = df[df["library_name"] == tumor_library]
-        if tumor_df.empty:
-            return None
-        return tumor_df.iloc[0].get("matched_normal_lib") or None

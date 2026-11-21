@@ -18,8 +18,9 @@ It holds the files that LOHHLA writes, and it is the key ``out`` for downstream 
 
 from snakemake.io import directory
 
-from snappy_pipeline.models import RelationshipDefinition, ToolModel
+from snappy_pipeline.models import ToolModel
 from snappy_pipeline.workflows.abstract import (
+    MATCHED_NORMAL_RELATIONSHIP,
     MATCHED_NORMAL_REQUIREMENT,
     BaseStep,
     BaseStepPart,
@@ -27,7 +28,6 @@ from snappy_pipeline.workflows.abstract import (
 )
 from snappy_pipeline.workflows.abstract.protocol import DataSignature, DataType
 from snappy_pipeline.workflows.hla_typing.model import ExpectedHlaTyping
-from snappy_pipeline.workflows.ngs_mapping.model import ExpectedAlignments
 
 from .model import SomaticHlaLohCalling as SomaticHlaLohCallingConfigModel
 
@@ -53,22 +53,12 @@ class LohhlaStepPart(BaseStepPart):
         return self.config
 
     def _get_input_files_run(self, wildcards):
-        normal_lib = self.get_normal_lib_name(wildcards)
-        tumor_lib = wildcards.tumor_library
-        normal: ExpectedAlignments = self.parent.get_upstream_paths(
-            "alignments", library_name=normal_lib
-        )
-        tumor: ExpectedAlignments = self.parent.get_upstream_paths(
-            "alignments", library_name=tumor_lib
-        )
+        tumor = wildcards.tumor_library
         hla_typing: ExpectedHlaTyping = self.parent.get_upstream_paths(
-            "hla_types", library_name=normal_lib
+            "hla_types", library_name=self.parent.matched_normal(tumor)
         )
         return {
-            "normal_bam": normal.bam,
-            "normal_bai": normal.bai,
-            "tumor_bam": tumor.bam,
-            "tumor_bai": tumor.bai,
+            **self.parent.tumor_normal_alignments(tumor),
             "hla": hla_typing.txt,
             "hla_dat": self.config.path_hla_dat,
             "hla_fasta": self.config.path_hla_fasta,
@@ -80,14 +70,6 @@ class LohhlaStepPart(BaseStepPart):
             "tumor_library": wildcards.tumor_library,
             "min_coverage_filter": self.config.min_coverage_filter,
         }
-
-    def get_normal_lib_name(self, wildcards):
-        """Return name of normal (non-cancer) library"""
-        df = self.parent.build_library_dataframe()
-        tumor_df = df[df["library_name"] == wildcards.tumor_library]
-        if tumor_df.empty:
-            return None
-        return tumor_df.iloc[0].get("matched_normal_lib") or None
 
     #: The plots of each HLA gene in LOHHLA's ``Figures`` directory; it writes none when all
     #: HLA alleles are homozygous
@@ -116,12 +98,7 @@ class SomaticHlaLohCallingWorkflow(BaseStep):
 
     library_requirement = MATCHED_NORMAL_REQUIREMENT
 
-    default_relationships = {
-        "matched_normal_lib": RelationshipDefinition(
-            via="donor_name",
-            target="role == 'normal' and extraction_type == 'dna'",
-        )
-    }
+    default_relationships = MATCHED_NORMAL_RELATIONSHIP
 
     @classmethod
     def get_output_paths(cls, config, signature=None, **kwargs) -> dict[str, str]:

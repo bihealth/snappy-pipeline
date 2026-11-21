@@ -7,16 +7,15 @@ from snappy_pipeline.models import ConfigPath, ContainerImage, ReadBy, RequiredB
 from snappy_pipeline.models import EnumField, SnappyModel, SnappyStepModel, ToolModel
 from snappy_pipeline.models.cnvkit import PanelOfNormals as CnvKit
 from snappy_pipeline.models.gatk import GATK
-from snappy_pipeline.models.parallel import Parallel
 from snappy_pipeline.workflows.abstract.protocol import (
     DataSignature,
     DataType,
+    DnaAlignments,
     ExpectedPathSchema,
     GermlineResource,
     Kits,
     Reference,
 )
-from snappy_pipeline.workflows.ngs_mapping.model import ExpectedAlignments
 
 
 class ExpectedGenomicsDb(BaseModel):
@@ -46,7 +45,10 @@ class GenomicsDb(GATK):
     """
 
 
-class Mutect2(Parallel, GATK):
+class Mutect2(GATK):
+    num_jobs: Annotated[int, Field(ge=1)] = 24
+    """The number of regions the genome is split into for scattered calling"""
+
     path_normals_list: ConfigPath = ""
     """Optional file listing libraries to include in panel"""
 
@@ -100,6 +102,7 @@ class PureCn(ToolModel):
         GenomeName | Literal["unknown"],
         EnumField(GenomeName, json_schema_extra={"options": {"unknown"}}),
     ] = "unknown"
+    """The genome of PureCN's annotations, for the calling tasks that read this panel, too"""
 
     enrichment_kit_name: str = "unknown"
     """For filename only..."""
@@ -114,15 +117,11 @@ class PureCn(ToolModel):
     """Nothing for GRCh38"""
 
     seed: int = 1234567
+    """The seed of PureCN's random numbers, for the calling tasks that read this panel, too"""
 
 
 class PanelOfNormalsDependsOn(SnappyModel):
-    alignments: Annotated[
-        str,
-        DataSignature(DataType.ALIGNMENTS, frozenset({"dna"})),
-        ExpectedPathSchema(ExpectedAlignments),
-        RequiredBy(Tool.mutect2, Tool.cnvkit, Tool.purecn),
-    ] = ""
+    alignments: Annotated[DnaAlignments, RequiredBy(Tool.mutect2, Tool.cnvkit, Tool.purecn)] = ""
 
     panel_of_normals: Annotated[
         str,

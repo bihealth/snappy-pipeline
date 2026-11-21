@@ -3,8 +3,8 @@
 
 Builds the indices of a reference FASTA file for one mapper.
 The ``tool`` field selects ``bwa``, ``bwa_mem2``, ``bwa_mem3``, ``minimap2`` or ``star``.
-STAR needs an RNA reference (``reference_molecule: rna``) and takes a gene annotation from ``depends_on.features`` to add splice junctions.
-The other tools need a DNA reference.
+STAR takes a gene annotation from ``depends_on.features`` to add splice junctions.
+The task produces data of type ``index``, tagged with the tool and with ``rna`` (``star``) or ``dna`` (the other tools).
 The task has one result per project, not per library.
 A task that reads the index must name the same genome in its ``depends_on.reference``; the project does not load otherwise.
 
@@ -13,7 +13,6 @@ Outputs
 
 Below ``tasks/<task>/output/reference_index/out/``, with the prefix ``reference``:
 
-- ``reference.fa.fai``, ``reference.dict`` and ``reference.fa.genome`` for every tool.
 - ``bwa``: ``.amb``, ``.ann``, ``.bwt``, ``.pac`` and ``.sa``.
 - ``bwa_mem2``: ``.0123``, ``.amb``, ``.ann``, ``.bwt.2bit.64`` and ``.pac``.
 - ``bwa_mem3``: ``.amb``, ``.ann``, ``.bwt.2bit.64`` and ``.pac``.
@@ -22,7 +21,7 @@ Below ``tasks/<task>/output/reference_index/out/``, with the prefix ``reference`
 
 Downstream tasks read the index through the key ``index``.
 This is the prefix of the files for ``bwa``, ``bwa_mem2`` and ``bwa_mem3``, the ``.mmi`` file for ``minimap2`` and the directory for ``star``.
-The keys ``reference_fai``, ``reference_dict`` and ``reference_genome`` name the other three files.
+Rules that read the genome take its ``.fai`` and ``.dict`` from next to the FASTA of their ``depends_on.reference`` task, not from this task.
 """
 
 from snappy_pipeline.utils import dictify, listify
@@ -56,29 +55,6 @@ STAR_SJDB_FILES = (
 )
 
 
-class BuildReferenceCommonStepPart(BaseStepPart):
-    name = "common"
-    actions = ("run",)
-    wrappers = {"run": "reference_index/common"}
-
-    default_resource_usage = ResourceUsage(threads=1, runtime="2h", mem="2GB")
-
-    def _get_input_files_run(self, wildcards):
-        return {"reference": self.parent.get_reference_path()}
-
-    def _get_output_files_run(self):
-        work_prefix = "work/reference_index/out/reference"
-        return {
-            "reference_fai": work_prefix + ".fa.fai",
-            "reference_dict": work_prefix + ".dict",
-            "reference_genome": work_prefix + ".fa.genome",
-        }
-
-    def _get_log_file_run(self):
-        prefix = "work/reference_index/log/reference_index.common"
-        return {"log": prefix + ".log"}
-
-
 class _IndexToolStepPart(BaseStepPart):
     output_suffixes: tuple[str, ...] = ()
 
@@ -87,12 +63,7 @@ class _IndexToolStepPart(BaseStepPart):
         return {}
 
     def _get_input_files_run(self, wildcards):
-        return {
-            "reference": self.parent.get_reference_path(),
-            "reference_fai": "work/reference_index/out/reference.fa.fai",
-            "reference_dict": "work/reference_index/out/reference.dict",
-            "reference_genome": "work/reference_index/out/reference.fa.genome",
-        }
+        return {"reference": self.parent.get_reference_path()}
 
     def _get_output_files_run(self):
         work_prefix = "work/reference_index/out/reference"
@@ -186,12 +157,7 @@ class ReferenceIndexWorkflow(BaseStep):
     def get_output_paths(cls, config, signature=None, **kwargs) -> dict[str, str]:
         prefix = kwargs.get("prefix", "work/reference_index/out/reference")
         index = {Tool.minimap2: prefix + ".mmi", Tool.star: prefix + ".index"}
-        return {
-            "index": index.get(Tool(config.tool), prefix),
-            "reference_fai": prefix + ".fa.fai",
-            "reference_dict": prefix + ".dict",
-            "reference_genome": prefix + ".fa.genome",
-        }
+        return {"index": index.get(Tool(config.tool), prefix)}
 
     def __init__(self, workflow, project, task_name):
         super().__init__(workflow, project, task_name)
@@ -202,14 +168,12 @@ class ReferenceIndexWorkflow(BaseStep):
             Tool.minimap2: Minimap2IndexStepPart,
             Tool.star: StarIndexStepPart,
         }
-        selected_tool_class = tool_to_class[self.config.tool]
-        self.register_sub_step_classes((BuildReferenceCommonStepPart, selected_tool_class))
+        self.register_sub_step_classes((tool_to_class[self.config.tool],))
 
     def get_reference_path(self) -> str:
         return self.get_upstream_paths("reference").fasta
 
     @listify
     def get_result_files(self):
-        for tool in ("common", str(self.config.tool)):
-            for path in self.get_output_files(tool, "run").values():
-                yield path.replace("work/", "output/", 1)
+        for path in self.get_output_files(str(self.config.tool), "run").values():
+            yield path.replace("work/", "output/", 1)

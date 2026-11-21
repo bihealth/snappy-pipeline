@@ -1,24 +1,37 @@
 """Pydantic models for the unified ``variant_filtration`` step."""
 
+import enum
 from typing import Annotated, Literal, Self
 
-from pydantic import BaseModel, Field, model_validator
+from pydantic import Field, model_validator
 
-from snappy_pipeline.models import ConfigPath, RequiredBy, SnappyModel, SnappyStepModel, ToolModel
+from snappy_pipeline.models import (
+    ConfigPath,
+    EnumField,
+    RequiredBy,
+    SnappyModel,
+    SnappyStepModel,
+    ToolModel,
+)
 from snappy_pipeline.workflows.abstract.protocol import (
     DataSignature,
     DataType,
+    DnaAlignments,
     ExpectedPathSchema,
+    ExpectedVariants,
     Reference,
     Regions,
 )
 from snappy_pipeline.models.calls_report import CallsReport
-from snappy_pipeline.workflows.ngs_mapping.model import ExpectedAlignments
 
 
-class ExpectedVariantVcf(BaseModel):
-    vcf: str
-    vcf_tbi: str
+class Tool(enum.StrEnum):
+    bcftools = "bcftools"
+    vembrane = "vembrane"
+    regions = "regions"
+    dkfz = "dkfz"
+    ebfilter = "ebfilter"
+    varlociraptor = "varlociraptor"
 
 
 class Bcftools(ToolModel):
@@ -152,36 +165,22 @@ class VarlociraptorFdr(ToolModel):
     """The variant types kept, each controlled on its own (``--var``)"""
 
 
-ToolLiteral = Literal[
-    "bcftools",
-    "vembrane",
-    "regions",
-    "dkfz",
-    "ebfilter",
-    "varlociraptor",
-]
-
-
 class VariantFiltrationDependsOn(SnappyModel):
     variants: Annotated[
         str,
         DataSignature(DataType.VARIANTS),
-        ExpectedPathSchema(ExpectedVariantVcf),
+        ExpectedPathSchema(ExpectedVariants),
     ]
 
     alignments: Annotated[
-        str,
-        DataSignature(DataType.ALIGNMENTS, frozenset({"dna"})),
-        ExpectedPathSchema(ExpectedAlignments),
-        RequiredBy("dkfz", "ebfilter"),
-        RequiredBy(when="calls_report.igv"),
+        DnaAlignments, RequiredBy(Tool.dkfz, Tool.ebfilter), RequiredBy(when="calls_report.igv")
     ] = ""
 
     reference: Annotated[
-        Reference, RequiredBy("dkfz", "ebfilter"), RequiredBy(when="calls_report.igv")
+        Reference, RequiredBy(Tool.dkfz, Tool.ebfilter), RequiredBy(when="calls_report.igv")
     ] = ""
 
-    regions: Annotated[Regions, RequiredBy("regions")] = ""
+    regions: Annotated[Regions, RequiredBy(Tool.regions)] = ""
     """Task with the BED file of the ``regions`` filter"""
 
 
@@ -191,7 +190,7 @@ class VariantFiltration(SnappyStepModel):
     calls_report: CallsReport | None = None
     """The calls of each VCF as a table and a datavzrd site for the report; unset: no report"""
 
-    tool: ToolLiteral
+    tool: Annotated[Tool, EnumField(Tool)]
     """One task = one tool. Vembrane supports both ``tag`` and ``filter`` modes."""
 
     bcftools: Bcftools | None = None
@@ -200,17 +199,3 @@ class VariantFiltration(SnappyStepModel):
     dkfz: Dkfz = Field(default_factory=Dkfz)
     ebfilter: Ebfilter | None = None
     varlociraptor: VarlociraptorFdr | None = None
-
-    @model_validator(mode="after")
-    def validate_config(self) -> Self:
-        if not self.depends_on.variants:
-            raise ValueError("depends_on.variants must be set")
-
-        if self.tool != "dkfz":
-            tool_cfg = getattr(self, self.tool, None)
-            if tool_cfg is None:
-                raise ValueError(
-                    f"Configuration block '{self.tool}:' must be provided when tool is '{self.tool}'"
-                )
-
-        return self

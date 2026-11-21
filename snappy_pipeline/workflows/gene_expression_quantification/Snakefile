@@ -19,97 +19,107 @@ wf = task_instance(config["__task_name__"])
 # Run RseQC infer_experiment.py ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 
-rule gene_expression_quantification_strandedness_run:
-    input:
-        unpack(wf.get_input_files("strandedness", "run")),
-    output:
-        **wf.get_output_files("strandedness", "run"),
-    log:
-        **wf.get_log_file("strandedness", "run"),
-    benchmark:
-        wf.get_benchmark_file("strandedness", "run")
-    threads: wf.get_resource("strandedness", "run", "threads")
-    resources:
-        **wf.get_resources("strandedness", "run"),
-    params:
-        args=wf.get_params("strandedness", "run"),
-    wrapper:
-        wf.get_wrapper("strandedness", "run")
+if wf.config.tool == "strandedness":
+
+    rule gene_expression_quantification_strandedness_run:
+        input:
+            unpack(wf.get_input_files("strandedness", "run")),
+        output:
+            **wf.get_output_files("strandedness", "run"),
+        log:
+            **wf.get_log_file("strandedness", "run"),
+        benchmark:
+            wf.get_benchmark_file("strandedness", "run")
+        threads: wf.get_resource("strandedness", "run", "threads")
+        resources:
+            **wf.get_resources("strandedness", "run"),
+        params:
+            args=wf.get_params("strandedness", "run"),
+        wrapper:
+            wf.get_wrapper("strandedness", "run")
 
 
 # Gene Expression QC ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 
-rule gene_expression_quantification_duplication_run:
-    input:
-        unpack(wf.get_input_files("duplication", "run")),
-    output:
-        **wf.get_output_files("duplication", "run"),
-    log:
-        **wf.get_log_file("duplication", "run"),
-    benchmark:
-        wf.get_benchmark_file("duplication", "run")
-    threads: wf.get_resource("duplication", "run", "threads")
-    resources:
-        **wf.get_resources("duplication", "run"),
-    params:
-        args=wf.get_params("duplication", "run"),
-    wrapper:
-        wf.get_wrapper("duplication", "run")
+if wf.config.tool == "duplication":
+
+    rule gene_expression_quantification_duplication_run:
+        input:
+            unpack(wf.get_input_files("duplication", "run")),
+        output:
+            **wf.get_output_files("duplication", "run"),
+        log:
+            **wf.get_log_file("duplication", "run"),
+        benchmark:
+            wf.get_benchmark_file("duplication", "run")
+        threads: wf.get_resource("duplication", "run", "threads")
+        resources:
+            **wf.get_resources("duplication", "run"),
+        params:
+            args=wf.get_params("duplication", "run"),
+        wrapper:
+            wf.get_wrapper("duplication", "run")
 
 
-rule gene_expression_quantification_dupradar_run:
-    input:
-        unpack(wf.get_input_files("dupradar", "run")),
-    output:
-        **wf.get_output_files("dupradar", "run"),
-    log:
-        **wf.get_log_file("dupradar", "run"),
-    benchmark:
-        wf.get_benchmark_file("dupradar", "run")
-    threads: wf.get_resource("dupradar", "run", "threads")
-    resources:
-        **wf.get_resources("dupradar", "run"),
-    params:
-        args=wf.get_params("dupradar", "run"),
-    wrapper:
-        wf.get_wrapper("dupradar", "run")
+if wf.config.tool == "dupradar":
+
+    rule gene_expression_quantification_dupradar_run:
+        input:
+            unpack(wf.get_input_files("dupradar", "run")),
+        output:
+            **wf.get_output_files("dupradar", "run"),
+        log:
+            **wf.get_log_file("dupradar", "run"),
+        benchmark:
+            wf.get_benchmark_file("dupradar", "run")
+        threads: wf.get_resource("dupradar", "run", "threads")
+        resources:
+            **wf.get_resources("dupradar", "run"),
+        params:
+            args=wf.get_params("dupradar", "run"),
+        wrapper:
+            wf.get_wrapper("dupradar", "run")
 
 
-rule gene_expression_quantification_rnaseqc_run:
-    input:
-        unpack(wf.get_input_files("rnaseqc", "run")),
-    output:
-        **wf.get_output_files("rnaseqc", "run"),
-    log:
-        **wf.get_log_file("rnaseqc", "run"),
-    benchmark:
-        wf.get_benchmark_file("rnaseqc", "run")
-    threads: wf.get_resource("rnaseqc", "run", "threads")
-    resources:
-        **wf.get_resources("rnaseqc", "run"),
-    params:
-        args=wf.get_params("rnaseqc", "run"),
-    wrapper:
-        wf.get_wrapper("rnaseqc", "run")
+if wf.config.tool == "rnaseqc":
+
+    rule gene_expression_quantification_rnaseqc_run:
+        input:
+            unpack(wf.get_input_files("rnaseqc", "run")),
+        output:
+            **wf.get_output_files("rnaseqc", "run"),
+        log:
+            **wf.get_log_file("rnaseqc", "run"),
+        benchmark:
+            wf.get_benchmark_file("rnaseqc", "run")
+        threads: wf.get_resource("rnaseqc", "run", "threads")
+        resources:
+            **wf.get_resources("rnaseqc", "run"),
+        params:
+            args=wf.get_params("rnaseqc", "run"),
+        wrapper:
+            wf.get_wrapper("rnaseqc", "run")
 
 
-rule gene_expression_quantification_stats_run:
-    input:
-        unpack(wf.get_input_files("stats", "run")),
-    output:
-        **wf.get_output_files("stats", "run"),
-    log:
-        **wf.get_log_file("stats", "run"),
-    benchmark:
-        wf.get_benchmark_file("stats", "run")
-    threads: wf.get_resource("stats", "run", "threads")
-    resources:
-        **wf.get_resources("stats", "run"),
-    params:
-        args=wf.get_params("stats", "run"),
-    wrapper:
-        wf.get_wrapper("stats", "run")
+if wf.config.tool == "stats":
+
+    rule gene_expression_quantification_stats_run:
+        input:
+            unpack(wf.get_input_files("stats", "run")),
+        output:
+            **wf.get_output_files("stats", "run"),
+        log:
+            **wf.get_log_file("stats", "run"),
+        benchmark:
+            wf.get_benchmark_file("stats", "run")
+        threads: wf.get_resource("stats", "run", "threads")
+        resources:
+            **wf.get_resources("stats", "run"),
+        params:
+            args=wf.get_params("stats", "run"),
+        wrapper:
+            wf.get_wrapper("stats", "run")
 
 
 # Gene Expression Quantification ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -117,22 +127,24 @@ rule gene_expression_quantification_stats_run:
 # Run FeatureCounts------------------------------------------------------------
 
 
-rule gene_expression_quantification_featurecounts_run:
-    input:
-        unpack(wf.get_input_files("featurecounts", "run")),
-    output:
-        **wf.get_output_files("featurecounts", "run"),
-    log:
-        **wf.get_log_file("featurecounts", "run"),
-    benchmark:
-        wf.get_benchmark_file("featurecounts", "run")
-    threads: wf.get_resource("featurecounts", "run", "threads")
-    resources:
-        **wf.get_resources("featurecounts", "run"),
-    params:
-        args=wf.get_params("featurecounts", "run"),
-    wrapper:
-        wf.get_wrapper("featurecounts", "run")
+if wf.config.tool == "featurecounts":
+
+    rule gene_expression_quantification_featurecounts_run:
+        input:
+            unpack(wf.get_input_files("featurecounts", "run")),
+        output:
+            **wf.get_output_files("featurecounts", "run"),
+        log:
+            **wf.get_log_file("featurecounts", "run"),
+        benchmark:
+            wf.get_benchmark_file("featurecounts", "run")
+        threads: wf.get_resource("featurecounts", "run", "threads")
+        resources:
+            **wf.get_resources("featurecounts", "run"),
+        params:
+            args=wf.get_params("featurecounts", "run"),
+        wrapper:
+            wf.get_wrapper("featurecounts", "run")
 
 
 # Gene Expression Quantification ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -140,19 +152,21 @@ rule gene_expression_quantification_featurecounts_run:
 # Run Salmon-------------------------------------------------------------------
 
 
-rule gene_expression_quantification_salmon_run:
-    input:
-        unpack(wf.get_input_files("salmon", "run")),
-    output:
-        **wf.get_output_files("salmon", "run"),
-    log:
-        **wf.get_log_file("salmon", "run"),
-    benchmark:
-        wf.get_benchmark_file("salmon", "run")
-    threads: wf.get_resource("salmon", "run", "threads")
-    resources:
-        **wf.get_resources("salmon", "run"),
-    params:
-        args=wf.get_params("salmon", "run"),
-    wrapper:
-        wf.get_wrapper("salmon", "run")
+if wf.config.tool == "salmon":
+
+    rule gene_expression_quantification_salmon_run:
+        input:
+            unpack(wf.get_input_files("salmon", "run")),
+        output:
+            **wf.get_output_files("salmon", "run"),
+        log:
+            **wf.get_log_file("salmon", "run"),
+        benchmark:
+            wf.get_benchmark_file("salmon", "run")
+        threads: wf.get_resource("salmon", "run", "threads")
+        resources:
+            **wf.get_resources("salmon", "run"),
+        params:
+            args=wf.get_params("salmon", "run"),
+        wrapper:
+            wf.get_wrapper("salmon", "run")

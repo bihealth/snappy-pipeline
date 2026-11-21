@@ -42,7 +42,7 @@
   "wrapper": null
  },
  {
-  "benchmark": "tasks/variant_export_external/benchmarks/dragen.PAT_case001subregion/dragen.PAT_case001subregion.gvcf_to_vcf.tsv",
+  "benchmark": "tasks/variant_export_external/benchmarks/PAT_case001subregion/PAT_case001subregion.gvcf_to_vcf.tsv",
   "input": [
    "<project>/raw/case001subregion-N1-DNA1-WES1/case001subregion-N1-DNA1-WES1.vcf.gz",
    "<repo>/.tests/test-workflow/resources/refs/subregion.fa",
@@ -50,11 +50,11 @@
    "<repo>/.tests/test-workflow/resources/refs/subregion.dict"
   ],
   "log": [
-   "tasks/variant_export_external/work/dragen.PAT_case001subregion/log/dragen.PAT_case001subregion.gvcf_to_vcf.log"
+   "tasks/variant_export_external/work/PAT_case001subregion/log/PAT_case001subregion.gvcf_to_vcf.log"
   ],
   "output": [
-   "tasks/variant_export_external/work/dragen.PAT_case001subregion/out/dragen.PAT_case001subregion.vcf.gz",
-   "tasks/variant_export_external/work/dragen.PAT_case001subregion/out/dragen.PAT_case001subregion.vcf.gz.tbi"
+   "tasks/variant_export_external/work/PAT_case001subregion/out/PAT_case001subregion.vcf.gz",
+   "tasks/variant_export_external/work/PAT_case001subregion/out/PAT_case001subregion.vcf.gz.tbi"
   ],
   "params": {
    "args": {
@@ -73,8 +73,8 @@
   },
   "rule": "variant_export_external_variant_export_external_gvcf_to_vcf",
   "temp": [
-   "tasks/variant_export_external/work/dragen.PAT_case001subregion/out/dragen.PAT_case001subregion.vcf.gz",
-   "tasks/variant_export_external/work/dragen.PAT_case001subregion/out/dragen.PAT_case001subregion.vcf.gz.tbi"
+   "tasks/variant_export_external/work/PAT_case001subregion/out/PAT_case001subregion.vcf.gz",
+   "tasks/variant_export_external/work/PAT_case001subregion/out/PAT_case001subregion.vcf.gz.tbi"
   ],
   "threads": 1,
   "wildcards": {
@@ -93,8 +93,8 @@
    "<repo>/tests/scripts/generate_task_configs.py",
    "<repo>/tests/scripts/generate_task_configs.py",
    "<repo>/tests/scripts/generate_task_configs.py",
-   "tasks/variant_export_external/work/dragen.PAT_case001subregion/out/dragen.PAT_case001subregion.vcf.gz",
-   "tasks/variant_export_external/work/dragen.PAT_case001subregion/out/dragen.PAT_case001subregion.vcf.gz.tbi"
+   "tasks/variant_export_external/work/PAT_case001subregion/out/PAT_case001subregion.vcf.gz",
+   "tasks/variant_export_external/work/PAT_case001subregion/out/PAT_case001subregion.vcf.gz.tbi"
   ],
   "log": [
    "tasks/variant_export_external/work/varfish_annotated.PAT_case001subregion/log/varfish_annotated.annotate.PAT_case001subregion.log"
@@ -122,9 +122,9 @@
       "reference": "genome",
       "variants": "external_vcf"
      },
-     "external_tool": "dragen",
      "group_by": null,
      "gvcf_option": true,
+     "ignore_read_groups": true,
      "job_group": null,
      "library_selection": null,
      "merge_option": null,

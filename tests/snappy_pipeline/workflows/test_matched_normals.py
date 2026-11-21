@@ -28,6 +28,7 @@ TABLE = pd.DataFrame(
 TASKS = {
     "ascat": ("somatic_purity_ploidy_estimate", "ascat", ["P1-T1-DNA1"]),
     "lohhla": ("somatic_hla_loh_calling", None, ["P1-T1-DNA1"]),
+    "msi": ("somatic_msi_calling", "mantis_msi2", ["P1-T1-DNA1"]),
     "cnv_checking": ("somatic_cnv_checking", None, ["P1-T1-DNA1"]),
     "hrd": ("homologous_recombination_deficiency", "scarHRD", ["P1-T1-DNA1"]),
     "sequenza": ("somatic_targeted_seq_cnv_calling", "sequenza", ["P1-T1-DNA1"]),

@@ -88,10 +88,7 @@
  {
   "benchmark": null,
   "input": [
-   "<repo>/.tests/test-workflow/resources/refs/subregion.fa",
-   "tasks/reference_index_bwa/work/reference_index/out/reference.fa.fai",
-   "tasks/reference_index_bwa/work/reference_index/out/reference.dict",
-   "tasks/reference_index_bwa/work/reference_index/out/reference.fa.genome"
+   "<repo>/.tests/test-workflow/resources/refs/subregion.fa"
   ],
   "log": [
    "tasks/reference_index_bwa/work/reference_index/log/reference_index.index.log"
@@ -124,38 +121,6 @@
   "wrapper": "file://<repo>/snappy_wrappers/wrappers/reference_index/bwa"
  },
  {
-  "benchmark": null,
-  "input": [
-   "<repo>/.tests/test-workflow/resources/refs/subregion.fa"
-  ],
-  "local": true,
-  "log": [
-   "tasks/reference_index_bwa/work/reference_index/log/reference_index.common.log"
-  ],
-  "output": [
-   "tasks/reference_index_bwa/work/reference_index/out/reference.fa.fai",
-   "tasks/reference_index_bwa/work/reference_index/out/reference.dict",
-   "tasks/reference_index_bwa/work/reference_index/out/reference.fa.genome"
-  ],
-  "params": {
-   "args": {
-    "code": "<hash>"
-   }
-  },
-  "resources": {
-   "mem": "2 GB",
-   "mem_mb": 2000,
-   "mem_mib": 1908,
-   "partition": "medium",
-   "runtime": 120
-  },
-  "rule": "reference_index_bwa_reference_index_common_run",
-  "temp": [],
-  "threads": 1,
-  "wildcards": {},
-  "wrapper": "file://<repo>/snappy_wrappers/wrappers/reference_index/common"
- },
- {
   "benchmark": "tasks/targeted_seq_mei_calling_scramble/benchmarks/case001subregion-N1-DNA1-WES1/case001subregion-N1-DNA1-WES1.analysis.tsv",
   "input": [
    "tasks/targeted_seq_mei_calling_scramble/work/case001subregion-N1-DNA1-WES1/out/case001subregion-N1-DNA1-WES1.cluster.txt",
@@ -168,8 +133,8 @@
    "tasks/targeted_seq_mei_calling_scramble/work/case001subregion-N1-DNA1-WES1/out/case001subregion-N1-DNA1-WES1.MEIs.txt",
    "tasks/targeted_seq_mei_calling_scramble/work/case001subregion-N1-DNA1-WES1/out/case001subregion-N1-DNA1-WES1.vcf",
    "tasks/targeted_seq_mei_calling_scramble/work/case001subregion-N1-DNA1-WES1/out/case001subregion-N1-DNA1-WES1.vcf.gz",
-   "tasks/targeted_seq_mei_calling_scramble/work/case001subregion-N1-DNA1-WES1/out/case001subregion-N1-DNA1-WES1.vcf.gz.md5",
    "tasks/targeted_seq_mei_calling_scramble/work/case001subregion-N1-DNA1-WES1/out/case001subregion-N1-DNA1-WES1.vcf.gz.tbi",
+   "tasks/targeted_seq_mei_calling_scramble/work/case001subregion-N1-DNA1-WES1/out/case001subregion-N1-DNA1-WES1.vcf.gz.md5",
    "tasks/targeted_seq_mei_calling_scramble/work/case001subregion-N1-DNA1-WES1/out/case001subregion-N1-DNA1-WES1.vcf.gz.tbi.md5"
   ],
   "params": {

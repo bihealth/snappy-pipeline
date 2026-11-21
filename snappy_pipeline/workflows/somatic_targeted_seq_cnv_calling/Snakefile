@@ -24,10 +24,10 @@ tool = str(wf.config.tool)
 # cnvkit pipeline -------------------------------------------------------------
 
 
-# cnvkit requires a large number of rules, thus externalized
+# cnvkit requires a large number of rules, shared with somatic_wgs_cnv_calling
 if tool == "cnvkit":
 
-    include: "cnvkit.rules"
+    include: "../common/cnvkit.rules"
 
 
 # Run sequenza ----------------------------------------------------

@@ -102,10 +102,10 @@ A ``libraryKit`` that the kits task lacks is an error.
 
 from typing import Any
 
-from snakemake.io import directory, expand, touch
+from snakemake.io import directory, touch
 from snakemake.iocontainers import Wildcards
 
-from snappy_pipeline.utils import dictify, listify
+from snappy_pipeline.utils import dictify
 from snappy_pipeline.workflows.abstract import (
     BaseStep,
     BaseStepPart,
@@ -166,6 +166,10 @@ class FastQcReportStepPart(BaseStepPart):
 
     default_resource_usage = ResourceUsage(threads=1, mem="4GB", runtime="4h")
 
+    library_requirement = "extraction_type in ['dna', 'rna']"
+
+    result_keys = ("fastqc_done",)
+
     report_outputs = {
         "run": {"html": ReportOutput("FastQC", caption="fastqc.rst", htmlindex="index.html")}
     }
@@ -196,6 +200,13 @@ class PicardStepPart(BaseStepPart):
     #: ``prepare`` converts the BED files of the kit to interval lists
     extra_arguments_action = "metrics"
     intermediate_outputs = {"prepare": ("baits", "targets")}
+
+    library_requirement = "extraction_type == 'dna'"
+
+    @property
+    def result_keys(self) -> dict[str, tuple[str, ...]]:
+        """The metrics files of all programs"""
+        return {"metrics": tuple(self.get_output_files("metrics"))}
 
     @property
     def report_outputs(self):
@@ -270,6 +281,13 @@ class NgsChewStepPart(BaseStepPart):
     #: ``extra_arguments``
     extra_arguments_action = "fingerprint"
 
+    library_requirement = "extraction_type == 'dna'"
+
+    result_keys = {
+        "fingerprint": ("npz", "npz_md5"),
+        "compare": tuple(table + suffix for table in COMPARE_TABLES for suffix in ("", "_md5")),
+    }
+
     report_outputs = {
         "compare": {
             "relatedness_html": ReportOutput("ngs-chew", caption="ngs_chew_relatedness.rst"),
@@ -299,7 +317,7 @@ class NgsChewStepPart(BaseStepPart):
         return {"log": "work/{library_name}/log/{library_name}.fingerprint.log"}
 
     def _get_input_files_compare(self, wildcards):
-        return {"npz": [f"work/{lib}/out/{lib}.npz" for lib in self.parent.dna_libraries()]}
+        return {"npz": [f"work/{lib}/out/{lib}.npz" for lib in self.parent.output_entities]}
 
     @dictify
     def _get_output_files_compare(self):
@@ -336,10 +354,9 @@ class NgsChewSummaryStepPart(QcSummaryStepPart):
         """The sheet facts the checks compare with:
         each DNA library's donor, pedigree and sex,
         and every donor of the pedigrees with its parents and library (``""`` if unsequenced)."""
-        table = self.parent.build_library_dataframe()
         libraries = []
-        for library in self.parent.dna_libraries():
-            row = table[table["library_name"] == library].iloc[0]
+        for library in self.parent.output_entities:
+            row = self.parent.library_row(library)
             libraries.append(
                 {
                     "library": library,
@@ -373,6 +390,8 @@ class AlfredStepPart(BaseStepPart):
 
     default_resource_usage = ResourceUsage(threads=2, runtime="4h", mem="20GB")
 
+    library_requirement = "extraction_type == 'dna'"
+
     @dictify
     def _get_input_files_run(self, wildcards):
         alignments = self.parent.get_upstream_paths(
@@ -382,6 +401,14 @@ class AlfredStepPart(BaseStepPart):
         yield "bai", alignments.bai
         yield from self.parent.reference_inputs().items()
         yield "targets_bed", self.parent.library_kit_paths("kits", wildcards.library_name).targets
+
+    def get_result_files(self) -> list[str]:
+        """The report of each library with a kit"""
+        json = "output/{library_name}/out/{library_name}.target_coverage.json.gz"
+        libraries = self.parent.kit_libraries()
+        return [
+            path.format(library_name=lib) for lib in libraries for path in (json, json + ".md5")
+        ]
 
     def _get_output_files_run(self):
         json = "work/{library_name}/out/{library_name}.target_coverage.json.gz"
@@ -412,9 +439,6 @@ class PicardSummaryStepPart(QcSummaryStepPart):
     def source_keys(self) -> dict[str, str]:
         """One kind of file per program, the metrics file that the program writes first"""
         return {program: program for program in self.config.picard.programs}
-
-    def entities(self) -> list[str]:
-        return self.parent.dna_libraries()
 
 
 class AlfredSummaryStepPart(QcSummaryStepPart):
@@ -462,86 +486,34 @@ class NgsDataQcWorkflow(BaseStep):
             return {"alfred_qc": f"work/{lib}/out/{lib}.target_coverage.json.gz"}
         return {"done": f"work/{lib}/report/.done"}
 
+    tool_parts = {
+        Tool.fastqc: FastQcReportStepPart,
+        Tool.picard: PicardStepPart,
+        Tool.ngs_chew: NgsChewStepPart,
+        Tool.alfred: AlfredStepPart,
+    }
+
+    #: The QC summary of the files of each tool, registered after the tool's part
+    summary_parts = {
+        Tool.picard: PicardSummaryStepPart,
+        Tool.ngs_chew: NgsChewSummaryStepPart,
+        Tool.alfred: AlfredSummaryStepPart,
+    }
+
+    @classmethod
+    def task_library_requirement(cls, config):
+        """The libraries that the tool runs on."""
+        return cls.tool_parts[config.tool].library_requirement
+
     def __init__(self, workflow, project, task_name):
         super().__init__(workflow, project, task_name)
-        tool_to_classes = {
-            "fastqc": (FastQcReportStepPart,),
-            "picard": (PicardStepPart, PicardSummaryStepPart),
-            "ngs_chew": (NgsChewStepPart, NgsChewSummaryStepPart),
-            "alfred": (AlfredStepPart, AlfredSummaryStepPart),
-        }
-        self.register_sub_step_classes(tool_to_classes[self.config.tool])
+        if summary := self.summary_parts.get(self.config.tool):
+            self.register_sub_step_classes((summary,))
         if self.config.tool == "picard" and "CollectHsMetrics" in self.config.picard.programs:
-            self.check_library_kits("kits", self.dna_libraries())
+            self.check_library_kits("kits", self.output_entities)
         if self.config.tool == "alfred":
-            self.check_library_kits("kits", self.dna_libraries(), require=False)
+            self.check_library_kits("kits", self.output_entities, require=False)
 
     def kit_libraries(self) -> list[str]:
         """Return the DNA libraries with a kit, which ``alfred`` runs on."""
-        return [name for name in self.dna_libraries() if name in self.library_kits]
-
-    def dna_libraries(self) -> list[str]:
-        """Return the DNA libraries that ``picard`` and ``ngs_chew`` run on."""
-        df = self.build_library_dataframe()
-        dna = df[df["extraction_type"] == "dna"]["library_name"]
-        return [name for name in self.output_entities if name in set(dna)]
-
-    @listify
-    def get_result_files(self):
-        """Return list of result files for the NGS raw data QC workflow
-
-        We will process all NGS libraries of all test samples in all sample
-        sheets.
-        """
-        if self.config.tool == "fastqc":
-            yield from self._yield_result_files(
-                tpl="output/{library_name}/report/.done",
-                allowed_extraction_types=(
-                    "dna",
-                    "rna",
-                ),
-            )
-        if self.config.tool == "picard":
-            tpl = "output/{library_name}/report/{library_name}.{ext}"
-            exts = []
-            for pgm in self.config.picard.programs:
-                if pgm in MULTIPLE_METRICS.keys():
-                    first = MULTIPLE_METRICS[pgm][0]
-                    exts.append(f"CollectMultipleMetrics.{first}.txt")
-                    exts.append(f"CollectMultipleMetrics.{first}.txt.md5")
-                else:
-                    exts.append(pgm + ".txt")
-                    exts.append(pgm + ".txt.md5")
-            yield from self._yield_result_files(
-                tpl=tpl,
-                allowed_extraction_types=("dna",),
-                ext=exts,
-            )
-        if self.config.tool == "ngs_chew":
-            yield from self._yield_result_files(
-                tpl="output/{library_name}/out/{library_name}.{ext}",
-                allowed_extraction_types=("dna",),
-                ext=["npz", "npz.md5"],
-            )
-            for table in COMPARE_TABLES:
-                yield f"output/cohort/out/cohort.{table}.txt"
-                yield f"output/cohort/out/cohort.{table}.txt.md5"
-        if self.config.tool == "alfred":
-            for library_name in self.kit_libraries():
-                json = f"output/{library_name}/out/{library_name}.target_coverage.json.gz"
-                yield from (json, json + ".md5")
-        if "qc_summary" in self.sub_steps:
-            yield from self.sub_steps["qc_summary"].get_result_files()
-
-    def _yield_result_files(self, tpl, allowed_extraction_types, **kwargs):
-        """Build output paths from path template and extension list"""
-        df = self.build_library_dataframe()
-        if df.empty:
-            return
-        for library_name in self.output_entities:
-            row = df[df["library_name"] == library_name]
-            if row.empty:
-                continue
-            extraction_type = row.iloc[0].get("extraction_type", "")
-            if extraction_type in allowed_extraction_types:
-                yield from expand(tpl, library_name=[library_name], **kwargs)
+        return [name for name in self.output_entities if name in self.library_kits]

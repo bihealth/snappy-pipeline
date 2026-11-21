@@ -15,11 +15,10 @@ from snappy_pipeline.workflows.abstract.protocol import (
     DataSignature,
     DataType,
     Dbsnp,
-    ExpectedPathSchema,
+    DnaAlignments,
     Kits,
     Reference,
 )
-from snappy_pipeline.workflows.ngs_mapping.model import ExpectedAlignments
 
 
 class Tool(enum.StrEnum):
@@ -98,12 +97,7 @@ class NgsChew(ToolModel):
 
 
 class NgsDataQcDependsOn(SnappyModel):
-    alignments: Annotated[
-        str,
-        DataSignature(DataType.ALIGNMENTS, frozenset({"dna"})),
-        ExpectedPathSchema(ExpectedAlignments),
-        RequiredBy(Tool.picard, Tool.ngs_chew, Tool.alfred),
-    ] = ""
+    alignments: Annotated[DnaAlignments, RequiredBy(Tool.picard, Tool.ngs_chew, Tool.alfred)] = ""
     """Alignments of DNA libraries"""
 
     reads: Annotated[str, DataSignature(DataType.RAW), RequiredBy(Tool.fastqc)] = ""

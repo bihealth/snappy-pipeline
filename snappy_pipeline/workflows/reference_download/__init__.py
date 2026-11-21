@@ -2,7 +2,7 @@
 """Download of a reference sequence
 
 Downloads one FASTA file from Ensembl, RefSeq or UCSC.
-The ``source`` field selects the source.
+The required ``source`` field selects the source.
 The source section (``ensembl``, ``refseq`` or ``ucsc``) selects the species, build and file, or gives a ``url`` that replaces the generated URL.
 ``contigs`` and ``contigs_regex`` keep only some contigs of the file.
 The task has one result per project, not per library.
@@ -15,7 +15,7 @@ Below ``tasks/<task>/output/``:
 - ``reference_download/out/reference.fa`` with its index ``reference.fa.fai`` and sequence dictionary ``reference.dict``, each with an ``.md5`` file
 
 Downstream tasks read the FASTA file through the key ``fasta`` of their ``reference`` field, and find the ``.fai`` and ``.dict`` next to it.
-The task produces data of type ``raw`` with the tags ``reference``, the source and the molecule (``dna``, ``rna`` or ``protein``).
+The task produces data of type ``raw`` with the tags ``reference``, its source and the ``molecule`` of the source section (``dna``, ``rna`` or ``protein``).
 """
 
 from snappy_pipeline.utils import dictify, listify
@@ -142,6 +142,15 @@ class ReferenceDownloadWorkflow(BaseStep):
     ]
 
     config_model_class = ReferenceDownloadConfigModel
+
+    @classmethod
+    def task_produces(cls, config, upstream):
+        molecule = getattr(config, config.source).molecule
+        return (
+            DataSignature(
+                DataType.RAW, frozenset({str(config.source), "reference", str(molecule)})
+            ),
+        )
 
     @classmethod
     def get_output_paths(cls, config, signature=None, **kwargs) -> dict[str, str]:

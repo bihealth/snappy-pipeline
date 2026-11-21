@@ -2,12 +2,14 @@
 
 from types import SimpleNamespace
 
+from snappy_pipeline.workflows.abstract import MATCHED_NORMAL_REQUIREMENT
 from snappy_pipeline.workflows.variant_calling import (
     BcftoolsCallStepPart,
     Gatk3HaplotypeCallerStepPart,
     Gatk3UnifiedGenotyperStepPart,
     Gatk4HaplotypeCallerGvcfStepPart,
     Gatk4HaplotypeCallerJointStepPart,
+    VariantCallingWorkflow,
 )
 from snappy_pipeline.workflows.variant_calling.model import (
     BcftoolsCall,
@@ -15,6 +17,9 @@ from snappy_pipeline.workflows.variant_calling.model import (
     Gatk3Ug,
     Gatk4HcGvcf,
     Gatk4HcJoint,
+    Mutect2,
+    TumorNormalMode,
+    VariantCalling,
 )
 
 
@@ -27,8 +32,9 @@ def _params(part_class, action="run", **sections):
 
 
 def test_bcftools_call_passes_its_settings():
-    params = _params(BcftoolsCallStepPart, bcftools_call=BcftoolsCall())
+    params = _params(BcftoolsCallStepPart, bcftools_call=BcftoolsCall(assembly="GRCh38"))
 
+    assert params["assembly"] == "GRCh38"
     assert params["padding"] == 1000
     assert params["annotate"] == "FORMAT/AD,FORMAT/DP"
     assert (params["per_sample_mf"], params["redo_baq"], params["variants_only"]) == (
@@ -41,7 +47,9 @@ def test_bcftools_call_passes_its_settings():
 def test_bcftools_call_passes_changed_settings():
     params = _params(
         BcftoolsCallStepPart,
-        bcftools_call=BcftoolsCall(padding=0, redo_baq=False, annotate="FORMAT/DP"),
+        bcftools_call=BcftoolsCall(
+            assembly="GRCh37", padding=0, redo_baq=False, annotate="FORMAT/DP"
+        ),
     )
 
     assert (params["padding"], params["redo_baq"], params["annotate"]) == (0, False, "FORMAT/DP")
@@ -78,3 +86,13 @@ def test_gatk4_hc_gvcf_passes_the_annotation_groups_of_each_action():
     assert groups["genotype"] == ["StandardAnnotation"]
     assert "AlleleSpecificAnnotation" in groups["discover"]
     assert "AlleleSpecificAnnotation" in groups["combine_gvcfs"]
+
+
+def test_mutect2_in_paired_mode_takes_only_the_tumors_with_a_matched_normal():
+    def requirement(mode):
+        mutect2 = Mutect2.model_construct(tumor_normal_mode=mode)
+        config = VariantCalling.model_construct(tool="mutect2", mutect2=mutect2)
+        return VariantCallingWorkflow.task_library_requirement(config)
+
+    assert requirement(TumorNormalMode.PAIRED) == MATCHED_NORMAL_REQUIREMENT
+    assert requirement(TumorNormalMode.AUTOMATIC) == "role == 'tumor' and extraction_type == 'dna'"

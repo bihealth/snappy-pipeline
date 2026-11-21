@@ -3,8 +3,8 @@
   "benchmark": null,
   "input": [
    "tasks/variant_calling_gatk4_hc_joint/work/FAM_case001subregion/out/FAM_case001subregion.vcf.gz",
-   "tasks/variant_calling_gatk4_hc_joint/work/FAM_case001subregion/out/FAM_case001subregion.vcf.gz.md5",
    "tasks/variant_calling_gatk4_hc_joint/work/FAM_case001subregion/out/FAM_case001subregion.vcf.gz.tbi",
+   "tasks/variant_calling_gatk4_hc_joint/work/FAM_case001subregion/out/FAM_case001subregion.vcf.gz.md5",
    "tasks/variant_calling_gatk4_hc_joint/work/FAM_case001subregion/out/FAM_case001subregion.vcf.gz.tbi.md5",
    "tasks/variant_calling_gatk4_hc_joint/work/FAM_case001subregion/report/bcftools_stats/FAM_case001subregion.case001subregion-N1-DNA1-WES1.txt",
    "tasks/variant_calling_gatk4_hc_joint/work/FAM_case001subregion/report/bcftools_stats/FAM_case001subregion.case001subregionFather-N1-DNA1-WES1.txt",
@@ -230,10 +230,7 @@
  {
   "benchmark": null,
   "input": [
-   "<repo>/.tests/test-workflow/resources/refs/subregion.fa",
-   "tasks/reference_index_bwa/work/reference_index/out/reference.fa.fai",
-   "tasks/reference_index_bwa/work/reference_index/out/reference.dict",
-   "tasks/reference_index_bwa/work/reference_index/out/reference.fa.genome"
+   "<repo>/.tests/test-workflow/resources/refs/subregion.fa"
   ],
   "log": [
    "tasks/reference_index_bwa/work/reference_index/log/reference_index.index.log"
@@ -268,41 +265,9 @@
  {
   "benchmark": null,
   "input": [
-   "<repo>/.tests/test-workflow/resources/refs/subregion.fa"
-  ],
-  "local": true,
-  "log": [
-   "tasks/reference_index_bwa/work/reference_index/log/reference_index.common.log"
-  ],
-  "output": [
-   "tasks/reference_index_bwa/work/reference_index/out/reference.fa.fai",
-   "tasks/reference_index_bwa/work/reference_index/out/reference.dict",
-   "tasks/reference_index_bwa/work/reference_index/out/reference.fa.genome"
-  ],
-  "params": {
-   "args": {
-    "code": "<hash>"
-   }
-  },
-  "resources": {
-   "mem": "2 GB",
-   "mem_mb": 2000,
-   "mem_mib": 1908,
-   "partition": "medium",
-   "runtime": 120
-  },
-  "rule": "reference_index_bwa_reference_index_common_run",
-  "temp": [],
-  "threads": 1,
-  "wildcards": {},
-  "wrapper": "file://<repo>/snappy_wrappers/wrappers/reference_index/common"
- },
- {
-  "benchmark": null,
-  "input": [
    "tasks/variant_calling_gatk4_hc_joint/work/FAM_case001subregion/out/FAM_case001subregion.vcf.gz",
-   "tasks/variant_calling_gatk4_hc_joint/work/FAM_case001subregion/out/FAM_case001subregion.vcf.gz.md5",
    "tasks/variant_calling_gatk4_hc_joint/work/FAM_case001subregion/out/FAM_case001subregion.vcf.gz.tbi",
+   "tasks/variant_calling_gatk4_hc_joint/work/FAM_case001subregion/out/FAM_case001subregion.vcf.gz.md5",
    "tasks/variant_calling_gatk4_hc_joint/work/FAM_case001subregion/out/FAM_case001subregion.vcf.gz.tbi.md5",
    "tasks/variant_calling_gatk4_hc_joint/work/FAM_case001subregion/report/bcftools_stats/FAM_case001subregion.case001subregion-N1-DNA1-WES1.txt",
    "tasks/variant_calling_gatk4_hc_joint/work/FAM_case001subregion/report/bcftools_stats/FAM_case001subregion.case001subregionFather-N1-DNA1-WES1.txt",
@@ -443,7 +408,7 @@
   "wrapper": "file://<repo>/snappy_wrappers/wrappers/bcftools_stats/run"
  },
  {
-  "benchmark": "tasks/variant_calling_gatk4_hc_joint/benchmarks/FAM_case001subregion/FAM_case001subregion.gatk4_hc_joint_run.tsv",
+  "benchmark": "tasks/variant_calling_gatk4_hc_joint/benchmarks/FAM_case001subregion/FAM_case001subregion.run.tsv",
   "input": [
    "tasks/variant_calling_gatk4_hc_joint/work/write_pedigree.FAM_case001subregion/out/FAM_case001subregion.ped",
    "tasks/ngs_mapping_bwa/work/case001subregion-N1-DNA1-WES1/out/case001subregion-N1-DNA1-WES1.bam",
@@ -456,12 +421,12 @@
    "<repo>/.tests/test-workflow/resources/refs/dbsnp.vcf.gz.tbi"
   ],
   "log": [
-   "tasks/variant_calling_gatk4_hc_joint/work/FAM_case001subregion/log/FAM_case001subregion.gatk4_hc_joint_run.log"
+   "tasks/variant_calling_gatk4_hc_joint/work/FAM_case001subregion/log/FAM_case001subregion.run.log"
   ],
   "output": [
    "tasks/variant_calling_gatk4_hc_joint/work/FAM_case001subregion/out/FAM_case001subregion.vcf.gz",
-   "tasks/variant_calling_gatk4_hc_joint/work/FAM_case001subregion/out/FAM_case001subregion.vcf.gz.md5",
    "tasks/variant_calling_gatk4_hc_joint/work/FAM_case001subregion/out/FAM_case001subregion.vcf.gz.tbi",
+   "tasks/variant_calling_gatk4_hc_joint/work/FAM_case001subregion/out/FAM_case001subregion.vcf.gz.md5",
    "tasks/variant_calling_gatk4_hc_joint/work/FAM_case001subregion/out/FAM_case001subregion.vcf.gz.tbi.md5"
   ],
   "params": {

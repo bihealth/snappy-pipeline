@@ -9,7 +9,7 @@ import pytest
 from snappy_pipeline.workflows.abstract import BaseStep
 from snappy_pipeline.workflows.abstract.protocol import DataSignature, DataType
 from snappy_pipeline.workflows.hla_typing.model import HlaTyping
-from snappy_pipeline.workflows.variant_calling.model import VariantCalling
+from snappy_pipeline.workflows.variant_calling.model import Mutect2, VariantCalling
 
 TABLE = pd.DataFrame(
     {
@@ -30,7 +30,10 @@ TASKS = {
         HlaTyping.model_construct(tool="optitype", library_selection="extraction_type == 'dna'"),
     ),
     "arcashla": ("hla_typing", HlaTyping.model_construct(tool="arcashla")),
-    "mutect2": ("variant_calling", VariantCalling.model_construct(tool="mutect2")),
+    "mutect2": (
+        "variant_calling",
+        VariantCalling.model_construct(tool="mutect2", mutect2=Mutect2.model_construct()),
+    ),
 }
 
 

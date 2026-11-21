@@ -75,17 +75,25 @@ The default image is pinned by its digest.
 A ``somatic_targeted_seq_cnv_calling`` task with ``tool: purecn`` runs its PureCN jobs in the image of its panel of normals task, so the panel and the calls use the same PureCN.
 """
 
-from snappy_pipeline.models.cnvkit import Gender as CnvKitGender
 from snappy_pipeline.models.cnvkit import PanelOfNormals as CnvKitModel
-from snappy_pipeline.utils import dictify, listify
+from snappy_pipeline.utils import dictify
 from snappy_pipeline.workflows.abstract import BaseStep, BaseStepPart, ReportOutput, ResourceUsage
-from snappy_pipeline.workflows.abstract.protocol import DataSignature, DataType
-from snappy_pipeline.workflows.ngs_mapping.model import ExpectedAlignments
+from snappy_pipeline.workflows.abstract.protocol import DataSignature, DataType, ExpectedAlignments
+from snappy_pipeline.workflows.common import vcf_outputs
+from snappy_pipeline.workflows.common.cnvkit import sex_params
 
 from .model import PanelOfNormals as PanelOfNormalsConfigModel
 from .model import Tool
 
 __author__ = "Manuel Holtgrewe <manuel.holtgrewe@bih-charite.de>"
+
+#: The path of the task-wide files without their suffix
+PANEL = "work/panel_of_normals/out/panel_of_normals"
+
+
+def with_md5(key: str, path: str) -> dict[str, str]:
+    """The output ``key`` and its md5 file ``<key>_md5``"""
+    return {key: path, key + "_md5": path + ".md5"}
 
 
 class PanelOfNormalsStepPart(BaseStepPart):
@@ -120,6 +128,9 @@ class PanelOfNormalsStepPart(BaseStepPart):
     #: Log file prefix by action
     log_templates: dict[str, str] = {}
 
+    #: The task-wide files that downstream tasks read, by the key of ``get_output_paths``
+    output_paths: dict[str, str] = {}
+
     def _get_log_file(self, action):
         return {"log": self.log_templates[action] + ".log"}
 
@@ -146,6 +157,24 @@ class PureCnStepPart(PanelOfNormalsStepPart):
 
     #: Per-library coverage is only read by ``create_panel``
     intermediate_outputs = {"coverage": ("coverage",)}
+
+    output_paths = {
+        "panel_of_normals": PANEL + ".rds",
+        "mapping_bias": PANEL + ".mapping_bias.rds",
+        "intervals": PANEL + ".intervals.list",
+    }
+
+    result_keys = {
+        "prepare": (
+            "intervals",
+            "optimized",
+            "tbi",
+            "intervals_md5",
+            "optimized_md5",
+            "tbi_md5",
+        ),
+        "create_panel": ("db", "db_md5", "mapbias", "mapbias_md5"),
+    }
 
     def __init__(self, parent):
         super().__init__(parent)
@@ -189,10 +218,7 @@ class PureCnStepPart(PanelOfNormalsStepPart):
 
     @dictify
     def _get_input_files_coverage(self, wildcards):
-        yield (
-            "intervals",
-            "work/panel_of_normals/out/panel_of_normals.intervals.list",
-        )
+        yield "intervals", self.output_paths["intervals"]
         alignments: ExpectedAlignments = self.parent.get_upstream_paths(
             "alignments", library_name=wildcards.library_name
         )
@@ -206,28 +232,23 @@ class PureCnStepPart(PanelOfNormalsStepPart):
         yield "genomicsdb", self.parent.get_upstream_paths("panel_of_normals").genomicsdb
 
     def _get_output_files_prepare(self):
-        base_out = "work/panel_of_normals/out/panel_of_normals.intervals"
-        return {
-            "intervals": base_out + ".list",
-            "optimized": base_out + ".bed.gz",
-            "tbi": base_out + ".bed.gz.tbi",
-            "intervals_md5": base_out + ".list.md5",
-            "optimized_md5": base_out + ".bed.gz.md5",
-            "tbi_md5": base_out + ".bed.gz.tbi.md5",
+        paths = {
+            "intervals": self.output_paths["intervals"],
+            "optimized": PANEL + ".intervals.bed.gz",
+            "tbi": PANEL + ".intervals.bed.gz.tbi",
         }
+        return paths | {key + "_md5": path + ".md5" for key, path in paths.items()}
 
     def _get_output_files_coverage(self):
         return {"coverage": "work/{library_name}/out/{library_name}.coverage_loess.txt.gz"}
 
     def _get_output_files_create_panel(self):
         return {
-            "db": "work/panel_of_normals/out/panel_of_normals.rds",
-            "db_md5": "work/panel_of_normals/out/panel_of_normals.rds.md5",
-            "mapbias": "work/panel_of_normals/out/panel_of_normals.mapping_bias.rds",
-            "mapbias_md5": "work/panel_of_normals/out/panel_of_normals.mapping_bias.rds.md5",
-            "lowcov": "work/panel_of_normals/out/panel_of_normals.low_coverage_targets.bed",
-            "hq": "work/panel_of_normals/out/panel_of_normals.hq_sites.bed",
-            "plot": "work/panel_of_normals/out/panel_of_normals.interval_weights.png",
+            **with_md5("db", self.output_paths["panel_of_normals"]),
+            **with_md5("mapbias", self.output_paths["mapping_bias"]),
+            "lowcov": PANEL + ".low_coverage_targets.bed",
+            "hq": PANEL + ".hq_sites.bed",
+            "plot": PANEL + ".interval_weights.png",
         }
 
     #: Config paths reach the wrappers as inputs, so they are left out of the params
@@ -267,8 +288,19 @@ class Mutect2StepPart(PanelOfNormalsStepPart):
 
     intermediate_outputs = {"gather": ("vcf", "vcf_tbi")}
 
+    #: The panel and its GenomicsDB, which the purecn panel task reads
+    output_paths = {
+        **{key: path for key, path in vcf_outputs(PANEL).items() if not key.endswith("_md5")},
+        "genomicsdb": PANEL + ".genomicsDB.tar.gz",
+    }
+
+    result_keys = {"create_panel": ("vcf", "vcf_tbi", "vcf_md5", "vcf_tbi_md5", "db", "db_md5")}
+
+    #: The regions of the scattered calling, the same for all normals
+    region_tpl = "work/scatter/{scatteritem}.region.bed"
+
     log_templates = {
-        "scatter": "work/{normal_library}/log/{normal_library}.scatter",
+        "scatter": "work/scatter/log",
         "prepare_panel": "work/{normal_library}/log/{normal_library}.{scatteritem}",
         "gather": "work/{normal_library}/log/{normal_library}",
         "create_panel": "work/panel_of_normals/log/panel_of_normals",
@@ -306,11 +338,10 @@ class Mutect2StepPart(PanelOfNormalsStepPart):
         alignments = self.parent.get_upstream_paths(
             "alignments", library_name=wildcards.normal_library
         )
-        scatteritem_base_path = "work/{normal_library}/par/scatter/{scatteritem}.region.bed"
         return {
             "normal_bam": alignments.bam,
             "normal_bai": alignments.bai,
-            "region": scatteritem_base_path.format(**wildcards),
+            "region": self.region_tpl.format(**wildcards),
             **self.parent.reference_inputs(),
         }
 
@@ -336,8 +367,7 @@ class Mutect2StepPart(PanelOfNormalsStepPart):
     def _get_output_files_scatter(self):
         scatter = self.parent.workflow.globals.get("scatter")
         scatter = getattr(scatter, self.name)
-        tpl = "work/{{normal_library}}/par/scatter/{scatteritem}.region.bed"
-        return {"regions": scatter(tpl)}
+        return {"regions": scatter(self.region_tpl)}
 
     @staticmethod
     def _vcf_outputs(prefix):
@@ -350,14 +380,7 @@ class Mutect2StepPart(PanelOfNormalsStepPart):
         return self._vcf_outputs("work/{normal_library}/out/{normal_library}.prepare")
 
     def _get_output_files_create_panel(self):
-        prefix = "work/panel_of_normals/out/panel_of_normals"
-        return {
-            **self._vcf_outputs(prefix),
-            "vcf_md5": prefix + ".vcf.gz.md5",
-            "vcf_tbi_md5": prefix + ".vcf.gz.tbi.md5",
-            "db": prefix + ".genomicsDB.tar.gz",
-            "db_md5": prefix + ".genomicsDB.tar.gz.md5",
-        }
+        return {**vcf_outputs(PANEL), **with_md5("db", self.output_paths["genomicsdb"])}
 
     def _get_params_scatter(self, wildcards):
         return {
@@ -409,6 +432,19 @@ class CnvkitStepPart(PanelOfNormalsStepPart):
 
     #: Per-library coverage is only read by ``create_panel``
     intermediate_outputs = {"coverage": ("target", "antitarget")}
+
+    output_paths = {
+        "panel_of_normals": PANEL + ".cnn",
+        "target": PANEL + ".target.bed",
+        "antitarget": PANEL + ".antitarget.bed",
+    }
+
+    result_keys = {
+        "target": ("target", "target_md5"),
+        "antitarget": ("antitarget", "antitarget_md5"),
+        "create_panel": ("panel", "panel_md5"),
+        "report": ("sex", "sex_md5", "metrics", "metrics_md5"),
+    }
 
     log_templates = {
         "target": "work/panel_of_normals/log/panel_of_normals.target",
@@ -474,10 +510,7 @@ class CnvkitStepPart(PanelOfNormalsStepPart):
         if args := getattr(cfg, action, {}):
             args = args.model_dump(by_alias=True)
         if action == "reference":
-            if cfg.gender != CnvKitGender.guess:
-                args["gender"] = cfg.gender
-            if cfg.male_reference:
-                args["male_reference"] = True
+            args |= sex_params(cfg)
             args["flat"] = len(self.normal_libraries) == 0
             if self.is_wgs:
                 args["edge_correction"] = False
@@ -513,9 +546,7 @@ class CnvkitStepPart(PanelOfNormalsStepPart):
         """Helper wrapper function for computing antitarget locations"""
         if self.is_wgs:
             return {}
-        result = {
-            "target": "work/panel_of_normals/out/panel_of_normals.target.bed".format(**wildcards),
-        }
+        result = {"target": self.output_paths["target"]}
         if self.config.depends_on.access:
             result["access"] = self.parent.get_upstream_paths("access").access
         return result
@@ -526,10 +557,8 @@ class CnvkitStepPart(PanelOfNormalsStepPart):
             "alignments", library_name=wildcards.normal_library
         )
         return {
-            "target": "work/panel_of_normals/out/panel_of_normals.target.bed".format(**wildcards),
-            "antitarget": "work/panel_of_normals/out/panel_of_normals.antitarget.bed".format(
-                **wildcards
-            ),
+            "target": self.output_paths["target"],
+            "antitarget": self.output_paths["antitarget"],
             "bam": alignments.bam,
             "bai": alignments.bai,
             **self.parent.reference_inputs(),
@@ -542,16 +571,8 @@ class CnvkitStepPart(PanelOfNormalsStepPart):
         tpl = "work/{normal_library}/out/{normal_library}.antitargetcoverage.cnn"
         antitargets = [tpl.format(normal_library=x) for x in self.normal_libraries]
         return {
-            "target": (
-                targets
-                if targets
-                else "work/panel_of_normals/out/panel_of_normals.target.bed".format(**wildcards)
-            ),
-            "antitarget": (
-                antitargets
-                if antitargets
-                else "work/panel_of_normals/out/panel_of_normals.antitarget.bed".format(**wildcards)
-            ),
+            "target": targets or self.output_paths["target"],
+            "antitarget": antitargets or self.output_paths["antitarget"],
             **self.parent.reference_inputs(),
         }
 
@@ -567,16 +588,10 @@ class CnvkitStepPart(PanelOfNormalsStepPart):
         }
 
     def _get_output_files_target(self):
-        return {
-            "target": "work/panel_of_normals/out/panel_of_normals.target.bed",
-            "target_md5": "work/panel_of_normals/out/panel_of_normals.target.bed.md5",
-        }
+        return with_md5("target", self.output_paths["target"])
 
     def _get_output_files_antitarget(self):
-        return {
-            "antitarget": "work/panel_of_normals/out/panel_of_normals.antitarget.bed",
-            "antitarget_md5": "work/panel_of_normals/out/panel_of_normals.antitarget.bed.md5",
-        }
+        return with_md5("antitarget", self.output_paths["antitarget"])
 
     def _get_output_files_coverage(self):
         return {
@@ -585,17 +600,13 @@ class CnvkitStepPart(PanelOfNormalsStepPart):
         }
 
     def _get_output_files_create_panel(self):
-        return {
-            "panel": "work/panel_of_normals/out/panel_of_normals.cnn",
-            "panel_md5": "work/panel_of_normals/out/panel_of_normals.cnn.md5",
-        }
+        return with_md5("panel", self.output_paths["panel_of_normals"])
 
     def _get_output_files_report(self):
+        report = "work/panel_of_normals/report/panel_of_normals"
         return {
-            "sex": "work/panel_of_normals/report/panel_of_normals.sex.tsv",
-            "sex_md5": "work/panel_of_normals/report/panel_of_normals.sex.tsv.md5",
-            "metrics": "work/panel_of_normals/report/panel_of_normals.metrics.tsv",
-            "metrics_md5": "work/panel_of_normals/report/panel_of_normals.metrics.tsv.md5",
+            **with_md5("sex", report + ".sex.tsv"),
+            **with_md5("metrics", report + ".metrics.tsv"),
         }
 
 
@@ -610,6 +621,10 @@ class AccessStepPart(PanelOfNormalsStepPart):
 
     log_templates = {"run": "work/panel_of_normals/log/panel_of_normals.accessible"}
 
+    output_paths = {"access": PANEL + ".accessible.bed"}
+
+    result_keys = ("access", "access_md5")
+
     @dictify
     def _get_input_files_run(self, wildcards):
         yield from self.parent.reference_inputs().items()
@@ -620,8 +635,7 @@ class AccessStepPart(PanelOfNormalsStepPart):
         return {"min_gap_size": self.config.access.min_gap_size}
 
     def _get_output_files_run(self):
-        tpl = "work/panel_of_normals/out/panel_of_normals.accessible.bed"
-        return {"access": tpl, "access_md5": tpl + ".md5"}
+        return with_md5("access", self.output_paths["access"])
 
 
 class PanelOfNormalsWorkflow(BaseStep):
@@ -646,110 +660,14 @@ class PanelOfNormalsWorkflow(BaseStep):
 
     config_model_class = PanelOfNormalsConfigModel
 
+    tool_parts = {
+        Tool.mutect2: Mutect2StepPart,
+        Tool.cnvkit: CnvkitStepPart,
+        Tool.access: AccessStepPart,
+        Tool.purecn: PureCnStepPart,
+    }
+
     @classmethod
     def get_output_paths(cls, config, signature=None, **kwargs) -> dict[str, str]:
         """Return local panel-of-normals output paths for downstream consumers."""
-        match config.tool:
-            case Tool.mutect2:
-                prefix = "work/panel_of_normals/out/panel_of_normals"
-                return {
-                    "vcf": prefix + ".vcf.gz",
-                    "vcf_tbi": prefix + ".vcf.gz.tbi",
-                    "genomicsdb": prefix + ".genomicsDB.tar.gz",
-                }
-            case Tool.cnvkit:
-                prefix = "work/panel_of_normals/out/panel_of_normals"
-                return {
-                    "panel_of_normals": prefix + ".cnn",
-                    "target": prefix + ".target.bed",
-                    "antitarget": prefix + ".antitarget.bed",
-                }
-            case Tool.purecn:
-                return {
-                    "panel_of_normals": "work/panel_of_normals/out/panel_of_normals.rds",
-                    "mapping_bias": "work/panel_of_normals/out/panel_of_normals.mapping_bias.rds",
-                    "intervals": "work/panel_of_normals/out/panel_of_normals.intervals.list",
-                }
-            case Tool.access:
-                return {"access": "work/panel_of_normals/out/panel_of_normals.accessible.bed"}
-        return {}
-
-    def __init__(self, workflow, project, task_name):
-        super().__init__(workflow, project, task_name)
-        # Register sub step classes so the sub steps are available
-        match self.config.tool:
-            case "mutect2":
-                selected = Mutect2StepPart
-            case "cnvkit":
-                selected = CnvkitStepPart
-            case "access":
-                selected = AccessStepPart
-            case "purecn":
-                selected = PureCnStepPart
-            case _:
-                raise NotImplementedError(f"Unknown tool: {self.config.tool}")
-        self.register_sub_step_classes((selected,))
-
-    @listify
-    def get_result_files(self):
-        """Return list of result files for the NGS mapping workflow
-
-        We will process all NGS libraries of all bio samples in all sample sheets.
-        """
-        result_files = []
-
-        if self.config.tool == "mutect2":
-            tpl = "output/panel_of_normals/out/panel_of_normals.{ext}"
-            ext_list = (
-                "vcf.gz",
-                "vcf.gz.md5",
-                "vcf.gz.tbi",
-                "vcf.gz.tbi.md5",
-                "genomicsDB.tar.gz",
-                "genomicsDB.tar.gz.md5",
-            )
-            result_files.extend(self._expand_result_files(tpl, ext_list))
-
-        if self.config.tool == "cnvkit":
-            tpls = [
-                (
-                    "output/panel_of_normals/out/panel_of_normals.target.{ext}",
-                    ("bed", "bed.md5"),
-                ),
-                (
-                    "output/panel_of_normals/out/panel_of_normals.antitarget.{ext}",
-                    ("bed", "bed.md5"),
-                ),
-                ("output/panel_of_normals/out/panel_of_normals.{ext}", ("cnn", "cnn.md5")),
-                (
-                    "output/panel_of_normals/report/panel_of_normals.sex.{ext}",
-                    ("tsv", "tsv.md5"),
-                ),
-                (
-                    "output/panel_of_normals/report/panel_of_normals.metrics.{ext}",
-                    ("tsv", "tsv.md5"),
-                ),
-            ]
-            for tpl, ext_list in tpls:
-                result_files.extend(self._expand_result_files(tpl, ext_list))
-
-        if self.config.tool == "access":
-            tpl = "output/panel_of_normals/out/panel_of_normals.accessible.bed"
-            result_files.extend([tpl + md5 for md5 in ("", ".md5")])
-
-        if self.config.tool == "purecn":
-            tpl = "output/panel_of_normals/out/panel_of_normals.{ext}"
-            ext_list = ("rds", "rds.md5")
-            result_files.extend(self._expand_result_files(tpl, ext_list))
-            tpl = "output/panel_of_normals/out/panel_of_normals.mapping_bias.{ext}"
-            ext_list = ("rds", "rds.md5")
-            result_files.extend(self._expand_result_files(tpl, ext_list))
-            tpl = "output/panel_of_normals/out/panel_of_normals.intervals.{ext}"
-            ext_list = ("list", "list.md5", "bed.gz", "bed.gz.md5", "bed.gz.tbi", "bed.gz.tbi.md5")
-            result_files.extend(self._expand_result_files(tpl, ext_list))
-
-        return result_files
-
-    def _expand_result_files(self, tpl, ext_list):
-        for ext in ext_list:
-            yield tpl.format(ext=ext)
+        return dict(cls.tool_parts[config.tool].output_paths)

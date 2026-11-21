@@ -6,10 +6,10 @@ from snappy_pipeline.workflows.abstract.protocol import (
     TOOL,
     DataSignature,
     DataType,
+    DnaAlignments,
     ExpectedPathSchema,
     Reference,
 )
-from snappy_pipeline.workflows.ngs_mapping.model import ExpectedAlignments
 
 
 class ExpectedExpansionHunterDatabase(SnappyModel):
@@ -23,11 +23,7 @@ class ExpectedExpansionHunterDatabase(SnappyModel):
 
 
 class RepeatExpansionDependsOn(SnappyModel):
-    alignments: Annotated[
-        str,
-        DataSignature(DataType.ALIGNMENTS, frozenset({"dna"})),
-        ExpectedPathSchema(ExpectedAlignments),
-    ]
+    alignments: DnaAlignments
 
     reference: Reference
 

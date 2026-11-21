@@ -19,6 +19,7 @@ QC and strandedness, all on the BAM files:
 ``featurecounts`` and ``dupradar`` need the strandedness of each library; the QC tools ``duplication``, ``rnaseqc`` and ``stats`` have no strand option.
 It comes from a task of this step with ``tool: strandedness``, named in ``depends_on.strandedness``.
 The field ``strand`` forces the strandedness of featurecounts and dupradar (0 unstranded, 1 forward, 2 reverse) instead.
+A task with ``tool: strandedness`` forces its decision with ``strandedness.strand``, like ``ngs_mapping`` with STAR.
 
 The example maps RNA reads with STAR, infers the strandedness, and counts with featurecounts:
 
@@ -100,10 +101,10 @@ The key ``index`` is the directory of the prebuilt index, with files such as ``s
 
 from typing import Any
 
-from snakemake.io import directory, expand
+from snakemake.io import directory
 from snakemake.iocontainers import Wildcards
 
-from snappy_pipeline.utils import dictify, listify
+from snappy_pipeline.utils import dictify
 from snappy_pipeline.workflows.abstract import (
     BaseStep,
     BaseStepPart,
@@ -111,6 +112,7 @@ from snappy_pipeline.workflows.abstract import (
 )
 from snappy_pipeline.workflows.abstract.protocol import DataSignature, DataType
 from snappy_pipeline.workflows.common.reads import reads_input_files, reads_params
+from snappy_pipeline.workflows.common.strandedness import strandedness_params
 from snappy_pipeline.workflows.ngs_mapping.model import ExpectedAlignments
 
 from .model import ExpectedStrandedness, Tool
@@ -124,6 +126,9 @@ EXPRESSION_SIGNATURE = DataSignature(DataType.EXPRESSION, frozenset({"rna"}))
 RNA_QC_SIGNATURE = DataSignature(DataType.QC, frozenset({"rna"}))
 #: The GTF that ``rnaseqc`` reads from ``depends_on.features``, prepared for RNA-SeQC
 RNASEQC_FEATURES_SIGNATURE = DataSignature(DataType.RAW, frozenset({"features", "rnaseqc"}))
+
+#: The output files of each library, below ``work/{library_name}/out/``
+OUT_PATH = "work/{library_name}/out/{library_name}"
 
 # Extensions
 EXTENSIONS = {
@@ -185,12 +190,16 @@ EXTENSIONS = {
 class GeneExpressionQuantificationStepPart(BaseStepPart):
     """Base class for gene expression quantifiers"""
 
+    #: Class available actions
+    actions = ("run",)
+
     #: Whether the tool reads the strandedness decision of the ``strandedness`` dependency.
     needs_strandedness = False
 
-    def __init__(self, parent):
-        super().__init__(parent)
-        self.base_path_out = "work/{{library_name}}/out/{{library_name}}{ext}"
+    @property
+    def result_keys(self) -> tuple[str, ...]:
+        """All outputs of the tool"""
+        return tuple(EXTENSIONS[self.name])
 
     def _get_input_files_run(self, wildcards: Wildcards):
         """Resolve alignment inputs through the typed upstream contract broker."""
@@ -209,18 +218,12 @@ class GeneExpressionQuantificationStepPart(BaseStepPart):
         return input_files
 
     def _get_output_files_run(self):
-        if self.name != self.config.tool:
-            return {}
-        return {
-            key: self.base_path_out.format(ext=ext) for key, ext in EXTENSIONS[self.name].items()
-        }
+        return {key: OUT_PATH + ext for key, ext in EXTENSIONS[self.name].items()}
 
     def _get_params_run(self, wildcards: Wildcards) -> dict[str, Any]:
         return {"strand": self.config.strand}
 
     def _get_log_file_run(self):
-        if self.name != self.config.tool:
-            return {}
         return {"log": "work/{library_name}/log/{library_name}.log"}
 
 
@@ -229,22 +232,16 @@ class SalmonStepPart(GeneExpressionQuantificationStepPart):
 
     #: Step name
     name = "salmon"
-
-    #: Class available actions
-    actions = ("run",)
     wrappers = {"run": "salmon"}
 
     def _get_output_files_run(self):
         outputs = super()._get_output_files_run()
-        if "aux" in outputs:
-            outputs["aux"] = directory(outputs["aux"])
+        outputs["aux"] = directory(outputs["aux"])
         return outputs
 
     @dictify
     def _get_input_files_run(self, wildcards):
         """Return input files"""
-        if self.config.tool != self.name:
-            return
         yield from reads_input_files(self.parent, wildcards.library_name).items()
         yield "features", self.parent.get_upstream_paths("features").gtf
         index = self.parent.get_upstream_paths("index")
@@ -258,7 +255,9 @@ class SalmonStepPart(GeneExpressionQuantificationStepPart):
         result["strand"] = self.config.strand
         return result
 
-    default_resource_usage = ResourceUsage(threads=16, runtime="4h", mem="32GB")
+    @property
+    def default_resource_usage(self) -> ResourceUsage:
+        return ResourceUsage(threads=self.config.salmon.num_threads, runtime="4h", mem="32GB")
 
 
 class FeatureCountsStepPart(GeneExpressionQuantificationStepPart):
@@ -269,8 +268,6 @@ class FeatureCountsStepPart(GeneExpressionQuantificationStepPart):
 
     needs_strandedness = True
 
-    #: Class available actions
-    actions = ("run",)
     wrappers = {"run": "featurecounts"}
 
     @dictify
@@ -279,11 +276,8 @@ class FeatureCountsStepPart(GeneExpressionQuantificationStepPart):
         yield "features", self.parent.get_upstream_paths("features").gtf
 
     def _get_params_run(self, wildcards: Wildcards) -> dict[str, Any]:
-        params = super()._get_params_run(wildcards)
-        if self.config.tool != self.name:
-            return params
         section = self.config.featurecounts
-        return params | {
+        return super()._get_params_run(wildcards) | {
             "feature_type": section.feature_type,
             "gene_attribute": section.gene_attribute,
             "exclude_flags": section.exclude_flags,
@@ -294,37 +288,26 @@ class FeatureCountsStepPart(GeneExpressionQuantificationStepPart):
 
 
 class StrandednessStepPart(GeneExpressionQuantificationStepPart):
-    """Gene expression quantification from RNA-seq using FeatureCounts"""
+    """The strand of each library with RSeQC ``infer_experiment``"""
 
     #: Step name
     name = "strandedness"
-
-    #: Class available actions
-    actions = ("run",)
     wrappers = {"run": "rseqc"}
 
     @dictify
     def _get_input_files_run(self, wildcards: Wildcards):
         yield from super()._get_input_files_run(wildcards).items()
-        if self.config.tool != self.name:
-            return
         yield "exon_bed", self.parent.get_upstream_paths("exons").bed
 
     default_resource_usage = ResourceUsage(threads=2, runtime="12h", mem="6700MB")
 
     def _get_params_run(self, wildcards: Wildcards) -> dict[str, Any]:
-        if self.config.tool != self.name:
-            return super()._get_params_run(wildcards)
-        config = self.config.strandedness.model_dump(by_alias=True) | {"strand": self.config.strand}
-        return {"config": config, "library_name": wildcards.library_name}
+        return strandedness_params(self.config.strandedness, wildcards.library_name)
 
 
 class QCStepPartDuplication(GeneExpressionQuantificationStepPart):
     #: Step name
     name = "duplication"
-
-    #: Class available actions
-    actions = ("run",)
     wrappers = {"run": "rnaqc/duplication"}
 
     def _get_params_run(self, wildcards: Wildcards) -> dict[str, Any]:
@@ -339,33 +322,26 @@ class QCStepPartDupradar(GeneExpressionQuantificationStepPart):
 
     needs_strandedness = True
 
-    #: Class available actions
-    actions = ("run",)
     wrappers = {"run": "rnaqc/dupradar"}
 
     @dictify
     def _get_input_files_run(self, wildcards: Wildcards):
         yield from super()._get_input_files_run(wildcards).items()
-        if self.config.tool != self.name:
-            return
         yield "features", self.parent.get_upstream_paths("features").gtf
 
     def _get_params_run(self, wildcards: Wildcards) -> dict[str, Any]:
-        if self.config.tool != self.name:
-            return super()._get_params_run(wildcards)
         return super()._get_params_run(wildcards) | {
             "num_threads": self.config.dupradar.num_threads,
         }
 
-    default_resource_usage = ResourceUsage(threads=8, runtime="4d", mem="6700MB")
+    @property
+    def default_resource_usage(self) -> ResourceUsage:
+        return ResourceUsage(threads=self.config.dupradar.num_threads, runtime="4d", mem="6700MB")
 
 
 class QCStepPartRnaseqc(GeneExpressionQuantificationStepPart):
     #: Step name
     name = "rnaseqc"
-
-    #: Class available actions
-    actions = ("run",)
     wrappers = {"run": "rnaqc/rnaseqc"}
 
     def _get_params_run(self, wildcards: Wildcards) -> dict[str, Any]:
@@ -374,8 +350,6 @@ class QCStepPartRnaseqc(GeneExpressionQuantificationStepPart):
     @dictify
     def _get_input_files_run(self, wildcards: Wildcards):
         yield from super()._get_input_files_run(wildcards).items()
-        if self.config.tool != self.name:
-            return
         yield from self.parent.reference_inputs().items()
         features = self.parent.get_upstream_paths("features", signature=RNASEQC_FEATURES_SIGNATURE)
         yield "features", features.gtf
@@ -386,9 +360,6 @@ class QCStepPartRnaseqc(GeneExpressionQuantificationStepPart):
 class QCStepPartStats(GeneExpressionQuantificationStepPart):
     #: Step name
     name = "stats"
-
-    #: Class available actions
-    actions = ("run",)
     wrappers = {"run": "rnaqc/stats"}
 
     def _get_params_run(self, wildcards: Wildcards) -> dict[str, Any]:
@@ -410,6 +381,16 @@ class GeneExpressionQuantificationWorkflow(BaseStep):
     library_requirement = "extraction_type == 'rna'"
     library_default = ""
 
+    tool_parts = {
+        Tool.strandedness: StrandednessStepPart,
+        Tool.featurecounts: FeatureCountsStepPart,
+        Tool.duplication: QCStepPartDuplication,
+        Tool.dupradar: QCStepPartDupradar,
+        Tool.rnaseqc: QCStepPartRnaseqc,
+        Tool.stats: QCStepPartStats,
+        Tool.salmon: SalmonStepPart,
+    }
+
     @classmethod
     def task_produces(cls, config, upstream):
         """Expression for featurecounts and salmon, the strandedness decision, or RNA QC."""
@@ -422,46 +403,10 @@ class GeneExpressionQuantificationWorkflow(BaseStep):
 
     @classmethod
     def get_output_paths(cls, config, signature=None, **kwargs) -> dict[str, str]:
-        """Return the local paths of the expression or strandedness outputs of the task's tool."""
-        lib = kwargs.get("library_name", "{library_name}")
-        prefix = f"work/{lib}/out/{lib}"
-        match config.tool:
-            case Tool.featurecounts:
-                return {"tsv": f"{prefix}.tsv"}
-            case Tool.salmon:
-                return {"gene_sf": f"{prefix}.gene.sf", "transcript_sf": f"{prefix}.transcript.sf"}
-            case Tool.strandedness:
-                return {"decision": f"{prefix}.decision"}
-            case Tool.dupradar:
-                return {"tsv": f"{prefix}.tsv"}
-        return {}
-
-    def __init__(self, workflow, project, task_name):
-        super().__init__(workflow, project, task_name)
-        # Register sub step classes so the sub steps are available
-        self.register_sub_step_classes(
-            (
-                StrandednessStepPart,
-                FeatureCountsStepPart,
-                QCStepPartDuplication,
-                QCStepPartDupradar,
-                QCStepPartRnaseqc,
-                QCStepPartStats,
-                SalmonStepPart,
-            )
-        )
-        # Inputs are resolved via get_upstream_paths() in step parts.
-
-    @listify
-    def get_result_files(self):
-        """Return list of result files for the NGS mapping workflow
-
-        We will process all NGS libraries of all bio samples in all sample sheets.
-        """
-        exts = EXTENSIONS[self.config.tool].values()
-
-        return expand(
-            "output/{library_name}/out/{library_name}{ext}",
-            library_name=self.output_entities,
-            ext=exts,
-        )
+        """Return the local paths of the outputs of the task's tool, without the md5 files."""
+        prefix = OUT_PATH.format(library_name=kwargs.get("library_name", "{library_name}"))
+        return {
+            key: prefix + ext
+            for key, ext in EXTENSIONS[config.tool].items()
+            if not key.endswith("_md5")
+        }

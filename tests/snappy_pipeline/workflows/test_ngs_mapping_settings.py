@@ -32,7 +32,7 @@ def _params(part_class, **config):
     part = object.__new__(part_class)
     part.config = SimpleNamespace(**config)
     part.parent = SimpleNamespace(
-        library_infos={"lib": {"library_kit": "PacBio HiFi"}},
+        library_row=lambda library_name: {"library_kit": "PacBio HiFi"},
         read_groups=lambda library_name: [
             SimpleNamespace(name=f"{library_name}_L001"),
             SimpleNamespace(name=f"{library_name}_L002"),

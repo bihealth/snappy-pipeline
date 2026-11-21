@@ -5,15 +5,40 @@ import re
 from snakemake.io import expand
 
 from snappy_pipeline.utils import dictify, flatten, listify
+from snappy_pipeline.workflows.abstract import BaseStep, WritePedigreeStepPart
+from snappy_pipeline.workflows.abstract.protocol import DataSignature, DataType
+from snappy_pipeline.workflows.common import vcf_outputs
+
+#: Output keys and paths of the VCF that is the result file of the SV callers, one per pedigree
+VCF_OUTPUTS = vcf_outputs("work/{library_name}/out/{library_name}")
 
 
-#: Output keys and paths of the VCF that is the result file of the SV callers
-VCF_OUTPUTS = {
-    "vcf": "work/{library_name}/out/{library_name}.vcf.gz",
-    "vcf_md5": "work/{library_name}/out/{library_name}.vcf.gz.md5",
-    "vcf_tbi": "work/{library_name}/out/{library_name}.vcf.gz.tbi",
-    "vcf_tbi_md5": "work/{library_name}/out/{library_name}.vcf.gz.tbi.md5",
-}
+class SvCallingWorkflow(BaseStep):
+    """Base class of ``sv_calling_{targeted,wgs}``: one VCF per pedigree, named after it"""
+
+    produces = [DataSignature(DataType.VARIANTS, frozenset({"germline", "sv"}))]
+
+    #: Whether the libraries are exomes and panels, whose target regions the callers take into
+    #: account (Manta's workflow, MELT's ``-exome``)
+    targeted: bool
+
+    #: The pedigrees of background data sets are called, too
+    uses_background = True
+
+    helper_parts = (WritePedigreeStepPart,)
+
+    @classmethod
+    def default_group_by(cls, config):
+        """The callers write one result per pedigree, named after the pedigree."""
+        return "related"
+
+    @classmethod
+    def get_output_paths(cls, config, signature=None, **kwargs) -> dict[str, str]:
+        """Return the VCF of a pedigree and its index for downstream consumers."""
+        library_name = kwargs.get("library_name", "{library_name}")
+        return {
+            key: VCF_OUTPUTS[key].format(library_name=library_name) for key in ("vcf", "vcf_tbi")
+        }
 
 
 class SvCallingGetResultFilesMixin:
@@ -22,43 +47,27 @@ class SvCallingGetResultFilesMixin:
     #: Whether the pedigrees of background data sets get result files
     pedigrees_include_background = True
 
+    def check_pedigree(self, pedigree: str, library_names: list[str]) -> None:
+        """Check a pedigree that gets result files, such as for a warning; nothing by default"""
+
     @listify
     def get_result_files(self):
-        """Return list of concrete output paths in ``output/``.
+        """Return the outputs of the last action below ``output/``, for each pedigree.
 
-        The implementation will return the paths of ``self.get_output_files()`` of the last
-        action, with the prefix ``work/`` replaced by ``output/``.
+        ``skip_libraries`` of the tool skips the whole pedigree of a listed library.
         """
-        if self.name != self.config.tool:
-            return  # tool not enabled, no result files
-
-        ngs_mapping_config = self.parent.get_task_config("alignments")
-        ngs_mapping_tool = ngs_mapping_config.tool
-        is_dna = (
-            ngs_mapping_tool.is_dna()
-            if hasattr(ngs_mapping_tool, "is_dna")
-            else str(ngs_mapping_tool) in {"bwa", "bwa_mem2", "bwa_mem3", "minimap2"}
-        )
-        if is_dna:
-            # Get list of result path templates.
-            output_files_tmp = self.get_output_files(self.actions[-1])
-            if isinstance(output_files_tmp, dict):
-                output_files = output_files_tmp.values()
-            else:
-                output_files = output_files_tmp
-            result_paths_tpls = [
-                re.sub(r"^work/", "output/", p)
-                for p in flatten(output_files)
-                if p.startswith("work/")
-            ]
-            #: Generate all concrete output paths.
-            for path_tpl in result_paths_tpls:
-                pedigrees = self.parent.pedigrees(self.pedigrees_include_background)
-                for pedigree, members in pedigrees.items():
-                    if cfg := getattr(self.config, self.name, None):
-                        # skip_libraries skips the whole pedigree of a listed library
-                        if not set(members) & set(cfg.skip_libraries):
-                            yield from expand(path_tpl, library_name=pedigree)
+        templates = [
+            re.sub(r"^work/", "output/", path)
+            for path in flatten(self.get_output_files(self.actions[-1]).values())
+        ]
+        skipped = set(self.config.get(self.name).skip_libraries)
+        pedigrees = self.parent.pedigrees(self.pedigrees_include_background)
+        for pedigree, library_names in pedigrees.items():
+            if set(library_names) & skipped:
+                continue
+            self.check_pedigree(pedigree, library_names)
+            for template in templates:
+                yield from expand(template, library_name=pedigree)
 
 
 class SvCallingGetLogFileMixin:

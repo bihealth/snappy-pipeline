@@ -6,11 +6,11 @@ from snappy_pipeline.models import SnappyModel, SnappyStepModel
 from snappy_pipeline.workflows.abstract.protocol import (
     DataSignature,
     DataType,
+    DnaAlignments,
     ExpectedPathSchema,
     Reference,
     Regions,
 )
-from snappy_pipeline.workflows.ngs_mapping.model import ExpectedAlignments
 
 
 class ExpectedSomaticCnvCalls(SnappyModel):
@@ -20,11 +20,7 @@ class ExpectedSomaticCnvCalls(SnappyModel):
 
 
 class SomaticCnvCheckingDependsOn(SnappyModel):
-    alignments: Annotated[
-        str,
-        DataSignature(DataType.ALIGNMENTS, frozenset({"dna"})),
-        ExpectedPathSchema(ExpectedAlignments),
-    ]
+    alignments: DnaAlignments
     copy_number: Annotated[
         str,
         DataSignature(DataType.VARIANTS, frozenset({"somatic", "cnv"})),

@@ -44,7 +44,12 @@ For each enabled prediction (``pvacseq``, ``pvacfuse``, ``pvacsplice``), the tas
 from snappy_pipeline.base import ConfigError
 from snappy_pipeline.models import RelationshipDefinition
 from snappy_pipeline.utils import dictify, listify
-from snappy_pipeline.workflows.abstract import BaseStep, BaseStepPart, ResourceUsage
+from snappy_pipeline.workflows.abstract import (
+    MATCHED_NORMAL_RELATIONSHIP,
+    BaseStep,
+    BaseStepPart,
+    ResourceUsage,
+)
 from snappy_pipeline.workflows.abstract.protocol import DataSignature, DataType
 
 from .model import ClassIAlgorithm, ClassIIAlgorithm
@@ -95,7 +100,7 @@ class NeoepitopeStepPart(BaseStepPart):
     def samples(self, tumor_library: str) -> dict[str, str]:
         """The sample names in the VCF: the tumor and, if there is one, the matched normal."""
         args = {"tumor_sample": tumor_library, "tumor_library": tumor_library}
-        if normal := self.parent.matched(tumor_library, "matched_normal_lib"):
+        if normal := self.parent.matched_normal(tumor_library):
             args |= {"normal_sample": normal, "normal_library": normal}
         return args
 
@@ -139,7 +144,7 @@ class PvacToolsStepPart(NeoepitopeStepPart):
         tumor = wildcards.tumor_library
         libraries = [
             tumor,
-            self.parent.matched(tumor, "matched_normal_lib"),
+            self.parent.matched_normal(tumor),
             self.parent.matched(tumor, "matched_rna_lib"),
         ]
         calls = []
@@ -528,9 +533,7 @@ class SomaticNeoepitopePredictionWorkflow(BaseStep):
     library_requirement = "role == 'tumor' and extraction_type == 'dna'"
 
     default_relationships = {
-        "matched_normal_lib": RelationshipDefinition(
-            via="donor_name", target="role == 'normal' and extraction_type == 'dna'"
-        ),
+        **MATCHED_NORMAL_RELATIONSHIP,
         "matched_rna_lib": RelationshipDefinition(
             via=["donor_name", "sample_name"], target="role == 'tumor' and extraction_type == 'rna'"
         ),
@@ -600,10 +603,6 @@ class SomaticNeoepitopePredictionWorkflow(BaseStep):
     @property
     def enabled_predictions(self) -> list[str]:
         return [p for p in PREDICTIONS if getattr(self.config.pvactools, p).enabled]
-
-    def matched(self, tumor_library: str, relationship: str) -> str:
-        """The library of a relationship of ``tumor_library``, or ``""``"""
-        return self.library_row(tumor_library).get(relationship) or ""
 
     @property
     def typed_mhc_classes(self) -> set[str]:

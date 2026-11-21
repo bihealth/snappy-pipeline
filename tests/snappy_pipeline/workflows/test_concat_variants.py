@@ -72,13 +72,9 @@ def test_the_task_needs_two_inputs_and_a_tool():
 
 
 def test_an_input_with_another_grouping_is_rejected(monkeypatch):
-    import snappy_pipeline.workflows.concat_variants as module
-
-    declared = {"fdr": "related", "sv_fdr": "library"}
-    monkeypatch.setattr(module, "_declared_group_by", lambda project, task, visited: declared[task])
     wf = object.__new__(ConcatVariantsWorkflow)
     wf.config = _config()
-    wf.project = None
+    wf.project = SimpleNamespace(group_by={"fdr": "related", "sv_fdr": "library"})
     monkeypatch.setattr(
         ConcatVariantsWorkflow, "effective_group_by", property(lambda self: "related")
     )

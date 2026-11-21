@@ -31,23 +31,20 @@ from typing import Any
 
 from snakemake.iocontainers import Wildcards
 
-from snappy_pipeline.models import RelationshipDefinition
 from snappy_pipeline.utils import dictify
 from snappy_pipeline.workflows.abstract import (
     BaseStep,
     BaseStepPart,
+    MATCHED_NORMAL_RELATIONSHIP,
     MATCHED_NORMAL_REQUIREMENT,
     ReportOutput,
+    ResourceUsage,
 )
 from snappy_pipeline.workflows.abstract.protocol import DataSignature, DataType
-from snappy_pipeline.workflows.ngs_mapping import ResourceUsage
 
 from .model import SomaticPurityPloidyEstimate as SomaticPurityPloidyEstimateConfigModel
 
 __author__ = "Manuel Holtgrewe <manuel.holtgrewe@bih-charite.de>"
-
-#: Tools for estimating purity and ploidy.
-PURITY_PLOIDY_TOOLS = "ascat"
 
 
 class AscatStepPart(BaseStepPart):
@@ -109,14 +106,6 @@ class AscatStepPart(BaseStepPart):
 
     default_resource_usage = ResourceUsage(threads=8, runtime="2d", mem=f"{10 * 1024 * 8}MB")
 
-    def get_normal_lib_name(self, wildcards):
-        """Return name of normal (non-cancer) library"""
-        df = self.parent.build_library_dataframe()
-        tumor_df = df[df["library_name"] == wildcards.tumor_library]
-        if tumor_df.empty:
-            return None
-        return tumor_df.iloc[0].get("matched_normal_lib") or None
-
     def _get_input_files_baf_tumor(self, wildcards):
         """Return input files for generating BAF file for the tumor."""
         alignments = self.parent.get_upstream_paths(
@@ -158,7 +147,7 @@ class AscatStepPart(BaseStepPart):
             "cnv_tumor": "work/{tumor_library}/out/{tumor_library}.cnv_tumor.txt",
             "cnv_normal": "work/{normal_library}/out/{normal_library}.cnv_normal.txt",
         }
-        normal_library = self.get_normal_lib_name(wildcards)
+        normal_library = self.parent.matched_normal(wildcards.tumor_library)
         for key, value in result.items():
             yield key, value.format(normal_library=normal_library, **wildcards)
 
@@ -216,12 +205,7 @@ class SomaticPurityPloidyEstimateWorkflow(BaseStep):
 
     library_requirement = MATCHED_NORMAL_REQUIREMENT
 
-    default_relationships = {
-        "matched_normal_lib": RelationshipDefinition(
-            via="donor_name",
-            target="role == 'normal' and extraction_type == 'dna'",
-        )
-    }
+    default_relationships = MATCHED_NORMAL_RELATIONSHIP
 
     @classmethod
     def get_output_paths(cls, config, signature=None, **kwargs) -> dict[str, str]:

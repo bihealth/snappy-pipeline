@@ -2,19 +2,19 @@ from typing import Annotated
 
 from snappy_pipeline.models import SnappyModel, SnappyStepModel
 from snappy_pipeline.workflows.abstract.protocol import (
+    ExpectedVariants,
     DataSignature,
     DataType,
     ExpectedPathSchema,
     Kits,
 )
-from snappy_pipeline.workflows.variant_calling.model import ExpectedSomaticVariants
 
 
 class TumorMutationalBurdenDependsOn(SnappyModel):
     variants: Annotated[
         str,
         DataSignature(DataType.VARIANTS, frozenset({"somatic"})),
-        ExpectedPathSchema(ExpectedSomaticVariants),
+        ExpectedPathSchema(ExpectedVariants),
     ]
 
     kits: Kits

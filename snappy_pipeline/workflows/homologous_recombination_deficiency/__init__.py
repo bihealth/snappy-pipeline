@@ -29,10 +29,9 @@ from typing import Any
 
 from snakemake.iocontainers import Wildcards
 
-from snappy_pipeline.base import ConfigError
-from snappy_pipeline.models import RelationshipDefinition
 from snappy_pipeline.utils import dictify
 from snappy_pipeline.workflows.abstract import (
+    MATCHED_NORMAL_RELATIONSHIP,
     MATCHED_NORMAL_REQUIREMENT,
     BaseStep,
     BaseStepPart,
@@ -65,7 +64,6 @@ class ScarHRDStepPart(BaseStepPart):
             "copy_number", library_name=wildcards.library_name
         )
         yield "seqz", copy_number.seqz
-        yield from self.parent.reference_inputs().items()
 
     def _get_output_files_run(self):
         return {
@@ -91,12 +89,7 @@ class HomologousRecombinationDeficiencyWorkflow(BaseStep):
 
     library_requirement = MATCHED_NORMAL_REQUIREMENT
 
-    default_relationships = {
-        "matched_normal_lib": RelationshipDefinition(
-            via="donor_name",
-            target="role == 'normal' and extraction_type == 'dna'",
-        )
-    }
+    default_relationships = MATCHED_NORMAL_RELATIONSHIP
 
     @classmethod
     def get_output_paths(cls, config, signature=None, **kwargs) -> dict[str, str]:
@@ -108,16 +101,3 @@ class HomologousRecombinationDeficiencyWorkflow(BaseStep):
         super().__init__(workflow, project, task_name)
         # Register sub step classes so the sub steps are available
         self.register_sub_step_classes((ScarHRDStepPart,))
-
-    def check_config(self):
-        """Check that the upstream CNV calling tool is supported.
-
-        ``scarHRD`` can currently only consume ``sequenza`` copy number output.
-        """
-        tool = self.get_task_config("copy_number").tool
-        if tool != "sequenza":
-            raise ConfigError(
-                f"Tool '{tool}' of the depends_on.copy_number task "
-                f"'{self.project.dependencies[self.task_name]['copy_number']}' is not supported by "
-                "'homologous_recombination_deficiency'; expected 'sequenza'"
-            )

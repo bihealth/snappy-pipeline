@@ -85,33 +85,26 @@ from typing import Any
 from snakemake.iocontainers import Wildcards
 
 from snappy_pipeline.base import ConfigError
-from snappy_pipeline.models import RelationshipDefinition, ToolModel
-from snappy_pipeline.utils import dictify, listify
+from snappy_pipeline.models import ToolModel
+from snappy_pipeline.utils import dictify
 from snappy_pipeline.workflows.abstract import (
+    MATCHED_NORMAL_RELATIONSHIP,
     BaseStep,
     BaseStepPart,
     ResourceUsage,
 )
+from snappy_pipeline.workflows.common import vcf_outputs
 from snappy_pipeline.workflows.common.calls_report import CallsReportStepPart
-from snappy_pipeline.workflows.abstract.protocol import DataSignature, DataType, select_signature
-from snappy_pipeline.workflows.ngs_mapping.model import ExpectedAlignments
+from snappy_pipeline.workflows.abstract.protocol import DataSignature, DataType
 
-from .model import (
-    Ebfilter as EbfilterConfig,
-)
-from .model import (
-    VariantFiltration as VariantFiltrationConfigModel,
-)
+from .model import Ebfilter as EbfilterConfig
+from .model import Tool
+from .model import VariantFiltration as VariantFiltrationConfigModel
 
 __author__ = "Manuel Holtgrewe <manuel.holtgrewe@bih-charite.de>"
 
-#: Output keys and extensions of the filtered VCF
-_OUTPUTS = {
-    "vcf": ".vcf.gz",
-    "vcf_tbi": ".vcf.gz.tbi",
-    "vcf_md5": ".vcf.gz.md5",
-    "vcf_tbi_md5": ".vcf.gz.tbi.md5",
-}
+#: The filtered VCF of an entity, without ``.vcf.gz``
+_OUT_PREFIX = "work/{library_name}/out/{library_name}"
 
 
 # ---------------------------------------------------------------------------
@@ -129,46 +122,33 @@ class VariantFiltrationStepPart(BaseStepPart):
     name = "filter"
     actions = ("run",)
 
-    def tool_section(self) -> ToolModel | None:
+    def tool_section(self) -> ToolModel:
         """The config section of the task's tool; all filter step parts are named ``filter``"""
-        section = getattr(self.config, self.config.tool, None)
-        return section if isinstance(section, ToolModel) else None
+        return getattr(self.config, self.config.tool)
 
     resource_usage = {
         "run": ResourceUsage(threads=1, runtime="4h", mem=f"{8 * 1024}MB"),
     }
-    result_keys = {"run": tuple(_OUTPUTS)}
+    result_keys = {"run": tuple(vcf_outputs(_OUT_PREFIX))}
     entity_wildcard = "library_name"
 
     @dictify
     def _get_input_files_run(self, wildcards: Wildcards):
-        lib = wildcards.library_name
-        variant = self.parent.get_upstream_paths("variants", library_name=lib)
-        # Accept both typed schema and plain dict
-        if isinstance(variant, dict):
-            yield "vcf", variant["vcf"]
-            yield "vcf_tbi", variant["vcf_tbi"]
-        else:
-            yield "vcf", variant.vcf
-            yield "vcf_tbi", variant.vcf_tbi
+        variant = self.parent.get_upstream_paths("variants", library_name=wildcards.library_name)
+        yield "vcf", variant.vcf
+        yield "vcf_tbi", variant.vcf_tbi
 
     def _get_output_files_run(self):
-        return {
-            key: f"work/{{library_name}}/out/{{library_name}}{ext}" for key, ext in _OUTPUTS.items()
-        }
+        return vcf_outputs(_OUT_PREFIX)
 
     def _get_log_file(self, action):
         return {"log": "work/{library_name}/log/{library_name}.log"}
 
     def _get_params_run(self, wildcards: Wildcards) -> dict[str, Any]:
-        cfg = getattr(self.config, self.config.tool)
-        params: dict[str, Any] = {
-            # The task name keeps FILTER IDs unique along a chain of filter tasks.
-            "filter_name": self.parent.task_name,
-        }
-        if cfg is not None:
-            params.update(cfg.model_dump(by_alias=True))
-        return params
+        # The task name keeps FILTER IDs unique along a chain of filter tasks.
+        return {"filter_name": self.parent.task_name} | self.tool_section().model_dump(
+            by_alias=True
+        )
 
 
 # ---------------------------------------------------------------------------
@@ -179,9 +159,6 @@ class VariantFiltrationStepPart(BaseStepPart):
 class _BamAwareStepPart(VariantFiltrationStepPart):
     """Mixin that adds tumor (and optionally normal) BAM inputs."""
 
-    def __init__(self, parent):
-        super().__init__(parent)
-
     @dictify
     def _get_input_files_run(self, wildcards: Wildcards):
         yield from super()._get_input_files_run(wildcards).items()
@@ -189,27 +166,11 @@ class _BamAwareStepPart(VariantFiltrationStepPart):
         yield from self.parent.reference_inputs().items()
 
         lib = self.parent.primary_library(wildcards.library_name)
-        tumor_aln: ExpectedAlignments = self.parent.get_upstream_paths(
-            "alignments", library_name=lib
-        )
-        if isinstance(tumor_aln, dict):
-            yield "bam", tumor_aln["bam"]
-        else:
-            yield "bam", tumor_aln.bam
+        yield "bam", self.parent.get_upstream_paths("alignments", library_name=lib).bam
 
-        df = self.parent.build_library_dataframe()
-        tumor_df = df[df["library_name"] == lib]
-        normal_lib = None
-        if not tumor_df.empty:
-            normal_lib = tumor_df.iloc[0].get("matched_normal_lib") or None
-        if normal_lib:
-            normal_aln: ExpectedAlignments = self.parent.get_upstream_paths(
-                "alignments", library_name=normal_lib
-            )
-            if isinstance(normal_aln, dict):
-                yield "normal", normal_aln["bam"]
-            else:
-                yield "normal", normal_aln.bam
+        if normal_lib := self.parent.matched_normal(lib):
+            normal = self.parent.get_upstream_paths("alignments", library_name=normal_lib)
+            yield "normal", normal.bam
 
 
 # ---------------------------------------------------------------------------
@@ -230,8 +191,6 @@ class VembraneStepPart(VariantFiltrationStepPart):
 
     def _get_params_run(self, wildcards: Wildcards) -> dict[str, Any]:
         cfg = self.config.vembrane
-        if cfg is None:
-            raise ValueError("vembrane configuration is required")
         # vembrane tag and filter both take the aux files, the context and the ontology
         params: dict[str, Any] = {
             "mode": cfg.mode,
@@ -248,8 +207,6 @@ class VembraneStepPart(VariantFiltrationStepPart):
     def _get_input_files_run(self, wildcards: Wildcards):
         yield from super()._get_input_files_run(wildcards).items()
         cfg = self.config.vembrane
-        if cfg is None:
-            return
         if cfg.aux:
             yield "aux", list(cfg.aux.values())
         if cfg.context_files:
@@ -313,7 +270,7 @@ class EbfilterStepPart(_BamAwareStepPart):
         yield "txt", panel_file
 
     def _get_output_files_write_panel(self):
-        return {"txt": "work/eb_filter.panel_of_normals/out/eb_filter.panel_of_normals.txt"}
+        return {"txt": "work/panel_of_normals/out/panel_of_normals.txt"}
 
     def _get_params_run(self, wildcards: Wildcards) -> dict[str, Any]:
         params = super()._get_params_run(wildcards)
@@ -350,21 +307,11 @@ class EbfilterStepPart(_BamAwareStepPart):
         random.shuffle(libraries)
         return libraries[: cfg.panel_of_normals_size]
 
-    @listify
-    def _get_panel_of_normal_bams(self, wildcards):
-        for lib_name in self._panel_of_normal_libraries():
-            aln: ExpectedAlignments = self.parent.get_upstream_paths(
-                "alignments", library_name=lib_name
-            )
-            if isinstance(aln, dict):
-                yield aln["bam"]
-            else:
-                yield aln.bam
-
-
-# ---------------------------------------------------------------------------
-# Map tool name → step part class
-# ---------------------------------------------------------------------------
+    def _get_panel_of_normal_bams(self, wildcards) -> list[str]:
+        return [
+            self.parent.get_upstream_paths("alignments", library_name=name).bam
+            for name in self._panel_of_normal_libraries()
+        ]
 
 
 class VarlociraptorStepPart(VariantFiltrationStepPart):
@@ -378,16 +325,6 @@ class VarlociraptorStepPart(VariantFiltrationStepPart):
         if params["mode"] == "filter":
             params.pop("filter_name")
         return params
-
-
-_TOOL_STEP_PART: dict[str, type[VariantFiltrationStepPart]] = {
-    "bcftools": BcftoolsStepPart,
-    "vembrane": VembraneStepPart,
-    "regions": RegionsStepPart,
-    "dkfz": DkfzStepPart,
-    "ebfilter": EbfilterStepPart,
-    "varlociraptor": VarlociraptorStepPart,
-}
 
 
 # ---------------------------------------------------------------------------
@@ -406,12 +343,21 @@ class VariantFiltrationWorkflow(BaseStep):
     name = "variant_filtration"
     produces = [DataSignature(DataType.VARIANTS, frozenset({"filtered"}))]
 
+    tool_parts = {
+        Tool.bcftools: BcftoolsStepPart,
+        Tool.vembrane: VembraneStepPart,
+        Tool.regions: RegionsStepPart,
+        Tool.dkfz: DkfzStepPart,
+        Tool.ebfilter: EbfilterStepPart,
+        Tool.varlociraptor: VarlociraptorStepPart,
+    }
+
     @classmethod
     def task_produces(cls, config, upstream):
         """The variants this task reads, tagged ``filtered``; the FDR control of varlociraptor
         needs varlociraptor calls (tag ``varlociraptor``, which annotation keeps)."""
         variants = upstream["variants"]
-        if config.tool == "varlociraptor" and "varlociraptor" not in variants.tags:
+        if config.tool == Tool.varlociraptor and "varlociraptor" not in variants.tags:
             raise ConfigError(
                 "tool: varlociraptor controls the FDR of the calls of a variant_calling task with "
                 "tool: varlociraptor, but depends_on.variants produces variants tagged "
@@ -422,40 +368,29 @@ class VariantFiltrationWorkflow(BaseStep):
     @classmethod
     def filter_ids(cls, config):
         """The IDs of the DKFZ bias filter, and the expression names of ``vembrane`` in tag mode."""
-        if config.tool == "dkfz":
+        if config.tool == Tool.dkfz:
             return frozenset({"bPcr", "bSeq"})
-        if config.tool == "vembrane" and config.vembrane.mode == "tag":
+        if config.tool == Tool.vembrane and config.vembrane.mode == "tag":
             return frozenset(config.vembrane.expressions)
         return frozenset()
 
     config_model_class = VariantFiltrationConfigModel
 
-    default_relationships = {
-        "matched_normal_lib": RelationshipDefinition(
-            via="donor_name",
-            target="role == 'normal' and extraction_type == 'dna'",
-        )
-    }
+    default_relationships = MATCHED_NORMAL_RELATIONSHIP
 
     @classmethod
     def get_output_paths(cls, config, signature=None, **kwargs) -> dict[str, str]:
         """Return local filtered-variant output paths for downstream consumers."""
         lib = kwargs.get("library_name", "{library_name}")
-        return {
-            "vcf": f"work/{lib}/out/{lib}.vcf.gz",
-            "vcf_tbi": f"work/{lib}/out/{lib}.vcf.gz.tbi",
-        }
+        paths = vcf_outputs(_OUT_PREFIX.format(library_name=lib))
+        return {key: paths[key] for key in ("vcf", "vcf_tbi")}
 
     def __init__(self, workflow, project, task_name):
         super().__init__(workflow, project, task_name)
-        tool_cls = _TOOL_STEP_PART[self.config.tool]
-        self.register_sub_step_classes((tool_cls,))
         if self.config.calls_report:
             self.register_sub_step_classes((CallsReportStepPart,))
 
     @cached_property
     def variants_are_annotated(self) -> bool:
         """Whether the variants of ``depends_on.variants`` carry an annotation (tag ``annotated``)."""
-        dependency = self.resolve_dependency("variants")
-        produced = self.project.signatures[dependency.task_name]
-        return "annotated" in select_signature(produced, dependency.signature).tags
+        return "annotated" in self.upstream_signature("variants").tags

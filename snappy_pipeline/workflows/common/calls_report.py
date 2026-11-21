@@ -48,13 +48,10 @@ class CallsReportStepPart(BaseStepPart):
         """The libraries whose BAMs the IGV views show:
         the members of the entity and, on cancer sheets, their matched normals."""
         libraries = list(self.parent.member_libraries(entity))
-        table = self.parent.libraries
-        if "matched_normal_lib" in table.columns:
-            for library in list(libraries):
-                rows = table[table["library_name"] == library]
-                normal = rows.iloc[0].get("matched_normal_lib") if not rows.empty else None
-                if normal and normal not in libraries:
-                    libraries.append(normal)
+        for library in list(libraries):
+            normal = self.parent.matched_normal(library)
+            if normal and normal not in libraries:
+                libraries.append(normal)
         return libraries
 
     def _get_input_files_run(self, wildcards: Wildcards) -> dict[str, Any]:

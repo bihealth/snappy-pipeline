@@ -8,13 +8,13 @@ from pydantic import BaseModel, ConfigDict
 from snappy_pipeline.models import ConfigPath
 from snappy_pipeline.models import RequiredBy, SnappyModel, SnappyStepModel, ToggleModel, ToolModel
 from snappy_pipeline.workflows.abstract.protocol import (
+    ExpectedVariants,
     DataSignature,
     DataType,
     ExpectedPathSchema,
     Features,
 )
 from snappy_pipeline.workflows.ngs_mapping.model import ExpectedGeneCounts
-from snappy_pipeline.workflows.variant_calling.model import ExpectedSomaticVariants
 
 
 class ExpectedCopyNumberCalls(BaseModel):
@@ -90,7 +90,7 @@ class CbioportalExportDependsOn(SnappyModel):
     variants: Annotated[
         str,
         DataSignature(DataType.VARIANTS, frozenset({"somatic", ("snv", "indel"), "vep"})),
-        ExpectedPathSchema(ExpectedSomaticVariants),
+        ExpectedPathSchema(ExpectedVariants),
     ]
     """Somatic variants annotated by VEP, filtered or not; the conversion to MAF cannot read
     mehari's annotations yet"""

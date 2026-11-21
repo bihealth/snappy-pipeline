@@ -19,9 +19,8 @@ Downstream tasks read the key ``tsv``.
 
 from snappy_pipeline.utils import dictify
 from snappy_pipeline.workflows.abstract import BaseStep, BaseStepPart, ReportOutput
-from snappy_pipeline.workflows.abstract.protocol import DataSignature, DataType
+from snappy_pipeline.workflows.abstract.protocol import DataSignature, DataType, ExpectedVariants
 from snappy_pipeline.workflows.ngs_mapping import ResourceUsage
-from snappy_pipeline.workflows.variant_calling.model import ExpectedSomaticVariants
 
 from .model import SomaticVariantSignatures as SomaticVariantSignaturesConfigModel
 
@@ -57,7 +56,7 @@ class TabulateVariantsStepPart(SignaturesStepPart):
     @dictify
     def _get_input_files_run(self, wildcards):
         """Return path to input file"""
-        variants: ExpectedSomaticVariants = self.parent.get_upstream_paths(
+        variants: ExpectedVariants = self.parent.get_upstream_paths(
             "variants", library_name=wildcards.tumor_library
         )
         yield "vcf", variants.vcf
@@ -99,11 +98,6 @@ class DeconstructSigsStepPart(SignaturesStepPart):
     def _get_output_files_run(self):
         base = "work/{tumor_library}/out/deconstruct_sigs.{tumor_library}"
         return {"tsv": base + ".tsv", "tsv_md5": base + ".tsv.md5", "pdf": base + ".pdf"}
-
-    def _get_log_file(self, action):
-        # RWrapper keeps the R script next to the log
-        prefix = "work/{tumor_library}/log/deconstruct_sigs.{tumor_library}"
-        return {"log": prefix + ".log", "script": prefix + ".R"}
 
 
 class SomaticVariantSignaturesWorkflow(BaseStep):

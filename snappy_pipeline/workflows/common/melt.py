@@ -5,7 +5,7 @@ from snakemake.iocontainers import Wildcards
 
 from snappy_pipeline.utils import dictify
 from snappy_pipeline.workflows.abstract import BaseStepPart, ResourceUsage
-from snappy_pipeline.workflows.common.sv_calling import SvCallingGetResultFilesMixin
+from snappy_pipeline.workflows.common.sv_calling import VCF_OUTPUTS, SvCallingGetResultFilesMixin
 
 __author__ = "Manuel Holtgrewe <manuel.holtgrewe@bih-charite.de>"
 
@@ -205,16 +205,8 @@ class MeltStepPart(SvCallingGetResultFilesMixin, BaseStepPart):
         yield "vcf", vcfs
         yield "vcf_tbi", [f"{vcf}.tbi" for vcf in vcfs]
 
-    @dictify
     def _get_output_files_merge_vcf(self):
-        prefix = "work/{library_name}/out/{library_name}"
-        work_files = {
-            "vcf": f"{prefix}.vcf.gz",
-            "vcf_md5": f"{prefix}.vcf.gz.md5",
-            "vcf_tbi": f"{prefix}.vcf.gz.tbi",
-            "vcf_tbi_md5": f"{prefix}.vcf.gz.tbi.md5",
-        }
-        yield from work_files.items()
+        return dict(VCF_OUTPUTS)
 
     @dictify
     def _get_log_file_merge_vcf(self):

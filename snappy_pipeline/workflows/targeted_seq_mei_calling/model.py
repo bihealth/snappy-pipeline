@@ -5,8 +5,7 @@ from pydantic import Field
 
 from snappy_pipeline.models import ConfigPath
 from snappy_pipeline.models import EnumField, SnappyModel, SnappyStepModel, ToolModel
-from snappy_pipeline.workflows.abstract.protocol import DataSignature, DataType, ExpectedPathSchema
-from snappy_pipeline.workflows.ngs_mapping.model import ExpectedAlignments
+from snappy_pipeline.workflows.abstract.protocol import DnaAlignments
 
 
 class Tool(enum.StrEnum):
@@ -34,11 +33,7 @@ class Scramble(ToolModel):
 
 
 class TargetedSeqMeiCallingDependsOn(SnappyModel):
-    alignments: Annotated[
-        str,
-        DataSignature(DataType.ALIGNMENTS, frozenset({"dna"})),
-        ExpectedPathSchema(ExpectedAlignments),
-    ]
+    alignments: DnaAlignments
 
 
 class TargetedSeqMeiCalling(SnappyStepModel):

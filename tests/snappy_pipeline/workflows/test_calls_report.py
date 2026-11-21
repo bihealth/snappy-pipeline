@@ -175,13 +175,12 @@ def test_the_report_writes_the_calls_table_and_the_site():
 
 
 def _part_with_igv(matched_normal=None, **igv):
-    import pandas as pd
-
     part = _part(igv=igv)
     rows = [{"library_name": "P001-N1-DNA1-WES1", "matched_normal_lib": ""}]
     if matched_normal is not None:
         rows = [{"library_name": "P001-T1-DNA1-WES1", "matched_normal_lib": matched_normal}]
-    part.parent.libraries = pd.DataFrame(rows)
+    normals = {row["library_name"]: row["matched_normal_lib"] for row in rows}
+    part.parent.matched_normal = lambda library: normals.get(library, "")
     part.parent.member_libraries = lambda entity: [rows[0]["library_name"]]
     part.parent.get_upstream_paths = lambda field, library_name: SimpleNamespace(
         bam=f"tasks/mapping/work/{library_name}/out/{library_name}.bam",

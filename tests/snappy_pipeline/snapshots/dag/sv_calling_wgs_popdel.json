@@ -3,8 +3,8 @@
   "benchmark": null,
   "input": [
    "tasks/sv_calling_wgs_popdel/work/PAT_case001subregion/out/PAT_case001subregion.vcf.gz",
-   "tasks/sv_calling_wgs_popdel/work/PAT_case001subregion/out/PAT_case001subregion.vcf.gz.md5",
    "tasks/sv_calling_wgs_popdel/work/PAT_case001subregion/out/PAT_case001subregion.vcf.gz.tbi",
+   "tasks/sv_calling_wgs_popdel/work/PAT_case001subregion/out/PAT_case001subregion.vcf.gz.md5",
    "tasks/sv_calling_wgs_popdel/work/PAT_case001subregion/out/PAT_case001subregion.vcf.gz.tbi.md5",
    "tasks/sv_calling_wgs_popdel/output/.manifest.tsv"
   ],
@@ -88,10 +88,7 @@
  {
   "benchmark": null,
   "input": [
-   "<repo>/.tests/test-workflow/resources/refs/subregion.fa",
-   "tasks/reference_index_bwa/work/reference_index/out/reference.fa.fai",
-   "tasks/reference_index_bwa/work/reference_index/out/reference.dict",
-   "tasks/reference_index_bwa/work/reference_index/out/reference.fa.genome"
+   "<repo>/.tests/test-workflow/resources/refs/subregion.fa"
   ],
   "log": [
    "tasks/reference_index_bwa/work/reference_index/log/reference_index.index.log"
@@ -126,41 +123,9 @@
  {
   "benchmark": null,
   "input": [
-   "<repo>/.tests/test-workflow/resources/refs/subregion.fa"
-  ],
-  "local": true,
-  "log": [
-   "tasks/reference_index_bwa/work/reference_index/log/reference_index.common.log"
-  ],
-  "output": [
-   "tasks/reference_index_bwa/work/reference_index/out/reference.fa.fai",
-   "tasks/reference_index_bwa/work/reference_index/out/reference.dict",
-   "tasks/reference_index_bwa/work/reference_index/out/reference.fa.genome"
-  ],
-  "params": {
-   "args": {
-    "code": "<hash>"
-   }
-  },
-  "resources": {
-   "mem": "2 GB",
-   "mem_mb": 2000,
-   "mem_mib": 1908,
-   "partition": "medium",
-   "runtime": 120
-  },
-  "rule": "reference_index_bwa_reference_index_common_run",
-  "temp": [],
-  "threads": 1,
-  "wildcards": {},
-  "wrapper": "file://<repo>/snappy_wrappers/wrappers/reference_index/common"
- },
- {
-  "benchmark": null,
-  "input": [
    "tasks/sv_calling_wgs_popdel/work/PAT_case001subregion/out/PAT_case001subregion.vcf.gz",
-   "tasks/sv_calling_wgs_popdel/work/PAT_case001subregion/out/PAT_case001subregion.vcf.gz.md5",
    "tasks/sv_calling_wgs_popdel/work/PAT_case001subregion/out/PAT_case001subregion.vcf.gz.tbi",
+   "tasks/sv_calling_wgs_popdel/work/PAT_case001subregion/out/PAT_case001subregion.vcf.gz.md5",
    "tasks/sv_calling_wgs_popdel/work/PAT_case001subregion/out/PAT_case001subregion.vcf.gz.tbi.md5"
   ],
   "local": true,
@@ -410,8 +375,8 @@
   ],
   "output": [
    "tasks/sv_calling_wgs_popdel/work/PAT_case001subregion/out/PAT_case001subregion.vcf.gz",
-   "tasks/sv_calling_wgs_popdel/work/PAT_case001subregion/out/PAT_case001subregion.vcf.gz.md5",
    "tasks/sv_calling_wgs_popdel/work/PAT_case001subregion/out/PAT_case001subregion.vcf.gz.tbi",
+   "tasks/sv_calling_wgs_popdel/work/PAT_case001subregion/out/PAT_case001subregion.vcf.gz.md5",
    "tasks/sv_calling_wgs_popdel/work/PAT_case001subregion/out/PAT_case001subregion.vcf.gz.tbi.md5"
   ],
   "params": {

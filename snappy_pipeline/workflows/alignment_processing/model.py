@@ -1,16 +1,12 @@
 import enum
-from typing import Annotated
 
 
 from snappy_pipeline.models import SnappyModel, SnappyStepModel, ToolModel
 from snappy_pipeline.workflows.abstract.protocol import (
     CommonVariants,
-    DataSignature,
-    DataType,
-    ExpectedPathSchema,
+    DnaAlignments,
     Reference,
 )
-from snappy_pipeline.workflows.ngs_mapping.model import ExpectedAlignments
 
 
 class Tool(enum.StrEnum):
@@ -18,11 +14,7 @@ class Tool(enum.StrEnum):
 
 
 class AlignmentProcessingDependsOn(SnappyModel):
-    alignments: Annotated[
-        str,
-        DataSignature(DataType.ALIGNMENTS, frozenset({"dna"})),
-        ExpectedPathSchema(ExpectedAlignments),
-    ]
+    alignments: DnaAlignments
     """The BAM files to process: an ``ngs_mapping`` task or another ``alignment_processing`` task"""
 
     reference: Reference

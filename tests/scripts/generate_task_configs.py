@@ -4,8 +4,10 @@
 Each task starts from the step's `default_config_yaml()`. Three tables complete it:
 - `TASK_CONFIG` fills config values and fixture paths per step and tool;
 - `DEPENDENCY_TASKS` and `STEP_DEPENDENCY_TASKS` name the upstream task of each `depends_on` key,
-  with per-tool rules in `wire_dependencies()`;
-- `validate_and_autofill_step_config()` puts placeholders into required fields that remain unset.
+  with per-tool rules in `wire_dependencies()`.
+
+`validate_step_config()` drops the `depends_on` keys that no reader of the task reads;
+any other validation error fails the generation.
 """
 
 from __future__ import annotations
@@ -122,195 +124,28 @@ def parse_default_step_config(workflow_cls: type) -> dict[str, Any]:
     return copy.deepcopy(config) if isinstance(config, dict) else {}
 
 
-def _placeholder_for_annotation(annotation: Any) -> Any:
-    origin = get_origin(annotation)
-    args = get_args(annotation)
+def validate_step_config(name: str, workflow_cls: type, config: dict[str, Any]) -> dict[str, Any]:
+    """Return the validated config of the generated task ``name``.
 
-    if annotation in (str, Any):
-        return "AUTO"
-    if annotation is bool:
-        return False
-    if annotation is int:
-        return 1
-    if annotation is float:
-        return 1.0
-    if annotation is dict:
-        return {}
-    if annotation is list:
-        return []
-    if annotation is tuple:
-        return []
-
-    if origin in (list, tuple, set, frozenset):
-        return []
-    if origin is dict:
-        return {}
-    if origin is None and isinstance(annotation, type) and issubclass(annotation, enum.Enum):
-        return next(iter(annotation)).value
-
-    if origin is not None and args:
-        # Handle Optional/Union by choosing the first non-None candidate.
-        for candidate in args:
-            if candidate is type(None):
-                continue
-            return _placeholder_for_annotation(candidate)
-
-    if isinstance(annotation, type):
-        # Nested Pydantic models and unknown classes can start as empty dicts.
-        return {}
-
-    return "AUTO"
-
-
-def _set_nested(container: dict[str, Any], path: tuple[Any, ...], value: Any) -> None:
-    current = container
-    for key in path[:-1]:
-        if not isinstance(key, str):
-            return
-        next_value = current.get(key)
-        if not isinstance(next_value, dict):
-            next_value = {}
-            current[key] = next_value
-        current = next_value
-
-    last = path[-1]
-    if isinstance(last, str):
-        current[last] = value
-
-
-def _unwrap_optional(annotation: Any) -> Any:
-    origin = get_origin(annotation)
-    args = get_args(annotation)
-    if origin is not None and args:
-        for candidate in args:
-            if candidate is not type(None):
-                return candidate
-    return annotation
-
-
-def _resolve_annotation_for_loc(config_model: type, loc: tuple[Any, ...]) -> Any:
-    ann: Any = config_model
-    for part in loc:
-        if not isinstance(part, str):
-            break
-        ann = _unwrap_optional(ann)
-        model_fields = getattr(ann, "model_fields", None)
-        if not model_fields:
-            break
-        field_info = model_fields.get(part)
-        if field_info is None:
-            break
-        ann = field_info.annotation
-    return ann
-
-
-def _remove_top_level_extra(config: dict[str, Any], path: tuple[Any, ...]) -> None:
-    if path and isinstance(path[0], str):
-        config.pop(path[0], None)
-
-
-def _placeholder_for_error_type(err_type: str) -> Any:
-    if err_type in {"string_type", "string_pattern_mismatch"}:
-        return "AUTO"
-    if err_type in {"int_type", "int_parsing"}:
-        return 1
-    if err_type in {"float_type", "float_parsing"}:
-        return 1.0
-    if err_type == "bool_type":
-        return False
-    if err_type == "list_type":
-        return []
-    if err_type == "dict_type":
-        return {}
-    if err_type in {"literal_error", "enum"}:
-        return "AUTO"
-    return "AUTO"
-
-
-def validate_and_autofill_step_config(
-    step_name: str,
-    workflow_cls: type,
-    step_config: dict[str, Any],
-) -> tuple[dict[str, Any], list[str]]:
-    notes: list[str] = []
-    config_model = getattr(workflow_cls, "config_model_class", None)
-    if not config_model:
-        notes.append(f"{step_name}: no config_model_class, kept parsed defaults")
-        return step_config, notes
-
-    candidate = copy.deepcopy(step_config)
-    max_rounds = 12
-    for _ in range(max_rounds):
+    Drops the ``depends_on`` fields that no reader of the task reads; any other error fails.
+    """
+    while True:
         try:
-            validated = config_model.model_validate(candidate)
-            return validated.model_dump(mode="json", exclude_none=True), notes
+            validated = workflow_cls.config_model_class.model_validate(config)
         except pydantic.ValidationError as e:
-            changed = False
-            for err in e.errors():
-                # Fields that no reader of the task reads (other tools, settings that are off)
-                if isinstance(error := err.get("ctx", {}).get("error"), DependsOnError):
-                    for name in error.unread:
-                        candidate["depends_on"].pop(name)
-                    changed = bool(error.unread)
-                    continue
-                err_type = err.get("type")
-                loc = tuple(err.get("loc", ()))
-                if not loc:
-                    continue
-
-                if err_type == "missing" and isinstance(loc[0], str):
-                    resolved_ann = _resolve_annotation_for_loc(config_model, loc)
-                    placeholder = _placeholder_for_annotation(resolved_ann)
-                    _set_nested(candidate, loc, placeholder)
-                    notes.append(
-                        f"{step_name}: auto-filled missing field {'.'.join(map(str, loc))}"
-                    )
-                    changed = True
-                elif err_type == "extra_forbidden":
-                    _remove_top_level_extra(candidate, loc)
-                    notes.append(f"{step_name}: removed extra field {'.'.join(map(str, loc))}")
-                    changed = True
-                elif err_type == "too_short" and isinstance(loc[0], str):
-                    # Add a single-element placeholder list so min_length constraints are met.
-                    resolved_ann = _resolve_annotation_for_loc(config_model, loc)
-                    inner_args = get_args(_unwrap_optional(resolved_ann))
-                    if inner_args:
-                        inner_placeholder = _placeholder_for_annotation(inner_args[0])
-                    else:
-                        inner_placeholder = "AUTO"
-                    _set_nested(candidate, loc, [inner_placeholder])
-                    notes.append(
-                        f"{step_name}: added single-item placeholder list for too_short field {'.'.join(map(str, loc))}"
-                    )
-                    changed = True
-                elif isinstance(loc[0], str):
-                    resolved_ann = _resolve_annotation_for_loc(config_model, loc)
-                    placeholder = _placeholder_for_annotation(resolved_ann)
-                    if placeholder in ({}, []) and err_type in {
-                        "string_type",
-                        "enum",
-                        "literal_error",
-                        "path_type",
-                        "path_not_file",
-                    }:
-                        placeholder = _placeholder_for_error_type(err_type)
-                    _set_nested(candidate, loc, placeholder)
-                    notes.append(
-                        f"{step_name}: coerced field {'.'.join(map(str, loc))} for error {err_type}"
-                    )
-                    changed = True
-
-            if not changed:
-                notes.append(f"{step_name}: unresolved validation errors, kept best-effort config")
-                return candidate, notes
-        except Exception as e:  # pragma: no cover - defensive for buggy validators
-            notes.append(
-                f"{step_name}: model validation raised {e.__class__.__name__}, kept best-effort config"
-            )
-            return candidate, notes
-
-    notes.append(f"{step_name}: reached autofill iteration limit, kept best-effort config")
-    return candidate, notes
+            unread = [
+                field
+                for err in e.errors()
+                if isinstance(error := err.get("ctx", {}).get("error"), DependsOnError)
+                for field in error.unread
+            ]
+            if not unread:
+                e.add_note(f"in the generated task {name}")
+                raise
+            for field in unread:
+                config["depends_on"].pop(field)
+        else:
+            return validated.model_dump(mode="json", exclude_none=True)
 
 
 def raw_data_dir(base_config: dict[str, Any], base_config_path: Path) -> str:
@@ -422,7 +257,7 @@ TASK_CONFIG: dict[tuple[str, str | None], dict[str, Any]] = {
         "strandedness": {"strand": -1, "threshold": 0.85},
     },
     ("panel_of_normals", "purecn"): {"purecn": {"path_normals_list": Overwrite("")}},
-    ("reference_index", "star"): {"reference_molecule": Overwrite("rna")},
+    ("reference_download", None): {"source": "ensembl"},
     ("somatic_gene_fusion_calling", "arriba"): {"arriba": {}},
     ("somatic_hla_loh_calling", None): {
         "path_hla_dat": PLACEHOLDER,
@@ -433,6 +268,14 @@ TASK_CONFIG: dict[tuple[str, str | None], dict[str, Any]] = {
     ("cbioportal_export", None): {
         "copy_number_alteration": {"enabled": True},
         "path_gene_id_mappings": PLACEHOLDER,
+        "vcf2maf": {"Center": "AUTO", "ncbi_build": "GRCh37"},
+        "study": {
+            "type_of_cancer": "AUTO",
+            "cancer_study_id": "AUTO",
+            "study_description": "AUTO",
+            "study_name": "AUTO",
+            "study_name_short": "AUTO",
+        },
     },
     ("somatic_neoepitope_prediction", None): {
         "pvactools": {
@@ -447,8 +290,8 @@ TASK_CONFIG: dict[tuple[str, str | None], dict[str, Any]] = {
             "pvacsplice": {"enabled": Overwrite(True)},
         }
     },
-    ("somatic_wgs_cnv_calling", "control_freec"): {"control_freec": {}},
-    ("sv_calling_targeted", "melt"): {"melt": MELT_FILES},
+    ("somatic_wgs_cnv_calling", "control_freec"): {"control_freec": {"convert": {}}},
+    ("sv_calling_targeted", "melt"): {"melt": {**MELT_FILES, "me_refs_infix": "AUTO"}},
     ("sv_calling_wgs", "melt"): {"melt": MELT_FILES},
     ("targeted_seq_mei_calling", "scramble"): {"scramble": {"blast_ref": REFERENCE}},
     ("variant_calling", None): {
@@ -463,8 +306,10 @@ TASK_CONFIG: dict[tuple[str, str | None], dict[str, Any]] = {
         },
     },
     # The statistics and their QC summary, once: one job per task, one file per pedigree member
+    ("variant_calling", "bcftools_call"): {"bcftools_call": {"assembly": "GRCh37"}},
     ("variant_calling", "gatk4_hc_joint"): {"bcftools_stats": {"enabled": Overwrite(True)}},
     ("variant_calling", "freebayes"): {"freebayes": {"num_jobs": 2}},
+    ("variant_calling", "mutect2"): {"mutect2": {"contamination": {}}},
     ("variant_calling", "varlociraptor"): {"varlociraptor": {"scenario": "somatic", "num_jobs": 2}},
     ("variant_export_external", None): VARIANT_EXPORT_EXTERNAL,
     ("variant_phasing", "gatk_read_backed_phasing"): {
@@ -700,9 +545,9 @@ def get_possible_variants(workflow_cls: type, step_name: str) -> list[str]:
     return [str(item.value) for item in annotation]
 
 
-def get_possible_tools(workflow_cls: type) -> list[str]:
-    """Return the values of a step's ``tool`` enum; empty for steps without a tool."""
-    tool_field = workflow_cls.config_model_class.model_fields.get("tool")
+def tool_values(model: type) -> list[str]:
+    """Return the values of a step model's ``tool`` field (enum or ``Literal``), if it has one."""
+    tool_field = model.model_fields.get("tool")
     if tool_field is None:
         return []
     annotation = tool_field.annotation
@@ -795,11 +640,10 @@ def wire_dependencies(step_name: str, tool: str | None) -> dict[str, str | list[
 def build_all_tasks(base_config: dict[str, Any], base_config_path: Path) -> list[dict[str, Any]]:
     """Return one task per step and tool, with filled config and wired dependencies."""
     fixtures = fixture_paths(base_config, base_config_path)
-    generation_notes: list[str] = []
     tasks: list[dict[str, Any]] = []
     for step_name, cls in sorted(WORKFLOW_REGISTRY.items()):
         variants = get_possible_variants(cls, step_name)
-        for tool in variants or get_possible_tools(cls) or [None]:
+        for tool in variants or tool_values(cls.config_model_class) or [None]:
             config = parse_default_step_config(cls)
             if variants:
                 config[VARIANT_FIELDS[step_name]] = tool
@@ -814,22 +658,15 @@ def build_all_tasks(base_config: dict[str, Any], base_config_path: Path) -> list
             if depends_on := wire_dependencies(step_name, tool):
                 config["depends_on"] = depends_on
 
-            config, notes = validate_and_autofill_step_config(step_name, cls, config)
-            generation_notes.extend(notes)
+            name = f"{step_name}_{tool}" if tool else step_name
+            config = validate_step_config(name, cls, config)
             if depends_on:
                 # Validation dumps every depends_on field; keep the wired ones that are read.
                 read = config.get("depends_on", {})
                 config["depends_on"] = {k: v for k, v in depends_on.items() if read.get(k)}
-            name = f"{step_name}_{tool}" if tool else step_name
             tasks.append({"step": step_name, "name": name, "config": config})
 
     tasks += [_resolve(extra, fixtures) for extra in EXTRA_TASKS]
-
-    if generation_notes:
-        print("Generation notes:")
-        for note in generation_notes:
-            print(f"- {note}")
-
     return tasks
 
 

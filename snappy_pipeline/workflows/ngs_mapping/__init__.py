@@ -73,16 +73,13 @@ BQSR
 """
 
 import os
-import re
-from functools import cached_property
 from typing import Any
 
-from snakemake.io import expand
 from snakemake.iocontainers import Wildcards
 
 from snappy_pipeline.base import ConfigError
 from snappy_pipeline.models import Intermediate
-from snappy_pipeline.utils import dictify, listify
+from snappy_pipeline.utils import dictify
 from snappy_pipeline.workflows.abstract import (
     BaseStep,
     BaseStepPart,
@@ -94,20 +91,12 @@ from snappy_pipeline.workflows.abstract import (
 from snappy_pipeline.workflows.abstract.protocol import DataType
 from snappy_pipeline.workflows.common.qc_summary import QcSummaryStepPart
 from snappy_pipeline.workflows.common.reads import reads_input_files, reads_params
+from snappy_pipeline.workflows.common.strandedness import strandedness_params
 
 __author__ = "Manuel Holtgrewe <manuel.holtgrewe@bih-charite.de>"
 
 from .model import NgsMapping as NgsMappingConfigModel
 from .model import Tool
-
-#: Available read mappers for (short/Illumina) DNA-seq data
-READ_MAPPERS_DNA = ("bwa", "bwa_mem2", "bwa_mem3")
-
-#: Available read mappers for (short/Illumina) RNA-seq data
-READ_MAPPERS_RNA = ("star",)
-
-#: Available read mappers for (long/PacBio/Nanopoare) DNA-seq data
-READ_MAPPERS_DNA_LONG = ("minimap2",)
 
 #: Files of a BWA index below its prefix. The wrapper takes the prefix from the first.
 BWA_INDEX_EXTENSIONS = (".amb", ".ann", ".bwt", ".pac", ".sa")
@@ -122,103 +111,20 @@ BWA_MEM3_INDEX_EXTENSIONS = (".amb", ".ann", ".bwt.2bit.64", ".pac")
 #: Files of a STAR index directory that mark it as the index
 STAR_INDEX_FILES = ("Genome", "SA", "SAindex")
 
+#: The BAM QC reports of ``samtools``
+BAM_REPORTS = ("bamstats", "flagstats", "idxstats")
 
-class MappingGetResultFilesMixin:
-    """Mixin that provides ``get_result_files()`` for mapping steps"""
-
-    tool_category = None
-
-    #: Keys of the output files that are no result files
-    non_result_keys: tuple[str, ...] = ()
-
-    def skip_result_files_for_library(self, library_name: str) -> bool:
-        """Override function such that the mapper is applicable to the library"""
-        library_tool_category = self.parent.library_tool_category(library_name)
-        if self.tool_category not in ("__any__", library_tool_category):
-            return True
-        else:
-            return self.name != self.config.tool
-
-    @listify
-    def get_result_files(self):
-        """Return list of concrete output paths in ``output/``.
-
-        The implementation will return the paths returned by ``self.get_output_files()`` for all
-        actions in ``self.actions``, with the prefix ``work/`` replaced by ``output/``. Keys in
-        ``non_result_keys`` are skipped.
-
-        You can override the ``skip_result_files_for_library()`` method to skip result files for
-        a library.
-        """
-        # Skip if step part has a tool category and it is not enabled
-        if self.tool_category != "__any__" and self.name != self.config.tool:
-            return
-
-        for action in self.actions:
-            skipped = set(self.non_result_keys)
-            if Intermediate.bam in self.config.delete_intermediates:
-                skipped |= set(self.bam_outputs.get(action, ()))
-            # Get list of result path templates.
-            result_paths_tpls = [
-                re.sub(r"^work/", "output/", path)
-                for key, path in self.get_output_files(action).items()
-                if key not in skipped
-            ]
-            #: Generate all concrete output paths.
-            for path_tpl in result_paths_tpls:
-                for library_name in self.parent.libraries["library_name"]:
-                    if not self.skip_result_files_for_library(library_name):
-                        yield from expand(path_tpl, library_name=library_name)
+#: The long-read libraries, by the ``seqPlatform`` of the sample sheet, as a pandas query
+LONG_READS = "seq_platform in ['ONT', 'PacBio']"
 
 
-class ReportGetResultFilesMixin:
-    """Mixin that provides ``get_result_files()`` for report generation steps"""
-
-    def skip_result_files_for_library(self, library_name: str) -> bool:
-        if not getattr(self, "tool_categories", None):
-            return False
-
-        library_tool_category = self.parent.library_tool_category(library_name)
-        return library_tool_category not in self.tool_categories
-
-    @listify
-    def get_result_files(self):
-        """Return list of concrete output paths in ``output/``.
-
-        The implementation will return the paths returned by ``self.get_output_files()`` for all
-        actions in ``self.actions``, with the prefix ``work/`` replaced by ``output/``.
-
-        You can override the ``skip_result_files_for_library()`` method to skip result files for
-        a library.
-        """
-        # Skip if step part has a tool category and it is not enabled
-        for action in self.actions:
-            # Get list of result path templates.
-            result_paths_tpls = [
-                re.sub(r"^work/", "output/", path)
-                for path in self.get_output_files(action).values()
-            ]
-            #: Generate all concrete output paths.
-            for library_name in self.parent.libraries["library_name"]:
-                for sub_step in self.parent.sub_steps.values():
-                    if (
-                        isinstance(sub_step, ReadMappingStepPart)
-                        and not sub_step.skip_result_files_for_library(library_name)
-                        and not self.skip_result_files_for_library(library_name)
-                    ):
-                        for path_tpl in result_paths_tpls:
-                            yield path_tpl.format(library_name=library_name)
-                if action == "collect":
-                    break  # only once
-
-
-class ReadMappingStepPart(MappingGetResultFilesMixin, BaseStepPart):
+class ReadMappingStepPart(BaseStepPart):
     """Base class for read mapping step parts"""
 
     report_outputs = {
         "run": {
             f"report_{report}_txt": ReportOutput("BAM QC", caption="bam_qc.rst")
-            for report in ("bamstats", "flagstats", "idxstats")
+            for report in BAM_REPORTS
         }
     }
 
@@ -227,6 +133,13 @@ class ReadMappingStepPart(MappingGetResultFilesMixin, BaseStepPart):
 
     #: The BAM, which a BQSR task may process further
     bam_outputs = {"run": ("bam", "bam_bai")}
+
+    result_keys = ("bam", "bam_bai", "bam_md5", "bam_bai_md5") + tuple(
+        f"report_{report}_txt{suffix}" for report in BAM_REPORTS for suffix in ("", "_md5")
+    )
+
+    #: The libraries that the tool maps, as a pandas query
+    library_requirement: str
 
     base_path_out = "work/{{library_name}}/out/{{library_name}}{ext}"
 
@@ -246,16 +159,13 @@ class ReadMappingStepPart(MappingGetResultFilesMixin, BaseStepPart):
     @dictify
     def _get_output_files_run(self):
         """Return the output files that all read mapping sub steps write."""
-        if self.name != self.config.tool:
-            return
         exts = (".bam", ".bam.bai")
         if Intermediate.bam not in self.config.delete_intermediates:
             exts += (".bam.md5", ".bam.bai.md5")  # only result files have an .md5
         for ext in exts:
             yield ext[1:].replace(".", "_"), self.base_path_out.format(ext=ext)
-        reports = ("bamstats", "flagstats", "idxstats")
         for suffix in ("", ".md5"):
-            for report in reports:
+            for report in BAM_REPORTS:
                 key = f"report_{report}_txt" + suffix.replace(".", "_")
                 yield (
                     key,
@@ -263,77 +173,43 @@ class ReadMappingStepPart(MappingGetResultFilesMixin, BaseStepPart):
                 )
 
     def _get_log_file_run(self):
-        if self.name != self.config.tool:
-            return {}
         return {"log": "work/{library_name}/log/{library_name}.mapping.log"}
 
 
 class BwaStepPart(ReadMappingStepPart):
-    """Support for performing NGS alignment using BWA"""
+    """Short-read DNA mapping with BWA; BWA-MEM2 and BWA-MEM3 differ only in their name"""
 
     #: Step name
     name = "bwa"
     wrappers = {"run": "bwa"}
 
-    #: Tool category
-    tool_category = "dna"
+    library_requirement = f"extraction_type == 'dna' and not {LONG_READS}"
 
     @property
     def default_resource_usage(self) -> ResourceUsage:
-        threads = self.config.bwa.num_threads_align
+        threads = self.tool_section().num_threads_align
         return ResourceUsage(threads=threads, runtime="3d", mem=f"{int(4.5 * 1024 * threads)}MB")
 
     def _get_params_run(self, wildcards: Wildcards) -> dict[str, Any]:
-        parent_args = super()._get_params_run(wildcards)
-        parent_args.update(self.config.bwa.model_dump(by_alias=True))
-        parent_args["read_groups"] = self._read_group_names(wildcards)
-        return parent_args
+        return (
+            super()._get_params_run(wildcards)
+            | self.tool_section().model_dump(by_alias=True)
+            | {"read_groups": self._read_group_names(wildcards)}
+        )
 
     def _get_input_files_run(self, wildcards):
         inputs = super()._get_input_files_run(wildcards)
-        return inputs | {"index": self.parent.get_index_files("bwa")}
+        return inputs | {"index": self.parent.get_index_files(self.name)}
 
 
-class BwaMem2StepPart(ReadMappingStepPart):
+class BwaMem2StepPart(BwaStepPart):
     name = "bwa_mem2"
     wrappers = {"run": "bwa_mem2"}
-    tool_category = "dna"
-
-    @property
-    def default_resource_usage(self) -> ResourceUsage:
-        threads = self.config.bwa_mem2.num_threads_align
-        return ResourceUsage(threads=threads, runtime="3d", mem=f"{int(4.5 * 1024 * threads)}MB")
-
-    def _get_params_run(self, wildcards: Wildcards) -> dict[str, Any]:
-        parent_args = super()._get_params_run(wildcards)
-        parent_args.update(self.config.bwa_mem2.model_dump(by_alias=True))
-        parent_args["read_groups"] = self._read_group_names(wildcards)
-        return parent_args
-
-    def _get_input_files_run(self, wildcards):
-        inputs = super()._get_input_files_run(wildcards)
-        return inputs | {"index": self.parent.get_index_files("bwa_mem2")}
 
 
-class BwaMem3StepPart(ReadMappingStepPart):
+class BwaMem3StepPart(BwaStepPart):
     name = "bwa_mem3"
     wrappers = {"run": "bwa_mem3"}
-    tool_category = "dna"
-
-    @property
-    def default_resource_usage(self) -> ResourceUsage:
-        threads = self.config.bwa_mem3.num_threads_align
-        return ResourceUsage(threads=threads, runtime="3d", mem=f"{int(4.5 * 1024 * threads)}MB")
-
-    def _get_params_run(self, wildcards: Wildcards) -> dict[str, Any]:
-        parent_args = super()._get_params_run(wildcards)
-        parent_args.update(self.config.bwa_mem3.model_dump(by_alias=True))
-        parent_args["read_groups"] = self._read_group_names(wildcards)
-        return parent_args
-
-    def _get_input_files_run(self, wildcards):
-        inputs = super()._get_input_files_run(wildcards)
-        return inputs | {"index": self.parent.get_index_files("bwa_mem3")}
 
 
 class StarStepPart(ReadMappingStepPart):
@@ -343,27 +219,30 @@ class StarStepPart(ReadMappingStepPart):
     name = "star"
     wrappers = {"run": "star"}
 
-    #: Tool category
-    tool_category = "rna"
+    library_requirement = f"extraction_type == 'rna' and not {LONG_READS}"
 
     #: The gene counts of STAR (all strands) are input of the strandedness step, whose result
     #: file holds the counts of the inferred strand
-    non_result_keys = ("gene_counts",)
+    result_keys = ReadMappingStepPart.result_keys + (
+        "junctions",
+        "junctions_md5",
+        "log_final",
+        "log_final_md5",
+        "transcriptome",
+        "transcriptome_md5",
+    )
 
     intermediate_outputs = {"run": ("gene_counts",)}
 
     def _get_output_files_run(self):
         """Override base class' function to make Snakemake aware of extra files for STAR."""
         output_files = super()._get_output_files_run()
-        if (cfg := self.config.get(self.name)) is None:
-            return output_files
-
         output_files["gene_counts"] = self.base_path_out.format(ext=".ReadsPerGene.tab")
         output_files["junctions"] = self.base_path_out.format(ext=".Junctions.tab")
         output_files["junctions_md5"] = output_files["junctions"] + ".md5"
         output_files["log_final"] = self.base_path_out.format(ext=".Log.final.out")
         output_files["log_final_md5"] = output_files["log_final"] + ".md5"
-        if cfg.transcriptome:
+        if self.config.star.transcriptome:
             output_files["transcriptome"] = self.base_path_out.format(ext=".toTranscriptome.bam")
             output_files["transcriptome_md5"] = output_files["transcriptome"] + ".md5"
         return output_files
@@ -387,12 +266,16 @@ class StarStepPart(ReadMappingStepPart):
 
 
 class StrandednessStepPart(BaseStepPart):
+    """The strand of each RNA library, and STAR's gene counts of that strand"""
+
     name = "strandedness"
     actions = ("infer", "counts")
-    wrappers = {"infer": "rseqc"}
+    wrappers = {"infer": "rseqc", "counts": "strandedness/counts"}
 
     #: ``counts`` only selects columns of the STAR counts
     extra_arguments_action = "infer"
+
+    result_keys = {"infer": ("decision", "decision_md5"), "counts": ("counts", "counts_md5")}
 
     def _get_input_files_infer(self, wildcards):
         # Must reference the mapper-specific work directory
@@ -422,27 +305,14 @@ class StrandednessStepPart(BaseStepPart):
             "counts_md5": "work/{library_name}/out/{library_name}.GeneCounts.tab.md5",
         }
 
-    def get_result_files(self):
-        if self.config.tool != "star":
-            return
-        tpl_out = "output/{library_name}/out/{library_name}.GeneCounts.tab"
-        tpl_strandedness = "output/{library_name}/strandedness/{library_name}.decision.json"
-        for library_name in self.parent.libraries["library_name"]:
-            info = self.parent.library_infos[library_name]
-            if info["extraction_type"] == "rna":
-                yield tpl_out.format(library_name=library_name)
-                yield tpl_out.format(library_name=library_name) + ".md5"
-                yield tpl_strandedness.format(library_name=library_name)
-                yield tpl_strandedness.format(library_name=library_name) + ".md5"
-
-    def _get_log_file(self, action):
+    def _get_log_file_infer(self):
         return {"log": "work/{library_name}/log/{library_name}.strandedness.log"}
 
+    def _get_log_file_counts(self):
+        return {"log": "work/{library_name}/log/{library_name}.gene_counts.log"}
+
     def _get_params_infer(self, wildcards: Wildcards) -> dict[str, Any]:
-        return {
-            "config": self.config.strandedness.model_dump(by_alias=True),
-            "library_name": wildcards.library_name,
-        }
+        return strandedness_params(self.config.strandedness, wildcards.library_name)
 
 
 class Minimap2StepPart(ReadMappingStepPart):
@@ -452,8 +322,7 @@ class Minimap2StepPart(ReadMappingStepPart):
     name = "minimap2"
     wrappers = {"run": "minimap2"}
 
-    #: Tool category
-    tool_category = "dna_long"
+    library_requirement = f"extraction_type == 'dna' and {LONG_READS}"
 
     @property
     def default_resource_usage(self) -> ResourceUsage:
@@ -467,31 +336,31 @@ class Minimap2StepPart(ReadMappingStepPart):
     def _get_params_run(self, wildcards: Wildcards) -> dict[str, Any]:
         params = super()._get_params_run(wildcards)
         params |= self.config.minimap2.model_dump(by_alias=True)
-        params["library_kit"] = self.parent.library_infos[wildcards.library_name]["library_kit"]
+        params["library_kit"] = self.parent.library_row(wildcards.library_name)["library_kit"]
         params["library_name"] = wildcards.library_name
         return params
 
 
-class BamCollectDocStepPart(ReportGetResultFilesMixin, BaseStepPart):
+class BamCollectDocStepPart(BaseStepPart):
     """Generate depth of coverage files."""
 
     #: Step name
     name = "bam_collect_doc"
 
-    #: Run for "dna" and "dna_long" only
-    tool_categories = ("dna", "dna_long")
-
     #: Class available actions
     actions = ("run",)
     wrappers = {"run": "maelstrom/bam_collect_doc"}
 
-    def skip_result_files_for_library(self, library_name: str) -> bool:
-        return not self.config.bam_collect_doc.enabled or super().skip_result_files_for_library(
-            library_name
-        )
-
-    def __init__(self, parent):
-        super().__init__(parent)
+    result_keys = (
+        "vcf",
+        "vcf_md5",
+        "vcf_tbi",
+        "vcf_tbi_md5",
+        "cov_bw",
+        "cov_bw_md5",
+        "mq_bw",
+        "mq_bw_md5",
+    )
 
     @dictify
     def _get_input_files_run(self, wildcards):
@@ -542,15 +411,6 @@ class BamQcSummaryStepPart(QcSummaryStepPart):
     def source(self) -> tuple[str, str]:
         return (self.config.tool, "run")
 
-    def entities(self) -> list[str]:
-        """The libraries that the mapper maps (its tool categories)."""
-        mapper = self.parent.sub_steps[self.config.tool]
-        return [
-            name
-            for name in self.parent.libraries["library_name"]
-            if not mapper.skip_result_files_for_library(name)
-        ]
-
 
 class NgsMappingWorkflow(BaseStep):
     """Perform NGS Mapping"""
@@ -558,8 +418,8 @@ class NgsMappingWorkflow(BaseStep):
     #: Step name
     name = "ngs_mapping"
 
-    #: All libraries, background included; the tool maps those of its category (DNA, long-read
-    #: DNA or RNA) and ``library_selection`` narrows them
+    #: All libraries, background included; the tool maps those of its ``library_requirement``
+    #: (short-read DNA, long-read DNA or short-read RNA) and ``library_selection`` narrows them
     library_default = ""
     background_results = True
 
@@ -569,6 +429,19 @@ class NgsMappingWorkflow(BaseStep):
     ]
 
     config_model_class = NgsMappingConfigModel
+
+    tool_parts = {
+        Tool.bwa: BwaStepPart,
+        Tool.bwa_mem2: BwaMem2StepPart,
+        Tool.bwa_mem3: BwaMem3StepPart,
+        Tool.minimap2: Minimap2StepPart,
+        Tool.star: StarStepPart,
+    }
+
+    @classmethod
+    def task_library_requirement(cls, config):
+        """The libraries that the tool maps."""
+        return cls.tool_parts[config.tool].library_requirement
 
     @classmethod
     def task_produces(cls, config, upstream):
@@ -601,44 +474,16 @@ class NgsMappingWorkflow(BaseStep):
 
     def __init__(self, workflow, project, task_name):
         super().__init__(workflow, project, task_name)
-        match self.config.tool:
-            case "bwa":
-                selected_mapper = BwaStepPart
-            case "bwa_mem2":
-                selected_mapper = BwaMem2StepPart
-            case "bwa_mem3":
-                selected_mapper = BwaMem3StepPart
-            case "minimap2":
-                selected_mapper = Minimap2StepPart
-            case "star":
-                selected_mapper = StarStepPart
-            case _:
-                raise NotImplementedError(f"Unknown tool: {self.config.tool}")
-        self.register_sub_step_classes(
-            (
-                selected_mapper,
-                StrandednessStepPart,
-                BamCollectDocStepPart,
-                BamQcSummaryStepPart,
-            )
-        )
+        if self.config.tool == Tool.star:
+            # STAR's gene counts of the strand that RSeQC infers
+            parts = (StrandednessStepPart,)
+        elif self.config.bam_collect_doc.enabled:
+            parts = (BamCollectDocStepPart,)
+        else:
+            parts = ()
+        self.register_sub_step_classes((*parts, BamQcSummaryStepPart))
         # Validate project
         self.validate_project(config=self.config)
-
-    @cached_property
-    def library_infos(self) -> dict[str, dict[str, Any]]:
-        """Return library name -> row of the library dataframe, background data sets included.
-
-        The task maps the libraries of the background data sets as well. A name that several data
-        sets have must be settled by the task's ``library_selection``.
-        """
-        return {name: self.library_row(name) for name in self._library_rows}
-
-    def library_tool_category(self, library_name: str) -> str:
-        """Return the tool category of a library: its extraction type, ``_long`` for long reads."""
-        info = self.library_infos[library_name]
-        suffix = "_long" if info["seq_platform"] in ("ONT", "PacBio") else ""
-        return f"{info['extraction_type']}{suffix}"
 
     def get_index_path(self, tool_name: str) -> str:
         """Return the index of ``tool_name`` from the ``depends_on.index`` task, tagged with it."""

@@ -303,6 +303,7 @@ def _part(group_by="library", libraries=TUMORS, **settings):
         member_libraries=lambda name: ["child-DNA1", "father-DNA1", "mother-DNA1"],
         primary_library=lambda name: name,
         library_row=lambda name: ROWS[name],
+        matched_normal=lambda name: ROWS[name].get("matched_normal_lib") or "",
         get_upstream_paths=_upstream,
         reference_inputs=lambda: {"reference": "ref.fa"},
         pedigree_donors=lambda index: pd.DataFrame(),

@@ -179,21 +179,16 @@ Consumers read upstream files only through `get_upstream_paths()`, which replace
 
 ## The `snappy` command
 
-The old entry-point scripts are replaced by a single `snappy` command with subcommands:
+The old entry-point scripts are replaced by a single `snappy` command with subcommands; {ref}`usage_commands` lists them all.
 
-| Subcommand           | Purpose                                                                               |
-| -------------------- | ------------------------------------------------------------------------------------- |
-| `snappy init`        | Create a project directory with `config.yaml` and `README.md`.                        |
-| `snappy task add`    | Add tasks to the `config.yaml` of a project.                                          |
-| `snappy task list`   | List the tasks of a project, or the available steps with `--available`.               |
-| `snappy task steps`  | List the available steps.                                                             |
-| `snappy check-files` | List the files that `config.yaml` names but that do not exist.                        |
-| `snappy run`         | Run the pipeline with Snakemake.                                                      |
-| `snappy report`      | Build the Snakemake report of the QC outputs (`report.zip` in the project directory). |
-| `snappy watch`       | Open the `snkmt` TUI to monitor a running workflow.                                   |
-| `snappy logs`        | Archive the logs of a run whose Snakemake process was killed.                         |
-| `snappy pull-sheet`  | Pull a sample sheet from the SODAR API.                                               |
-| `snappy completion`  | Print the shell completion script for bash, zsh or fish.                              |
+| main                   | snake9                                                               |
+| ---------------------- | -------------------------------------------------------------------- |
+| `snappy-start-project` | `snappy init`                                                        |
+| `snappy-start-step`    | `snappy task add`                                                    |
+| `snappy-snake`         | `snappy run`                                                         |
+| `snappy-pull-sheet`    | `snappy pull-sheet`                                                  |
+| `snappy-refresh-step`  | none: the executor comes from a Snakemake profile                    |
+| `snappy-slurm-status`  | none: the SLURM executor plugin of Snakemake keeps track of the jobs |
 
 ### `snappy run` options
 
@@ -232,8 +227,18 @@ In multi-tool workflows or substeps that require disambiguation, additional wild
 Tasks whose tools write statistics (`ngs_mapping`, `ngs_data_qc` with `alfred` or `picard`, `variant_calling` with `bcftools_stats`) add one job that writes the result file `qc_summary/out/qc_summary.tsv`, one row per library, and renders tables and charts of all libraries for the report (datavzrd).
 Files that main's wrappers wrote without declaring them are declared outputs now: PureCN's plots (`{library}.pdf`, `.local_optima.pdf`, `.segmentation.pdf` and `.chromosomes.pdf` instead of `_local_optima.pdf` and so on), STAR's `{library}.Log.final.out`, and Salmon's `{library}.lib_format_counts.json` and auxiliary directory `{library}.aux` (main: `out/aux/`); Salmon's own log is part of the job log.
 
+The mutect2 sections lost the knobs of the removed nested Snakemake runs (`use_profile`, `restart_times`, `max_jobs_per_second`, `max_status_checks_per_second`, `debug_trunc_tokens`, `keep_tmpdir`, `job_mult_memory`, `job_mult_time`, `merge_mult_memory`, `merge_mult_time`), which nothing read; `num_jobs` and `num_cores` stay.
+The temporary directory of the jobs is `resources.tmpdir` of the project config (main: `global_config.tmpdir`, with `$TODAY`), else `$TMPDIR`.
+
+`homologous_recombination_deficiency` has no `scarHRD.length` and no `depends_on.reference` anymore; scarHRD read neither, only the `seqz` file of the copy number task.
+`somatic_msi_calling` leaves out tumor libraries without a matched normal, with a warning, since MANTIS2 needs the normal.
+
 Profiles are now passed via `--workflow-profile`, which is the recommended approach in Snakemake 9.
 Multiple `--workflow-profile` arguments are layered (later profiles override earlier ones), so the default profile is applied first and the SLURM profile overrides only what it needs to.
+
+`somatic_targeted_seq_cnv_calling` with `tool: purecn` lost `purecn.genome_name` and `purecn.seed`: its PureCN jobs take those of the panel of normals task, like its image.
+`somatic_targeted_seq_cnv_calling` lost `purecn.enrichment_kit_name`, which no wrapper read.
+The `cnvkit` section of `panel_of_normals` lost `genemetrics`, `segmetrics`, `breaks` and `drop_low_coverage`, which the panel report never read.
 
 ## Snakemake 7 to Snakemake 9
 
@@ -242,7 +247,7 @@ The most visible change is that **subworkflows** have been replaced by Snakemake
 Each step's Snakefile is imported as a module with a `replace_prefix` mapping, so output and work directories are namespaced per task (e.g. `tasks/sample_bwa/output/` instead of a flat `output/`).
 This is what makes it possible to run the same step type multiple times in one project without file collisions.
 
-More wrappers were migrated to the typed wrapper classes (`RWrapper`, `PythonWrapper`, `ShellWrapper`).
+More wrappers were migrated to the typed wrapper classes (`ShellWrapper`, `PythonWrapper`); R code runs through `ShellWrapper` heredocs.
 These improve type checking and make wrapper signatures more explicit compared to the plain `Wrapper` base class.
 
 The Snakemake version bump also required updates to several dependencies (pandas, pydantic, etc.) to stay compatible with Snakemake's own dependency chain.
@@ -368,6 +373,11 @@ To migrate an existing project:
 23. `config.yaml` has a required `project` section: its `name`, and optionally the `external_id` of the project in a data management system (such as the SODAR project UUID, which tracks where the raw data lives) and a `description`; `snappy init` writes it.
 24. The results of `group_by: related` tasks (joint germline calls, SV calls, their annotation, filtration and checks, the exports) are named after the related group instead of the index library or the primary tumor: `work/FAM_<index donor>/` on germline sheets, or the sheet's family id (the data set's `pedigree_field`, else the `familyId` custom field), `work/PAT_<donor>/` on cancer sheets and the bare index donor on generic sheets; the `write_pedigree.<group>` PED carries the same name in its family column.
     Rerun these tasks, or rename their `work/` directories and files.
+25. `variant_calling` with `tool: bcftools_call` needs `bcftools_call.assembly` (`GRCh37` or `GRCh38`), the ploidy of the sex chromosomes for `bcftools call --ploidy`.
+    Main guessed it from the path of the reference and called every contig diploid when the path named neither build.
+26. `variant_export_external` has no `external_tool` field: the merged VCF of a pedigree is named after the pedigree, without main's `dragen.` prefix.
+27. A `gene_expression_quantification` task with `tool: strandedness` forces its decision with `strandedness.strand`, as `ngs_mapping` does with STAR; main used the step's `strand`.
+    The step's `strand` applies to `featurecounts`, `dupradar` and `salmon` only and takes -1, 0, 1 or 2; a `tool: strandedness` task with a `strand` other than -1 fails at load.
 
 ## Example: a neoepitope config from main and its translation
 

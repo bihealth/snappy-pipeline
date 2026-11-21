@@ -28,7 +28,6 @@ The task links these result files below ``tasks/<task>/output/``, each with a ``
 ``varfish-cli importer caseimportinfo-create`` takes these files; it ignores a database info table and the feature effects of structural variants, which the task therefore no longer writes.
 """
 
-import typing
 import warnings
 from functools import cached_property
 
@@ -83,11 +82,6 @@ class MehariStepPart(BaseStepPart):
     def _get_log_file(self, action: str) -> SnakemakeDict:
         return {"log": f"work/{{library_name}}/log/{{library_name}}.{action}.log"}
 
-    def _sv_calling_is_targeted(self) -> bool:
-        """Whether ``depends_on.structural_variants`` names an ``sv_calling_targeted`` task."""
-        task_name = self.parent.config.depends_on.structural_variants
-        return self.parent.project.task(task_name).step == "sv_calling_targeted"
-
     def _has_result_files(self, action: str) -> bool:
         """Whether the config asks for the files of the action."""
         if action == "annotate_strucvars":
@@ -97,31 +91,26 @@ class MehariStepPart(BaseStepPart):
         return True
 
     def get_result_files(self):
+        pedigrees = self._pedigrees_with_index()
         result = []
         for action in filter(self._has_result_files, self.actions):
-            pedigrees = self._pedigrees_with_index(
-                require_consistent_pedigree_kits=(
-                    action == "annotate_strucvars" and self._sv_calling_is_targeted()
-                )
-            )
             for path in self.get_output_files(action).values():
-                result += expand(path.replace("work/", "output/", 1), library_name=list(pedigrees))
+                result += expand(path.replace("work/", "output/", 1), library_name=pedigrees)
         return result
 
-    @dictify
-    def _pedigrees_with_index(
-        self, *, require_consistent_pedigree_kits: bool = False
-    ) -> typing.Generator[typing.Tuple[str, typing.List[str]], None, None]:
-        """Return ``dict`` that maps each pedigree whose index has a DNA library to the DNA libraries of its members.
+    def _pedigrees_with_index(self) -> list[str]:
+        """Return the pedigrees whose index has a DNA library.
         The other pedigrees are skipped with a warning that names their donors."""
+        result = []
         for pedigree in self.parent.pedigrees():
-            members = self.parent.pedigree_members(pedigree, include_background=True)
             if self.parent.pedigree_index(pedigree, include_background=True) is None:
+                members = self.parent.pedigree_members(pedigree, include_background=True)
                 names = sorted(members["donor_name"])
                 msg = f"INFO: pedigree {pedigree} has no index with a DNA library (donors: {names})"
                 warnings.warn(InconsistentPedigreeWarning(msg))
                 continue
-            yield pedigree, members["library_name"].tolist()
+            result.append(pedigree)
+        return result
 
     def _get_output_files(self, action: str) -> dict[str, str]:
         prefix = "work/{library_name}/out/{library_name}"
@@ -163,46 +152,40 @@ class MehariStepPart(BaseStepPart):
         yield "ped", self._ped(wildcards)
         yield from self.parent.reference_inputs().items()
 
-        if not self.parent.config.depends_on.structural_variants:
-            raise RuntimeError("depends_on.structural_variants is not set")
         sv_config = self.parent.get_task_config("structural_variants")
-        sv_callers = [str(sv_config.tool)]
-        skip_libraries = {
-            sv_caller: getattr(sv_config, sv_caller).skip_libraries for sv_caller in sv_callers
-        }
-
+        sv_caller = str(sv_config.tool)
         library_names = self.parent.pedigree_members(
             wildcards.library_name, include_background=True
         )["library_name"].tolist()
 
-        vcfs = []
-        for sv_caller in sv_callers:
-            if any(map(skip_libraries[sv_caller].__contains__, library_names)):
-                msg = f"Found libraries to skip in family {library_names}.  All samples will be skipped."
-                warnings.warn(SkipLibraryWarning(msg))
-                continue
-
-            if sv_caller == "gcnv":
-                library_kits = [
-                    self.parent.library_kits.get(library_name, "") for library_name in library_names
-                ]
-                if len(set(library_kits)) != 1:
-                    names_kits = list(zip(library_names, library_kits))
-                    msg = (
-                        "Found inconsistent library kits (more than one kit!) for pedigree "
-                        f"{wildcards.library_name}.  The library name/kit pairs are "
-                        f"{names_kits}.  This pedigree will be SKIPPED for gcnv export (as it was "
-                        "skipped for gcnv calls)."
-                    )
-                    warnings.warn(InconsistentLibraryKitsWarning(msg))
-                    continue
-
-            vcfs.append(
-                self.parent.get_upstream_paths(
-                    "structural_variants", library_name=wildcards.library_name
-                )["vcf"]
+        if set(getattr(sv_config, sv_caller).skip_libraries) & set(library_names):
+            msg = (
+                f"Found libraries to skip in family {library_names}.  All samples will be skipped."
             )
-        yield "vcf", vcfs
+            warnings.warn(SkipLibraryWarning(msg))
+            yield "vcf", []
+            return
+
+        if sv_caller == "gcnv":
+            library_kits = [
+                self.parent.library_kits.get(library_name, "") for library_name in library_names
+            ]
+            if len(set(library_kits)) != 1:
+                names_kits = list(zip(library_names, library_kits))
+                msg = (
+                    "Found inconsistent library kits (more than one kit!) for pedigree "
+                    f"{wildcards.library_name}.  The library name/kit pairs are "
+                    f"{names_kits}.  This pedigree will be SKIPPED for gcnv export (as it was "
+                    "skipped for gcnv calls)."
+                )
+                warnings.warn(InconsistentLibraryKitsWarning(msg))
+                yield "vcf", []
+                return
+
+        variants = self.parent.get_upstream_paths(
+            "structural_variants", library_name=wildcards.library_name
+        )
+        yield "vcf", [variants.vcf]
 
     def _get_params_annotate_strucvars(self, wildcards):
         return {
@@ -227,6 +210,11 @@ class MehariStepPart(BaseStepPart):
                 coverage = self.parent.get_upstream_paths("qc", library_name=library_name)
                 result["alfred_qc"].append(coverage.alfred_qc)
         return result
+
+    def _get_params_bam_qc(self, wildcards):
+        """The library of each ``bamstats`` and ``idxstats`` input, in their order"""
+        members = self.parent.pedigree_members(wildcards.library_name, include_background=True)
+        return {"libraries": members["library_name"].tolist()}
 
     def _get_output_files_bam_qc(self) -> SnakemakeDictItemsGenerator:
         return self._get_output_files("bam_qc")

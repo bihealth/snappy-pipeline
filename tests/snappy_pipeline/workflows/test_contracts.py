@@ -7,9 +7,13 @@ from snappy_pipeline.base import ConfigError
 from snappy_pipeline.orchestration import load_project
 from snappy_pipeline.workflow_registry import WORKFLOW_REGISTRY
 from snappy_pipeline.workflows.abstract import BaseStep
-from snappy_pipeline.workflows.abstract.protocol import DataSignature, DataType, select_signature
+from snappy_pipeline.workflows.abstract.protocol import (
+    DataSignature,
+    DataType,
+    ExpectedVariants,
+    select_signature,
+)
 from snappy_pipeline.workflows.ngs_mapping.model import ExpectedAlignments
-from snappy_pipeline.workflows.variant_filtration.model import ExpectedVariantVcf
 from tests.snappy_pipeline.test_orchestration import (
     WORK_DIR,
     _annotation,
@@ -125,7 +129,7 @@ def _filtration_step(**depends_on):
 def test_get_upstream_paths_namespaces_and_wraps_in_schema():
     paths = _filtration_step().get_upstream_paths("variants", library_name="L1")
 
-    assert paths == ExpectedVariantVcf(
+    assert paths == ExpectedVariants(
         vcf="tasks/annotation/work/L1/out/L1.vcf.gz",
         vcf_tbi="tasks/annotation/work/L1/out/L1.vcf.gz.tbi",
     )

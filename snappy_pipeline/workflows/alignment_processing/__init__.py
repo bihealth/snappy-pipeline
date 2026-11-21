@@ -108,6 +108,8 @@ class AlignmentProcessingWorkflow(BaseStep):
 
     config_model_class = AlignmentProcessingConfigModel
 
+    tool_parts = {Tool.gatk4_bqsr: Gatk4BqsrStepPart}
+
     @classmethod
     def task_produces(cls, config, upstream):
         """The alignments this task reads, with the tag of its tool."""
@@ -118,8 +120,3 @@ class AlignmentProcessingWorkflow(BaseStep):
         lib = kwargs.get("library_name", "{library_name}")
         bam = BAM.format(library_name=lib)
         return {"bam": bam, "bai": bam + ".bai"}
-
-    def __init__(self, workflow, project, task_name):
-        super().__init__(workflow, project, task_name)
-        tool_to_class = {Tool.gatk4_bqsr: Gatk4BqsrStepPart}
-        self.register_sub_step_classes((tool_to_class[self.config.tool],))
