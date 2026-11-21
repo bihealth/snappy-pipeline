@@ -10,8 +10,10 @@ if TYPE_CHECKING:
 
 __author__ = "Manuel Holtgrewe <manuel.holtgrewe@bih-charite.de>"
 
+args = snakemake.params.args
+
 ShellWrapper(snakemake).run(
     r"""
-arcasHLA reference --version {snakemake.params.reference_version} --verbose
+arcasHLA reference --version {args[reference_version]} --verbose
 """
 )

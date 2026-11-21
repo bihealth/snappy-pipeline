@@ -204,7 +204,11 @@
    "tasks/reference_index_bwa/work/reference_index/out/reference.dict",
    "tasks/reference_index_bwa/work/reference_index/out/reference.fa.genome"
   ],
-  "params": {},
+  "params": {
+   "args": {
+    "code": "<hash>"
+   }
+  },
   "resources": {
    "mem": "2 GB",
    "mem_mb": 2000,
@@ -258,7 +262,11 @@
    "tasks/variant_calling_freebayes/work/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1.vcf.gz.tbi",
    "tasks/variant_calling_freebayes/work/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1.vcf.gz.tbi.md5"
   ],
-  "params": {},
+  "params": {
+   "args": {
+    "code": "<hash>"
+   }
+  },
   "resources": {
    "mem": "4 GB",
    "mem_mb": 4000,

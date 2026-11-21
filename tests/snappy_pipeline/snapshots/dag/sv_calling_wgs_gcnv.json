@@ -36,6 +36,7 @@
   ],
   "params": {
    "args": {
+    "code": "<hash>",
     "interval_merging_rule": "OVERLAPPING_ONLY"
    }
   },
@@ -150,6 +151,7 @@
   ],
   "params": {
    "args": {
+    "code": "<hash>",
     "interval_merging_rule": "OVERLAPPING_ONLY",
     "padding": 0
    }
@@ -323,7 +325,11 @@
    "tasks/reference_index_bwa/work/reference_index/out/reference.dict",
    "tasks/reference_index_bwa/work/reference_index/out/reference.fa.genome"
   ],
-  "params": {},
+  "params": {
+   "args": {
+    "code": "<hash>"
+   }
+  },
   "resources": {
    "mem": "2 GB",
    "mem_mb": 2000,
@@ -377,7 +383,11 @@
    "tasks/sv_calling_wgs_gcnv/work/PAT_case001subregion/out/PAT_case001subregion.wgs.joint_segmentation.vcf.gz",
    "tasks/sv_calling_wgs_gcnv/work/PAT_case001subregion/out/PAT_case001subregion.wgs.joint_segmentation.vcf.gz.tbi"
   ],
-  "params": {},
+  "params": {
+   "args": {
+    "code": "<hash>"
+   }
+  },
   "resources": {
    "mem": "46.08 GB",
    "mem_mb": 46080,
@@ -412,7 +422,11 @@
    "tasks/sv_calling_wgs_gcnv/work/PAT_case001subregion/out/PAT_case001subregion.vcf.gz.md5",
    "tasks/sv_calling_wgs_gcnv/work/PAT_case001subregion/out/PAT_case001subregion.vcf.gz.tbi.md5"
   ],
-  "params": {},
+  "params": {
+   "args": {
+    "code": "<hash>"
+   }
+  },
   "resources": {
    "mem": "7.68 GB",
    "mem_mb": 7680,
@@ -496,7 +510,11 @@
   "output": [
    "tasks/sv_calling_wgs_gcnv/work/write_pedigree.PAT_case001subregion/out/PAT_case001subregion.ped"
   ],
-  "params": {},
+  "params": {
+   "args": {
+    "pedigree": []
+   }
+  },
   "resources": {},
   "rule": "sv_calling_wgs_gcnv_sv_calling_wgs_write_pedigree_run",
   "temp": [],

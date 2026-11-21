@@ -23,8 +23,10 @@ rule variant_checking_write_pedigree_run:
     output:
         wf.get_output_files("write_pedigree", "run"),
     localrule: True
+    params:
+        args=wf.get_params("write_pedigree", "run"),
     run:
-        wf.substep_dispatch("write_pedigree", "run", wildcards, output)
+        wf.sub_steps["write_pedigree"].write(params.args, output)
 
 
 # Run peddy -------------------------------------------------------------------
@@ -41,14 +43,11 @@ rule variant_checking_peddy_run:
         wf.get_benchmark_file("peddy", "run")
     threads: wf.get_resource("peddy", "run", "threads")
     resources:
-        runtime=wf.get_resource("peddy", "run", "runtime"),
-        mem=wf.get_resource("peddy", "run", "mem"),
-        partition=wf.get_resource("peddy", "run", "partition"),
-        tmpdir=wf.get_resource("peddy", "run", "tmpdir"),
+        **wf.get_resources("peddy", "run"),
     params:
         args=wf.get_params("peddy", "run"),
     wrapper:
-        wf.wrapper_path("peddy/run")
+        wf.get_wrapper("peddy", "run")
 
 
 # QC summary of all pedigrees -------------------------------------------------
@@ -65,11 +64,8 @@ rule variant_checking_qc_summary:
         wf.get_benchmark_file("qc_summary", "run")
     threads: wf.get_resource("qc_summary", "run", "threads")
     resources:
-        runtime=wf.get_resource("qc_summary", "run", "runtime"),
-        mem=wf.get_resource("qc_summary", "run", "mem"),
-        partition=wf.get_resource("qc_summary", "run", "partition"),
-        tmpdir=wf.get_resource("qc_summary", "run", "tmpdir"),
+        **wf.get_resources("qc_summary", "run"),
     params:
         args=wf.get_params("qc_summary", "run"),
     wrapper:
-        wf.wrapper_path("qc_summary")
+        wf.get_wrapper("qc_summary", "run")

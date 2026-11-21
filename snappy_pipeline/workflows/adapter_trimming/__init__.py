@@ -106,6 +106,7 @@ class AdapterTrimmingStepPart(BaseStepPart):
 
 class BbdukStepPart(AdapterTrimmingStepPart):
     name = "bbduk"
+    wrappers = {"run": "bbduk/run"}
     file_keys = ("adapter_sequences", "barcodes")
 
     @property
@@ -115,6 +116,7 @@ class BbdukStepPart(AdapterTrimmingStepPart):
 
 class FastpStepPart(AdapterTrimmingStepPart):
     name = "fastp"
+    wrappers = {"run": "fastp/run"}
     file_keys = ("filter_by_index1", "filter_by_index2")
 
     #: The HTML report of each FASTQ file or pair, below the path of the file

@@ -31,14 +31,11 @@ if wf.config.tool == "optitype":
             wf.get_benchmark_file("optitype", "run")
         threads: wf.get_resource("optitype", "run", "threads")
         resources:
-            runtime=wf.get_resource("optitype", "run", "runtime"),
-            mem=wf.get_resource("optitype", "run", "mem"),
-            partition=wf.get_resource("optitype", "run", "partition"),
-            tmpdir=wf.get_resource("optitype", "run", "tmpdir"),
+            **wf.get_resources("optitype", "run"),
         params:
             args=wf.get_params("optitype", "run"),
         wrapper:
-            wf.wrapper_path("optitype")
+            wf.get_wrapper("optitype", "run")
 
 
 # arcasHLA --------------------------------------------------------------------
@@ -48,21 +45,20 @@ if wf.config.tool == "arcashla":
 
     rule hla_typing_arcashla_prepare_reference:
         output:
-            done="work/prepare_reference/out/.done",
+            **wf.get_output_files("arcashla", "prepare_reference"),
         log:
-            log="work/prepare_reference/log/prepare_reference.log",
+            **wf.get_log_file("arcashla", "prepare_reference"),
         benchmark:
-            "benchmarks/prepare_reference/prepare_reference.tsv"
+            wf.get_benchmark_file("arcashla", "prepare_reference")
         # Network access: downloads and installs fail now and then
         retries: 2
-        threads: 1
+        threads: wf.get_resource("arcashla", "prepare_reference", "threads")
         resources:
-            runtime="4h",
-            mem="8GB",
+            **wf.get_resources("arcashla", "prepare_reference"),
         params:
-            reference_version=wf.config.arcashla.reference_version,
+            args=wf.get_params("arcashla", "prepare_reference"),
         wrapper:
-            wf.wrapper_path("arcashla/prepare_reference")
+            wf.get_wrapper("arcashla", "prepare_reference")
 
     rule hla_typing_arcashla_run:
         input:
@@ -75,11 +71,8 @@ if wf.config.tool == "arcashla":
             wf.get_benchmark_file("arcashla", "run")
         threads: wf.get_resource("arcashla", "run", "threads")
         resources:
-            runtime=wf.get_resource("arcashla", "run", "runtime"),
-            mem=wf.get_resource("arcashla", "run", "mem"),
-            partition=wf.get_resource("arcashla", "run", "partition"),
-            tmpdir=wf.get_resource("arcashla", "run", "tmpdir"),
+            **wf.get_resources("arcashla", "run"),
         params:
             args=wf.get_params("arcashla", "run"),
         wrapper:
-            wf.wrapper_path("arcashla/run")
+            wf.get_wrapper("arcashla", "run")

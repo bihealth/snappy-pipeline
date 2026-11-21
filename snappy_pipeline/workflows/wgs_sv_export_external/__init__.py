@@ -55,6 +55,7 @@ class VarfishAnnotatorExternalStepPart(BaseStepPart):
 
     #: Class available actions
     actions = ("annotate", "merge_vcf")
+    wrappers = {"annotate": "varfish_annotator/annotate_svs", "merge_vcf": "bcftools/merge_vcf"}
 
     intermediate_outputs = {"merge_vcf": ("vcf", "vcf_tbi")}
 

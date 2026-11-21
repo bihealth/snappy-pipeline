@@ -41,6 +41,7 @@ class ScrambleStepPart(BaseStepPart):
 
     #: Class available actions
     actions = ("cluster", "analysis")
+    wrappers = {"analysis": "scramble/analysis", "cluster": "scramble/cluster"}
 
     #: ``cluster`` is scramble's ``cluster_identifier`` script, which takes no tool options
     extra_arguments_action = "analysis"

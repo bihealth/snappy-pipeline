@@ -103,6 +103,11 @@ class CnvettiSomaticWgsStepPart(SomaticWgsCnvCallingStepPart):
 
     #: Class available actions
     actions = ("coverage", "tumor_normal_ratio", "segment")
+    wrappers = {
+        "segment": "cnvetti/wgs/segment",
+        "tumor_normal_ratio": "cnvetti/wgs/tumor_normal_ratio",
+        "coverage": "cnvetti/wgs/coverage",
+    }
 
     extra_arguments_action = "coverage"
 
@@ -279,6 +284,16 @@ class CnvkitSomaticWgsStepPart(SomaticWgsCnvCallingStepPart):
         "plot",
         "report",
     )
+    wrappers = {
+        "report": "cnvkit/report",
+        "export": "cnvkit/export",
+        "plot": "cnvkit/plot",
+        "postprocess": "cnvkit/postprocess",
+        "call": "cnvkit/call",
+        "segment": "cnvkit/segment",
+        "fix": "cnvkit/fix",
+        "coverage": "cnvkit/coverage",
+    }
 
     extra_arguments_action = "segment"
 
@@ -513,6 +528,11 @@ class ControlFreecSomaticWgsStepPart(SomaticWgsCnvCallingStepPart):
 
     #: Class available actions
     actions = ("run", "transform", "plot")
+    wrappers = {
+        "plot": "cnvkit/plot",
+        "transform": "control_freec/transform",
+        "run": "control_freec",
+    }
 
     extra_arguments_action = "run"
 

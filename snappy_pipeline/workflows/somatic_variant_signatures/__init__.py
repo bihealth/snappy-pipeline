@@ -50,6 +50,7 @@ class TabulateVariantsStepPart(SignaturesStepPart):
 
     #: Step name
     name = "tabulate_vcf"
+    wrappers = {"run": "signatures/tabulate_vcf"}
 
     intermediate_outputs = {"run": ("tsv",)}
 
@@ -79,6 +80,7 @@ class DeconstructSigsStepPart(SignaturesStepPart):
 
     #: Step name
     name = "deconstruct_sigs"
+    wrappers = {"run": "signatures/deconstruct_sigs"}
 
     result_keys = ("tsv", "tsv_md5")
 

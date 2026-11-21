@@ -198,7 +198,11 @@
    "tasks/reference_index_bwa/work/reference_index/out/reference.dict",
    "tasks/reference_index_bwa/work/reference_index/out/reference.fa.genome"
   ],
-  "params": {},
+  "params": {
+   "args": {
+    "code": "<hash>"
+   }
+  },
   "resources": {
    "mem": "2 GB",
    "mem_mb": 2000,
@@ -320,7 +324,11 @@
    "tasks/sv_calling_targeted_delly2/work/PAT_case001subregion/out/PAT_case001subregion.merge_calls.bcf",
    "tasks/sv_calling_targeted_delly2/work/PAT_case001subregion/out/PAT_case001subregion.merge_calls.bcf.csi"
   ],
-  "params": {},
+  "params": {
+   "args": {
+    "code": "<hash>"
+   }
+  },
   "resources": {
    "mem": "4 GB",
    "mem_mb": 4000,
@@ -354,7 +362,11 @@
    "tasks/sv_calling_targeted_delly2/work/PAT_case001subregion/out/PAT_case001subregion.vcf.gz.tbi",
    "tasks/sv_calling_targeted_delly2/work/PAT_case001subregion/out/PAT_case001subregion.vcf.gz.tbi.md5"
   ],
-  "params": {},
+  "params": {
+   "args": {
+    "code": "<hash>"
+   }
+  },
   "resources": {
    "mem": "4 GB",
    "mem_mb": 4000,
@@ -387,7 +399,11 @@
    "tasks/variant_calling_freebayes_germline/work/PAT_case001subregion/out/PAT_case001subregion.vcf.gz.tbi",
    "tasks/variant_calling_freebayes_germline/work/PAT_case001subregion/out/PAT_case001subregion.vcf.gz.tbi.md5"
   ],
-  "params": {},
+  "params": {
+   "args": {
+    "code": "<hash>"
+   }
+  },
   "resources": {
    "mem": "4 GB",
    "mem_mb": 4000,
@@ -550,7 +566,11 @@
   "output": [
    "tasks/variant_calling_varlociraptor_germline/work/case001subregion-N1-DNA1-WES1/out/case001subregion-N1-DNA1-WES1.alignment_properties.json"
   ],
-  "params": {},
+  "params": {
+   "args": {
+    "code": "<hash>"
+   }
+  },
   "resources": {
    "mem": "4 GB",
    "mem_mb": 4000,
@@ -669,7 +689,11 @@
    "tasks/variant_calling_varlociraptor_germline/work/PAT_case001subregion/out/PAT_case001subregion.vcf.gz.tbi",
    "tasks/variant_calling_varlociraptor_germline/work/PAT_case001subregion/out/PAT_case001subregion.vcf.gz.tbi.md5"
   ],
-  "params": {},
+  "params": {
+   "args": {
+    "code": "<hash>"
+   }
+  },
   "resources": {
    "mem": "4 GB",
    "mem_mb": 4000,
@@ -783,7 +807,11 @@
    "tasks/variant_calling_varlociraptor_germline/work/PAT_case001subregion/out/PAT_case001subregion/candidates/1-of-2.bcf",
    "tasks/variant_calling_varlociraptor_germline/work/PAT_case001subregion/out/PAT_case001subregion/candidates/2-of-2.bcf"
   ],
-  "params": {},
+  "params": {
+   "args": {
+    "code": "<hash>"
+   }
+  },
   "resources": {
    "mem": "4 GB",
    "mem_mb": 4000,
@@ -817,7 +845,11 @@
   "output": [
    "tasks/variant_calling_varlociraptor_sv/work/case001subregion-N1-DNA1-WES1/out/case001subregion-N1-DNA1-WES1.alignment_properties.json"
   ],
-  "params": {},
+  "params": {
+   "args": {
+    "code": "<hash>"
+   }
+  },
   "resources": {
    "mem": "4 GB",
    "mem_mb": 4000,
@@ -936,7 +968,11 @@
    "tasks/variant_calling_varlociraptor_sv/work/PAT_case001subregion/out/PAT_case001subregion.vcf.gz.tbi",
    "tasks/variant_calling_varlociraptor_sv/work/PAT_case001subregion/out/PAT_case001subregion.vcf.gz.tbi.md5"
   ],
-  "params": {},
+  "params": {
+   "args": {
+    "code": "<hash>"
+   }
+  },
   "resources": {
    "mem": "4 GB",
    "mem_mb": 4000,
@@ -1050,7 +1086,11 @@
    "tasks/variant_calling_varlociraptor_sv/work/PAT_case001subregion/out/PAT_case001subregion/candidates/1-of-2.bcf",
    "tasks/variant_calling_varlociraptor_sv/work/PAT_case001subregion/out/PAT_case001subregion/candidates/2-of-2.bcf"
   ],
-  "params": {},
+  "params": {
+   "args": {
+    "code": "<hash>"
+   }
+  },
   "resources": {
    "mem": "4 GB",
    "mem_mb": 4000,

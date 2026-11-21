@@ -19,12 +19,11 @@ rule reference_index_common_run:
     localrule: True
     threads: wf.get_resource("common", "run", "threads")
     resources:
-        runtime=wf.get_resource("common", "run", "runtime"),
-        mem=wf.get_resource("common", "run", "mem"),
-        partition=wf.get_resource("common", "run", "partition"),
-        tmpdir=wf.get_resource("common", "run", "tmpdir"),
+        **wf.get_resources("common", "run"),
+    params:
+        args=wf.get_params("common", "run"),
     wrapper:
-        wf.wrapper_path("reference_index/common")
+        wf.get_wrapper("common", "run")
 
 
 tool = str(wf.config.tool)
@@ -40,14 +39,11 @@ if tool == "bwa":
         cache: "omit-software"
         threads: wf.get_resource("bwa", "run", "threads")
         resources:
-            runtime=wf.get_resource("bwa", "run", "runtime"),
-            mem=wf.get_resource("bwa", "run", "mem"),
-            partition=wf.get_resource("bwa", "run", "partition"),
-            tmpdir=wf.get_resource("bwa", "run", "tmpdir"),
+            **wf.get_resources("bwa", "run"),
         params:
             args=wf.get_params("bwa", "run"),
         wrapper:
-            wf.wrapper_path("reference_index/bwa")
+            wf.get_wrapper("bwa", "run")
 
 elif tool == "bwa_mem2":
 
@@ -61,14 +57,11 @@ elif tool == "bwa_mem2":
         cache: "omit-software"
         threads: wf.get_resource("bwa_mem2", "run", "threads")
         resources:
-            runtime=wf.get_resource("bwa_mem2", "run", "runtime"),
-            mem=wf.get_resource("bwa_mem2", "run", "mem"),
-            partition=wf.get_resource("bwa_mem2", "run", "partition"),
-            tmpdir=wf.get_resource("bwa_mem2", "run", "tmpdir"),
+            **wf.get_resources("bwa_mem2", "run"),
         params:
             args=wf.get_params("bwa_mem2", "run"),
         wrapper:
-            wf.wrapper_path("reference_index/bwa_mem2")
+            wf.get_wrapper("bwa_mem2", "run")
 
 elif tool == "bwa_mem3":
 
@@ -82,14 +75,11 @@ elif tool == "bwa_mem3":
         cache: "omit-software"
         threads: wf.get_resource("bwa_mem3", "run", "threads")
         resources:
-            runtime=wf.get_resource("bwa_mem3", "run", "runtime"),
-            mem=wf.get_resource("bwa_mem3", "run", "mem"),
-            partition=wf.get_resource("bwa_mem3", "run", "partition"),
-            tmpdir=wf.get_resource("bwa_mem3", "run", "tmpdir"),
+            **wf.get_resources("bwa_mem3", "run"),
         params:
             args=wf.get_params("bwa_mem3", "run"),
         wrapper:
-            wf.wrapper_path("reference_index/bwa_mem3")
+            wf.get_wrapper("bwa_mem3", "run")
 
 elif tool == "minimap2":
 
@@ -103,14 +93,11 @@ elif tool == "minimap2":
         cache: "omit-software"
         threads: wf.get_resource("minimap2", "run", "threads")
         resources:
-            runtime=wf.get_resource("minimap2", "run", "runtime"),
-            mem=wf.get_resource("minimap2", "run", "mem"),
-            partition=wf.get_resource("minimap2", "run", "partition"),
-            tmpdir=wf.get_resource("minimap2", "run", "tmpdir"),
+            **wf.get_resources("minimap2", "run"),
         params:
             args=wf.get_params("minimap2", "run"),
         wrapper:
-            wf.wrapper_path("reference_index/minimap2")
+            wf.get_wrapper("minimap2", "run")
 
 elif tool == "star":
 
@@ -124,11 +111,8 @@ elif tool == "star":
         cache: "omit-software"
         threads: wf.get_resource("star", "run", "threads")
         resources:
-            runtime=wf.get_resource("star", "run", "runtime"),
-            mem=wf.get_resource("star", "run", "mem"),
-            partition=wf.get_resource("star", "run", "partition"),
-            tmpdir=wf.get_resource("star", "run", "tmpdir"),
+            **wf.get_resources("star", "run"),
         params:
             args=wf.get_params("star", "run"),
         wrapper:
-            wf.wrapper_path("reference_index/star")
+            wf.get_wrapper("star", "run")

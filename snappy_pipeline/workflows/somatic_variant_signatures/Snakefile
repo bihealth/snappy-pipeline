@@ -32,14 +32,11 @@ rule somatic_variant_signatures_tabulate_vcf:
         wf.get_benchmark_file("tabulate_vcf", "run")
     threads: wf.get_resource("tabulate_vcf", "run", "threads")
     resources:
-        runtime=wf.get_resource("tabulate_vcf", "run", "runtime"),
-        mem=wf.get_resource("tabulate_vcf", "run", "mem"),
-        partition=wf.get_resource("tabulate_vcf", "run", "partition"),
-        tmpdir=wf.get_resource("tabulate_vcf", "run", "tmpdir"),
+        **wf.get_resources("tabulate_vcf", "run"),
     params:
         args=wf.get_params("tabulate_vcf", "run"),
     wrapper:
-        wf.wrapper_path("signatures/tabulate_vcf")
+        wf.get_wrapper("tabulate_vcf", "run")
 
 
 # Run R deconstructSigs ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -56,11 +53,8 @@ rule somatic_variant_signatures_deconstructsigs:
         wf.get_benchmark_file("deconstruct_sigs", "run")
     threads: wf.get_resource("deconstruct_sigs", "run", "threads")
     resources:
-        runtime=wf.get_resource("deconstruct_sigs", "run", "runtime"),
-        mem=wf.get_resource("deconstruct_sigs", "run", "mem"),
-        partition=wf.get_resource("deconstruct_sigs", "run", "partition"),
-        tmpdir=wf.get_resource("deconstruct_sigs", "run", "tmpdir"),
+        **wf.get_resources("deconstruct_sigs", "run"),
     params:
         args=wf.get_params("deconstruct_sigs", "run"),
     wrapper:
-        wf.wrapper_path("signatures/deconstruct_sigs")
+        wf.get_wrapper("deconstruct_sigs", "run")

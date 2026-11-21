@@ -59,6 +59,7 @@ STAR_SJDB_FILES = (
 class BuildReferenceCommonStepPart(BaseStepPart):
     name = "common"
     actions = ("run",)
+    wrappers = {"run": "reference_index/common"}
 
     default_resource_usage = ResourceUsage(threads=1, runtime="2h", mem="2GB")
 
@@ -108,6 +109,7 @@ class _IndexToolStepPart(BaseStepPart):
 class BwaIndexStepPart(_IndexToolStepPart):
     name = "bwa"
     actions = ("run",)
+    wrappers = {"run": "reference_index/bwa"}
     output_suffixes = (".amb", ".ann", ".bwt", ".pac", ".sa")
 
     default_resource_usage = ResourceUsage(threads=8, runtime="24h", mem="16GB")
@@ -120,6 +122,7 @@ class BwaIndexStepPart(_IndexToolStepPart):
 class BwaMem2IndexStepPart(_IndexToolStepPart):
     name = "bwa_mem2"
     actions = ("run",)
+    wrappers = {"run": "reference_index/bwa_mem2"}
     output_suffixes = (".0123", ".amb", ".ann", ".bwt.2bit.64", ".pac")
 
     default_resource_usage = ResourceUsage(threads=8, runtime="24h", mem="16GB")
@@ -128,6 +131,7 @@ class BwaMem2IndexStepPart(_IndexToolStepPart):
 class BwaMem3IndexStepPart(_IndexToolStepPart):
     name = "bwa_mem3"
     actions = ("run",)
+    wrappers = {"run": "reference_index/bwa_mem3"}
     output_suffixes = (".amb", ".ann", ".bwt.2bit.64", ".pac")
 
     default_resource_usage = ResourceUsage(threads=8, runtime="24h", mem="16GB")
@@ -136,6 +140,7 @@ class BwaMem3IndexStepPart(_IndexToolStepPart):
 class Minimap2IndexStepPart(_IndexToolStepPart):
     name = "minimap2"
     actions = ("run",)
+    wrappers = {"run": "reference_index/minimap2"}
     output_suffixes = (".mmi",)
 
     default_resource_usage = ResourceUsage(threads=8, runtime="12h", mem="16GB")
@@ -144,6 +149,7 @@ class Minimap2IndexStepPart(_IndexToolStepPart):
 class StarIndexStepPart(_IndexToolStepPart):
     name = "star"
     actions = ("run",)
+    wrappers = {"run": "reference_index/star"}
 
     @property
     def output_suffixes(self) -> tuple[str, ...]:

@@ -32,12 +32,11 @@ rule somatic_purity_ploidy_estimate_ascat_baf_tumor:
         wf.get_benchmark_file("ascat", "baf_tumor")
     threads: wf.get_resource("ascat", "baf_tumor", "threads")
     resources:
-        runtime=wf.get_resource("ascat", "baf_tumor", "runtime"),
-        mem=wf.get_resource("ascat", "baf_tumor", "mem"),
-        partition=wf.get_resource("ascat", "baf_tumor", "partition"),
-        tmpdir=wf.get_resource("ascat", "baf_tumor", "tmpdir"),
+        **wf.get_resources("ascat", "baf_tumor"),
+    params:
+        args=wf.get_params("ascat", "baf_tumor"),
     wrapper:
-        wf.wrapper_path("ascat/build_baf")
+        wf.get_wrapper("ascat", "baf_tumor")
 
 
 rule somatic_purity_ploidy_estimate_ascat_baf_normal:
@@ -51,12 +50,11 @@ rule somatic_purity_ploidy_estimate_ascat_baf_normal:
         wf.get_benchmark_file("ascat", "baf_normal")
     threads: wf.get_resource("ascat", "baf_normal", "threads")
     resources:
-        runtime=wf.get_resource("ascat", "baf_normal", "runtime"),
-        mem=wf.get_resource("ascat", "baf_normal", "mem"),
-        partition=wf.get_resource("ascat", "baf_normal", "partition"),
-        tmpdir=wf.get_resource("ascat", "baf_normal", "tmpdir"),
+        **wf.get_resources("ascat", "baf_normal"),
+    params:
+        args=wf.get_params("ascat", "baf_normal"),
     wrapper:
-        wf.wrapper_path("ascat/build_baf")
+        wf.get_wrapper("ascat", "baf_normal")
 
 
 # Get logR for tumor and normal in WGS ----------------------------------------
@@ -73,12 +71,11 @@ rule somatic_purity_ploidy_estimate_ascat_cnv_tumor:
         wf.get_benchmark_file("ascat", "cnv_tumor")
     threads: wf.get_resource("ascat", "cnv_tumor", "threads")
     resources:
-        runtime=wf.get_resource("ascat", "cnv_tumor", "runtime"),
-        mem=wf.get_resource("ascat", "cnv_tumor", "mem"),
-        partition=wf.get_resource("ascat", "cnv_tumor", "partition"),
-        tmpdir=wf.get_resource("ascat", "cnv_tumor", "tmpdir"),
+        **wf.get_resources("ascat", "cnv_tumor"),
+    params:
+        args=wf.get_params("ascat", "cnv_tumor"),
     wrapper:
-        wf.wrapper_path("ascat/build_cnv")
+        wf.get_wrapper("ascat", "cnv_tumor")
 
 
 rule somatic_purity_ploidy_estimate_ascat_cnv_normal:
@@ -92,12 +89,11 @@ rule somatic_purity_ploidy_estimate_ascat_cnv_normal:
         wf.get_benchmark_file("ascat", "cnv_normal")
     threads: wf.get_resource("ascat", "cnv_normal", "threads")
     resources:
-        runtime=wf.get_resource("ascat", "cnv_normal", "runtime"),
-        mem=wf.get_resource("ascat", "cnv_normal", "mem"),
-        partition=wf.get_resource("ascat", "cnv_normal", "partition"),
-        tmpdir=wf.get_resource("ascat", "cnv_normal", "tmpdir"),
+        **wf.get_resources("ascat", "cnv_normal"),
+    params:
+        args=wf.get_params("ascat", "cnv_normal"),
     wrapper:
-        wf.wrapper_path("ascat/build_cnv")
+        wf.get_wrapper("ascat", "cnv_normal")
 
 
 # run ASCAT R package with prepared input files -------------------------------
@@ -114,11 +110,8 @@ rule somatic_purity_ploidy_estimate_ascat_run_ascat:
         wf.get_benchmark_file("ascat", "run_ascat")
     threads: wf.get_resource("ascat", "run_ascat", "threads")
     resources:
-        runtime=wf.get_resource("ascat", "run_ascat", "runtime"),
-        mem=wf.get_resource("ascat", "run_ascat", "mem"),
-        partition=wf.get_resource("ascat", "run_ascat", "partition"),
-        tmpdir=wf.get_resource("ascat", "run_ascat", "tmpdir"),
+        **wf.get_resources("ascat", "run_ascat"),
     params:
         args=wf.get_params("ascat", "run_ascat"),
     wrapper:
-        wf.wrapper_path("ascat/run_ascat")
+        wf.get_wrapper("ascat", "run_ascat")

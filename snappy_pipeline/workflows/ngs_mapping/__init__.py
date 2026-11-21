@@ -273,6 +273,7 @@ class BwaStepPart(ReadMappingStepPart):
 
     #: Step name
     name = "bwa"
+    wrappers = {"run": "bwa"}
 
     #: Tool category
     tool_category = "dna"
@@ -295,6 +296,7 @@ class BwaStepPart(ReadMappingStepPart):
 
 class BwaMem2StepPart(ReadMappingStepPart):
     name = "bwa_mem2"
+    wrappers = {"run": "bwa_mem2"}
     tool_category = "dna"
 
     @property
@@ -315,6 +317,7 @@ class BwaMem2StepPart(ReadMappingStepPart):
 
 class BwaMem3StepPart(ReadMappingStepPart):
     name = "bwa_mem3"
+    wrappers = {"run": "bwa_mem3"}
     tool_category = "dna"
 
     @property
@@ -338,6 +341,7 @@ class StarStepPart(ReadMappingStepPart):
 
     #: Step name
     name = "star"
+    wrappers = {"run": "star"}
 
     #: Tool category
     tool_category = "rna"
@@ -385,6 +389,7 @@ class StarStepPart(ReadMappingStepPart):
 class StrandednessStepPart(BaseStepPart):
     name = "strandedness"
     actions = ("infer", "counts")
+    wrappers = {"infer": "rseqc"}
 
     #: ``counts`` only selects columns of the STAR counts
     extra_arguments_action = "infer"
@@ -445,6 +450,7 @@ class Minimap2StepPart(ReadMappingStepPart):
 
     #: Step name
     name = "minimap2"
+    wrappers = {"run": "minimap2"}
 
     #: Tool category
     tool_category = "dna_long"
@@ -477,6 +483,7 @@ class BamCollectDocStepPart(ReportGetResultFilesMixin, BaseStepPart):
 
     #: Class available actions
     actions = ("run",)
+    wrappers = {"run": "maelstrom/bam_collect_doc"}
 
     def skip_result_files_for_library(self, library_name: str) -> bool:
         return not self.config.bam_collect_doc.enabled or super().skip_result_files_for_library(

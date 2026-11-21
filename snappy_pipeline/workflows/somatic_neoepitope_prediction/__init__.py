@@ -112,6 +112,7 @@ class PvacToolsStepPart(NeoepitopeStepPart):
 
     name = "pvactools"
     actions = ("normalize", "hla_types")
+    wrappers = {"hla_types": "pvactools/hla_types", "normalize": "pvactools/normalize"}
 
     resource_usage = {
         "normalize": ResourceUsage(threads=1, runtime="1h", mem="4GB"),
@@ -255,6 +256,11 @@ class PvacSeqStepPart(PredictionStepPart):
 
     name = "pvacseq"
     actions = ("pileup", "add_expression", "run")
+    wrappers = {
+        "run": "pvactools/pvacseq",
+        "add_expression": "pvactools/add_expression",
+        "pileup": "pvactools/pileup",
+    }
 
     resource_usage = {
         "pileup": ResourceUsage(threads=1, runtime="4h", mem="6GB"),
@@ -358,6 +364,7 @@ class PvacFuseStepPart(PredictionStepPart):
     """pVACfuse on the arriba fusions of the matched RNA library"""
 
     name = "pvacfuse"
+    wrappers = {"run": "pvactools/pvacfuse"}
 
     @dictify
     def _get_input_files_run(self, wildcards):
@@ -376,6 +383,11 @@ class PvacSpliceStepPart(PredictionStepPart):
 
     name = "pvacsplice"
     actions = ("features", "junction", "run")
+    wrappers = {
+        "run": "pvactools/pvacsplice",
+        "junction": "pvactools/junction",
+        "features": "pvactools/features",
+    }
 
     resource_usage = {
         "features": ResourceUsage(threads=1, runtime="1h", mem="4GB"),
@@ -447,6 +459,7 @@ class NetChopStepPart(PostProcessStepPart):
     """Proteasomal cleavage with NetChop"""
 
     name = "netchop"
+    wrappers = {"run": "pvactools/netchop"}
     result_keys = ("netchop", "netchop_md5")
 
     def _get_input_files_run(self, wildcards):
@@ -479,6 +492,7 @@ class NetStabStepPart(PostProcessStepPart):
     """Stability of the MHC class I epitopes with netMHCstabpan"""
 
     name = "netstab"
+    wrappers = {"run": "pvactools/netstab"}
     result_keys = ("netstab", "netstab_md5")
 
     def _get_input_files_run(self, wildcards):

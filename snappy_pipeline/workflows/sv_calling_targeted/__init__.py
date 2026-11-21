@@ -46,6 +46,8 @@ class SvCallingTargetedWorkflow(BaseStep):
 
     #: Workflow name
     name = "sv_calling_targeted"
+    #: Exomes and panels: the callers take the target regions into account
+    targeted = True
     #: The pedigrees of background data sets are called, too
     uses_background = True
 

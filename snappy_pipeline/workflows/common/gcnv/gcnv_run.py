@@ -264,6 +264,14 @@ class RunGcnvStepPart(
         "joint_germline_cnv_segmentation",
         "merge_multikit_families",
     )
+    wrappers = {
+        "coverage": "gcnv/coverage",
+        "contig_ploidy": "gcnv/contig_ploidy_case_mode",
+        "call_cnvs": "gcnv/call_cnvs_case_mode",
+        "post_germline_calls": "gcnv/post_germline_calls_case_mode",
+        "joint_germline_cnv_segmentation": "gcnv/joint_germline_cnv_segmentation",
+        "merge_multikit_families": "gcnv/merge_multikit_families",
+    }
 
     temp_outputs = {"call_cnvs": ("calls",)}
 

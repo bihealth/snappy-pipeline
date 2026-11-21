@@ -31,14 +31,11 @@ rule somatic_cnv_checking_pileup_normal:
         wf.get_benchmark_file("pileup", "normal")
     threads: wf.get_resource("pileup", "normal", "threads")
     resources:
-        runtime=wf.get_resource("pileup", "normal", "runtime"),
-        mem=wf.get_resource("pileup", "normal", "mem"),
-        partition=wf.get_resource("pileup", "normal", "partition"),
-        tmpdir=wf.get_resource("pileup", "normal", "tmpdir"),
+        **wf.get_resources("pileup", "normal"),
     params:
         args=wf.get_params("pileup", "normal"),
     wrapper:
-        wf.wrapper_path("bcftools/heterozygous_variants")
+        wf.get_wrapper("pileup", "normal")
 
 
 # Run pileup to add read counts in the tumor sample ---------------------------
@@ -55,14 +52,11 @@ rule somatic_cnv_checking_pileup_tumor:
         wf.get_benchmark_file("pileup", "tumor")
     threads: wf.get_resource("pileup", "tumor", "threads")
     resources:
-        runtime=wf.get_resource("pileup", "tumor", "runtime"),
-        mem=wf.get_resource("pileup", "tumor", "mem"),
-        partition=wf.get_resource("pileup", "tumor", "partition"),
-        tmpdir=wf.get_resource("pileup", "tumor", "tmpdir"),
+        **wf.get_resources("pileup", "tumor"),
     params:
         args=wf.get_params("pileup", "tumor"),
     wrapper:
-        wf.wrapper_path("bcftools/pileups")
+        wf.get_wrapper("pileup", "tumor")
 
 
 # Add CNV status at the locii -------------------------------------------------
@@ -80,14 +74,11 @@ if wf.depends_on.get("copy_number"):
             wf.get_benchmark_file("cnv", "run")
         threads: wf.get_resource("cnv", "run", "threads")
         resources:
-            runtime=wf.get_resource("cnv", "run", "runtime"),
-            mem=wf.get_resource("cnv", "run", "mem"),
-            partition=wf.get_resource("cnv", "run", "partition"),
-            tmpdir=wf.get_resource("cnv", "run", "tmpdir"),
+            **wf.get_resources("cnv", "run"),
         params:
             args=wf.get_params("cnv", "run"),
         wrapper:
-            wf.wrapper_path("vcfpy/add_bed")
+            wf.get_wrapper("cnv", "run")
 
     # Generate report & plots -----------------------------------------------------
     rule somatic_cnv_checking_cnv_report:
@@ -101,11 +92,8 @@ if wf.depends_on.get("copy_number"):
             wf.get_benchmark_file("report", "run")
         threads: wf.get_resource("report", "run", "threads")
         resources:
-            runtime=wf.get_resource("report", "run", "runtime"),
-            mem=wf.get_resource("report", "run", "mem"),
-            partition=wf.get_resource("report", "run", "partition"),
-            tmpdir=wf.get_resource("report", "run", "tmpdir"),
+            **wf.get_resources("report", "run"),
         params:
             args=wf.get_params("report", "run"),
         wrapper:
-            wf.wrapper_path("somatic_cnv_checking")
+            wf.get_wrapper("report", "run")

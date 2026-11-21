@@ -31,7 +31,7 @@ rule cbioportal_export_meta_files:
     params:
         args=wf.get_params("cbioportal_meta_files", "run"),
     wrapper:
-        wf.wrapper_path("cbioportal/meta_files")
+        wf.get_wrapper("cbioportal_meta_files", "run")
 
 
 # cbioportal patient and sample data ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -48,7 +48,7 @@ rule cbioportal_export_patient_data:
     params:
         args=wf.get_params("cbioportal_clinical_data", "run"),
     wrapper:
-        wf.wrapper_path("cbioportal/clinical_data")
+        wf.get_wrapper("cbioportal_clinical_data", "run")
 
 
 rule cbioportal_export_case_lists:
@@ -62,7 +62,7 @@ rule cbioportal_export_case_lists:
     params:
         args=wf.get_params("cbioportal_case_lists", "run"),
     wrapper:
-        wf.wrapper_path("cbioportal/case_lists")
+        wf.get_wrapper("cbioportal_case_lists", "run")
 
 
 # Mutation file (data_mutation_extended.txt) ==================================
@@ -81,14 +81,11 @@ rule cbioportal_export_generate_mafs:
         wf.get_benchmark_file("cbioportal_vcf2maf", "run")
     threads: wf.get_resource("cbioportal_vcf2maf", "run", "threads")
     resources:
-        runtime=wf.get_resource("cbioportal_vcf2maf", "run", "runtime"),
-        mem=wf.get_resource("cbioportal_vcf2maf", "run", "mem"),
-        partition=wf.get_resource("cbioportal_vcf2maf", "run", "partition"),
-        tmpdir=wf.get_resource("cbioportal_vcf2maf", "run", "tmpdir"),
+        **wf.get_resources("cbioportal_vcf2maf", "run"),
     params:
         args=wf.get_params("cbioportal_vcf2maf", "run"),
     wrapper:
-        wf.wrapper_path("vcf2maf/vcf_to_table")
+        wf.get_wrapper("cbioportal_vcf2maf", "run")
 
 
 # Merge all sample MAF files --------------------------------------------------
@@ -129,14 +126,11 @@ if step_config.copy_number_alteration.enabled:
             wf.get_benchmark_file("cbioportal_cns2cna", "run")
         threads: wf.get_resource("cbioportal_cns2cna", "run", "threads")
         resources:
-            runtime=wf.get_resource("cbioportal_cns2cna", "run", "runtime"),
-            mem=wf.get_resource("cbioportal_cns2cna", "run", "mem"),
-            partition=wf.get_resource("cbioportal_cns2cna", "run", "partition"),
-            tmpdir=wf.get_resource("cbioportal_cns2cna", "run", "tmpdir"),
+            **wf.get_resources("cbioportal_cns2cna", "run"),
         params:
             args=wf.get_params("cbioportal_cns2cna", "run"),
         wrapper:
-            wf.wrapper_path("cbioportal/generate_cna")
+            wf.get_wrapper("cbioportal_cns2cna", "run")
 
     # Merge sample-based CNA files to cBioPortal ----------------------------------
     rule cbioportal_export_concatenate_cna_log2:
@@ -150,14 +144,11 @@ if step_config.copy_number_alteration.enabled:
             wf.get_benchmark_file("cbioportal_cna", "log2")
         threads: wf.get_resource("cbioportal_cna", "log2", "threads")
         resources:
-            runtime=wf.get_resource("cbioportal_cna", "log2", "runtime"),
-            mem=wf.get_resource("cbioportal_cna", "log2", "mem"),
-            partition=wf.get_resource("cbioportal_cna", "log2", "partition"),
-            tmpdir=wf.get_resource("cbioportal_cna", "log2", "tmpdir"),
+            **wf.get_resources("cbioportal_cna", "log2"),
         params:
             args=wf.get_params("cbioportal_cna", "log2"),
         wrapper:
-            wf.wrapper_path("cbioportal/merge_tables")
+            wf.get_wrapper("cbioportal_cna", "log2")
 
     rule cbioportal_export_concatenate_cna_gistic:
         input:
@@ -170,14 +161,11 @@ if step_config.copy_number_alteration.enabled:
             wf.get_benchmark_file("cbioportal_cna", "gistic")
         threads: wf.get_resource("cbioportal_cna", "gistic", "threads")
         resources:
-            runtime=wf.get_resource("cbioportal_cna", "gistic", "runtime"),
-            mem=wf.get_resource("cbioportal_cna", "gistic", "mem"),
-            partition=wf.get_resource("cbioportal_cna", "gistic", "partition"),
-            tmpdir=wf.get_resource("cbioportal_cna", "gistic", "tmpdir"),
+            **wf.get_resources("cbioportal_cna", "gistic"),
         params:
             args=wf.get_params("cbioportal_cna", "gistic"),
         wrapper:
-            wf.wrapper_path("cbioportal/merge_tables")
+            wf.get_wrapper("cbioportal_cna", "gistic")
 
     # Merge sample-based segment files to cBioPortal ------------------------------
     rule cbioportal_export_concatenate_segments:
@@ -191,14 +179,11 @@ if step_config.copy_number_alteration.enabled:
             wf.get_benchmark_file("cbioportal_segment", "run")
         threads: wf.get_resource("cbioportal_segment", "run", "threads")
         resources:
-            runtime=wf.get_resource("cbioportal_segment", "run", "runtime"),
-            mem=wf.get_resource("cbioportal_segment", "run", "mem"),
-            partition=wf.get_resource("cbioportal_segment", "run", "partition"),
-            tmpdir=wf.get_resource("cbioportal_segment", "run", "tmpdir"),
+            **wf.get_resources("cbioportal_segment", "run"),
         params:
             args=wf.get_params("cbioportal_segment", "run"),
         wrapper:
-            wf.wrapper_path("cbioportal/merge_tables")
+            wf.get_wrapper("cbioportal_segment", "run")
 
 
 # Create expression RPKMs -----------------------------------------------------
@@ -216,11 +201,8 @@ if step_config.expression.enabled:
             wf.get_benchmark_file("cbioportal_expression", "run")
         threads: wf.get_resource("cbioportal_expression", "run", "threads")
         resources:
-            runtime=wf.get_resource("cbioportal_expression", "run", "runtime"),
-            mem=wf.get_resource("cbioportal_expression", "run", "mem"),
-            partition=wf.get_resource("cbioportal_expression", "run", "partition"),
-            tmpdir=wf.get_resource("cbioportal_expression", "run", "tmpdir"),
+            **wf.get_resources("cbioportal_expression", "run"),
         params:
             args=wf.get_params("cbioportal_expression", "run"),
         wrapper:
-            wf.wrapper_path("cbioportal/merge_tables")
+            wf.get_wrapper("cbioportal_expression", "run")

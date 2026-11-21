@@ -212,7 +212,11 @@
    "tasks/reference_index_bwa/work/reference_index/out/reference.dict",
    "tasks/reference_index_bwa/work/reference_index/out/reference.fa.genome"
   ],
-  "params": {},
+  "params": {
+   "args": {
+    "code": "<hash>"
+   }
+  },
   "resources": {
    "mem": "2 GB",
    "mem_mb": 2000,

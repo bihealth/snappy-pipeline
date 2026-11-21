@@ -35,6 +35,7 @@
   ],
   "params": {
    "args": {
+    "code": "<hash>",
     "interval_merging_rule": "OVERLAPPING_ONLY"
    }
   },
@@ -189,6 +190,7 @@
   "params": {
    "args": {
     "bin_length": 0,
+    "code": "<hash>",
     "interval_merging_rule": "OVERLAPPING_ONLY"
    }
   },
@@ -383,7 +385,11 @@
    "tasks/reference_index_bwa/work/reference_index/out/reference.dict",
    "tasks/reference_index_bwa/work/reference_index/out/reference.fa.genome"
   ],
-  "params": {},
+  "params": {
+   "args": {
+    "code": "<hash>"
+   }
+  },
   "resources": {
    "mem": "2 GB",
    "mem_mb": 2000,

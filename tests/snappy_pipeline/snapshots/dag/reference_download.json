@@ -75,7 +75,11 @@
    "tasks/reference_download/work/reference_download/out/reference.dict",
    "tasks/reference_download/work/reference_download/out/reference.dict.md5"
   ],
-  "params": {},
+  "params": {
+   "args": {
+    "code": "<hash>"
+   }
+  },
   "resources": {
    "mem": "2 GB",
    "mem_mb": 2000,

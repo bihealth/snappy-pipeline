@@ -23,6 +23,11 @@ class MantaStepPart(
     name = "manta"
     actions = ("run",)
 
+    @property
+    def wrappers(self) -> dict[str, str]:
+        """Exomes and genomes run different Manta workflows"""
+        return {"run": "manta/germline_targeted" if self.parent.targeted else "manta/germline_wgs"}
+
     def _get_params_run(self, wildcards):
         """The tool's ``extra_arguments`` only, which ``with_extra_arguments`` adds"""
         return {}

@@ -30,14 +30,11 @@ rule gene_expression_quantification_strandedness_run:
         wf.get_benchmark_file("strandedness", "run")
     threads: wf.get_resource("strandedness", "run", "threads")
     resources:
-        runtime=wf.get_resource("strandedness", "run", "runtime"),
-        mem=wf.get_resource("strandedness", "run", "mem"),
-        partition=wf.get_resource("strandedness", "run", "partition"),
-        tmpdir=wf.get_resource("strandedness", "run", "tmpdir"),
+        **wf.get_resources("strandedness", "run"),
     params:
         args=wf.get_params("strandedness", "run"),
     wrapper:
-        wf.wrapper_path("rseqc")
+        wf.get_wrapper("strandedness", "run")
 
 
 # Gene Expression QC ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -54,14 +51,11 @@ rule gene_expression_quantification_duplication_run:
         wf.get_benchmark_file("duplication", "run")
     threads: wf.get_resource("duplication", "run", "threads")
     resources:
-        runtime=wf.get_resource("duplication", "run", "runtime"),
-        mem=wf.get_resource("duplication", "run", "mem"),
-        partition=wf.get_resource("duplication", "run", "partition"),
-        tmpdir=wf.get_resource("duplication", "run", "tmpdir"),
+        **wf.get_resources("duplication", "run"),
     params:
         args=wf.get_params("duplication", "run"),
     wrapper:
-        wf.wrapper_path("rnaqc/duplication")
+        wf.get_wrapper("duplication", "run")
 
 
 rule gene_expression_quantification_dupradar_run:
@@ -75,14 +69,11 @@ rule gene_expression_quantification_dupradar_run:
         wf.get_benchmark_file("dupradar", "run")
     threads: wf.get_resource("dupradar", "run", "threads")
     resources:
-        runtime=wf.get_resource("dupradar", "run", "runtime"),
-        mem=wf.get_resource("dupradar", "run", "mem"),
-        partition=wf.get_resource("dupradar", "run", "partition"),
-        tmpdir=wf.get_resource("dupradar", "run", "tmpdir"),
+        **wf.get_resources("dupradar", "run"),
     params:
         args=wf.get_params("dupradar", "run"),
     wrapper:
-        wf.wrapper_path("rnaqc/dupradar")
+        wf.get_wrapper("dupradar", "run")
 
 
 rule gene_expression_quantification_rnaseqc_run:
@@ -96,14 +87,11 @@ rule gene_expression_quantification_rnaseqc_run:
         wf.get_benchmark_file("rnaseqc", "run")
     threads: wf.get_resource("rnaseqc", "run", "threads")
     resources:
-        runtime=wf.get_resource("rnaseqc", "run", "runtime"),
-        mem=wf.get_resource("rnaseqc", "run", "mem"),
-        partition=wf.get_resource("rnaseqc", "run", "partition"),
-        tmpdir=wf.get_resource("rnaseqc", "run", "tmpdir"),
+        **wf.get_resources("rnaseqc", "run"),
     params:
         args=wf.get_params("rnaseqc", "run"),
     wrapper:
-        wf.wrapper_path("rnaqc/rnaseqc")
+        wf.get_wrapper("rnaseqc", "run")
 
 
 rule gene_expression_quantification_stats_run:
@@ -117,14 +105,11 @@ rule gene_expression_quantification_stats_run:
         wf.get_benchmark_file("stats", "run")
     threads: wf.get_resource("stats", "run", "threads")
     resources:
-        runtime=wf.get_resource("stats", "run", "runtime"),
-        mem=wf.get_resource("stats", "run", "mem"),
-        partition=wf.get_resource("stats", "run", "partition"),
-        tmpdir=wf.get_resource("stats", "run", "tmpdir"),
+        **wf.get_resources("stats", "run"),
     params:
         args=wf.get_params("stats", "run"),
     wrapper:
-        wf.wrapper_path("rnaqc/stats")
+        wf.get_wrapper("stats", "run")
 
 
 # Gene Expression Quantification ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -143,14 +128,11 @@ rule gene_expression_quantification_featurecounts_run:
         wf.get_benchmark_file("featurecounts", "run")
     threads: wf.get_resource("featurecounts", "run", "threads")
     resources:
-        runtime=wf.get_resource("featurecounts", "run", "runtime"),
-        mem=wf.get_resource("featurecounts", "run", "mem"),
-        partition=wf.get_resource("featurecounts", "run", "partition"),
-        tmpdir=wf.get_resource("featurecounts", "run", "tmpdir"),
+        **wf.get_resources("featurecounts", "run"),
     params:
         args=wf.get_params("featurecounts", "run"),
     wrapper:
-        wf.wrapper_path("featurecounts")
+        wf.get_wrapper("featurecounts", "run")
 
 
 # Gene Expression Quantification ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -169,11 +151,8 @@ rule gene_expression_quantification_salmon_run:
         wf.get_benchmark_file("salmon", "run")
     threads: wf.get_resource("salmon", "run", "threads")
     resources:
-        runtime=wf.get_resource("salmon", "run", "runtime"),
-        mem=wf.get_resource("salmon", "run", "mem"),
-        partition=wf.get_resource("salmon", "run", "partition"),
-        tmpdir=wf.get_resource("salmon", "run", "tmpdir"),
+        **wf.get_resources("salmon", "run"),
     params:
         args=wf.get_params("salmon", "run"),
     wrapper:
-        wf.wrapper_path("salmon")
+        wf.get_wrapper("salmon", "run")

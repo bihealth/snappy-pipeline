@@ -216,7 +216,11 @@
    "tasks/reference_index_bwa/work/reference_index/out/reference.dict",
    "tasks/reference_index_bwa/work/reference_index/out/reference.fa.genome"
   ],
-  "params": {},
+  "params": {
+   "args": {
+    "code": "<hash>"
+   }
+  },
   "resources": {
    "mem": "2 GB",
    "mem_mb": 2000,
@@ -281,7 +285,11 @@
   "output": [
    "tasks/somatic_purity_ploidy_estimate_ascat/work/case001subregion-N1-DNA1-WES1/out/case001subregion-N1-DNA1-WES1.baf_normal.txt"
   ],
-  "params": {},
+  "params": {
+   "args": {
+    "code": "<hash>"
+   }
+  },
   "resources": {
    "mem": "81.92 GB",
    "mem_mb": 81920,
@@ -315,7 +323,11 @@
   "output": [
    "tasks/somatic_purity_ploidy_estimate_ascat/work/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1.baf_tumor.txt"
   ],
-  "params": {},
+  "params": {
+   "args": {
+    "code": "<hash>"
+   }
+  },
   "resources": {
    "mem": "81.92 GB",
    "mem_mb": 81920,
@@ -349,7 +361,11 @@
   "output": [
    "tasks/somatic_purity_ploidy_estimate_ascat/work/case001subregion-N1-DNA1-WES1/out/case001subregion-N1-DNA1-WES1.cnv_normal.txt"
   ],
-  "params": {},
+  "params": {
+   "args": {
+    "code": "<hash>"
+   }
+  },
   "resources": {
    "mem": "81.92 GB",
    "mem_mb": 81920,
@@ -383,7 +399,11 @@
   "output": [
    "tasks/somatic_purity_ploidy_estimate_ascat/work/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1.cnv_tumor.txt"
   ],
-  "params": {},
+  "params": {
+   "args": {
+    "code": "<hash>"
+   }
+  },
   "resources": {
    "mem": "81.92 GB",
    "mem_mb": 81920,

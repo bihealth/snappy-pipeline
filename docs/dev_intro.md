@@ -100,14 +100,11 @@ rule ngs_mapping_bwa_run:
         wf.get_benchmark_file("bwa", "run")
     threads: wf.get_resource("bwa", "run", "threads")
     resources:
-        runtime=wf.get_resource("bwa", "run", "runtime"),
-        mem=wf.get_resource("bwa", "run", "mem"),
-        partition=wf.get_resource("bwa", "run", "partition"),
-        tmpdir=wf.get_resource("bwa", "run", "tmpdir"),
+        **wf.get_resources("bwa", "run"),
     params:
         args=wf.get_params("bwa", "run"),
     wrapper:
-        wf.wrapper_path("bwa")
+        wf.get_wrapper("bwa", "run")
 ```
 
 {ref}`dev_conventions` lists the methods and the per-action methods behind them.
@@ -120,7 +117,7 @@ The Snakefile only wires the Python code into rules.
 
 The tools run in wrappers below `snappy_wrappers/wrappers/<name>/`.
 A wrapper directory holds `wrapper.py`, `environment.yaml` and its pin file `environment.linux-64.pin.txt`.
-`BaseStep.wrapper_path(...)` turns the name into the file URL for the `wrapper:` section.
+A step part names the wrapper of each action in `wrappers`, and `wf.get_wrapper(...)` turns the name into the file URL for the `wrapper:` section.
 
 A wrapper derives from a base class in `snappy_wrappers/snappy_wrapper.py`:
 

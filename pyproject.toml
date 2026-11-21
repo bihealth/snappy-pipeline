@@ -267,13 +267,13 @@ python-fastjsonschema = ">=2.20,<3"
 
 [tool.pixi.feature.dev.tasks]
 fmt = { cmd = "ruff format .", description = "Apply Ruff code formatter" }
-snakefmt = { cmd = "snakefmt snappy_pipeline/workflows/*/Snakefile", description = "Apply Snakefmt code formatter" }
+snakefmt = { cmd = "snakefmt snappy_pipeline/workflows/*/Snakefile snappy_pipeline/workflows/*/*.rules", description = "Apply Snakefmt code formatter" }
 shfmt = { cmd = "python tests/scripts/shell_templates.py --write", description = "Apply shfmt to the shell scripts and the shell templates of the wrappers" }
 srcfmt = { depends-on = ["fmt", "snakefmt", "shfmt"], description = "Apply Python, Snakemake and shell formatters" }
 
 check = { cmd = "ruff check .", description = "Run Ruff code checker" }
 lint-fmt = { cmd = "ruff format --check .", description = "Check Python formatting" }
-lint-snakefmt = { cmd = "snakefmt --check snappy_pipeline/workflows/*/Snakefile", description = "Check Snakemake formatting" }
+lint-snakefmt = { cmd = "snakefmt --check snappy_pipeline/workflows/*/Snakefile snappy_pipeline/workflows/*/*.rules", description = "Check Snakemake formatting" }
 lint-shell = { cmd = "python tests/scripts/shell_templates.py", description = "Check the shell scripts and the shell templates of the wrappers with shfmt" }
 lint = { depends-on = ["check", "lint-fmt", "lint-snakefmt", "lint-shell"], description = "Run all linters" }
 

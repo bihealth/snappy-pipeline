@@ -66,6 +66,7 @@ class Gatk4BqsrStepPart(AlignmentProcessingStepPart):
     """Base quality score recalibration with GATK"""
 
     name = "gatk4_bqsr"
+    wrappers = {"run": "gatk4_bqsr"}
 
     result_keys = ("bam", "bam_bai", "bam_md5", "bam_bai_md5", "recal_table", "recal_table_md5")
 

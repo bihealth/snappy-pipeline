@@ -26,6 +26,12 @@ class Delly2StepPart(
 
     name = "delly2"
     actions = ("call", "merge_calls", "genotype", "merge_genotypes")
+    wrappers = {
+        "merge_genotypes": "delly2/germline/merge_genotypes",
+        "genotype": "delly2/germline/genotype",
+        "merge_calls": "delly2/germline/merge_calls",
+        "call": "delly2/germline/call",
+    }
 
     #: ``genotype`` runs ``delly call`` again, but takes the arguments of the discovery only
     extra_arguments_action = "call"
@@ -53,9 +59,7 @@ class Delly2StepPart(
             },
         }
 
-    _get_params_merge_calls = _get_params_call
     _get_params_genotype = _get_params_call
-    _get_params_merge_genotypes = _get_params_call
 
     @dictify
     def _get_input_files_call(self, wildcards):

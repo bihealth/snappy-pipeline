@@ -28,14 +28,11 @@ if wf.config.tool == "bwa":
             wf.get_benchmark_file("bwa", "run")
         threads: wf.get_resource("bwa", "run", "threads")
         resources:
-            runtime=wf.get_resource("bwa", "run", "runtime"),
-            mem=wf.get_resource("bwa", "run", "mem"),
-            partition=wf.get_resource("bwa", "run", "partition"),
-            tmpdir=wf.get_resource("bwa", "run", "tmpdir"),
+            **wf.get_resources("bwa", "run"),
         params:
             args=wf.get_params("bwa", "run"),
         wrapper:
-            wf.wrapper_path("bwa")
+            wf.get_wrapper("bwa", "run")
 
 
 # Run BWA-MEM2 ----------------------------------------------------------------
@@ -54,14 +51,11 @@ if wf.config.tool == "bwa_mem2":
             wf.get_benchmark_file("bwa_mem2", "run")
         threads: wf.get_resource("bwa_mem2", "run", "threads")
         resources:
-            runtime=wf.get_resource("bwa_mem2", "run", "runtime"),
-            mem=wf.get_resource("bwa_mem2", "run", "mem"),
-            partition=wf.get_resource("bwa_mem2", "run", "partition"),
-            tmpdir=wf.get_resource("bwa_mem2", "run", "tmpdir"),
+            **wf.get_resources("bwa_mem2", "run"),
         params:
             args=wf.get_params("bwa_mem2", "run"),
         wrapper:
-            wf.wrapper_path("bwa_mem2")
+            wf.get_wrapper("bwa_mem2", "run")
 
 
 # Run BWA-MEM3 ----------------------------------------------------------------
@@ -80,14 +74,11 @@ if wf.config.tool == "bwa_mem3":
             wf.get_benchmark_file("bwa_mem3", "run")
         threads: wf.get_resource("bwa_mem3", "run", "threads")
         resources:
-            runtime=wf.get_resource("bwa_mem3", "run", "runtime"),
-            mem=wf.get_resource("bwa_mem3", "run", "mem"),
-            partition=wf.get_resource("bwa_mem3", "run", "partition"),
-            tmpdir=wf.get_resource("bwa_mem3", "run", "tmpdir"),
+            **wf.get_resources("bwa_mem3", "run"),
         params:
             args=wf.get_params("bwa_mem3", "run"),
         wrapper:
-            wf.wrapper_path("bwa_mem3")
+            wf.get_wrapper("bwa_mem3", "run")
 
 
 # Run STAR --------------------------------------------------------------------
@@ -106,14 +97,11 @@ if wf.config.tool == "star":
             wf.get_benchmark_file("star", "run")
         threads: wf.get_resource("star", "run", "threads")
         resources:
-            runtime=wf.get_resource("star", "run", "runtime"),
-            mem=wf.get_resource("star", "run", "mem"),
-            partition=wf.get_resource("star", "run", "partition"),
-            tmpdir=wf.get_resource("star", "run", "tmpdir"),
+            **wf.get_resources("star", "run"),
         params:
             args=wf.get_params("star", "run"),
         wrapper:
-            wf.wrapper_path("star")
+            wf.get_wrapper("star", "run")
 
 
 # Run minimap2 ---------------------------------------------------------------
@@ -132,14 +120,11 @@ if wf.config.tool == "minimap2":
             wf.get_benchmark_file("minimap2", "run")
         threads: wf.get_resource("minimap2", "run", "threads")
         resources:
-            runtime=wf.get_resource("minimap2", "run", "runtime"),
-            mem=wf.get_resource("minimap2", "run", "mem"),
-            partition=wf.get_resource("minimap2", "run", "partition"),
-            tmpdir=wf.get_resource("minimap2", "run", "tmpdir"),
+            **wf.get_resources("minimap2", "run"),
         params:
             args=wf.get_params("minimap2", "run"),
         wrapper:
-            wf.wrapper_path("minimap2")
+            wf.get_wrapper("minimap2", "run")
 
 
 # QC / Statistics ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -158,14 +143,11 @@ rule ngs_mapping_bam_collect_doc_run:
         wf.get_benchmark_file("bam_collect_doc", "run")
     threads: wf.get_resource("bam_collect_doc", "run", "threads")
     resources:
-        runtime=wf.get_resource("bam_collect_doc", "run", "runtime"),
-        mem=wf.get_resource("bam_collect_doc", "run", "mem"),
-        partition=wf.get_resource("bam_collect_doc", "run", "partition"),
-        tmpdir=wf.get_resource("bam_collect_doc", "run", "tmpdir"),
+        **wf.get_resources("bam_collect_doc", "run"),
     params:
         args=wf.get_params("bam_collect_doc", "run"),
     wrapper:
-        wf.wrapper_path("maelstrom/bam_collect_doc")
+        wf.get_wrapper("bam_collect_doc", "run")
 
 
 # Compute protocol strandedness for STAR --------------------------------------
@@ -182,14 +164,11 @@ rule ngs_mapping_infer_strandedness:
         wf.get_benchmark_file("strandedness", "infer")
     threads: wf.get_resource("strandedness", "infer", "threads")
     resources:
-        runtime=wf.get_resource("strandedness", "infer", "runtime"),
-        mem=wf.get_resource("strandedness", "infer", "mem"),
-        partition=wf.get_resource("strandedness", "infer", "partition"),
-        tmpdir=wf.get_resource("strandedness", "infer", "tmpdir"),
+        **wf.get_resources("strandedness", "infer"),
     params:
         args=wf.get_params("strandedness", "infer"),
     wrapper:
-        wf.wrapper_path("rseqc")
+        wf.get_wrapper("strandedness", "infer")
 
 
 # Gene counts from mapper & strandedness --------------------------------------
@@ -233,11 +212,8 @@ rule ngs_mapping_qc_summary:
         wf.get_benchmark_file("qc_summary", "run")
     threads: wf.get_resource("qc_summary", "run", "threads")
     resources:
-        runtime=wf.get_resource("qc_summary", "run", "runtime"),
-        mem=wf.get_resource("qc_summary", "run", "mem"),
-        partition=wf.get_resource("qc_summary", "run", "partition"),
-        tmpdir=wf.get_resource("qc_summary", "run", "tmpdir"),
+        **wf.get_resources("qc_summary", "run"),
     params:
         args=wf.get_params("qc_summary", "run"),
     wrapper:
-        wf.wrapper_path("qc_summary")
+        wf.get_wrapper("qc_summary", "run")

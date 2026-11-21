@@ -61,6 +61,7 @@ class _ReferenceDownloadStepPart(BaseStepPart):
 
 class EnsemblReferenceDownloadStepPart(_ReferenceDownloadStepPart):
     name = "ensembl"
+    wrappers = {"run": "reference_download/ensembl"}
     source = Source.ensembl
 
     @dictify
@@ -76,6 +77,7 @@ class EnsemblReferenceDownloadStepPart(_ReferenceDownloadStepPart):
 
 class RefseqReferenceDownloadStepPart(_ReferenceDownloadStepPart):
     name = "refseq"
+    wrappers = {"run": "reference_download/refseq"}
     source = Source.refseq
 
     @dictify
@@ -89,6 +91,7 @@ class RefseqReferenceDownloadStepPart(_ReferenceDownloadStepPart):
 
 class UcscReferenceDownloadStepPart(_ReferenceDownloadStepPart):
     name = "ucsc"
+    wrappers = {"run": "reference_download/ucsc"}
     source = Source.ucsc
 
     @dictify
@@ -104,6 +107,7 @@ class SidecarsStepPart(BaseStepPart):
 
     name = "sidecars"
     actions = ("run",)
+    wrappers = {"run": "reference_download/sidecars"}
 
     default_resource_usage = ResourceUsage(threads=1, runtime="1h", mem="2GB")
 

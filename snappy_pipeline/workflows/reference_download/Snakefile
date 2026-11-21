@@ -21,14 +21,11 @@ if source == "ensembl":
         retries: 2
         threads: wf.get_resource("ensembl", "run", "threads")
         resources:
-            runtime=wf.get_resource("ensembl", "run", "runtime"),
-            mem=wf.get_resource("ensembl", "run", "mem"),
-            partition=wf.get_resource("ensembl", "run", "partition"),
-            tmpdir=wf.get_resource("ensembl", "run", "tmpdir"),
+            **wf.get_resources("ensembl", "run"),
         params:
             args=wf.get_params("ensembl", "run"),
         wrapper:
-            wf.wrapper_path("reference_download/ensembl")
+            wf.get_wrapper("ensembl", "run")
 
 elif source == "refseq":
 
@@ -42,14 +39,11 @@ elif source == "refseq":
         retries: 2
         threads: wf.get_resource("refseq", "run", "threads")
         resources:
-            runtime=wf.get_resource("refseq", "run", "runtime"),
-            mem=wf.get_resource("refseq", "run", "mem"),
-            partition=wf.get_resource("refseq", "run", "partition"),
-            tmpdir=wf.get_resource("refseq", "run", "tmpdir"),
+            **wf.get_resources("refseq", "run"),
         params:
             args=wf.get_params("refseq", "run"),
         wrapper:
-            wf.wrapper_path("reference_download/refseq")
+            wf.get_wrapper("refseq", "run")
 
 elif source == "ucsc":
 
@@ -63,14 +57,11 @@ elif source == "ucsc":
         retries: 2
         threads: wf.get_resource("ucsc", "run", "threads")
         resources:
-            runtime=wf.get_resource("ucsc", "run", "runtime"),
-            mem=wf.get_resource("ucsc", "run", "mem"),
-            partition=wf.get_resource("ucsc", "run", "partition"),
-            tmpdir=wf.get_resource("ucsc", "run", "tmpdir"),
+            **wf.get_resources("ucsc", "run"),
         params:
             args=wf.get_params("ucsc", "run"),
         wrapper:
-            wf.wrapper_path("reference_download/ucsc")
+            wf.get_wrapper("ucsc", "run")
 
 
 rule reference_download_sidecars_run:
@@ -85,9 +76,8 @@ rule reference_download_sidecars_run:
     localrule: True
     threads: wf.get_resource("sidecars", "run", "threads")
     resources:
-        runtime=wf.get_resource("sidecars", "run", "runtime"),
-        mem=wf.get_resource("sidecars", "run", "mem"),
-        partition=wf.get_resource("sidecars", "run", "partition"),
-        tmpdir=wf.get_resource("sidecars", "run", "tmpdir"),
+        **wf.get_resources("sidecars", "run"),
+    params:
+        args=wf.get_params("sidecars", "run"),
     wrapper:
-        wf.wrapper_path("reference_download/sidecars")
+        wf.get_wrapper("sidecars", "run")

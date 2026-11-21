@@ -50,6 +50,7 @@ class BamReportsExternalStepPart(BaseStepPart):
 
     #: Class available actions
     actions = ("bam_qc", "run")
+    wrappers = {"run": "alfred/qc", "bam_qc": "samtools/bam_qc_report"}
 
     default_resource_usage = ResourceUsage(threads=2, runtime="4h", mem="20GB")
 
@@ -99,6 +100,12 @@ class VarfishAnnotatorAnnotateStepPart(BaseStepPart):
 
     #: Class available actions
     actions = ("annotate", "bam_qc", "gvcf_to_vcf", "merge_vcf")
+    wrappers = {
+        "bam_qc": "varfish_annotator/bam_qc",
+        "annotate": "varfish_annotator/annotate",
+        "merge_vcf": "bcftools/merge_snv_vcf",
+        "gvcf_to_vcf": "bcftools/gvcf_to_vcf",
+    }
 
     intermediate_outputs = {"gvcf_to_vcf": ("vcf", "vcf_tbi"), "merge_vcf": ("vcf", "vcf_tbi")}
 

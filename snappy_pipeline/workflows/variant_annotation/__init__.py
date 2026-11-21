@@ -92,6 +92,7 @@ class VariantAnnotationStepPart(BaseStepPart):
 
 class VepStepPart(VariantAnnotationStepPart):
     name = "vep"
+    wrappers = {"run": "vep/run"}
 
     report_outputs = {"run": {"summary": ReportOutput("VEP", caption="vep_summary.rst")}}
 
@@ -122,6 +123,7 @@ class VepStepPart(VariantAnnotationStepPart):
 
 class MehariStepPart(VariantAnnotationStepPart):
     name = "mehari"
+    wrappers = {"run": "mehari/run"}
 
     def _get_params_run(self, wildcards):
         """Pass the options; the files (reference, databases) are inputs."""

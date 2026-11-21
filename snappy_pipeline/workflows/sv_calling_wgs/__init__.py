@@ -75,6 +75,12 @@ class PopDelStepPart(
 
     name = "popdel"
     actions = ("profile", "call", "concat_calls", "reorder_vcf")
+    wrappers = {
+        "reorder_vcf": "popdel/reorder_vcf",
+        "concat_calls": "popdel/concat_calls",
+        "call": "popdel/call",
+        "profile": "popdel/profile",
+    }
 
     #: ``profile`` takes no ``extra_arguments``
     extra_arguments_action = "call"
@@ -184,6 +190,8 @@ class SvCallingWgsWorkflow(BaseStep):
 
     name = "sv_calling_wgs"
     produces = [DataSignature(DataType.VARIANTS, frozenset({"germline", "sv"}))]
+    #: Whole genomes: the callers run without target regions
+    targeted = False
     #: The pedigrees of background data sets are called, too
     uses_background = True
 

@@ -145,6 +145,11 @@ class SequenzaStepPart(SomaticTargetedSeqCnvCallingStepPart):
         "coverage",
         "run",
     )
+    wrappers = {
+        "run": "sequenza/run",
+        "coverage": "sequenza/coverage",
+        "gcreference": "sequenza/gcreference",
+    }
 
     #: ``run`` is an R script without command line, ``coverage`` runs ``sequenza-utils bam2seqz``
     extra_arguments_action = "coverage"
@@ -280,6 +285,7 @@ class PureCNStepPart(SomaticTargetedSeqCnvCallingStepPart):
 
     #: Class available actions
     actions = ("coverage", "run")
+    wrappers = {"run": "purecn/run", "coverage": "purecn/coverage"}
 
     extra_arguments_action = "run"
 
@@ -408,6 +414,16 @@ class CnvKitStepPart(SomaticTargetedSeqCnvCallingStepPart):
         "plot",
         "report",
     )
+    wrappers = {
+        "report": "cnvkit/report",
+        "export": "cnvkit/export",
+        "plot": "cnvkit/plot",
+        "postprocess": "cnvkit/postprocess",
+        "call": "cnvkit/call",
+        "segment": "cnvkit/segment",
+        "fix": "cnvkit/fix",
+        "coverage": "cnvkit/coverage",
+    }
 
     extra_arguments_action = "segment"
 

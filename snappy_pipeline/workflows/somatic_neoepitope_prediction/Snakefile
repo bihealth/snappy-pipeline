@@ -31,14 +31,11 @@ if tools.pvacseq.enabled or tools.pvacsplice.enabled:
             wf.get_benchmark_file("pvactools", "normalize")
         threads: wf.get_resource("pvactools", "normalize", "threads")
         resources:
-            runtime=wf.get_resource("pvactools", "normalize", "runtime"),
-            mem=wf.get_resource("pvactools", "normalize", "mem"),
-            partition=wf.get_resource("pvactools", "normalize", "partition"),
-            tmpdir=wf.get_resource("pvactools", "normalize", "tmpdir"),
+            **wf.get_resources("pvactools", "normalize"),
         params:
             args=wf.get_params("pvactools", "normalize"),
         wrapper:
-            wf.wrapper_path("pvactools/normalize")
+            wf.get_wrapper("pvactools", "normalize")
 
 
 rule somatic_neoepitope_prediction_pvactools_hla_types:
@@ -52,12 +49,11 @@ rule somatic_neoepitope_prediction_pvactools_hla_types:
         wf.get_benchmark_file("pvactools", "hla_types")
     threads: wf.get_resource("pvactools", "hla_types", "threads")
     resources:
-        runtime=wf.get_resource("pvactools", "hla_types", "runtime"),
-        mem=wf.get_resource("pvactools", "hla_types", "mem"),
-        partition=wf.get_resource("pvactools", "hla_types", "partition"),
-        tmpdir=wf.get_resource("pvactools", "hla_types", "tmpdir"),
+        **wf.get_resources("pvactools", "hla_types"),
+    params:
+        args=wf.get_params("pvactools", "hla_types"),
     wrapper:
-        wf.wrapper_path("pvactools/hla_types")
+        wf.get_wrapper("pvactools", "hla_types")
 
 
 # pVACseq ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -75,14 +71,11 @@ if tools.pvacseq.enabled and tools.pvacseq.pileup.enabled:
             wf.get_benchmark_file("pvacseq", "pileup")
         threads: wf.get_resource("pvacseq", "pileup", "threads")
         resources:
-            runtime=wf.get_resource("pvacseq", "pileup", "runtime"),
-            mem=wf.get_resource("pvacseq", "pileup", "mem"),
-            partition=wf.get_resource("pvacseq", "pileup", "partition"),
-            tmpdir=wf.get_resource("pvacseq", "pileup", "tmpdir"),
+            **wf.get_resources("pvacseq", "pileup"),
         params:
             args=wf.get_params("pvacseq", "pileup"),
         wrapper:
-            wf.wrapper_path("pvactools/pileup")
+            wf.get_wrapper("pvacseq", "pileup")
 
 
 if tools.pvacseq.enabled and (tools.pvacseq.pileup.enabled or tools.pvacseq.expression.enabled):
@@ -98,14 +91,11 @@ if tools.pvacseq.enabled and (tools.pvacseq.pileup.enabled or tools.pvacseq.expr
             wf.get_benchmark_file("pvacseq", "add_expression")
         threads: wf.get_resource("pvacseq", "add_expression", "threads")
         resources:
-            runtime=wf.get_resource("pvacseq", "add_expression", "runtime"),
-            mem=wf.get_resource("pvacseq", "add_expression", "mem"),
-            partition=wf.get_resource("pvacseq", "add_expression", "partition"),
-            tmpdir=wf.get_resource("pvacseq", "add_expression", "tmpdir"),
+            **wf.get_resources("pvacseq", "add_expression"),
         params:
             args=wf.get_params("pvacseq", "add_expression"),
         wrapper:
-            wf.wrapper_path("pvactools/add_expression")
+            wf.get_wrapper("pvacseq", "add_expression")
 
 
 if tools.pvacseq.enabled:
@@ -121,10 +111,7 @@ if tools.pvacseq.enabled:
             wf.get_benchmark_file("pvacseq", "run")
         threads: wf.get_resource("pvacseq", "run", "threads")
         resources:
-            runtime=wf.get_resource("pvacseq", "run", "runtime"),
-            mem=wf.get_resource("pvacseq", "run", "mem"),
-            partition=wf.get_resource("pvacseq", "run", "partition"),
-            tmpdir=wf.get_resource("pvacseq", "run", "tmpdir"),
+            **wf.get_resources("pvacseq", "run"),
         params:
             args=wf.get_params("pvacseq", "run"),
         # fmt: off
@@ -132,7 +119,7 @@ if tools.pvacseq.enabled:
             container(image_uri=tools.container)
         # fmt: on
         wrapper:
-            wf.wrapper_path("pvactools/pvacseq")
+            wf.get_wrapper("pvacseq", "run")
 
 
 # pVACfuse ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -150,10 +137,7 @@ if tools.pvacfuse.enabled:
             wf.get_benchmark_file("pvacfuse", "run")
         threads: wf.get_resource("pvacfuse", "run", "threads")
         resources:
-            runtime=wf.get_resource("pvacfuse", "run", "runtime"),
-            mem=wf.get_resource("pvacfuse", "run", "mem"),
-            partition=wf.get_resource("pvacfuse", "run", "partition"),
-            tmpdir=wf.get_resource("pvacfuse", "run", "tmpdir"),
+            **wf.get_resources("pvacfuse", "run"),
         params:
             args=wf.get_params("pvacfuse", "run"),
         # fmt: off
@@ -161,7 +145,7 @@ if tools.pvacfuse.enabled:
             container(image_uri=tools.container)
         # fmt: on
         wrapper:
-            wf.wrapper_path("pvactools/pvacfuse")
+            wf.get_wrapper("pvacfuse", "run")
 
 
 # pVACsplice ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -179,12 +163,11 @@ if tools.pvacsplice.enabled:
             wf.get_benchmark_file("pvacsplice", "features")
         threads: wf.get_resource("pvacsplice", "features", "threads")
         resources:
-            runtime=wf.get_resource("pvacsplice", "features", "runtime"),
-            mem=wf.get_resource("pvacsplice", "features", "mem"),
-            partition=wf.get_resource("pvacsplice", "features", "partition"),
-            tmpdir=wf.get_resource("pvacsplice", "features", "tmpdir"),
+            **wf.get_resources("pvacsplice", "features"),
+        params:
+            args=wf.get_params("pvacsplice", "features"),
         wrapper:
-            wf.wrapper_path("pvactools/features")
+            wf.get_wrapper("pvacsplice", "features")
 
     rule somatic_neoepitope_prediction_pvacsplice_junction:
         input:
@@ -197,12 +180,11 @@ if tools.pvacsplice.enabled:
             wf.get_benchmark_file("pvacsplice", "junction")
         threads: wf.get_resource("pvacsplice", "junction", "threads")
         resources:
-            runtime=wf.get_resource("pvacsplice", "junction", "runtime"),
-            mem=wf.get_resource("pvacsplice", "junction", "mem"),
-            partition=wf.get_resource("pvacsplice", "junction", "partition"),
-            tmpdir=wf.get_resource("pvacsplice", "junction", "tmpdir"),
+            **wf.get_resources("pvacsplice", "junction"),
+        params:
+            args=wf.get_params("pvacsplice", "junction"),
         wrapper:
-            wf.wrapper_path("pvactools/junction")
+            wf.get_wrapper("pvacsplice", "junction")
 
     rule somatic_neoepitope_prediction_pvacsplice_run:
         input:
@@ -215,10 +197,7 @@ if tools.pvacsplice.enabled:
             wf.get_benchmark_file("pvacsplice", "run")
         threads: wf.get_resource("pvacsplice", "run", "threads")
         resources:
-            runtime=wf.get_resource("pvacsplice", "run", "runtime"),
-            mem=wf.get_resource("pvacsplice", "run", "mem"),
-            partition=wf.get_resource("pvacsplice", "run", "partition"),
-            tmpdir=wf.get_resource("pvacsplice", "run", "tmpdir"),
+            **wf.get_resources("pvacsplice", "run"),
         params:
             args=wf.get_params("pvacsplice", "run"),
         # fmt: off
@@ -226,7 +205,7 @@ if tools.pvacsplice.enabled:
             container(image_uri=tools.container)
         # fmt: on
         wrapper:
-            wf.wrapper_path("pvactools/pvacsplice")
+            wf.get_wrapper("pvacsplice", "run")
 
 
 # Post-processing ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -246,14 +225,11 @@ if any(prediction.net_chop.enabled for prediction in predictions):
             wf.get_benchmark_file("netchop", "run")
         threads: wf.get_resource("netchop", "run", "threads")
         resources:
-            runtime=wf.get_resource("netchop", "run", "runtime"),
-            mem=wf.get_resource("netchop", "run", "mem"),
-            partition=wf.get_resource("netchop", "run", "partition"),
-            tmpdir=wf.get_resource("netchop", "run", "tmpdir"),
+            **wf.get_resources("netchop", "run"),
         params:
             args=wf.get_params("netchop", "run"),
         wrapper:
-            wf.wrapper_path("pvactools/netchop")
+            wf.get_wrapper("netchop", "run")
 
 
 if any(prediction.netmhc_stab.enabled for prediction in predictions):
@@ -269,10 +245,7 @@ if any(prediction.netmhc_stab.enabled for prediction in predictions):
             wf.get_benchmark_file("netstab", "run")
         threads: wf.get_resource("netstab", "run", "threads")
         resources:
-            runtime=wf.get_resource("netstab", "run", "runtime"),
-            mem=wf.get_resource("netstab", "run", "mem"),
-            partition=wf.get_resource("netstab", "run", "partition"),
-            tmpdir=wf.get_resource("netstab", "run", "tmpdir"),
+            **wf.get_resources("netstab", "run"),
         params:
             args=wf.get_params("netstab", "run"),
         # fmt: off
@@ -280,4 +253,4 @@ if any(prediction.netmhc_stab.enabled for prediction in predictions):
             container(image_uri=tools.container)
         # fmt: on
         wrapper:
-            wf.wrapper_path("pvactools/netstab")
+            wf.get_wrapper("netstab", "run")

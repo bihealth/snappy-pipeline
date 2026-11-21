@@ -24,14 +24,11 @@ rule repeat_expansion_run_expansionhunter:
         library_name=r"(?!annotated\.).+",
     threads: wf.get_resource("expansionhunter", "run", "threads")
     resources:
-        runtime=wf.get_resource("expansionhunter", "run", "runtime"),
-        mem=wf.get_resource("expansionhunter", "run", "mem"),
-        partition=wf.get_resource("expansionhunter", "run", "partition"),
-        tmpdir=wf.get_resource("expansionhunter", "run", "tmpdir"),
+        **wf.get_resources("expansionhunter", "run"),
     params:
         args=wf.get_params("expansionhunter", "run"),
     wrapper:
-        wf.wrapper_path("expansionhunter")
+        wf.get_wrapper("expansionhunter", "run")
 
 
 rule repeat_expansion_annotate_expansionhunter:
@@ -41,9 +38,6 @@ rule repeat_expansion_annotate_expansionhunter:
         **wf.get_output_files("expansionhunter", "annotate"),
     threads: wf.get_resource("expansionhunter", "run", "threads")
     resources:
-        runtime=wf.get_resource("expansionhunter", "run", "runtime"),
-        mem=wf.get_resource("expansionhunter", "run", "mem"),
-        partition=wf.get_resource("expansionhunter", "run", "partition"),
-        tmpdir=wf.get_resource("expansionhunter", "run", "tmpdir"),
+        **wf.get_resources("expansionhunter", "run"),
     run:
-        wf.substep_getattr("expansionhunter", "annotate_results")(wildcards, input, output)
+        wf.sub_steps["expansionhunter"].annotate_results(wildcards, input, output)

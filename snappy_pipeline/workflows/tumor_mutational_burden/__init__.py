@@ -40,6 +40,7 @@ class TumorMutationalBurdenCalculationStepPart(BaseStepPart):
     name = "tmb_gathering"
 
     actions = ("run",)
+    wrappers = {"run": "bcftools/TMB"}
 
     entity_wildcard = "tumor_library"
 

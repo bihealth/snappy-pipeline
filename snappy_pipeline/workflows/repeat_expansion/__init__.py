@@ -47,6 +47,7 @@ class ExpansionHunterStepPart(BaseStepPart):
 
     #: Valid actions
     actions = ("run", "annotate")
+    wrappers = {"run": "expansionhunter"}
 
     extra_arguments_action = "run"
 

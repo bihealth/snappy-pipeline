@@ -32,6 +32,14 @@ class MeltStepPart(SvCallingGetResultFilesMixin, BaseStepPart):
         "make_vcf",
         "merge_vcf",
     )
+    wrappers = {
+        "merge_vcf": "melt/merge_vcf",
+        "make_vcf": "melt/make_vcf",
+        "genotype": "melt/genotype",
+        "group_analysis": "melt/group_analysis",
+        "indiv_analysis": "melt/indiv_analysis",
+        "preprocess": "melt/preprocess",
+    }
 
     intermediate_outputs = {
         "preprocess": ("orig_bam", "orig_bai", "disc_bam", "disc_bai"),
@@ -236,6 +244,6 @@ class MeltStepPart(SvCallingGetResultFilesMixin, BaseStepPart):
         """IndivAnalysis takes MELT's ``-r``, ``-b`` and, for targeted data, ``-exome``"""
         params = self._get_params_group_analysis(wildcards)
         params["exclude_contigs"] = self.config.melt.exclude_contigs
-        if self.parent.name == "sv_calling_targeted":
+        if self.parent.targeted:
             params["exome"] = True
         return params

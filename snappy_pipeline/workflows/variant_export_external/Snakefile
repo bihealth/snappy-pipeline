@@ -22,8 +22,10 @@ rule variant_export_external_write_pedigree_run:
     output:
         wf.get_output_files("write_pedigree_with_sample_name", "run"),
     localrule: True
+    params:
+        args=wf.get_params("write_pedigree_with_sample_name", "run"),
     run:
-        wf.substep_dispatch("write_pedigree_with_sample_name", "run", wildcards, output)
+        wf.sub_steps["write_pedigree_with_sample_name"].write(params.args, output)
 
 
 # Convert gVCF to VCF | Merge VCFs  ------------------------------------------------
@@ -41,14 +43,11 @@ if wf.get_task_config("variant_export_external").gvcf_option:
             wf.get_benchmark_file("varfish_annotator_external", "gvcf_to_vcf")
         threads: wf.get_resource("varfish_annotator_external", "gvcf_to_vcf", "threads")
         resources:
-            runtime=wf.get_resource("varfish_annotator_external", "gvcf_to_vcf", "runtime"),
-            mem=wf.get_resource("varfish_annotator_external", "gvcf_to_vcf", "mem"),
-            partition=wf.get_resource("varfish_annotator_external", "gvcf_to_vcf", "partition"),
-            tmpdir=wf.get_resource("varfish_annotator_external", "gvcf_to_vcf", "tmpdir"),
+            **wf.get_resources("varfish_annotator_external", "gvcf_to_vcf"),
         params:
             args=wf.get_params("varfish_annotator_external", "gvcf_to_vcf"),
         wrapper:
-            wf.wrapper_path("bcftools/gvcf_to_vcf")
+            wf.get_wrapper("varfish_annotator_external", "gvcf_to_vcf")
 
 else:
 
@@ -63,14 +62,11 @@ else:
             wf.get_benchmark_file("varfish_annotator_external", "merge_vcf")
         threads: wf.get_resource("varfish_annotator_external", "merge_vcf", "threads")
         resources:
-            runtime=wf.get_resource("varfish_annotator_external", "merge_vcf", "runtime"),
-            mem=wf.get_resource("varfish_annotator_external", "merge_vcf", "mem"),
-            partition=wf.get_resource("varfish_annotator_external", "merge_vcf", "partition"),
-            tmpdir=wf.get_resource("varfish_annotator_external", "merge_vcf", "tmpdir"),
+            **wf.get_resources("varfish_annotator_external", "merge_vcf"),
         params:
             args=wf.get_params("varfish_annotator_external", "merge_vcf"),
         wrapper:
-            wf.wrapper_path("bcftools/merge_snv_vcf")
+            wf.get_wrapper("varfish_annotator_external", "merge_vcf")
 
 
 # Run varfish-annotator-cli annotate ------------------------------------------
@@ -87,14 +83,11 @@ rule variant_export_external_varfish_annotator_annotate:
         wf.get_benchmark_file("varfish_annotator_external", "annotate")
     threads: wf.get_resource("varfish_annotator_external", "annotate", "threads")
     resources:
-        runtime=wf.get_resource("varfish_annotator_external", "annotate", "runtime"),
-        mem=wf.get_resource("varfish_annotator_external", "annotate", "mem"),
-        partition=wf.get_resource("varfish_annotator_external", "annotate", "partition"),
-        tmpdir=wf.get_resource("varfish_annotator_external", "annotate", "tmpdir"),
+        **wf.get_resources("varfish_annotator_external", "annotate"),
     params:
         args=wf.get_params("varfish_annotator_external", "annotate"),
     wrapper:
-        wf.wrapper_path("varfish_annotator/annotate")
+        wf.get_wrapper("varfish_annotator_external", "annotate")
 
 
 # Generate BAM file QC reports --------------------------------------------
@@ -111,12 +104,11 @@ rule variant_export_external_bam_reports_bam_qc:
         wf.get_benchmark_file("bam_reports", "bam_qc")
     threads: wf.get_resource("bam_reports", "bam_qc", "threads")
     resources:
-        runtime=wf.get_resource("bam_reports", "bam_qc", "runtime"),
-        mem=wf.get_resource("bam_reports", "bam_qc", "mem"),
-        partition=wf.get_resource("bam_reports", "bam_qc", "partition"),
-        tmpdir=wf.get_resource("bam_reports", "bam_qc", "tmpdir"),
+        **wf.get_resources("bam_reports", "bam_qc"),
+    params:
+        args=wf.get_params("bam_reports", "bam_qc"),
     wrapper:
-        wf.wrapper_path("samtools/bam_qc_report")
+        wf.get_wrapper("bam_reports", "bam_qc")
 
 
 # Generate target region coverage report --------------------------------------
@@ -133,12 +125,11 @@ rule variant_export_external_bam_reports_run:
         wf.get_benchmark_file("bam_reports", "run")
     threads: wf.get_resource("bam_reports", "run", "threads")
     resources:
-        runtime=wf.get_resource("bam_reports", "run", "runtime"),
-        mem=wf.get_resource("bam_reports", "run", "mem"),
-        partition=wf.get_resource("bam_reports", "run", "partition"),
-        tmpdir=wf.get_resource("bam_reports", "run", "tmpdir"),
+        **wf.get_resources("bam_reports", "run"),
+    params:
+        args=wf.get_params("bam_reports", "run"),
     wrapper:
-        wf.wrapper_path("alfred/qc")
+        wf.get_wrapper("bam_reports", "run")
 
 
 # Gather statistics about the alignment ---------------------------------------
@@ -155,11 +146,8 @@ rule variant_export_external_varfish_annotator_bam_qc:
         wf.get_benchmark_file("varfish_annotator_external", "bam_qc")
     threads: wf.get_resource("varfish_annotator_external", "bam_qc", "threads")
     resources:
-        runtime=wf.get_resource("varfish_annotator_external", "bam_qc", "runtime"),
-        mem=wf.get_resource("varfish_annotator_external", "bam_qc", "mem"),
-        partition=wf.get_resource("varfish_annotator_external", "bam_qc", "partition"),
-        tmpdir=wf.get_resource("varfish_annotator_external", "bam_qc", "tmpdir"),
+        **wf.get_resources("varfish_annotator_external", "bam_qc"),
     params:
         args=wf.get_params("varfish_annotator_external", "bam_qc"),
     wrapper:
-        wf.wrapper_path("varfish_annotator/bam_qc")
+        wf.get_wrapper("varfish_annotator_external", "bam_qc")

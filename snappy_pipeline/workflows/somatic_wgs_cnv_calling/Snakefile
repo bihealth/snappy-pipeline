@@ -38,14 +38,11 @@ if str(wf.config.tool) == "cnvetti":
             wf.get_benchmark_file("cnvetti", "coverage")
         threads: wf.get_resource("cnvetti", "coverage", "threads")
         resources:
-            runtime=wf.get_resource("cnvetti", "coverage", "runtime"),
-            mem=wf.get_resource("cnvetti", "coverage", "mem"),
-            partition=wf.get_resource("cnvetti", "coverage", "partition"),
-            tmpdir=wf.get_resource("cnvetti", "coverage", "tmpdir"),
+            **wf.get_resources("cnvetti", "coverage"),
         params:
             args=wf.get_params("cnvetti", "coverage"),
         wrapper:
-            wf.wrapper_path("cnvetti/wgs/coverage")
+            wf.get_wrapper("cnvetti", "coverage")
 
     # Combine matched tumor/normal BAM files or just forward singleton tumor BAM.
     rule somatic_wgs_cnv_calling_cnvetti_tumor_normal_ratio:
@@ -59,12 +56,11 @@ if str(wf.config.tool) == "cnvetti":
             wf.get_benchmark_file("cnvetti", "tumor_normal_ratio")
         threads: wf.get_resource("cnvetti", "tumor_normal_ratio", "threads")
         resources:
-            runtime=wf.get_resource("cnvetti", "tumor_normal_ratio", "runtime"),
-            mem=wf.get_resource("cnvetti", "tumor_normal_ratio", "mem"),
-            partition=wf.get_resource("cnvetti", "tumor_normal_ratio", "partition"),
-            tmpdir=wf.get_resource("cnvetti", "tumor_normal_ratio", "tmpdir"),
+            **wf.get_resources("cnvetti", "tumor_normal_ratio"),
+        params:
+            args=wf.get_params("cnvetti", "tumor_normal_ratio"),
         wrapper:
-            wf.wrapper_path("cnvetti/wgs/tumor_normal_ratio")
+            wf.get_wrapper("cnvetti", "tumor_normal_ratio")
 
     # Segment log2-scaled values from tumor/normal log2-ratio or log2-transformed
     # relative coverage from tumor only BAM.
@@ -79,14 +75,11 @@ if str(wf.config.tool) == "cnvetti":
             wf.get_benchmark_file("cnvetti", "segment")
         threads: wf.get_resource("cnvetti", "segment", "threads")
         resources:
-            runtime=wf.get_resource("cnvetti", "segment", "runtime"),
-            mem=wf.get_resource("cnvetti", "segment", "mem"),
-            partition=wf.get_resource("cnvetti", "segment", "partition"),
-            tmpdir=wf.get_resource("cnvetti", "segment", "tmpdir"),
+            **wf.get_resources("cnvetti", "segment"),
         params:
             args=wf.get_params("cnvetti", "segment"),
         wrapper:
-            wf.wrapper_path("cnvetti/wgs/segment")
+            wf.get_wrapper("cnvetti", "segment")
 
 elif str(wf.config.tool) == "control_freec":
 
@@ -101,14 +94,11 @@ elif str(wf.config.tool) == "control_freec":
             wf.get_benchmark_file("control_freec", "run")
         threads: wf.get_resource("control_freec", "run", "threads")
         resources:
-            runtime=wf.get_resource("control_freec", "run", "runtime"),
-            mem=wf.get_resource("control_freec", "run", "mem"),
-            partition=wf.get_resource("control_freec", "run", "partition"),
-            tmpdir=wf.get_resource("control_freec", "run", "tmpdir"),
+            **wf.get_resources("control_freec", "run"),
         params:
             args=wf.get_params("control_freec", "run"),
         wrapper:
-            wf.wrapper_path("control_freec")
+            wf.get_wrapper("control_freec", "run")
 
     rule somatic_wgs_cnv_calling_control_freec_transform_output:
         input:
@@ -121,14 +111,11 @@ elif str(wf.config.tool) == "control_freec":
             wf.get_benchmark_file("control_freec", "transform")
         threads: wf.get_resource("control_freec", "transform", "threads")
         resources:
-            runtime=wf.get_resource("control_freec", "transform", "runtime"),
-            mem=wf.get_resource("control_freec", "transform", "mem"),
-            partition=wf.get_resource("control_freec", "transform", "partition"),
-            tmpdir=wf.get_resource("control_freec", "transform", "tmpdir"),
+            **wf.get_resources("control_freec", "transform"),
         params:
             args=wf.get_params("control_freec", "transform"),
         wrapper:
-            wf.wrapper_path("control_freec/transform")
+            wf.get_wrapper("control_freec", "transform")
 
     rule somatic_wgs_cnv_calling_control_freec_plot:
         input:
@@ -141,14 +128,11 @@ elif str(wf.config.tool) == "control_freec":
             wf.get_benchmark_file("control_freec", "plot")
         threads: wf.get_resource("control_freec", "plot", "threads")
         resources:
-            runtime=wf.get_resource("control_freec", "plot", "runtime"),
-            mem=wf.get_resource("control_freec", "plot", "mem"),
-            partition=wf.get_resource("control_freec", "plot", "partition"),
-            tmpdir=wf.get_resource("control_freec", "plot", "tmpdir"),
+            **wf.get_resources("control_freec", "plot"),
         params:
             args=wf.get_params("control_freec", "plot"),
         wrapper:
-            wf.wrapper_path("cnvkit/plot")  # we're using the plotting tool from cnvkit
+            wf.get_wrapper("control_freec", "plot")
 
 elif str(wf.config.tool) == "cnvkit":
 

@@ -170,6 +170,7 @@ class cbioportalVcf2MafStepPart(BaseStepPart):
 
     #: Actions
     actions = ("run",)
+    wrappers = {"run": "vcf2maf/vcf_to_table"}
 
     intermediate_outputs = {"run": ("maf",)}
 
@@ -266,6 +267,7 @@ class cbioportalCns2CnaStepPart(BaseStepPart):
 
     #: Actions
     actions = ("run",)
+    wrappers = {"run": "cbioportal/generate_cna"}
 
     intermediate_outputs = {"run": ("cna",)}
 
@@ -303,6 +305,7 @@ class cbioportalCnaFilesStepPart(cbioportalExportStepPart):
 
     #: Actions
     actions = ("log2", "gistic")
+    wrappers = {"gistic": "cbioportal/merge_tables", "log2": "cbioportal/merge_tables"}
 
     default_resource_usage = _TABLE_RESOURCE_USAGE
 
@@ -350,6 +353,7 @@ class cbioportalSegmentStepPart(cbioportalExportStepPart):
 
     #: Actions
     actions = ("run",)
+    wrappers = {"run": "cbioportal/merge_tables"}
 
     #: Output file name
     output_file = "work/upload/data_segment.txt"
@@ -380,6 +384,7 @@ class cbioportalExpressionStepPart(cbioportalExportStepPart):
 
     #: Action
     actions = ("run",)
+    wrappers = {"run": "cbioportal/merge_tables"}
 
     #: Output file name
     output_file = "work/upload/data_expression.txt"
@@ -416,6 +421,7 @@ class cbioportalMetaFilesStepPart(BaseStepPart):
 
     #: Actions
     actions = ("run",)
+    wrappers = {"run": "cbioportal/meta_files"}
 
     _get_log_file = cbioportalExportStepPart._get_log_file
 
@@ -443,6 +449,7 @@ class cbioportalClinicalDataStepPart(cbioportalExportStepPart):
 
     #: Actions
     actions = ("run",)
+    wrappers = {"run": "cbioportal/clinical_data"}
 
     def _get_params_run(self, wildcards):
         donors = {}
@@ -478,6 +485,7 @@ class cbioportalCaseListsStepPart(cbioportalExportStepPart):
 
     #: Actions
     actions = ("run",)
+    wrappers = {"run": "cbioportal/case_lists"}
 
     def _get_params_run(self, wildcards):
         samples = dict(zip(CASE_LIST_FILES.keys(), [[] for _ in range(len(CASE_LIST_FILES))]))

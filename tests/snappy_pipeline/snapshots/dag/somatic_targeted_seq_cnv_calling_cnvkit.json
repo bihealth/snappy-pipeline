@@ -462,7 +462,11 @@
    "tasks/reference_index_bwa/work/reference_index/out/reference.dict",
    "tasks/reference_index_bwa/work/reference_index/out/reference.fa.genome"
   ],
-  "params": {},
+  "params": {
+   "args": {
+    "code": "<hash>"
+   }
+  },
   "resources": {
    "mem": "2 GB",
    "mem_mb": 2000,
@@ -585,6 +589,7 @@
   "params": {
    "args": {
     "center": "median",
+    "code": "<hash>",
     "drop_low_coverage": false,
     "filter": "ampdel",
     "method": "threshold",
@@ -630,6 +635,7 @@
   ],
   "params": {
    "args": {
+    "code": "<hash>",
     "count": false,
     "min_mapq": 0
    }
@@ -673,7 +679,9 @@
    "tasks/somatic_targeted_seq_cnv_calling_cnvkit/work/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1.vcf.gz.tbi.md5"
   ],
   "params": {
-   "args": {}
+   "args": {
+    "code": "<hash>"
+   }
   },
   "resources": {
    "mem": "7.68 GB",
@@ -706,6 +714,7 @@
   ],
   "params": {
    "args": {
+    "code": "<hash>",
     "edge_correction": true,
     "gc_correction": true,
     "rmask_correction": true
@@ -791,6 +800,7 @@
   ],
   "params": {
    "args": {
+    "code": "<hash>",
     "min_probes": 3,
     "shift_xy": true,
     "threshold": 0.5
@@ -854,6 +864,7 @@
   ],
   "params": {
    "args": {
+    "code": "<hash>",
     "library_name": "case001subregion-T1-DNA1-WES1",
     "ploidy": 2
    }
@@ -901,6 +912,7 @@
     "breaks": {
      "min_probes": 1
     },
+    "code": "<hash>",
     "drop_low_coverage": false,
     "genemetrics": {
      "alpha": 0.05,
@@ -950,6 +962,7 @@
   ],
   "params": {
    "args": {
+    "code": "<hash>",
     "drop_low_coverage": false,
     "drop_outliers": 10,
     "extra_arguments": [],

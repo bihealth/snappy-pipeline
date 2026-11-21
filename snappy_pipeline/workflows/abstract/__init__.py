@@ -40,7 +40,7 @@ from snappy_pipeline.models import (
     SnappyStepModel,
     ToolModel,
 )
-from snappy_pipeline.wrapper_code import code_of, snakefile_of
+from snappy_pipeline.wrapper_code import code_of, package_root
 from snappy_pipeline.utils import listify
 from snappy_pipeline.reads import ReadGroup
 from snappy_pipeline.workflows.abstract.protocol import (
@@ -53,16 +53,6 @@ from snappy_pipeline.workflows.abstract.protocol import (
 if typing.TYPE_CHECKING:
     from snappy_pipeline.orchestration import Project
 from snappy_wrappers.resource_usage import ResourceUsage, mem_mb, runtime_minutes
-
-#: String constant with bash command for redirecting stderr to ``{log}`` file
-STDERR_TO_LOG_FILE = r"""
-# -----------------------------------------------------------------------------
-# Redirect stderr to log file and enable printing executed commands
-exec 2> >(tee -a "{log}")
-set -x
-# -----------------------------------------------------------------------------
-
-""".lstrip()
 
 
 @contextlib.contextmanager
@@ -96,14 +86,6 @@ def modified_environ(*remove, **update):
     finally:
         env.update(update_after)
         [env.pop(k) for k in remove_after]
-
-
-class ImplementationUnavailableError(NotImplementedError):
-    """Raised when a function that is to be overridden optionally is called
-
-    This is provided as an alternative to ``NotImplementedError`` as the Python linters warn if
-    a class does not override functions throwing ``NotImplementedError``.
-    """
 
 
 Inputs: typing.TypeAlias = InputFiles | dict[str, Any]
@@ -155,6 +137,11 @@ class BaseStepPart:
 
     #: Wildcard of the output entity (library, tumor library, ...) in the output paths
     entity_wildcard: str = "library_name"
+
+    #: The wrapper of each action that runs one, as a path below ``snappy_wrappers/wrappers``;
+    #: a property where the config picks it. The rule's ``wrapper:`` is ``wf.get_wrapper(...)``,
+    #: and the hash of the wrapper's code is the ``code`` param of the rule (its rerun trigger).
+    wrappers: dict[str, str] = {}
 
     #: The action whose command gets the ``extra_arguments`` of the tool section; ``None``: the
     #: only action
@@ -283,13 +270,19 @@ class BaseStepPart:
         return with_extra
 
     def get_params(self, action: str) -> Callable[..., dict[str, Any]]:
-        """Return the params function of the given action: ``self._get_params_<action>``
+        """Return the params function of the given action: ``self._get_params_<action>``, or
+        ``_no_params`` for an action without one.
 
         The function takes ``wildcards`` (and optionally ``input``) and returns the dict that
         the wrapper reads as ``snakemake.params.args``.
         """
         self._validate_action(action)
-        return getattr(self, f"_get_params_{action}")
+        return getattr(self, f"_get_params_{action}", self._no_params)
+
+    @staticmethod
+    def _no_params(wildcards) -> dict[str, Any]:
+        """The params of an action that has none of its own (``extra_arguments`` and ``code`` are added anyway)"""
+        return {}
 
     def get_input_files(self, action: str) -> Callable[[Wildcards], Inputs]:
         """Return the input function of the given action: ``self._get_input_files_<action>``
@@ -339,27 +332,13 @@ class BaseStepPart:
         """Return the wildcard values of the result files of one output entity."""
         return {self.entity_wildcard: [entity]}
 
-    def get_shell_cmd(self, action: str, wildcards: Wildcards) -> str:  # NOSONAR
-        """Return shell command for the given action of the sub step and the given wildcards"""
-        raise ImplementationUnavailableError(
-            "Override this method before calling it!"
-        )  # pragma: no cover
-
-    def run_locally(self, action: str, wildcards: Wildcards) -> str:  # NOSONAR
-        """Runs a function locally for the given action of the sub step and the given wildcards"""
-        raise ImplementationUnavailableError(
-            "Override this method before calling it!"
-        )  # pragma: no cover
-
-    def run(self, action: str, wildcards: Wildcards):  # NOSONAR
-        """Run the sub steps action action's code with the given wildcards"""
-        raise ImplementationUnavailableError(
-            "Override this method before calling it!"
-        )  # pragma: no cover
-
 
 class WritePedigreeStepPart(BaseStepPart):
-    """Write the PED file of a pedigree, whose family column is the pedigree's name (its ``related_group``)"""
+    """Write the PED file of a pedigree, whose family column is the pedigree's name (its ``related_group``).
+
+    The rows come from the sample sheets through the params, so that a changed sex, parent or
+    affected status rewrites the PED and reruns its readers.
+    """
 
     #: Step name
     name = "write_pedigree"
@@ -367,25 +346,31 @@ class WritePedigreeStepPart(BaseStepPart):
     #: Class available actions
     actions = ("run",)
 
+    #: The wildcard that names the pedigree in the output path
+    entity_wildcard = "related_group"
+
     #: The column that names the individuals and their parents: their DNA libraries, the
     #: sample names of the VCFs
     individual_column = "library_name"
 
-    def _members(self, related_group: str):
-        """Return the primary DNA library rows of the pedigree ``related_group``; none in projects with cancer sample sheets only."""
-        members = self.parent.pedigree_members(related_group)
+    def _members(self, entity: str):
+        """Return the primary DNA library rows of the pedigree ``entity``; none in projects with cancer sample sheets only."""
+        members = self.parent.pedigree_members(entity)
         df = self.parent.build_library_dataframe()
         return members.iloc[0:0] if df.empty or df["kind"].eq("cancer").all() else members
+
+    def _family(self, entity: str) -> str:
+        """The family column of the PED: the pedigree's name, ``FAM_`` and the index donor on a germline sheet without a family id"""
+        return entity
 
     @listify
     def _get_input_files_run(self, wildcards):
         """Return the BAM files of the pedigree members."""
-        for library_name in self._members(wildcards.related_group)["library_name"]:
+        for library_name in self._members(getattr(wildcards, self.entity_wildcard))["library_name"]:
             yield self.parent.get_upstream_paths("alignments", library_name=library_name).bam
 
-    def get_output_files(self, action):
-        self._validate_action(action=action)
-        return "work/write_pedigree.{related_group}/out/{related_group}.ped"
+    def _get_output_files_run(self):
+        return f"work/write_pedigree.{{{self.entity_wildcard}}}/out/{{{self.entity_wildcard}}}.ped"
 
     def get_result_files(self):
         return []
@@ -396,21 +381,29 @@ class WritePedigreeStepPart(BaseStepPart):
             return library_name
         return self.parent.library_row(library_name)[self.individual_column]
 
-    def run(self, wildcards: Wildcards, output: OutputFiles):
-        """Write the pedigree as biomedsheets did: the family, the individual, its father and mother, sex (1 male, 2 female, 0 unknown) and affected status (2 affected, 1 unaffected, 0 unknown).
-        The family is the pedigree's name, ``FAM_`` and the index donor on a germline sheet without a family id."""
+    def _get_params_run(self, wildcards) -> dict[str, Any]:
+        """The PED rows as biomedsheets wrote them: the family, the individual, its father and mother, sex (1 male, 2 female, 0 unknown) and affected status (2 affected, 1 unaffected, 0 unknown)"""
+        entity = getattr(wildcards, self.entity_wildcard)
         sexes = {"male": "1", "female": "2"}
+        rows = [
+            [
+                self._family(entity),
+                self._individual(row["library_name"]),
+                self._individual(row["father_name"]),
+                self._individual(row["mother_name"]),
+                sexes.get(str(row["sex"]).lower(), "0"),
+                str(row["disease_state"]),
+            ]
+            for _, row in self._members(entity).iterrows()
+        ]
+        return {"pedigree": rows}
+
+    @staticmethod
+    def write(args: dict[str, Any], output: OutputFiles):
+        """Write the PED rows of the params (the rule's ``run:`` block)"""
         with open(str(output), "w") as f:
-            for _, row in self._members(wildcards.related_group).iterrows():
-                fields = (
-                    wildcards.related_group,
-                    self._individual(row["library_name"]),
-                    self._individual(row["father_name"]),
-                    self._individual(row["mother_name"]),
-                    sexes.get(str(row["sex"]).lower(), "0"),
-                    str(row["disease_state"]),
-                )
-                print("\t".join(fields), file=f)
+            for row in args["pedigree"]:
+                print("\t".join(row), file=f)
 
 
 class WritePedigreeSampleNameStepPart(WritePedigreeStepPart):
@@ -463,11 +456,6 @@ class LinkOutStepPart(BaseStepPart):
         """Return output file pattern"""
         assert action == "run", "Unsupported action"
         return self.base_pattern_out
-
-    def get_shell_cmd(self, action, wildcards):
-        """Return call for linking out"""
-        assert action == "run", "Unsupported action"
-        return "test -h {output[0]} || ln -sr {input[0]} {output[0]}"
 
     def run_locally(self, action, wildcards):
         assert action == "run", "Unsupported action"
@@ -1218,22 +1206,10 @@ class BaseStep:
         """Check the configuration against the sample sheets at setup; raise ``ConfigError`` on
         problems. Override in sub classes."""
 
-    def register_sub_step_classes(
-        self, classes: tuple[type[BaseStepPart] | tuple[type[BaseStepPart], Any], ...]
-    ):
-        """Register an iterable of sub step classes
-
-        Initializes objects in ``self.sub_steps`` dict
-        """
-        for pair_or_class in classes:
-            try:
-                klass, args = pair_or_class
-            except TypeError:
-                klass = pair_or_class
-                args = ()
-            obj = klass(self, *args)
-            # obj.check_config()
-            self.sub_steps[klass.name] = obj
+    def register_sub_step_classes(self, classes: tuple[type[BaseStepPart], ...]):
+        """Register the step part classes: one object per class in ``self.sub_steps``, by name"""
+        for klass in classes:
+            self.sub_steps[klass.name] = klass(self)
 
     def resolve_dependency(
         self, field_name: str, upstream_task: str | None = None
@@ -1501,15 +1477,16 @@ class BaseStep:
         of the tool section
         """
         params = self._require_function(sub_step, "get_params", action)
-        with_arguments = self._get_sub_step(sub_step).with_extra_arguments(action, params)
-        code = code_of(snakefile_of(inspect.getfile(type(self))), sub_step, action)
+        part = self._get_sub_step(sub_step)
+        with_arguments = part.with_extra_arguments(action, params)
+        code = code_of(part.wrappers.get(action))
         if code is None:
             return with_arguments
 
         @wraps(with_arguments)  # Snakemake reads the signature to pick the arguments
         def with_code(*args, **kwargs):
-            # The hash of what the rule's wrappers import from snappy_wrappers, so that a
-            # changed tool reruns the job (Snakemake hashes the wrapper script only)
+            # The hash of the wrapper's code, so that a changed wrapper, tool or base class reruns
+            # the job (Snakemake's own code trigger does not see wrapper scripts)
             return {**with_arguments(*args, **kwargs), "code": code}
 
         return with_code
@@ -1526,11 +1503,16 @@ class BaseStep:
         return value
 
     def get_resource(self, sub_step: str, action: str, resource_name: str) -> Any:
-        """Get resource
+        """Return the function of one resource of a rule (``threads:`` takes ``"threads"``)"""
+        return self._get_sub_step(sub_step).get_resource(action, resource_name)
 
-        Delegates to the sub step object's get_resource function
-        """
-        return self.substep_dispatch(sub_step, "get_resource", action, resource_name)
+    def get_resources(self, sub_step: str, action: str) -> dict[str, Callable[..., Any]]:
+        """Return the functions of a rule's ``resources:`` section: runtime, mem, partition and
+        tmpdir, for ``resources: **wf.get_resources(...)``"""
+        return {
+            name: self.get_resource(sub_step, action, name)
+            for name in ("runtime", "mem", "partition", "tmpdir")
+        }
 
     def get_tmpdir(self) -> str:
         """Return temporary directory.
@@ -1555,44 +1537,20 @@ class BaseStep:
         return tmpdir
 
     def get_log_file(self, sub_step: str, action: str) -> Outputs:
-        """Return path to the log file
+        """Return the log files of a rule, for ``log: **wf.get_log_file(...)``"""
+        return self._get_sub_step(sub_step).get_log_file(action)
 
-        Delegates to the sub step object's get_log_file function
-        """
-        return self.substep_dispatch(sub_step, "get_log_file", action)
-
-    def get_shell_cmd(self, sub_step: str, action: str, wildcards: Wildcards) -> str:
-        """Return shell command for the pipeline sub step
-
-        Delegates to the sub step object's get_shell_cmd function
-        """
-        return self.substep_dispatch(sub_step, "get_shell_cmd", action, wildcards)
-
-    def run_locally(self, sub_step: str, action: str, wildcards: Wildcards) -> str:
-        """Runs a function locally for the pipeline sub step
-
-        Delegates to the sub step object's run_locally function
-        """
-        return self.substep_dispatch(sub_step, "run_locally", action, wildcards)
-
-    def run(self, sub_step: str, action: str, wildcards: Wildcards) -> str:
-        """Run command for the given action of the given sub step with the given wildcards
-
-        Delegates to the sub step object's run function
-        """
-        return self._get_sub_step(sub_step).run(action, wildcards)
+    def get_wrapper(self, sub_step: str, action: str) -> str:
+        """Return the wrapper of a rule as a ``file://`` URL: the step part's ``wrappers[action]``"""
+        part = self._get_sub_step(sub_step)
+        part._validate_action(action)
+        if action not in part.wrappers:
+            raise ValueError(f"{type(part).__name__}.wrappers names no wrapper for {action!r}")
+        return self.wrapper_path(part.wrappers[action])
 
     def get_result_files(self) -> list[str]:
         """Return the result files below ``output/``: those of all step parts."""
         return [path for part in self.sub_steps.values() for path in part.get_result_files()]
-
-    def substep_getattr(self, step: str, name: str) -> Any:
-        """Return attribute from substep"""
-        return getattr(self._get_sub_step(step), name)
-
-    def substep_dispatch(self, step: str, function: str, *args, **kwargs):
-        """Dispatch call to function of sub step implementation"""
-        return self.substep_getattr(step, function)(*args, **kwargs)
 
     def _get_sub_step(self, sub_step: str) -> BaseStepPart:
         if sub_step in self.sub_steps:
@@ -1616,20 +1574,10 @@ class BaseStep:
                 data_set.pedigree_field,
             )
 
-    @classmethod
-    def wrapper_path(cls, path: str) -> str:
-        """Generate path to wrapper"""
-        return "file://" + os.path.abspath(
-            os.path.join(
-                os.path.dirname(__file__),
-                "..",
-                "..",
-                "..",
-                "snappy_wrappers",
-                "wrappers",
-                path,
-            )
-        )
+    @staticmethod
+    def wrapper_path(path: str) -> str:
+        """The ``file://`` URL of a wrapper directory below ``snappy_wrappers/wrappers``"""
+        return (package_root() / "wrappers" / path).as_uri()
 
 
 # ---------------------------------------------------------------------------

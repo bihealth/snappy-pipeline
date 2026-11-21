@@ -12,7 +12,7 @@ rule create_proteome_link_out_run:
         wf.get_output_files("link_out", "run"),
     localrule: True
     run:
-        wf.run_locally("link_out", "run", wildcards)
+        wf.sub_steps["link_out"].run_locally("run", wildcards)
 
 
 rule create_proteome_run:
@@ -26,11 +26,8 @@ rule create_proteome_run:
         wf.get_benchmark_file("create_proteome", "run")
     threads: wf.get_resource("create_proteome", "run", "threads")
     resources:
-        runtime=wf.get_resource("create_proteome", "run", "runtime"),
-        mem=wf.get_resource("create_proteome", "run", "mem"),
-        partition=wf.get_resource("create_proteome", "run", "partition"),
-        tmpdir=wf.get_resource("create_proteome", "run", "tmpdir"),
+        **wf.get_resources("create_proteome", "run"),
     params:
         args=wf.get_params("create_proteome", "run"),
     wrapper:
-        wf.wrapper_path("pvactools/create_proteome")
+        wf.get_wrapper("create_proteome", "run")

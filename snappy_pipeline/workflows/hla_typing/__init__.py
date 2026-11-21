@@ -68,6 +68,7 @@ class OptiTypeStepPart(BaseStepPart):
 
     #: Class available actions
     actions = ("run",)
+    wrappers = {"run": "optitype"}
 
     def _get_input_files_run(self, wildcards):
         """Return input files"""
@@ -116,7 +117,9 @@ class ArcasHlaStepPart(BaseStepPart):
     supported_extraction_types = ("rna",)
 
     #: Class available actions
-    actions = ("run",)
+    actions = ("prepare_reference", "run")
+    wrappers = {"prepare_reference": "arcashla/prepare_reference", "run": "arcashla/run"}
+    extra_arguments_action = "run"
 
     PAIRED_PATTERN: re.Pattern = re.compile(
         r"^(?P<passPairs>[0-9]+) \+ (?P<failPairs>[0-9]+) paired in sequencing$"
@@ -130,6 +133,15 @@ class ArcasHlaStepPart(BaseStepPart):
             "alignments", library_name=wildcards.library_name
         )
         yield "bam", alignments.bam
+
+    def _get_output_files_prepare_reference(self):
+        return {"done": "work/prepare_reference/out/.done"}
+
+    def _get_log_file_prepare_reference(self):
+        return {"log": "work/prepare_reference/log/prepare_reference.log"}
+
+    def _get_params_prepare_reference(self, wildcards):
+        return {"reference_version": self.config.arcashla.reference_version}
 
     def _get_output_files_run(self):
         if self.name != str(self.config.tool):
@@ -146,6 +158,8 @@ class ArcasHlaStepPart(BaseStepPart):
         )
 
     default_resource_usage = ResourceUsage(threads=4, runtime="60h", mem="64000MB")
+    #: Downloading and indexing the reference
+    resource_usage = {"prepare_reference": ResourceUsage(threads=1, runtime="4h", mem="8GB")}
 
 
 #: The step part of each tool

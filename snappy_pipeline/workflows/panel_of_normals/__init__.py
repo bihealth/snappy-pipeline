@@ -136,6 +136,11 @@ class PureCnStepPart(PanelOfNormalsStepPart):
 
     #: Actions
     actions = ("prepare", "coverage", "create_panel")
+    wrappers = {
+        "create_panel": "purecn/create_panel",
+        "coverage": "purecn/coverage",
+        "prepare": "purecn/prepare",
+    }
 
     extra_arguments_action = "create_panel"
 
@@ -247,6 +252,12 @@ class Mutect2StepPart(PanelOfNormalsStepPart):
 
     #: Class available actions
     actions = ("scatter", "prepare_panel", "gather", "create_panel")
+    wrappers = {
+        "create_panel": "mutect2/create_panel",
+        "gather": "mutect2/gather",
+        "prepare_panel": "mutect2/run",
+        "scatter": "split_regions",
+    }
 
     #: ``create_panel`` takes the arguments of the sub-section ``genomicsdb``
     extra_arguments_action = "prepare_panel"
@@ -385,6 +396,13 @@ class CnvkitStepPart(PanelOfNormalsStepPart):
         "create_panel",
         "report",
     )
+    wrappers = {
+        "report": "cnvkit/report",
+        "create_panel": "cnvkit/reference",
+        "coverage": "cnvkit/coverage",
+        "antitarget": "cnvkit/antitarget",
+        "target": "cnvkit/target",
+    }
 
     #: ``create_panel`` runs ``cnvkit.py reference``
     extra_arguments_action = "create_panel"
@@ -586,6 +604,7 @@ class AccessStepPart(PanelOfNormalsStepPart):
 
     name = "access"
     actions = ("run",)
+    wrappers = {"run": "cnvkit/access"}
 
     default_resource_usage = ResourceUsage(threads=2, runtime="2h", mem="8GB")
 

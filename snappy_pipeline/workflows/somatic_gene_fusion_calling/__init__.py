@@ -67,6 +67,7 @@ class StarFusionStepPart(SomaticGeneFusionCallingStepPart):
 
     #: Step name
     name = "star_fusion"
+    wrappers = {"run": "star_fusion"}
 
     @dictify
     def _get_input_files_run(self, wildcards):
@@ -90,6 +91,7 @@ class ArribaStepPart(SomaticGeneFusionCallingStepPart):
 
     #: Step name
     name = "arriba"
+    wrappers = {"run": "arriba/run"}
 
     @dictify
     def _get_input_files_run(self, wildcards):

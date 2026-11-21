@@ -157,7 +157,11 @@
   "output": [
    "tasks/variant_export_external/work/write_pedigree.PAT_case001subregion/out/PAT_case001subregion.ped"
   ],
-  "params": {},
+  "params": {
+   "args": {
+    "pedigree": []
+   }
+  },
   "resources": {},
   "rule": "variant_export_external_variant_export_external_write_pedigree_run",
   "temp": [],

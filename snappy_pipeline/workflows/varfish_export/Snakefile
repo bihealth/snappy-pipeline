@@ -22,8 +22,10 @@ rule varfish_export_write_pedigree_run:
     output:
         wf.get_output_files("write_pedigree", "run"),
     localrule: True
+    params:
+        args=wf.get_params("write_pedigree", "run"),
     run:
-        wf.substep_dispatch("write_pedigree", "run", wildcards, output)
+        wf.sub_steps["write_pedigree"].write(params.args, output)
 
 
 # Annotate the small variants and write their table ---------------------------
@@ -40,14 +42,11 @@ rule varfish_export_mehari_annotate_seqvars:
         wf.get_benchmark_file("mehari", "annotate_seqvars")
     threads: wf.get_resource("mehari", "annotate_seqvars", "threads")
     resources:
-        runtime=wf.get_resource("mehari", "annotate_seqvars", "runtime"),
-        mem=wf.get_resource("mehari", "annotate_seqvars", "mem"),
-        partition=wf.get_resource("mehari", "annotate_seqvars", "partition"),
-        tmpdir=wf.get_resource("mehari", "annotate_seqvars", "tmpdir"),
+        **wf.get_resources("mehari", "annotate_seqvars"),
     params:
         args=wf.get_params("mehari", "annotate_seqvars"),
     wrapper:
-        wf.wrapper_path("mehari/annotate_seqvars")
+        wf.get_wrapper("mehari", "annotate_seqvars")
 
 
 # Write the table of the structural variants ----------------------------------
@@ -64,14 +63,11 @@ rule varfish_export_mehari_annotate_strucvars:
         wf.get_benchmark_file("mehari", "annotate_strucvars")
     threads: wf.get_resource("mehari", "annotate_strucvars", "threads")
     resources:
-        runtime=wf.get_resource("mehari", "annotate_strucvars", "runtime"),
-        mem=wf.get_resource("mehari", "annotate_strucvars", "mem"),
-        partition=wf.get_resource("mehari", "annotate_strucvars", "partition"),
-        tmpdir=wf.get_resource("mehari", "annotate_strucvars", "tmpdir"),
+        **wf.get_resources("mehari", "annotate_strucvars"),
     params:
         args=wf.get_params("mehari", "annotate_strucvars"),
     wrapper:
-        wf.wrapper_path("mehari/annotate_strucvars")
+        wf.get_wrapper("mehari", "annotate_strucvars")
 
 
 # Gather statistics about the alignment ---------------------------------------
@@ -88,9 +84,8 @@ rule varfish_export_mehari_bam_qc:
         wf.get_benchmark_file("mehari", "bam_qc")
     threads: wf.get_resource("mehari", "bam_qc", "threads")
     resources:
-        runtime=wf.get_resource("mehari", "bam_qc", "runtime"),
-        mem=wf.get_resource("mehari", "bam_qc", "mem"),
-        partition=wf.get_resource("mehari", "bam_qc", "partition"),
-        tmpdir=wf.get_resource("mehari", "bam_qc", "tmpdir"),
+        **wf.get_resources("mehari", "bam_qc"),
+    params:
+        args=wf.get_params("mehari", "bam_qc"),
     wrapper:
-        wf.wrapper_path("mehari/bam_qc")
+        wf.get_wrapper("mehari", "bam_qc")

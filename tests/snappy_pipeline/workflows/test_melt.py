@@ -18,7 +18,7 @@ def _params(action, step="sv_calling_targeted"):
             max_no_call_percent=100,
         )
     )
-    part.parent = SimpleNamespace(name=step)
+    part.parent = SimpleNamespace(name=step, targeted=step == "sv_calling_targeted")
     return getattr(part, f"_get_params_{action}")(SimpleNamespace(me_type="ALU"))
 
 

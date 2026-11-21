@@ -55,6 +55,7 @@ class BcftoolsConcatStepPart(BaseStepPart):
 
     name = "bcftools"
     actions = ("run",)
+    wrappers = {"run": "bcftools/concat_variants"}
 
     result_keys = {"run": tuple(_OUTPUTS)}
 

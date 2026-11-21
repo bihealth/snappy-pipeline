@@ -137,7 +137,11 @@
    "tasks/reference_index_bwa/work/reference_index/out/reference.dict",
    "tasks/reference_index_bwa/work/reference_index/out/reference.fa.genome"
   ],
-  "params": {},
+  "params": {
+   "args": {
+    "code": "<hash>"
+   }
+  },
   "resources": {
    "mem": "2 GB",
    "mem_mb": 2000,
@@ -775,7 +779,11 @@
    "tasks/sv_calling_targeted_melt/work/PAT_case001subregion/out/PAT_case001subregion.vcf.gz.tbi",
    "tasks/sv_calling_targeted_melt/work/PAT_case001subregion/out/PAT_case001subregion.vcf.gz.tbi.md5"
   ],
-  "params": {},
+  "params": {
+   "args": {
+    "code": "<hash>"
+   }
+  },
   "resources": {
    "mem": "16 GB",
    "mem_mb": 16000,
@@ -811,7 +819,11 @@
    "tasks/sv_calling_targeted_melt/work/case001subregion-N1-DNA1-WES1/out/case001subregion-N1-DNA1-WES1.bam.disc.bai",
    "tasks/sv_calling_targeted_melt/work/case001subregion-N1-DNA1-WES1/out/case001subregion-N1-DNA1-WES1.bam.fq"
   ],
-  "params": {},
+  "params": {
+   "args": {
+    "code": "<hash>"
+   }
+  },
   "resources": {
    "mem": "16 GB",
    "mem_mb": 16000,

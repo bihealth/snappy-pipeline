@@ -62,6 +62,7 @@ class PeddyStepPart(BaseStepPart):
 
     #: Class available actions
     actions = ("run",)
+    wrappers = {"run": "peddy/run"}
 
     def tool_section(self):
         """peddy has no tool section: the ``extra_arguments`` are the step's own"""

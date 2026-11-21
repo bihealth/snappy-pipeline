@@ -46,14 +46,11 @@ elif tool == "sequenza":
             wf.get_benchmark_file("sequenza", "gcreference")
         threads: wf.get_resource("sequenza", "gcreference", "threads")
         resources:
-            runtime=wf.get_resource("sequenza", "gcreference", "runtime"),
-            mem=wf.get_resource("sequenza", "gcreference", "mem"),
-            partition=wf.get_resource("sequenza", "gcreference", "partition"),
-            tmpdir=wf.get_resource("sequenza", "gcreference", "tmpdir"),
+            **wf.get_resources("sequenza", "gcreference"),
         params:
             args=wf.get_params("sequenza", "gcreference"),
         wrapper:
-            wf.wrapper_path("sequenza/gcreference")
+            wf.get_wrapper("sequenza", "gcreference")
 
     rule somatic_targeted_seq_cnv_calling_sequenza_coverage:
         input:
@@ -66,14 +63,11 @@ elif tool == "sequenza":
             wf.get_benchmark_file("sequenza", "coverage")
         threads: wf.get_resource("sequenza", "coverage", "threads")
         resources:
-            runtime=wf.get_resource("sequenza", "coverage", "runtime"),
-            mem=wf.get_resource("sequenza", "coverage", "mem"),
-            partition=wf.get_resource("sequenza", "coverage", "partition"),
-            tmpdir=wf.get_resource("sequenza", "coverage", "tmpdir"),
+            **wf.get_resources("sequenza", "coverage"),
         params:
             args=wf.get_params("sequenza", "coverage"),
         wrapper:
-            wf.wrapper_path("sequenza/coverage")
+            wf.get_wrapper("sequenza", "coverage")
 
     rule somatic_targeted_seq_cnv_calling_sequenza_run:
         input:
@@ -86,14 +80,11 @@ elif tool == "sequenza":
             wf.get_benchmark_file("sequenza", "run")
         threads: wf.get_resource("sequenza", "run", "threads")
         resources:
-            runtime=wf.get_resource("sequenza", "run", "runtime"),
-            mem=wf.get_resource("sequenza", "run", "mem"),
-            partition=wf.get_resource("sequenza", "run", "partition"),
-            tmpdir=wf.get_resource("sequenza", "run", "tmpdir"),
+            **wf.get_resources("sequenza", "run"),
         params:
             args=wf.get_params("sequenza", "run"),
         wrapper:
-            wf.wrapper_path("sequenza/run")
+            wf.get_wrapper("sequenza", "run")
 
 
 # Run PureCN ------------------------------------------------------
@@ -112,18 +103,15 @@ elif tool == "purecn":
             wf.get_benchmark_file("purecn", "coverage")
         threads: wf.get_resource("purecn", "coverage", "threads")
         resources:
-            runtime=wf.get_resource("purecn", "coverage", "runtime"),
-            mem=wf.get_resource("purecn", "coverage", "mem"),
-            partition=wf.get_resource("purecn", "coverage", "partition"),
-            tmpdir=wf.get_resource("purecn", "coverage", "tmpdir"),
+            **wf.get_resources("purecn", "coverage"),
         params:
             args=wf.get_params("purecn", "coverage"),
         # fmt: off
         software:
-            container(image_uri=wf.substep_getattr("purecn", "image"))
+            container(image_uri=wf.sub_steps["purecn"].image)
         # fmt: on
         wrapper:
-            wf.wrapper_path("purecn/coverage")
+            wf.get_wrapper("purecn", "coverage")
 
     rule somatic_targeted_seq_cnv_calling_purecn_run:
         input:
@@ -136,15 +124,12 @@ elif tool == "purecn":
             wf.get_benchmark_file("purecn", "run")
         threads: wf.get_resource("purecn", "run", "threads")
         resources:
-            runtime=wf.get_resource("purecn", "run", "runtime"),
-            mem=wf.get_resource("purecn", "run", "mem"),
-            partition=wf.get_resource("purecn", "run", "partition"),
-            tmpdir=wf.get_resource("purecn", "run", "tmpdir"),
+            **wf.get_resources("purecn", "run"),
         params:
             args=wf.get_params("purecn", "run"),
         # fmt: off
         software:
-            container(image_uri=wf.substep_getattr("purecn", "image"))
+            container(image_uri=wf.sub_steps["purecn"].image)
         # fmt: on
         wrapper:
-            wf.wrapper_path("purecn/run")
+            wf.get_wrapper("purecn", "run")

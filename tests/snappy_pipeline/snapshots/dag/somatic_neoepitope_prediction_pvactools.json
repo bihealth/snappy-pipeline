@@ -136,12 +136,16 @@
    "tasks/hla_typing_arcashla/work/prepare_reference/out/.done"
   ],
   "params": {
-   "reference_version": "3.24.0"
+   "args": {
+    "code": "<hash>",
+    "reference_version": "3.24.0"
+   }
   },
   "resources": {
    "mem": "8 GB",
    "mem_mb": 8000,
    "mem_mib": 7630,
+   "partition": "medium",
    "runtime": 240
   },
   "rule": "hla_typing_arcashla_hla_typing_arcashla_prepare_reference",
@@ -602,7 +606,11 @@
    "tasks/panel_of_normals_mutect2/work/case001subregion-N1-DNA1-WES1/out/case001subregion-N1-DNA1-WES1.prepare.vcf.gz",
    "tasks/panel_of_normals_mutect2/work/case001subregion-N1-DNA1-WES1/out/case001subregion-N1-DNA1-WES1.prepare.vcf.gz.tbi"
   ],
-  "params": {},
+  "params": {
+   "args": {
+    "code": "<hash>"
+   }
+  },
   "resources": {
    "mem": "8.19 GB",
    "mem_mb": 8192,
@@ -1811,7 +1819,11 @@
    "tasks/reference_index_bwa/work/reference_index/out/reference.dict",
    "tasks/reference_index_bwa/work/reference_index/out/reference.fa.genome"
   ],
-  "params": {},
+  "params": {
+   "args": {
+    "code": "<hash>"
+   }
+  },
   "resources": {
    "mem": "2 GB",
    "mem_mb": 2000,
@@ -1839,7 +1851,11 @@
    "tasks/reference_index_star/work/reference_index/out/reference.dict",
    "tasks/reference_index_star/work/reference_index/out/reference.fa.genome"
   ],
-  "params": {},
+  "params": {
+   "args": {
+    "code": "<hash>"
+   }
+  },
   "resources": {
    "mem": "2 GB",
    "mem_mb": 2000,
@@ -2372,7 +2388,11 @@
   "output": [
    "tasks/somatic_neoepitope_prediction_pvactools/work/features/out/features.gtf"
   ],
-  "params": {},
+  "params": {
+   "args": {
+    "code": "<hash>"
+   }
+  },
   "resources": {
    "mem": "4 GB",
    "mem_mb": 4000,
@@ -2406,7 +2426,11 @@
   "output": [
    "tasks/somatic_neoepitope_prediction_pvactools/work/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1.junctions.tsv"
   ],
-  "params": {},
+  "params": {
+   "args": {
+    "code": "<hash>"
+   }
+  },
   "resources": {
    "mem": "16 GB",
    "mem_mb": 16000,
@@ -2511,7 +2535,11 @@
   "output": [
    "tasks/somatic_neoepitope_prediction_pvactools/work/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1.hla_types.txt"
   ],
-  "params": {},
+  "params": {
+   "args": {
+    "code": "<hash>"
+   }
+  },
   "resources": {
    "mem": "4 GB",
    "mem_mb": 4000,
@@ -3031,7 +3059,11 @@
    "tasks/variant_calling_mutect2/work/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1.raw.vcf.stats",
    "tasks/variant_calling_mutect2/work/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1.raw.read_orientation_model.tar.gz"
   ],
-  "params": {},
+  "params": {
+   "args": {
+    "code": "<hash>"
+   }
+  },
   "resources": {
    "mem": "32.77 GB",
    "mem_mb": 32768,

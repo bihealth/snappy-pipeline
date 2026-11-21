@@ -33,7 +33,6 @@ Downstream tasks read ``vcf`` and ``vcf_tbi`` through ``depends_on``.
 
 __author__ = "Manuel Holtgrewe <manuel.holtgrewe@bih-charite.de>"
 
-import os
 from functools import cached_property
 from typing import Any
 
@@ -42,6 +41,7 @@ from snappy_pipeline.workflows.abstract import (
     BaseStep,
     BaseStepPart,
     ResourceUsage,
+    WritePedigreeStepPart,
 )
 from snappy_pipeline.workflows.common.calls_report import CallsReportStepPart
 from snappy_pipeline.workflows.abstract.protocol import DataSignature, DataType, select_signature
@@ -59,49 +59,29 @@ _OUTPUTS = {
 _BASE_PATH_OUT = "work/{library_name}/out/{library_name}"
 
 
-class WriteTrioPedigreeStepPart(BaseStepPart):
+class WriteTrioPedigreeStepPart(WritePedigreeStepPart):
     """Write the trio PED of a child: the child and its sequenced parents, in the child's family (its ``related_group``)"""
 
     #: Step name
     name = "write_trio_pedigree"
 
-    #: Class available actions
-    actions = ("run",)
+    #: The child names the PED
+    entity_wildcard = "library_name"
 
     def _get_input_files_run(self, wildcards):
         return []
 
-    def _get_output_files_run(self):
-        return "work/write_pedigree.{library_name}/out/{library_name}.ped"
+    def _members(self, entity: str):
+        """The rows of the child and of its sequenced parents"""
+        libraries = self.parent.build_library_dataframe(include_background=True)
+        child = self.parent.library_row(entity)
+        names = [
+            name for name in (entity, child["father_name"], child["mother_name"]) if name != "0"
+        ]
+        return libraries.set_index("library_name", drop=False).loc[names]
 
-    def run(self, wildcards, output):
-        """Write out the pedigree information"""
-        fname = self.get_output_files("run").format(**wildcards)
-        os.makedirs(os.path.dirname(fname), exist_ok=True)
-        libraries = self.parent.build_library_dataframe(include_background=True).set_index(
-            "library_name", drop=False
-        )
-        child = libraries.loc[wildcards.library_name]
-        family = child["related_group"]
-        with open(fname, "wt") as ped_file:
-            for name in (child["library_name"], child["father_name"], child["mother_name"]):
-                if name == "0":
-                    continue
-                person = libraries.loc[name]
-                sex = {"male": "1", "female": "2", "unknown": "0"}[person["sex"]]
-                print(
-                    "\t".join(
-                        (
-                            family,
-                            name,
-                            person["father_name"],
-                            person["mother_name"],
-                            sex,
-                            str(person["disease_state"]),
-                        )
-                    ),
-                    file=ped_file,
-                )
+    def _family(self, entity: str) -> str:
+        return self.parent.library_row(entity)["related_group"]
 
 
 class VariantPhasingBaseStep(BaseStepPart):
@@ -132,6 +112,7 @@ class PhaseByTransmissionStepPart(VariantPhasingBaseStep):
 
     #: Name of the step in the pipeline.
     name = "gatk_phase_by_transmission"
+    wrappers = {"run": "gatk_phase_by_transmission"}
 
     result_keys = tuple(_OUTPUTS)
 
@@ -169,6 +150,11 @@ class ReadBackedPhasingStepPart(VariantPhasingBaseStep):
 
     #: Class available actions
     actions = ("scatter", "run", "gather")
+    wrappers = {
+        "gather": "bcftools/concat",
+        "run": "gatk_read_backed_phasing",
+        "scatter": "split_regions",
+    }
 
     extra_arguments_action = "run"
 
@@ -285,12 +271,14 @@ class TumorReadBackedPhasingStepPart(TumorPhasingStepPart):
     """GATK 3 ReadBackedPhasing of a tumor library"""
 
     name = "gatk_read_backed_phasing_tumor"
+    wrappers = {"run": "gatk_read_backed_phasing_tumor"}
 
 
 class TumorWhatshapStepPart(TumorPhasingStepPart):
     """WhatsHap phasing of a tumor library"""
 
     name = "whatshap_tumor"
+    wrappers = {"run": "whatshap/phase"}
 
 
 _TOOL_STEP_PART = {

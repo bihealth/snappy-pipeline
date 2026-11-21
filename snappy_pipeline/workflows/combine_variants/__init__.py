@@ -57,6 +57,7 @@ _OUTPUTS = {
 class CombineVariantsStepPart(BaseStepPart):
     name = "combine"
     actions = ("run",)
+    wrappers = {"run": "combine_variants/run"}
 
     def tool_section(self):
         """The options of GATK's CombineVariants are on the step model"""

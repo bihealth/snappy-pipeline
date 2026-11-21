@@ -50,6 +50,7 @@ class SomaticCnvCheckingPileupStepPart(BaseStepPart):
 
     name = "pileup"
     actions = ("normal", "tumor")
+    wrappers = {"tumor": "bcftools/pileups", "normal": "bcftools/heterozygous_variants"}
 
     intermediate_outputs = {"normal": ("vcf", "vcf_tbi"), "tumor": ("vcf", "vcf_tbi")}
 
@@ -117,6 +118,7 @@ class SomaticCnvCheckingCnvStepPart(BaseStepPart):
 
     name = "cnv"
     actions = ("run",)
+    wrappers = {"run": "vcfpy/add_bed"}
 
     entity_wildcard = "tumor_library"
 
@@ -166,6 +168,7 @@ class SomaticCnvCheckingReportStepPart(BaseStepPart):
 
     name = "report"
     actions = ("run",)
+    wrappers = {"run": "somatic_cnv_checking"}
 
     entity_wildcard = "tumor_library"
 

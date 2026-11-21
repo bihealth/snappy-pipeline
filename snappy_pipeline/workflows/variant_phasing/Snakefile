@@ -24,8 +24,10 @@ rule variant_phasing_write_trio_pedigree_run:
     output:
         wf.get_output_files("write_trio_pedigree", "run"),
     localrule: True
+    params:
+        args=wf.get_params("write_trio_pedigree", "run"),
     run:
-        wf.substep_dispatch("write_trio_pedigree", "run", wildcards, output)
+        wf.sub_steps["write_trio_pedigree"].write(params.args, output)
 
 
 if wf.config.tool == Tool.gatk_phase_by_transmission:
@@ -42,14 +44,11 @@ if wf.config.tool == Tool.gatk_phase_by_transmission:
             wf.get_benchmark_file("gatk_phase_by_transmission", "run")
         threads: wf.get_resource("gatk_phase_by_transmission", "run", "threads")
         resources:
-            runtime=wf.get_resource("gatk_phase_by_transmission", "run", "runtime"),
-            mem=wf.get_resource("gatk_phase_by_transmission", "run", "mem"),
-            partition=wf.get_resource("gatk_phase_by_transmission", "run", "partition"),
-            tmpdir=wf.get_resource("gatk_phase_by_transmission", "run", "tmpdir"),
+            **wf.get_resources("gatk_phase_by_transmission", "run"),
         params:
             args=wf.get_params("gatk_phase_by_transmission", "run"),
         wrapper:
-            wf.wrapper_path("gatk_phase_by_transmission")
+            wf.get_wrapper("gatk_phase_by_transmission", "run")
 
 elif wf.config.tool == Tool.gatk_read_backed_phasing:
     # GATK ReadBackedPhasing, scattered over chunks of the genome -------------
@@ -69,14 +68,11 @@ elif wf.config.tool == Tool.gatk_read_backed_phasing:
         localrule: True
         threads: wf.get_resource("gatk_read_backed_phasing", "scatter", "threads")
         resources:
-            runtime=wf.get_resource("gatk_read_backed_phasing", "scatter", "runtime"),
-            mem=wf.get_resource("gatk_read_backed_phasing", "scatter", "mem"),
-            partition=wf.get_resource("gatk_read_backed_phasing", "scatter", "partition"),
-            tmpdir=wf.get_resource("gatk_read_backed_phasing", "scatter", "tmpdir"),
+            **wf.get_resources("gatk_read_backed_phasing", "scatter"),
         params:
             args=wf.get_params("gatk_read_backed_phasing", "scatter"),
         wrapper:
-            wf.wrapper_path("split_regions")
+            wf.get_wrapper("gatk_read_backed_phasing", "scatter")
 
     rule variant_phasing_gatk_read_backed_phasing_run:
         input:
@@ -89,14 +85,11 @@ elif wf.config.tool == Tool.gatk_read_backed_phasing:
             wf.get_benchmark_file("gatk_read_backed_phasing", "run")
         threads: wf.get_resource("gatk_read_backed_phasing", "run", "threads")
         resources:
-            runtime=wf.get_resource("gatk_read_backed_phasing", "run", "runtime"),
-            mem=wf.get_resource("gatk_read_backed_phasing", "run", "mem"),
-            partition=wf.get_resource("gatk_read_backed_phasing", "run", "partition"),
-            tmpdir=wf.get_resource("gatk_read_backed_phasing", "run", "tmpdir"),
+            **wf.get_resources("gatk_read_backed_phasing", "run"),
         params:
             args=wf.get_params("gatk_read_backed_phasing", "run"),
         wrapper:
-            wf.wrapper_path("gatk_read_backed_phasing")
+            wf.get_wrapper("gatk_read_backed_phasing", "run")
 
     rule variant_phasing_gatk_read_backed_phasing_gather:
         input:
@@ -109,12 +102,11 @@ elif wf.config.tool == Tool.gatk_read_backed_phasing:
             wf.get_benchmark_file("gatk_read_backed_phasing", "gather")
         threads: wf.get_resource("gatk_read_backed_phasing", "gather", "threads")
         resources:
-            runtime=wf.get_resource("gatk_read_backed_phasing", "gather", "runtime"),
-            mem=wf.get_resource("gatk_read_backed_phasing", "gather", "mem"),
-            partition=wf.get_resource("gatk_read_backed_phasing", "gather", "partition"),
-            tmpdir=wf.get_resource("gatk_read_backed_phasing", "gather", "tmpdir"),
+            **wf.get_resources("gatk_read_backed_phasing", "gather"),
+        params:
+            args=wf.get_params("gatk_read_backed_phasing", "gather"),
         wrapper:
-            wf.wrapper_path("bcftools/concat")
+            wf.get_wrapper("gatk_read_backed_phasing", "gather")
 
 elif wf.config.tool == Tool.gatk_read_backed_phasing_tumor:
     # GATK ReadBackedPhasing of tumor libraries ---------------------------------
@@ -130,14 +122,11 @@ elif wf.config.tool == Tool.gatk_read_backed_phasing_tumor:
             wf.get_benchmark_file("gatk_read_backed_phasing_tumor", "run")
         threads: wf.get_resource("gatk_read_backed_phasing_tumor", "run", "threads")
         resources:
-            runtime=wf.get_resource("gatk_read_backed_phasing_tumor", "run", "runtime"),
-            mem=wf.get_resource("gatk_read_backed_phasing_tumor", "run", "mem"),
-            partition=wf.get_resource("gatk_read_backed_phasing_tumor", "run", "partition"),
-            tmpdir=wf.get_resource("gatk_read_backed_phasing_tumor", "run", "tmpdir"),
+            **wf.get_resources("gatk_read_backed_phasing_tumor", "run"),
         params:
             args=wf.get_params("gatk_read_backed_phasing_tumor", "run"),
         wrapper:
-            wf.wrapper_path("gatk_read_backed_phasing_tumor")
+            wf.get_wrapper("gatk_read_backed_phasing_tumor", "run")
 
 elif wf.config.tool == Tool.whatshap_tumor:
     # WhatsHap phasing of tumor libraries -------------------------------------------
@@ -153,14 +142,11 @@ elif wf.config.tool == Tool.whatshap_tumor:
             wf.get_benchmark_file("whatshap_tumor", "run")
         threads: wf.get_resource("whatshap_tumor", "run", "threads")
         resources:
-            runtime=wf.get_resource("whatshap_tumor", "run", "runtime"),
-            mem=wf.get_resource("whatshap_tumor", "run", "mem"),
-            partition=wf.get_resource("whatshap_tumor", "run", "partition"),
-            tmpdir=wf.get_resource("whatshap_tumor", "run", "tmpdir"),
+            **wf.get_resources("whatshap_tumor", "run"),
         params:
             args=wf.get_params("whatshap_tumor", "run"),
         wrapper:
-            wf.wrapper_path("whatshap/phase")
+            wf.get_wrapper("whatshap_tumor", "run")
 
 else:
     raise ValueError(f"unknown tool {wf.config.tool}")
@@ -179,11 +165,8 @@ if "calls_report" in wf.sub_steps:
             wf.get_benchmark_file("calls_report", "run")
         threads: wf.get_resource("calls_report", "run", "threads")
         resources:
-            runtime=wf.get_resource("calls_report", "run", "runtime"),
-            mem=wf.get_resource("calls_report", "run", "mem"),
-            partition=wf.get_resource("calls_report", "run", "partition"),
-            tmpdir=wf.get_resource("calls_report", "run", "tmpdir"),
+            **wf.get_resources("calls_report", "run"),
         params:
             args=wf.get_params("calls_report", "run"),
         wrapper:
-            wf.wrapper_path("calls_report")
+            wf.get_wrapper("calls_report", "run")

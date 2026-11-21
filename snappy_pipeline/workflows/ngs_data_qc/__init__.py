@@ -162,6 +162,7 @@ class FastQcReportStepPart(BaseStepPart):
 
     #: Class available actions
     actions = ("run",)
+    wrappers = {"run": "fastqc"}
 
     default_resource_usage = ResourceUsage(threads=1, mem="4GB", runtime="4h")
 
@@ -190,6 +191,7 @@ class PicardStepPart(BaseStepPart):
 
     name = "picard"
     actions = ("prepare", "metrics")
+    wrappers = {"metrics": "picard/metrics", "prepare": "picard/prepare"}
 
     #: ``prepare`` converts the BED files of the kit to interval lists
     extra_arguments_action = "metrics"
@@ -262,6 +264,7 @@ class NgsChewStepPart(BaseStepPart):
 
     name = "ngs_chew"
     actions = ("fingerprint", "compare")
+    wrappers = {"compare": "ngs_chew/compare", "fingerprint": "ngs_chew/fingerprint"}
 
     #: ``compare`` runs ngs-chew's comparison, statistics and plots, which take no
     #: ``extra_arguments``
@@ -366,6 +369,7 @@ class AlfredStepPart(BaseStepPart):
 
     name = "alfred"
     actions = ("run",)
+    wrappers = {"run": "alfred/qc"}
 
     default_resource_usage = ResourceUsage(threads=2, runtime="4h", mem="20GB")
 

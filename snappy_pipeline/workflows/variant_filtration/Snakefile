@@ -23,149 +23,32 @@ if wf.config.tool == "ebfilter":
         localrule: True
         threads: wf.get_resource("filter", "write_panel", "threads")
         resources:
-            runtime=wf.get_resource("filter", "write_panel", "runtime"),
-            mem=wf.get_resource("filter", "write_panel", "mem"),
-            partition=wf.get_resource("filter", "write_panel", "partition"),
-            tmpdir=wf.get_resource("filter", "write_panel", "tmpdir"),
+            **wf.get_resources("filter", "write_panel"),
         params:
             args=wf.get_params("filter", "write_panel"),
         run:
-            wf.substep_getattr("filter", "write_panel_of_normals_file")(wildcards)
+            wf.sub_steps["filter"].write_panel_of_normals_file(wildcards)
 
 
 # Variant Filtration ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-if wf.config.tool == "bcftools":
 
-    rule variant_filtration_filter_run:
-        input:
-            unpack(wf.get_input_files("filter", "run")),
-        output:
-            **wf.get_output_files("filter", "run"),
-        log:
-            **wf.get_log_file("filter", "run"),
-        benchmark:
-            wf.get_benchmark_file("filter", "run")
-        threads: wf.get_resource("filter", "run", "threads")
-        resources:
-            runtime=wf.get_resource("filter", "run", "runtime"),
-            mem=wf.get_resource("filter", "run", "mem"),
-            partition=wf.get_resource("filter", "run", "partition"),
-            tmpdir=wf.get_resource("filter", "run", "tmpdir"),
-        params:
-            args=wf.get_params("filter", "run"),
-        wrapper:
-            wf.wrapper_path("bcftools/filter")
-
-elif wf.config.tool == "vembrane":
-
-    rule variant_filtration_filter_run:
-        input:
-            unpack(wf.get_input_files("filter", "run")),
-        output:
-            **wf.get_output_files("filter", "run"),
-        log:
-            **wf.get_log_file("filter", "run"),
-        benchmark:
-            wf.get_benchmark_file("filter", "run")
-        threads: wf.get_resource("filter", "run", "threads")
-        resources:
-            runtime=wf.get_resource("filter", "run", "runtime"),
-            mem=wf.get_resource("filter", "run", "mem"),
-            partition=wf.get_resource("filter", "run", "partition"),
-            tmpdir=wf.get_resource("filter", "run", "tmpdir"),
-        params:
-            args=wf.get_params("filter", "run"),
-        wrapper:
-            wf.wrapper_path("vembrane/tag")
-
-elif wf.config.tool == "regions":
-
-    rule variant_filtration_filter_run:
-        input:
-            unpack(wf.get_input_files("filter", "run")),
-        output:
-            **wf.get_output_files("filter", "run"),
-        log:
-            **wf.get_log_file("filter", "run"),
-        benchmark:
-            wf.get_benchmark_file("filter", "run")
-        threads: wf.get_resource("filter", "run", "threads")
-        resources:
-            runtime=wf.get_resource("filter", "run", "runtime"),
-            mem=wf.get_resource("filter", "run", "mem"),
-            partition=wf.get_resource("filter", "run", "partition"),
-            tmpdir=wf.get_resource("filter", "run", "tmpdir"),
-        params:
-            args=wf.get_params("filter", "run"),
-        wrapper:
-            wf.wrapper_path("bcftools/regions")
-
-elif wf.config.tool == "dkfz":
-
-    rule variant_filtration_filter_run:
-        input:
-            unpack(wf.get_input_files("filter", "run")),
-        output:
-            **wf.get_output_files("filter", "run"),
-        log:
-            **wf.get_log_file("filter", "run"),
-        benchmark:
-            wf.get_benchmark_file("filter", "run")
-        threads: wf.get_resource("filter", "run", "threads")
-        resources:
-            runtime=wf.get_resource("filter", "run", "runtime"),
-            mem=wf.get_resource("filter", "run", "mem"),
-            partition=wf.get_resource("filter", "run", "partition"),
-            tmpdir=wf.get_resource("filter", "run", "tmpdir"),
-        params:
-            args=wf.get_params("filter", "run"),
-        wrapper:
-            wf.wrapper_path("dkfz_bias_filter")
-
-elif wf.config.tool == "ebfilter":
-
-    rule variant_filtration_filter_run:
-        input:
-            unpack(wf.get_input_files("filter", "run")),
-        output:
-            **wf.get_output_files("filter", "run"),
-        log:
-            **wf.get_log_file("filter", "run"),
-        benchmark:
-            wf.get_benchmark_file("filter", "run")
-        threads: wf.get_resource("filter", "run", "threads")
-        resources:
-            runtime=wf.get_resource("filter", "run", "runtime"),
-            mem=wf.get_resource("filter", "run", "mem"),
-            partition=wf.get_resource("filter", "run", "partition"),
-            tmpdir=wf.get_resource("filter", "run", "tmpdir"),
-        params:
-            args=wf.get_params("filter", "run"),
-        wrapper:
-            wf.wrapper_path("eb_filter")
-
-elif wf.config.tool == "varlociraptor":
-
-    rule variant_filtration_filter_run:
-        input:
-            unpack(wf.get_input_files("filter", "run")),
-        output:
-            **wf.get_output_files("filter", "run"),
-        log:
-            **wf.get_log_file("filter", "run"),
-        benchmark:
-            wf.get_benchmark_file("filter", "run")
-        threads: wf.get_resource("filter", "run", "threads")
-        resources:
-            runtime=wf.get_resource("filter", "run", "runtime"),
-            mem=wf.get_resource("filter", "run", "mem"),
-            partition=wf.get_resource("filter", "run", "partition"),
-            tmpdir=wf.get_resource("filter", "run", "tmpdir"),
-        params:
-            args=wf.get_params("filter", "run"),
-        wrapper:
-            wf.wrapper_path("varlociraptor/control_fdr")
+rule variant_filtration_filter_run:
+    input:
+        unpack(wf.get_input_files("filter", "run")),
+    output:
+        **wf.get_output_files("filter", "run"),
+    log:
+        **wf.get_log_file("filter", "run"),
+    benchmark:
+        wf.get_benchmark_file("filter", "run")
+    threads: wf.get_resource("filter", "run", "threads")
+    resources:
+        **wf.get_resources("filter", "run"),
+    params:
+        args=wf.get_params("filter", "run"),
+    wrapper:
+        wf.get_wrapper("filter", "run")
 
 
 if "calls_report" in wf.sub_steps:
@@ -181,11 +64,8 @@ if "calls_report" in wf.sub_steps:
             wf.get_benchmark_file("calls_report", "run")
         threads: wf.get_resource("calls_report", "run", "threads")
         resources:
-            runtime=wf.get_resource("calls_report", "run", "runtime"),
-            mem=wf.get_resource("calls_report", "run", "mem"),
-            partition=wf.get_resource("calls_report", "run", "partition"),
-            tmpdir=wf.get_resource("calls_report", "run", "tmpdir"),
+            **wf.get_resources("calls_report", "run"),
         params:
             args=wf.get_params("calls_report", "run"),
         wrapper:
-            wf.wrapper_path("calls_report")
+            wf.get_wrapper("calls_report", "run")

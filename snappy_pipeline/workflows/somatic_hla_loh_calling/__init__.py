@@ -42,6 +42,7 @@ class LohhlaStepPart(BaseStepPart):
 
     #: Class available actions
     actions = ("run",)
+    wrappers = {"run": "lohhla"}
 
     entity_wildcard = "tumor_library"
 

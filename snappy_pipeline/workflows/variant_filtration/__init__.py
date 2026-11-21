@@ -220,9 +220,13 @@ class _BamAwareStepPart(VariantFiltrationStepPart):
 class BcftoolsStepPart(VariantFiltrationStepPart):
     """bcftools expression filter."""
 
+    wrappers = {"run": "bcftools/filter"}
+
 
 class VembraneStepPart(VariantFiltrationStepPart):
     """Unified vembrane tag/filter step."""
+
+    wrappers = {"run": "vembrane/tag"}
 
     def _get_params_run(self, wildcards: Wildcards) -> dict[str, Any]:
         cfg = self.config.vembrane
@@ -257,6 +261,8 @@ class VembraneStepPart(VariantFiltrationStepPart):
 class RegionsStepPart(VariantFiltrationStepPart):
     """Region/BED-based filter via bcftools."""
 
+    wrappers = {"run": "bcftools/regions"}
+
     @dictify
     def _get_input_files_run(self, wildcards: Wildcards):
         yield from super()._get_input_files_run(wildcards).items()
@@ -269,6 +275,8 @@ class RegionsStepPart(VariantFiltrationStepPart):
 
 class DkfzStepPart(_BamAwareStepPart):
     """DKFZ bias filter."""
+
+    wrappers = {"run": "dkfz_bias_filter"}
 
     resource_usage = {
         "run": ResourceUsage(threads=1, runtime="12h", mem=f"{3 * 1024}MB"),
@@ -285,6 +293,7 @@ class EbfilterStepPart(_BamAwareStepPart):
     """EBFilter."""
 
     actions = ("run", "write_panel")
+    wrappers = {"run": "eb_filter"}
     extra_arguments_action = "run"
     resource_usage = {
         "run": ResourceUsage(threads=1, runtime="24h", mem=f"{2 * 1024}MB"),
@@ -360,6 +369,8 @@ class EbfilterStepPart(_BamAwareStepPart):
 
 class VarlociraptorStepPart(VariantFiltrationStepPart):
     """FDR control of varlociraptor calls."""
+
+    wrappers = {"run": "varlociraptor/control_fdr"}
 
     def _get_params_run(self, wildcards: Wildcards) -> dict[str, Any]:
         # Only tag mode writes a FILTER ID, the task name

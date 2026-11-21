@@ -208,7 +208,11 @@
    "tasks/reference_index_bwa/work/reference_index/out/reference.dict",
    "tasks/reference_index_bwa/work/reference_index/out/reference.fa.genome"
   ],
-  "params": {},
+  "params": {
+   "args": {
+    "code": "<hash>"
+   }
+  },
   "resources": {
    "mem": "2 GB",
    "mem_mb": 2000,
@@ -390,7 +394,11 @@
    "tasks/somatic_wgs_cnv_calling_cnvetti/work/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1.tumor_normal_ratio.bcf",
    "tasks/somatic_wgs_cnv_calling_cnvetti/work/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1.tumor_normal_ratio.bcf.csi"
   ],
-  "params": {},
+  "params": {
+   "args": {
+    "code": "<hash>"
+   }
+  },
   "resources": {
    "mem": "15.36 GB",
    "mem_mb": 15360,

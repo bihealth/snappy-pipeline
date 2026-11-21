@@ -846,7 +846,11 @@
    "tasks/panel_of_normals_mutect2/work/case001subregion-N1-DNA1-WES1/out/case001subregion-N1-DNA1-WES1.prepare.vcf.gz",
    "tasks/panel_of_normals_mutect2/work/case001subregion-N1-DNA1-WES1/out/case001subregion-N1-DNA1-WES1.prepare.vcf.gz.tbi"
   ],
-  "params": {},
+  "params": {
+   "args": {
+    "code": "<hash>"
+   }
+  },
   "resources": {
    "mem": "8.19 GB",
    "mem_mb": 8192,
@@ -2055,7 +2059,11 @@
    "tasks/reference_index_bwa/work/reference_index/out/reference.dict",
    "tasks/reference_index_bwa/work/reference_index/out/reference.fa.genome"
   ],
-  "params": {},
+  "params": {
+   "args": {
+    "code": "<hash>"
+   }
+  },
   "resources": {
    "mem": "2 GB",
    "mem_mb": 2000,
@@ -2083,6 +2091,7 @@
   "params": {
    "args": {
     "center": "median",
+    "code": "<hash>",
     "drop_low_coverage": false,
     "filter": "ampdel",
     "method": "threshold",
@@ -2128,6 +2137,7 @@
   ],
   "params": {
    "args": {
+    "code": "<hash>",
     "count": false,
     "min_mapq": 0
    }
@@ -2166,6 +2176,7 @@
   ],
   "params": {
    "args": {
+    "code": "<hash>",
     "edge_correction": false,
     "gc_correction": true,
     "rmask_correction": true
@@ -2201,6 +2212,7 @@
   ],
   "params": {
    "args": {
+    "code": "<hash>",
     "library_name": "case001subregion-T1-DNA1-WES1",
     "ploidy": 2
    }
@@ -2233,6 +2245,7 @@
   ],
   "params": {
    "args": {
+    "code": "<hash>",
     "drop_low_coverage": false,
     "drop_outliers": 10,
     "extra_arguments": [],
@@ -2484,7 +2497,11 @@
    "tasks/variant_calling_mutect2/work/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1.raw.vcf.stats",
    "tasks/variant_calling_mutect2/work/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1.raw.read_orientation_model.tar.gz"
   ],
-  "params": {},
+  "params": {
+   "args": {
+    "code": "<hash>"
+   }
+  },
   "resources": {
    "mem": "32.77 GB",
    "mem_mb": 32768,

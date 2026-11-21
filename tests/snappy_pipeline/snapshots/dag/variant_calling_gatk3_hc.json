@@ -271,7 +271,11 @@
    "tasks/reference_index_bwa/work/reference_index/out/reference.dict",
    "tasks/reference_index_bwa/work/reference_index/out/reference.fa.genome"
   ],
-  "params": {},
+  "params": {
+   "args": {
+    "code": "<hash>"
+   }
+  },
   "resources": {
    "mem": "2 GB",
    "mem_mb": 2000,
@@ -375,7 +379,36 @@
   "output": [
    "tasks/variant_calling_gatk3_hc/work/write_pedigree.FAM_case001subregion/out/FAM_case001subregion.ped"
   ],
-  "params": {},
+  "params": {
+   "args": {
+    "pedigree": [
+     [
+      "FAM_case001subregion",
+      "case001subregion-N1-DNA1-WES1",
+      "case001subregionFather-N1-DNA1-WES1",
+      "case001subregionMother-N1-DNA1-WES1",
+      "1",
+      "2"
+     ],
+     [
+      "FAM_case001subregion",
+      "case001subregionFather-N1-DNA1-WES1",
+      "0",
+      "0",
+      "1",
+      "1"
+     ],
+     [
+      "FAM_case001subregion",
+      "case001subregionMother-N1-DNA1-WES1",
+      "0",
+      "0",
+      "2",
+      "1"
+     ]
+    ]
+   }
+  },
   "resources": {},
   "rule": "variant_calling_gatk3_hc_variant_calling_write_pedigree_run",
   "temp": [],

@@ -79,6 +79,13 @@ class AscatStepPart(BaseStepPart):
         "cnv_normal",
         "run_ascat",
     )
+    wrappers = {
+        "run_ascat": "ascat/run_ascat",
+        "cnv_normal": "ascat/build_cnv",
+        "cnv_tumor": "ascat/build_cnv",
+        "baf_normal": "ascat/build_baf",
+        "baf_tumor": "ascat/build_baf",
+    }
 
     intermediate_outputs = {
         action: ("txt",) for action in ("baf_tumor", "baf_normal", "cnv_tumor", "cnv_normal")

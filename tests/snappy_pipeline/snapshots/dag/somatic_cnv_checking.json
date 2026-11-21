@@ -398,7 +398,11 @@
    "tasks/reference_index_bwa/work/reference_index/out/reference.dict",
    "tasks/reference_index_bwa/work/reference_index/out/reference.fa.genome"
   ],
-  "params": {},
+  "params": {
+   "args": {
+    "code": "<hash>"
+   }
+  },
   "resources": {
    "mem": "2 GB",
    "mem_mb": 2000,
@@ -630,6 +634,7 @@
   "params": {
    "args": {
     "center": "median",
+    "code": "<hash>",
     "drop_low_coverage": false,
     "filter": "ampdel",
     "method": "threshold",
@@ -675,6 +680,7 @@
   ],
   "params": {
    "args": {
+    "code": "<hash>",
     "count": false,
     "min_mapq": 0
    }
@@ -713,6 +719,7 @@
   ],
   "params": {
    "args": {
+    "code": "<hash>",
     "edge_correction": false,
     "gc_correction": true,
     "rmask_correction": true
@@ -748,6 +755,7 @@
   ],
   "params": {
    "args": {
+    "code": "<hash>",
     "library_name": "case001subregion-T1-DNA1-WES1",
     "ploidy": 2
    }
@@ -780,6 +788,7 @@
   ],
   "params": {
    "args": {
+    "code": "<hash>",
     "drop_low_coverage": false,
     "drop_outliers": 10,
     "extra_arguments": [],

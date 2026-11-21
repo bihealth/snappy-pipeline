@@ -357,6 +357,7 @@ class BcftoolsCallStepPart(VariantCallingStepPart):
 
     #: Step name
     name = "bcftools_call"
+    wrappers = {"run": "bcftools_call"}
 
     default_resource_usage = ResourceUsage(
         threads=16, runtime="2d", mem=f"{int(3.75 * 1024 * 16)}MB"
@@ -422,6 +423,7 @@ class Gatk3HaplotypeCallerStepPart(GatkCallerStepPartBase):
 
     #: Step name
     name = "gatk3_hc"
+    wrappers = {"run": "gatk3_hc"}
 
     def _get_params_run(self, wildcards) -> dict[str, Any]:
         return {
@@ -439,6 +441,7 @@ class Gatk3UnifiedGenotyperStepPart(GatkCallerStepPartBase):
 
     #: Step name
     name = "gatk3_ug"
+    wrappers = {"run": "gatk3_ug"}
 
     def _get_params_run(self, wildcards) -> dict[str, Any]:
         return {
@@ -456,6 +459,7 @@ class Gatk4HaplotypeCallerJointStepPart(GatkCallerStepPartBase):
     """Germline variant calling with GATK 4 HaplotypeCaller doing joint calling per pedigree"""
 
     name = "gatk4_hc_joint"
+    wrappers = {"run": "gatk4_hc/joint"}
 
     def _get_params_run(self, wildcards) -> dict[str, Any]:
         return {
@@ -474,6 +478,11 @@ class Gatk4HaplotypeCallerGvcfStepPart(GatkCallerStepPartBase):
     name = "gatk4_hc_gvcf"
 
     actions = ("discover", "combine_gvcfs", "genotype")
+    wrappers = {
+        "genotype": "gatk4_hc/genotype",
+        "combine_gvcfs": "gatk4_hc/combine_gvcfs",
+        "discover": "gatk4_hc/discover",
+    }
 
     extra_arguments_action = "discover"
 
@@ -619,6 +628,7 @@ class BcftoolsStatsStepPart(ReportStepPart):
     """
 
     name = "bcftools_stats"
+    wrappers = {"run": "bcftools_stats/run"}
 
     report_outputs = {"run": {"txt": ReportOutput("bcftools stats", caption="bcftools_stats.rst")}}
 
@@ -668,6 +678,7 @@ class BcftoolsRohStepPart(ReportStepPart):
     """ROH calling with `bcftools roh`."""
 
     name = "bcftools_roh"
+    wrappers = {"run": "bcftools_roh"}
     report_per_donor = False
     result_keys = ("txt", "txt_md5")
     default_resource_usage = ResourceUsage(threads=1, runtime="1h", mem="4GB")
@@ -711,6 +722,7 @@ class BafFileGenerationStepPart(ReportStepPart):
 
     #: Step name
     name = "baf_file_generation"
+    wrappers = {"run": "baf_file_generation"}
 
     #: Whether to report results per donor
     report_per_donor = True
@@ -791,6 +803,15 @@ class Mutect2StepPart(SomaticVariantCallingStepPart):
         "pileup_normal",
         "pileup_tumor",
     )
+    wrappers = {
+        "filter": "mutect2/filter",
+        "gather": "mutect2/gather",
+        "run": "mutect2/run",
+        "scatter": "split_regions",
+        "contamination": "mutect2/contamination",
+        "pileup_tumor": "mutect2/pileup",
+        "pileup_normal": "mutect2/pileup",
+    }
 
     #: The sub-sections ``filtration`` and ``contamination`` hold the arguments of the other
     #: GATK actions
@@ -1068,6 +1089,7 @@ class FreebayesStepPart(ScatteredCallerStepPart):
     region_tpl = "work/scatter/{scatteritem}.region.bed"
 
     actions = ("scatter", "run", "gather")
+    wrappers = {"gather": "bcftools/concat", "run": "freebayes", "scatter": "split_regions"}
 
     extra_arguments_action = "run"
 
@@ -1202,6 +1224,13 @@ class VarlociraptorStepPart(ScatteredCallerStepPart):
     name = "varlociraptor"
 
     actions = ("scatter", "alignment_properties", "preprocess", "call", "gather")
+    wrappers = {
+        "gather": "bcftools/concat",
+        "call": "varlociraptor/call",
+        "preprocess": "varlociraptor/preprocess",
+        "alignment_properties": "varlociraptor/alignment_properties",
+        "scatter": "varlociraptor/split_candidates",
+    }
 
     #: The ``preprocess`` section passes its own extra arguments
     extra_arguments_action = "call"

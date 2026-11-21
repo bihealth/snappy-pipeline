@@ -25,6 +25,7 @@ _LOG_PREFIX = "work/{library_name}/log/{library_name}"
 class CreateProteomeStepPart(BaseStepPart):
     name = "create_proteome"
     actions = ("run",)
+    wrappers = {"run": "pvactools/create_proteome"}
     default_resource_usage = ResourceUsage(threads=1, mem="4G", runtime="4h")
 
     @dictify

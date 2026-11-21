@@ -206,6 +206,21 @@ class BuildGcnvModelStepPart(
         "coverage": ("tsv",),
     }
 
+    @property
+    def wrappers(self) -> dict[str, str]:
+        """Whole genomes are binned without target regions, by the ``_wgs`` wrappers"""
+        wgs = "_wgs" if self.config.intervals == "wgs" else ""
+        return {
+            "preprocess_intervals": f"gcnv/preprocess_intervals{wgs}",
+            "annotate_gc": f"gcnv/annotate_gc{wgs}",
+            "filter_intervals": "gcnv/filter_intervals",
+            "scatter_intervals": "gcnv/scatter_intervals",
+            "coverage": "gcnv/coverage",
+            "contig_ploidy": "gcnv/contig_ploidy",
+            "call_cnvs": "gcnv/call_cnvs_cohort_mode",
+            "post_germline_calls": "gcnv/post_germline_calls",
+        }
+
     def _get_params_preprocess_intervals(self, wildcards):
         """Targeted intervals take ``--bin-length``, whole genomes ``--padding``"""
         params = {"interval_merging_rule": str(self.config.interval_merging_rule)}

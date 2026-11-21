@@ -30,6 +30,7 @@ class CallsReportStepPart(BaseStepPart):
 
     name = "calls_report"
     actions = ("run",)
+    wrappers = {"run": "calls_report"}
     entity_wildcard = "library_name"
     result_keys = ("tsv", "tsv_md5")
 

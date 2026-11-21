@@ -475,6 +475,17 @@ def test_wrappers_read_the_params_they_get():
     assert not stale, f"remove these entries from WRAPPERS_READING_PARAMS_DYNAMICALLY: {stale}"
 
 
+def test_wrapper_jobs_carry_the_code_of_their_wrapper():
+    """Every job that runs a wrapper has the hash of the wrapper's code in its params, since Snakemake
+    itself records no code for wrapper rules (``snappy_pipeline/wrapper_code.py``)."""
+    found = [
+        f"{snapshot}: {job['rule']}"
+        for snapshot, job in _snapshot_jobs()
+        if job["wrapper"] and job["params"].get("args", {}).get("code") != "<hash>"
+    ]
+    assert not found, f"wrapper jobs without params.args.code: {found}"
+
+
 def test_result_files_are_targets():
     """The work files that a results job links are targets of ``all``, so that a missing one (for
     example after a failed rerun) is rebuilt and linked again; an existing manifest alone does

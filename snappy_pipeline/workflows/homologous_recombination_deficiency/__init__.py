@@ -53,6 +53,7 @@ class ScarHRDStepPart(BaseStepPart):
 
     #: Class available actions
     actions = ("run",)
+    wrappers = {"run": "scarHRD/run"}
 
     result_keys = {"run": ("hrd", "hrd_md5")}
 

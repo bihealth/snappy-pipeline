@@ -37,6 +37,7 @@ class QcSummaryStepPart(BaseStepPart):
 
     name = "qc_summary"
     actions = ("run",)
+    wrappers = {"run": "qc_summary"}
 
     #: Step part and action whose per-library outputs the summary reads
     source: tuple[str, str]

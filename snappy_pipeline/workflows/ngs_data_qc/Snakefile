@@ -32,14 +32,11 @@ if wf.config.tool == "fastqc":
             wf.get_benchmark_file("fastqc", "run")
         threads: wf.get_resource("fastqc", "run", "threads")
         resources:
-            runtime=wf.get_resource("fastqc", "run", "runtime"),
-            mem=wf.get_resource("fastqc", "run", "mem"),
-            partition=wf.get_resource("fastqc", "run", "partition"),
-            tmpdir=wf.get_resource("fastqc", "run", "tmpdir"),
+            **wf.get_resources("fastqc", "run"),
         params:
             args=wf.get_params("fastqc", "run"),
         wrapper:
-            wf.wrapper_path("fastqc")
+            wf.get_wrapper("fastqc", "run")
 
 
 # Bam Data QC ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -60,12 +57,11 @@ if wf.config.tool == "picard":
             wf.get_benchmark_file("picard", "prepare")
         threads: wf.get_resource("picard", "prepare", "threads")
         resources:
-            runtime=wf.get_resource("picard", "prepare", "runtime"),
-            mem=wf.get_resource("picard", "prepare", "mem"),
-            partition=wf.get_resource("picard", "prepare", "partition"),
-            tmpdir=wf.get_resource("picard", "prepare", "tmpdir"),
+            **wf.get_resources("picard", "prepare"),
+        params:
+            args=wf.get_params("picard", "prepare"),
         wrapper:
-            wf.wrapper_path("picard/prepare")
+            wf.get_wrapper("picard", "prepare")
 
     rule ngs_data_qc_picard_metrics:
         input:
@@ -78,14 +74,11 @@ if wf.config.tool == "picard":
             wf.get_benchmark_file("picard", "metrics")
         threads: wf.get_resource("picard", "metrics", "threads")
         resources:
-            runtime=wf.get_resource("picard", "metrics", "runtime"),
-            mem=wf.get_resource("picard", "metrics", "mem"),
-            partition=wf.get_resource("picard", "metrics", "partition"),
-            tmpdir=wf.get_resource("picard", "metrics", "tmpdir"),
+            **wf.get_resources("picard", "metrics"),
         params:
             args=wf.get_params("picard", "metrics"),
         wrapper:
-            wf.wrapper_path("picard/metrics")
+            wf.get_wrapper("picard", "metrics")
 
 
 # Fingerprints with ngs-chew --------------------------------------------------
@@ -104,14 +97,11 @@ if wf.config.tool == "ngs_chew":
             wf.get_benchmark_file("ngs_chew", "fingerprint")
         threads: wf.get_resource("ngs_chew", "fingerprint", "threads")
         resources:
-            runtime=wf.get_resource("ngs_chew", "fingerprint", "runtime"),
-            mem=wf.get_resource("ngs_chew", "fingerprint", "mem"),
-            partition=wf.get_resource("ngs_chew", "fingerprint", "partition"),
-            tmpdir=wf.get_resource("ngs_chew", "fingerprint", "tmpdir"),
+            **wf.get_resources("ngs_chew", "fingerprint"),
         params:
             args=wf.get_params("ngs_chew", "fingerprint"),
         wrapper:
-            wf.wrapper_path("ngs_chew/fingerprint")
+            wf.get_wrapper("ngs_chew", "fingerprint")
 
     rule ngs_data_qc_ngs_chew_compare:
         input:
@@ -124,12 +114,11 @@ if wf.config.tool == "ngs_chew":
             wf.get_benchmark_file("ngs_chew", "compare")
         threads: wf.get_resource("ngs_chew", "compare", "threads")
         resources:
-            runtime=wf.get_resource("ngs_chew", "compare", "runtime"),
-            mem=wf.get_resource("ngs_chew", "compare", "mem"),
-            partition=wf.get_resource("ngs_chew", "compare", "partition"),
-            tmpdir=wf.get_resource("ngs_chew", "compare", "tmpdir"),
+            **wf.get_resources("ngs_chew", "compare"),
+        params:
+            args=wf.get_params("ngs_chew", "compare"),
         wrapper:
-            wf.wrapper_path("ngs_chew/compare")
+            wf.get_wrapper("ngs_chew", "compare")
 
 
 # Target coverage with alfred -------------------------------------------------
@@ -148,14 +137,11 @@ if wf.config.tool == "alfred":
             wf.get_benchmark_file("alfred", "run")
         threads: wf.get_resource("alfred", "run", "threads")
         resources:
-            runtime=wf.get_resource("alfred", "run", "runtime"),
-            mem=wf.get_resource("alfred", "run", "mem"),
-            partition=wf.get_resource("alfred", "run", "partition"),
-            tmpdir=wf.get_resource("alfred", "run", "tmpdir"),
+            **wf.get_resources("alfred", "run"),
         params:
             args=wf.get_params("alfred", "run"),
         wrapper:
-            wf.wrapper_path("alfred/qc")
+            wf.get_wrapper("alfred", "run")
 
 
 # QC summary of all libraries -------------------------------------------------
@@ -174,11 +160,8 @@ if "qc_summary" in wf.sub_steps:
             wf.get_benchmark_file("qc_summary", "run")
         threads: wf.get_resource("qc_summary", "run", "threads")
         resources:
-            runtime=wf.get_resource("qc_summary", "run", "runtime"),
-            mem=wf.get_resource("qc_summary", "run", "mem"),
-            partition=wf.get_resource("qc_summary", "run", "partition"),
-            tmpdir=wf.get_resource("qc_summary", "run", "tmpdir"),
+            **wf.get_resources("qc_summary", "run"),
         params:
             args=wf.get_params("qc_summary", "run"),
         wrapper:
-            wf.wrapper_path("qc_summary")
+            wf.get_wrapper("qc_summary", "run")

@@ -47,6 +47,7 @@ class Mantis2StepPart(BaseStepPart):
     name = "mantis_msi2"
 
     actions = ("run",)
+    wrappers = {"run": "mantis/mantis_msi2/run"}
 
     entity_wildcard = "tumor_library"
 

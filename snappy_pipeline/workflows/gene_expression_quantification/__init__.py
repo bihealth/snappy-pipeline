@@ -232,6 +232,7 @@ class SalmonStepPart(GeneExpressionQuantificationStepPart):
 
     #: Class available actions
     actions = ("run",)
+    wrappers = {"run": "salmon"}
 
     def _get_output_files_run(self):
         outputs = super()._get_output_files_run()
@@ -270,6 +271,7 @@ class FeatureCountsStepPart(GeneExpressionQuantificationStepPart):
 
     #: Class available actions
     actions = ("run",)
+    wrappers = {"run": "featurecounts"}
 
     @dictify
     def _get_input_files_run(self, wildcards: Wildcards):
@@ -299,6 +301,7 @@ class StrandednessStepPart(GeneExpressionQuantificationStepPart):
 
     #: Class available actions
     actions = ("run",)
+    wrappers = {"run": "rseqc"}
 
     @dictify
     def _get_input_files_run(self, wildcards: Wildcards):
@@ -322,6 +325,7 @@ class QCStepPartDuplication(GeneExpressionQuantificationStepPart):
 
     #: Class available actions
     actions = ("run",)
+    wrappers = {"run": "rnaqc/duplication"}
 
     def _get_params_run(self, wildcards: Wildcards) -> dict[str, Any]:
         return {}
@@ -337,6 +341,7 @@ class QCStepPartDupradar(GeneExpressionQuantificationStepPart):
 
     #: Class available actions
     actions = ("run",)
+    wrappers = {"run": "rnaqc/dupradar"}
 
     @dictify
     def _get_input_files_run(self, wildcards: Wildcards):
@@ -361,6 +366,7 @@ class QCStepPartRnaseqc(GeneExpressionQuantificationStepPart):
 
     #: Class available actions
     actions = ("run",)
+    wrappers = {"run": "rnaqc/rnaseqc"}
 
     def _get_params_run(self, wildcards: Wildcards) -> dict[str, Any]:
         return {}
@@ -383,6 +389,7 @@ class QCStepPartStats(GeneExpressionQuantificationStepPart):
 
     #: Class available actions
     actions = ("run",)
+    wrappers = {"run": "rnaqc/stats"}
 
     def _get_params_run(self, wildcards: Wildcards) -> dict[str, Any]:
         return {}

@@ -64,6 +64,11 @@ class MehariStepPart(BaseStepPart):
 
     name = "mehari"
     actions = ("annotate_seqvars", "annotate_strucvars", "bam_qc")
+    wrappers = {
+        "bam_qc": "mehari/bam_qc",
+        "annotate_strucvars": "mehari/annotate_strucvars",
+        "annotate_seqvars": "mehari/annotate_seqvars",
+    }
 
     #: The ``strucvars`` section passes its own extra arguments
     extra_arguments_action = "annotate_seqvars"
