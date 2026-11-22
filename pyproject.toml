@@ -56,6 +56,8 @@ dependencies = [
     "pysam >=0.22.1,<1",
     # Jinja 2 template rendering
     "jinja2 >=3.1.4,<4",
+    # The library and donor tables of the sample sheets, the sheet summary and the gCNV tools
+    "pandas >=3,<4",
     # YTE rendering of custom varlociraptor scenarios
     "yte >=1.5.5,<2",
     # Parsing of ISA-tab.
