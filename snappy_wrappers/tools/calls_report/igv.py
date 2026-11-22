@@ -11,6 +11,8 @@ The page is cut to a size limit by dropping the lowest-ranked sites and rerunnin
 igv.js is inlined from the copy that the environment's post-deploy script fetched,
 so no job needs network,
 and the calls table gets an ``igv`` column with the rank of a selected call, linked to the page.
+The link carries the rank in the URL hash, which a script in the page resolves to the call's row;
+the template of igv-reports preselects the first row only.
 """
 
 from __future__ import annotations
@@ -56,6 +58,35 @@ SITE_COLUMNS = (
 )
 
 KEY = ("chromosome", "position", "ref", "alt")
+
+#: Selects the site of the URL hash, the rank of a call as the ``igv`` column links it;
+#: the template builds its table once igv.js is up, so the script waits for the table
+HASH_SCRIPT = """<script type="text/javascript">
+    (function () {
+        function select() {
+            const table = document.getElementById("variant_table")
+            if (!table) {
+                window.setTimeout(select, 100)
+                return
+            }
+            const rank = decodeURIComponent(window.location.hash.slice(1))
+            if (!rank) return
+            const headers = Array.from(table.querySelectorAll("th"), (th) => th.textContent)
+            const column = headers.indexOf("rank")
+            for (const row of table.querySelectorAll("tbody tr")) {
+                const cell = row.cells[column]
+                if (cell && cell.textContent === rank) {
+                    cell.click()  // the template's handler loads the session of the row
+                    row.scrollIntoView({block: "center"})
+                    return
+                }
+            }
+        }
+        window.addEventListener("hashchange", select)
+        select()
+    })()
+</script>
+"""
 
 
 def igv_js_path() -> Path:
@@ -212,6 +243,18 @@ def inline_igv_js(html: str, js: str) -> str:
     return IGV_JS_TAG.sub(lambda _: f'<script type="text/javascript">{js}</script>', html, count=1)
 
 
+def select_by_hash(html: str) -> str:
+    """``html`` with :data:`HASH_SCRIPT` before its last ``</body>``
+    (the inlined igv.js holds the tag in a string too)."""
+    at = html.rfind("</body>")
+    if at < 0:
+        raise ValueError(
+            "the igv-reports page has no </body> to add the hash selection to; the igv-reports "
+            "version changed"
+        )
+    return html[:at] + HASH_SCRIPT + html[at:]
+
+
 def build_page(
     summary: Summary,
     settings: dict[str, Any],
@@ -238,7 +281,8 @@ def build_page(
     page = os.path.join(workdir, "top.html")
     while sites.height:
         sites_path = os.path.join(workdir, "sites.tsv")
-        sites.write_csv(sites_path, separator="\t")
+        # Unquoted: igv-reports shows a quoted empty string as "" in its table
+        sites.write_csv(sites_path, separator="\t", quote_style="never")
         command = create_report_command(
             sites_path,
             fasta,
@@ -256,10 +300,10 @@ def build_page(
         sites = sites.head(keep)
     if not sites.height:
         return None, sites, requested
-    html = Path(page).read_text(encoding="utf-8")
-    Path(page).write_text(
-        inline_igv_js(html, igv_js_path().read_text(encoding="utf-8")), encoding="utf-8"
+    html = inline_igv_js(
+        Path(page).read_text(encoding="utf-8"), igv_js_path().read_text(encoding="utf-8")
     )
+    Path(page).write_text(select_by_hash(html), encoding="utf-8")
     return page, sites, requested
 
 

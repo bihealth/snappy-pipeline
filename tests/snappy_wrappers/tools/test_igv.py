@@ -135,6 +135,20 @@ def test_inline_igv_js_replaces_the_template_tag_once():
         igv.inline_igv_js("<head></head>", "x")
 
 
+def test_select_by_hash_adds_the_script_before_the_last_body_end():
+    # The inlined igv.js has the tag in a string; the template's own tag comes last
+    html = "<script>a('</body>')</script><body><div id='igvDiv'></div></body>\n</html>"
+
+    assert igv.select_by_hash(html) == (
+        "<script>a('</body>')</script><body><div id='igvDiv'></div>"
+        + igv.HASH_SCRIPT
+        + "</body>\n</html>"
+    )
+    assert 'getElementById("variant_table")' in igv.HASH_SCRIPT
+    with pytest.raises(ValueError, match="no </body>"):
+        igv.select_by_hash("<body>")
+
+
 def test_build_page_trims_the_sites_until_the_page_fits(tmp_path, monkeypatch):
     summary = summarize(str(FIXTURES / "calls.vcf"), Options())
     sizes = iter([30 * 1024 * 1024, 2 * 1024 * 1024])  # the first page is too big
@@ -142,10 +156,12 @@ def test_build_page_trims_the_sites_until_the_page_fits(tmp_path, monkeypatch):
 
     def run(command, check):
         runs.append(command)
+        assert '""' not in Path(command[1]).read_text()  # empty cells stay empty on the page
         sites = pl.read_csv(command[1], separator="\t")
         Path(command[command.index("--output") + 1]).write_text(
             '<script src="https://cdn.jsdelivr.net/npm/igv@3.5.2/dist/igv.min.js"></script>'
             + "x" * next(sizes)
+            + "</body>"
         )
         assert sites.height in (6, 1)
 
@@ -175,7 +191,9 @@ def test_build_page_trims_the_sites_until_the_page_fits(tmp_path, monkeypatch):
 
     assert requested == 6 and sites.height == 1  # floor(6 * 0.9 * 10 / 30)
     assert len(runs) == 2
-    assert Path(page).read_text().startswith('<script type="text/javascript">var igv;</script>')
+    html = Path(page).read_text()
+    assert html.startswith('<script type="text/javascript">var igv;</script>')
+    assert html.endswith(igv.HASH_SCRIPT + "</body>")
     tracks = json.loads((tmp_path / "tracks.json").read_text())
     assert [t["name"] for t in tracks] == ["calls", "a", "b", "c"]
 
