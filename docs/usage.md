@@ -27,6 +27,9 @@ snappy run -- --forcerun $(snappy rules --part calls_report --part qc_summary --
 
 `snappy task add` takes `[task_name=]step_type` arguments, for example `mapping=ngs_mapping`, and so does `snappy init --task`.
 Without a task name, the task is named after its step.
+On a terminal, `snappy task add` without arguments asks for the tasks one by one, and so does `snappy init` when it asks whether to add tasks: the step (type a part of its name to filter the list), the name, the tool and, for each `depends_on` key the tool requires, the task that provides it among those of the project, newest first.
+For a key that no task provides yet, the question offers to add such a task on the spot, which pulls in a chain top-down: a calling task asks for its alignments, which asks for a mapping task, which asks for the genome, where an `external_data` task gets its `produces` and its file keys from the requirement.
+The written block has the answers set and everything else as `snappy task add` writes it, so the tool sections and the paths of the data are still filled in `config.yaml`.
 Besides `config.yaml`, `snappy init`:
 
 - writes an empty sample sheet (`--sheet-type generic|germline|cancer`) that `config.yaml` names.

@@ -41,6 +41,18 @@ from .impl.fsmanip import (
 )
 from .impl.logging import LVL_ERROR, LVL_IMPORTANT, LVL_INFO, LVL_SUCCESS, log
 from .impl.output import Column, listing_options, print_listing
+from .impl.prompts import ask_confirm, ask_select, ask_text
+from .impl.task_chain import (
+    EXTERNAL,
+    Key,
+    candidates,
+    entries_of,
+    entry_for,
+    external_data_settings,
+    providers,
+    required_keys,
+    step_tools,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -161,6 +173,17 @@ RULE_COLUMNS = [
 ]
 
 
+def _load_config_yaml(config_filename: str):
+    with open(config_filename, "rt") as f:
+        return ruamel_yaml.YAML().load(f.read())
+
+
+def _task_rows_of(config_yaml) -> list[dict[str, Any]]:
+    """The rows of the task listing from the loaded ``config.yaml``."""
+    tasks = (config_yaml or {}).get("tasks") or []
+    return [_task_row(item) for item in tasks if isinstance(item, dict)]
+
+
 def _task_row(item: dict) -> dict[str, Any]:
     """A task entry of ``config.yaml`` as a row: name, step, tool and ``depends_on``."""
     config = item.get("config") or {}
@@ -178,13 +201,23 @@ GITIGNORE_FILENAME = ".gitignore"
 SHEET_FILENAME = "samplesheet.tsv"
 #: The sample sheet formats of ``snappy init --sheet-type`` and the data set type of each
 SHEET_TYPES = {"generic": "generic", "germline": "germline_variants", "cancer": "matched_cancer"}
+#: The sheet types as prompt choices: value, title, description
+SHEET_TYPE_CHOICES = [
+    ("generic", "generic", "Libraries without relations between donors"),
+    ("germline", "germline", "Pedigrees: index, parents and siblings, with sex and affection"),
+    ("cancer", "cancer", "The tumor and normal libraries of each donor"),
+]
 
 #: Configuration file name
 CONFIG_FILENAME = CONFIG_FILE
 
 
 class AddTaskApp:
-    """Implementation of task addition logic."""
+    """Implementation of task addition logic.
+
+    ``settings`` are values set in the generated block, as the questions of a terminal give
+    them: ``tool``, the ``depends_on`` keys, ``produces`` and the file keys of ``external_data``.
+    """
 
     def __init__(
         self,
@@ -192,11 +225,13 @@ class AddTaskApp:
         task_name: str,
         project_directory: str,
         config_mode: ConfigMode | str = ConfigMode.COMMENTED,
+        settings: dict[str, Any] | None = None,
     ):
         self.step = step
         self.task_name = task_name
         self.project_directory = project_directory
         self.config_mode = ConfigMode(config_mode)
+        self.settings = settings or {}
 
     def run(self):
         log("")
@@ -276,6 +311,13 @@ class AddTaskApp:
 
         if step_config_block is None:
             step_config_block = CommentedMap()
+        for key, value in self.settings.items():
+            # A key of the block keeps its comments; a commented-out key is added anew
+            if isinstance(value, dict) and isinstance(step_config_block.get(key), CommentedMap):
+                for sub_key, sub_value in value.items():
+                    step_config_block[key][sub_key] = sub_value
+            else:
+                step_config_block[key] = value
 
         task_block = CommentedMap()
         task_block["name"] = self.task_name
@@ -403,44 +445,36 @@ def init(
     default_name = os.path.basename(os.path.abspath(project_directory))
     if interactive is None:
         interactive = sys.stdin.isatty() and sys.stdout.isatty()
+    add_tasks = False  # ask for the tasks once config.yaml exists
     if interactive:
 
         def asked(name: str) -> bool:
             return ctx.get_parameter_source(name) == ParameterSource.DEFAULT
 
         if asked("project_name"):
-            project_name = click.prompt("Project name", default=project_name or default_name)
+            project_name = ask_text("Project name", default=project_name or default_name)
         if asked("external_id"):
-            external_id = click.prompt(
-                "External id of the project, such as the SODAR project UUID",
-                default="",
-                show_default=False,
-            )
+            external_id = ask_text("External id of the project, such as the SODAR project UUID")
         if asked("description"):
-            description = click.prompt("Description", default="", show_default=False)
+            description = ask_text("Description")
         if asked("sheet_type"):
-            sheet_type = click.prompt(
-                "Sample sheet type", type=click.Choice(SHEET_TYPES), default=sheet_type
-            )
-        if asked("tasks") and click.confirm("Add tasks now?", default=False):
-            tasks = _prompt_tasks()
+            sheet_type = ask_select("Sample sheet type", SHEET_TYPE_CHOICES, default=sheet_type)
         if git:
             if asked("track_sheet"):
-                track_sheet = click.confirm(
+                track_sheet = ask_confirm(
                     "Track samplesheet.tsv in git? Only if it holds no personal data, or the "
                     "remote is approved for such data (such as the internal GitLab)",
                     default=False,
                 )
             if asked("remote"):
-                remote = click.prompt(
-                    "Git remote URL (origin; nothing is pushed)", default="", show_default=False
-                )
+                remote = ask_text("Git remote URL (origin; nothing is pushed)")
             if track_sheet and remote:
-                track_sheet = click.confirm(
+                track_sheet = ask_confirm(
                     f"Is {remote} approved for the data in the sample sheet?", default=False
                 )
                 if not track_sheet:
                     log("samplesheet.tsv stays untracked", level=LVL_IMPORTANT)
+        add_tasks = asked("tasks") and ask_confirm("Add tasks now?", default=False)
     project_name = project_name or default_name
 
     log("SNAPPY Pipeline -- init")
@@ -521,6 +555,8 @@ def init(
             config_mode=config_mode,
         )
         failed = failed or app.run()
+    if add_tasks:
+        _prompt_tasks(project_directory, config_mode)
 
     if git:
         init_git(project_directory, remote or None, track_sheet)
@@ -534,20 +570,84 @@ def init(
     log("All done, have a nice day!", level=LVL_SUCCESS)
 
 
-def _prompt_tasks() -> tuple:
-    """Ask for tasks, ``[name=]step_type`` each, until an empty line."""
-    click.echo("Step types: `snappy task list --available`")
-    tasks = []
-    while True:
-        value = click.prompt(
-            "Task ([name=]step_type, empty line to finish)", default="", show_default=False
+#: The answers of a key question besides the tasks that can provide the key
+ADD_PROVIDER = "+"
+LEAVE_EMPTY = ""
+
+
+class _TaskQuestions:
+    """The task questions of a terminal: one task after the other, each written into
+    ``config.yaml`` at once, with the tasks of the project as the answers to its ``depends_on``
+    keys, or a new task added on the spot for a key nothing provides yet."""
+
+    def __init__(self, project_directory: str, config_mode: ConfigMode | str):
+        self.project_directory = project_directory
+        self.config_mode = config_mode
+        self.config_filename = _project_config(project_directory)
+        self.entries = entries_of(_load_config_yaml(self.config_filename))
+        self.summaries = dict(_get_registered_steps_info())
+        self.added: list[str] = []
+
+    def run(self) -> list[str]:
+        """Ask for tasks until no more are wanted; print the task table; return the added names."""
+        while True:
+            self.task(ask_select("Step", self._step_choices(STEPS)))
+            if not ask_confirm("Add another task?", default=True):
+                break
+        print_listing(_task_rows_of(_load_config_yaml(self.config_filename)), TASK_COLUMNS, "Tasks")
+        return self.added
+
+    def _step_choices(self, steps) -> list[tuple[str, str, str | None]]:
+        return [(step, step, self.summaries.get(step)) for step in steps]
+
+    def task(self, step: str, provides: Key | None = None) -> str:
+        """Ask for one task of ``step`` and write it; ``provides`` is the key of the task that
+        asked for it, which names the task by default and sets the data of ``external_data``."""
+        taken = {entry.name for entry in self.entries}
+        default = provides.name if provides else step
+        name = ""
+        while not name or name in taken:
+            name = ask_text("Task name", default="" if default in taken else default).strip()
+            if name in taken:
+                log("A task named {name} exists", {"name": name}, level=LVL_ERROR)
+        settings: dict[str, Any] = {}
+        tools = step_tools(step)
+        tool = ask_select("Tool", [(tool, tool, None) for tool in tools]) if tools else None
+        if tool is not None:
+            settings["tool"] = tool
+        if step == EXTERNAL and provides is not None:
+            settings |= external_data_settings(provides)
+        depends_on: dict[str, str] = {}
+        for key in required_keys(step, tool):
+            choices = [(name_, name_, None) for name_ in candidates(key, self.entries)]
+            choices.append((ADD_PROVIDER, "add a task that provides it now", None))
+            choices.append((LEAVE_EMPTY, "leave empty, fill in config.yaml later", None))
+            message = f"{key.name}: {key.description}" if key.description else key.name
+            answer = ask_select(message, choices)
+            if answer == ADD_PROVIDER:
+                provider = ask_select("Step of the task", self._step_choices(providers(key)))
+                answer = self.task(provider, provides=key)
+            if answer:
+                depends_on[key.name] = answer
+        if depends_on:
+            settings["depends_on"] = depends_on
+        app = AddTaskApp(
+            step=step,
+            task_name=name,
+            project_directory=self.project_directory,
+            config_mode=self.config_mode,
+            settings=settings,
         )
-        if not value:
-            return tuple(tasks)
-        try:
-            tasks.append(TaskParamType().convert(value, None, None))
-        except click.BadParameter as e:
-            click.echo(e.format_message())
+        if app.run():
+            sys.exit(1)
+        self.entries.append(entry_for(name, step, tool, settings))
+        self.added.append(name)
+        return name
+
+
+def _prompt_tasks(project_directory: str, config_mode: ConfigMode | str) -> list[str]:
+    """Ask for tasks on a terminal, one by one (see :class:`_TaskQuestions`)."""
+    return _TaskQuestions(project_directory, config_mode).run()
 
 
 def init_git(project_directory: str, remote: str | None, track_sheet: bool = False) -> None:
@@ -619,15 +719,31 @@ def task():
 
 @task.command(name="add")
 @click.argument(
-    "tasks", nargs=-1, required=True, type=TaskParamType(), metavar="[NAME=]STEP_TYPE..."
+    "tasks", nargs=-1, required=False, type=TaskParamType(), metavar="[NAME=]STEP_TYPE..."
 )
 @directory_option
 @config_mode_option
-def task_add(tasks, directory, config_mode):
-    """Add tasks to the project configuration.
+@click.option(
+    "--interactive/--no-interactive",
+    default=None,
+    help="Without tasks, ask for them one by one; the default on a terminal.",
+)
+def task_add(tasks, directory, config_mode, interactive):
+    """Add tasks to the project configuration, or ask for them one by one on a terminal.
 
-    TASKS is a list of tasks to add, formatted as [task_name=]step_type.
+    TASKS is a list of tasks to add, formatted as [task_name=]step_type. Without tasks, each
+    one is asked for: step, name, tool and, per required depends_on key, the task that provides
+    it, among those of the project or added on the spot.
     """
+    if not tasks:
+        if interactive is None:
+            interactive = sys.stdin.isatty() and sys.stdout.isatty()
+        if not interactive:
+            raise click.UsageError(
+                "Give the tasks as [NAME=]STEP_TYPE, or run on a terminal to be asked for them"
+            )
+        _prompt_tasks(directory, config_mode)
+        return
     for task_name, step in tasks:
         app = AddTaskApp(
             step=step,
@@ -660,10 +776,7 @@ def task_list(directory, available, as_json, plain):
         print_listing(rows, STEP_COLUMNS, "Steps", as_json=as_json, plain=plain)
         return
     config_filename = _project_config(directory)
-    with open(config_filename, "rt") as f:
-        config_yaml = ruamel_yaml.YAML().load(f.read())
-    tasks = (config_yaml or {}).get("tasks") or []
-    rows = [_task_row(item) for item in tasks if isinstance(item, dict)]
+    rows = _task_rows_of(_load_config_yaml(config_filename))
     print_listing(
         rows,
         TASK_COLUMNS,

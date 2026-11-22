@@ -67,6 +67,8 @@ dependencies = [
     # Rich colored help formatting for Click CLIs
     "rich-click >=1.7.0,<2",
     "rich >=13.0.0",
+    # The questions of snappy init and snappy task add on a terminal
+    "questionary >=2.1,<3",
     # The SODAR API of snappy pull-sheet
     "requests >=2.32,<3",
 ]

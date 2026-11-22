@@ -361,6 +361,45 @@ def test_task_add_full_writes_every_field_active(tmp_path):
     assert not any(line.lstrip().startswith("#library_selection") for line in lines)
 
 
+def test_task_add_asks_for_the_tasks_on_a_terminal(tmp_path, answers):
+    (tmp_path / "config.yaml").write_text(CHECK_FILES_CONFIG)
+    answers(
+        "variant_filtration",  # step
+        "mapping",  # a taken name, asked again
+        "filtration",
+        "vembrane",  # tool
+        snappy_cli.ADD_PROVIDER,  # variants: no task of the project calls variants yet
+        "variant_calling",  # the step of the new task
+        "calling",  # its name
+        "mutect2",  # its tool
+        "mapping",  # its alignments
+        "genome",  # its reference
+        False,  # no further task
+    )
+
+    result = CliRunner().invoke(
+        snappy_cli.main, ["task", "add", "--interactive", "--directory", str(tmp_path)]
+    )
+
+    assert result.exit_code == 0, result.output
+    assert answers.pending == []
+    text = (tmp_path / "config.yaml").read_text()
+    assert text.index("- name: calling\n") < text.index("- name: filtration\n")
+    assert "tool: mutect2" in text and "alignments: mapping" in text and "reference: genome" in text
+    assert "tool: vembrane" in text and "variants: calling" in text
+    # The task table closes the questions
+    assert "filtration\tvariant_filtration\tvembrane\tvariants: calling" in result.output
+
+
+def test_task_add_without_tasks_needs_a_terminal(tmp_path):
+    (tmp_path / "config.yaml").write_text(CHECK_FILES_CONFIG)
+
+    result = CliRunner().invoke(snappy_cli.main, ["task", "add", "--directory", str(tmp_path)])
+
+    assert result.exit_code == 2
+    assert "runonaterminal" in re.sub(r"\x1b\[[0-9;]*m|[\s│╭╮╰╯─]", "", result.output)
+
+
 def test_task_add_without_a_config_fails_with_a_hint(tmp_path):
     result = CliRunner().invoke(
         snappy_cli.main, ["task", "add", "--directory", str(tmp_path), "ngs_mapping"]

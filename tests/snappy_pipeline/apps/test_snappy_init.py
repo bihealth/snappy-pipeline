@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 """Tests for ``snappy init`` subcommand."""
 
+import re
 import shutil
 
 import pytest
@@ -134,28 +135,44 @@ def test_init_tracks_the_sample_sheet_only_on_request(tmp_path, git):
 
 
 @needs_git
-def test_init_asks_for_what_no_option_gives(tmp_path, git):
+def test_init_asks_for_what_no_option_gives(tmp_path, git, answers):
     project = tmp_path / "project"
-    answers = [
+    answers(
         "My project",  # name
         "sodar-uuid",  # external id
         "A trio",  # description
         "germline",  # sheet type
-        "y",  # add tasks
-        "mapping=ngs_mapping",
-        "",  # no more tasks
-        "y",  # track the sheet
+        True,  # track the sheet
         "git@example.org:lab/project.git",  # remote
-        "n",  # the remote is not approved for the sheet
-    ]
-    result = CliRunner().invoke(
-        snappy_cli.main, ["init", str(project), "--interactive"], input="\n".join(answers) + "\n"
+        False,  # the remote is not approved for the sheet
+        True,  # add tasks now
+        "ngs_mapping",  # step
+        "mapping",  # name
+        "bwa_mem3",  # tool
+        "data_sets",  # reads
+        snappy_cli.LEAVE_EMPTY,  # index: nothing provides it yet, filled in later
+        snappy_cli.ADD_PROVIDER,  # reference: add a task that provides it now
+        "external_data",  # its step
+        "genome",  # its name
+        False,  # no further task
     )
+
+    result = CliRunner().invoke(snappy_cli.main, ["init", str(project), "--interactive"])
+
     assert result.exit_code == 0, result.output
+    assert answers.pending == []
+    assert answers.asked[7:11] == ["Add tasks now?", "Step", "Task name", "Tool"]
+    assert [q.split(":")[0] for q in answers.asked[11:14]] == ["reads", "index", "reference"]
+    assert answers.asked[14:16] == ["Step of the task", "Task name"]
     text = (project / "config.yaml").read_text()
     assert 'name: "My project"' in text and 'external_id: "sodar-uuid"' in text
     assert 'description: "A trio"' in text and "type: germline_variants" in text
-    assert "\n  - name: mapping\n" in text
+    # The genome task was added while the mapping task was asked for, so it comes first
+    assert text.index("- name: genome\n") < text.index("- name: mapping\n")
+    assert re.search(r"type: raw\b", text) and "- dna\n" in text and "- reference\n" in text
+    assert "\n      files:\n        fasta:\n" in text
+    assert "tool: bwa_mem3" in text and "reads: data_sets" in text and "reference: genome" in text
+    assert re.search(r"\n\s+index:\s+# REQUIRED", text)  # left to be filled
     # The remote is not approved for the sheet, so it stays untracked
     assert git(project, "ls-files").split() == [".gitignore", "README.md", "config.yaml"]
     assert git(project, "remote", "get-url", "origin").strip() == "git@example.org:lab/project.git"
