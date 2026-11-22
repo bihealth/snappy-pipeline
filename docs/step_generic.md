@@ -3,13 +3,13 @@
 # Generic Pipeline Step Description
 
 A pipeline step is a Snakemake workflow plus the Python code that wires its rules.
-A **task** is a configured use of a step in the `tasks` list of the `config.yaml` of a project.
+A **task** is a configured use of a step, an entry of the `tasks` list in the `config.yaml` of a project.
 Each task reads files that other tasks or the project provide, writes its results into its `work/` directory and links its result files into its `output/` directory.
 
 ## Configuration
 
 A task has a `step`, a unique `name` and a `config`.
-The `config` is checked against the model of the step when `snappy run` starts.
+When `snappy run` starts, it checks the `config` against the fields that the step defines.
 Unknown keys are an error.
 
 ```yaml
@@ -28,8 +28,8 @@ Unknown keys are an error.
 : Names the upstream task for each input.
     The keys are named after the data (`reads`, `alignments`, `variants`, `reference`, `index`, ...).
     Each step page lists its keys and the data type and tags the upstream task must produce.
-    A key that only some tools read, such as `panel_of_normals` of `variant_calling` (only `mutect2`), is an error for the other tools.
-    Likewise, a key that a setting reads is an error while the setting is off, such as `common_variants` without `mutect2.contamination`.
+    A key that only some tools read is an error for the other tools, such as `panel_of_normals` of `variant_calling`, which only `mutect2` reads.
+    A key that a setting reads is an error while the setting is off, such as `common_variants` without `mutect2.contamination`.
 
 `tool`
 : Selects the program the task runs.
@@ -41,15 +41,19 @@ Unknown keys are an error.
     Without it, the task takes the step's default, see the step's page and {ref}`overview`.
 
 `background_selection`
-: For the steps that use the libraries of background data sets (mapping, panels of normals, the SV and gCNV callers): narrows them with a pandas `DataFrame.query()` expression, such as `data_set == 'cohort_1000g'`.
-    Without it, the task takes all background libraries; other steps reject it.
+: Narrows the libraries of background data sets with a pandas `DataFrame.query()` expression, such as `data_set == 'cohort_1000g'`.
+    Only the steps that use these libraries accept it: mapping, panels of normals and the SV and gCNV callers.
+    Without it, the task takes all background libraries.
 
 `group_by`
-: `library` writes one output per library, `related` one per group of related libraries, where the step supports it: the members of a pedigree on germline sample sheets, the libraries of one donor on cancer sample sheets.
-    Without it, the task takes its step's default (`related` for germline variant calling), else the granularity of its upstream tasks, else `library`.
+: `library` writes one output per library, `related` one per group of related libraries, where the step supports it.
+    Related libraries are the members of a pedigree on germline sample sheets and the libraries of one donor on cancer sample sheets.
+    Without `group_by`, the task takes its step's default (`related` for germline variant calling), else what its upstream tasks declare, else `library`.
 
 `delete_intermediates`
-: What the task deletes once its readers are done, see {ref}`usage`: `intermediates`, the per-sample intermediate files that only later rules of the task read, and `bam`, the BAM of an `ngs_mapping` task that a later task processes further, which then is no result file.
+: Lists what the task deletes once its readers are done, see {ref}`usage`.
+    `intermediates` are the per-sample intermediate files that only later rules of the task read.
+    `bam` is the BAM of an `ngs_mapping` or `alignment_processing` task that a later task processes further, and this BAM then is not a result file.
 
 Each step page ends with the default configuration, with every option and its documentation.
 `snappy task add` writes the same into `config.yaml`.
@@ -83,7 +87,7 @@ Tasks of the same step with different tools or settings do not collide.
 Paths below `work/` and `output/` contain only what varies, such as the library name.
 The tool is part of the task configuration and never part of a path.
 
-There are no link-in jobs and no `input/` directory.
+No job links input files into a task, and there is no `input/` directory.
 Steps read FASTQ files where they are, and existing data comes from `external_data` tasks.
 
 ### Directory `work/`
@@ -102,6 +106,7 @@ Only result files have a `.md5` file.
 It holds relative symlinks into `work/` that mirror the paths below `work/`.
 No task reads from it.
 
-One local job per task with result files, `<task>_results`, creates the links to the result files of the task.
-Each file has its `.md5` file, and VCF and BED files also have their index.
-The job writes `output/.manifest.tsv`, which lists the path, size and md5 file of each result file, and removes links to files that are no result files any more.
+For each task with result files, one local job, `<task>_results`, creates the links to them.
+Each result file has its `.md5` file, and VCF and BED files also have their index.
+The job writes `output/.manifest.tsv`, which lists the path, size and md5 file of each result file.
+It removes links to files that are no longer result files.

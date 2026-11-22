@@ -1,12 +1,13 @@
 """Tumor mutational burden
 
 The step computes the tumor mutational burden (TMB) of each tumor from its somatic variants.
-It counts the variants (SNVs and indels) inside the ``targets`` of the tumor library's kit and divides them by the total length of the regions, in variants per megabase.
+It counts the variants (SNVs and indels) inside the ``targets`` of the tumor library's kit.
+It divides the count by the total length of these regions, which gives variants per megabase.
 The ``missense_TMB`` counts only the variants whose annotation matches ``missense_regex``.
-This needs an annotated VCF, which ``has_annotation: true`` states.
+The missense TMB needs an annotated VCF, and ``has_annotation: true`` states that the VCF is annotated.
 
 The kits come from ``depends_on.kits``, an ``external_data`` task with ``kits``.
-Each tumor library must be a targeted library with a kit that this task has.
+Each tumor library must be a targeted library whose kit is in that task.
 
 The step has no ``tool`` field.
 The task gives one result per tumor DNA library.

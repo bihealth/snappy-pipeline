@@ -6,17 +6,17 @@ The ``tool`` field selects the caller:
 
 - ``cnvetti`` writes the called CNVs as a BCF file.
 - ``cnvkit`` runs the CNVkit workflow for whole genomes and exports the segments in several formats.
-  It needs ``depends_on.panel_of_normals``: a ``panel_of_normals`` task with ``tool: cnvkit`` in whole genome mode (without ``depends_on.kits``), which also gives the target and antitarget regions.
+  It needs ``depends_on.panel_of_normals``: a ``panel_of_normals`` task with ``tool: cnvkit`` in whole genome mode (without ``depends_on.kits``).
+  That task also gives the target and antitarget regions.
   Without normals, the panel task builds a flat reference.
 - ``control_freec`` runs Control-FREEC and transforms its ratios into log2 values, calls and segments.
-  It needs ``depends_on.database``: an ``external_data`` task with ``{type: database, tags: [control_freec]}``, the key ``chr_len`` (the chromosome lengths) and, optionally, the key ``mappability``.
+  It needs ``depends_on.database``: an ``external_data`` task with ``{type: database, tags: [control_freec]}``, the key ``chr_len`` (the chromosome lengths) and an optional key ``mappability``.
 
 The task gives one result per tumor DNA library.
 ``control_freec`` leaves out tumor libraries without a matched normal, with a warning.
-It takes the sex of each donor from the sample sheet (``XY`` for male, ``XX`` for female donors) and ``control_freec.unknown_sex`` for the others.
-``cnvetti`` segments the coverage of such a tumor alone.
-The files are unfiltered.
-They contain low-quality calls.
+``control_freec`` takes the sex of each donor from the sample sheet (``XY`` for male, ``XX`` for female donors) and ``control_freec.unknown_sex`` for the others.
+``cnvetti`` segments the coverage of a tumor without a matched normal alone.
+The files are unfiltered and contain low-quality calls.
 
 Outputs
 -------
@@ -26,10 +26,12 @@ The files depend on the tool and are generally not in a standard format.
 
 - ``cnvetti``: the segments ``{tumor_library}/out/{tumor_library}.bcf`` and the segmented windows ``{tumor_library}/out/{tumor_library}.windows.bcf``, each with ``.csi``.
 - ``cnvkit``: ``{tumor_library}/out/{tumor_library}.cnr``, ``.dnacopy.seg``, ``.seg``, ``.bed.gz`` (with ``.tbi``) and ``.vcf.gz`` (with ``.tbi``).
-  The directory ``{tumor_library}/report/`` holds the tables ``{tumor_library}.breaks.txt``, ``.genemetrics.txt``, ``.segmetrics.txt``, ``.sex.txt`` and ``.metrics.txt``, and the plots ``{tumor_library}.diagram.pdf`` and ``{tumor_library}.scatter.png`` (also per chromosome, ``{tumor_library}.scatter.chr1.png`` and so on).
+  The directory ``{tumor_library}/report/`` holds the tables ``{tumor_library}.breaks.txt``, ``.genemetrics.txt``, ``.segmetrics.txt``, ``.sex.txt`` and ``.metrics.txt``.
+  It also holds the plots ``{tumor_library}.diagram.pdf`` and ``{tumor_library}.scatter.png``, and one scatter plot per chromosome (``{tumor_library}.scatter.chr1.png`` and so on).
 - ``control_freec``: ``{tumor_library}/out/{tumor_library}.ratio.txt``, ``.gene_log2.txt``, ``.gene_call.txt``, ``.segments.txt``, ``.scatter.png`` and ``.diagram.pdf``.
 
-Downstream tasks read the key ``dnacopy_seg``, which only ``cnvkit`` provides, so ``cnvetti`` and ``control_freec`` tasks do not satisfy their requirement.
+Downstream tasks read the key ``dnacopy_seg``, which only ``cnvkit`` provides.
+A ``cnvetti`` or ``control_freec`` task therefore does not satisfy their requirement.
 ``cnvetti`` also provides the keys ``bcf`` and ``bcf_csi`` (the segments), and ``control_freec`` the keys ``log2``, ``call`` and ``segments``.
 """
 

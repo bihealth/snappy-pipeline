@@ -2,18 +2,23 @@
 """Somatic neoepitope prediction with pVACtools
 
 The step predicts neoepitopes of the tumor DNA libraries with pVACtools: pVACseq from somatic small variants, pVACfuse from gene fusions, pVACsplice from splicing events.
-The single ``tool`` is ``pvactools``; ``pvactools.pvacseq``, ``pvacfuse`` and ``pvacsplice`` are enabled separately (pVACseq by default) and share the preparation of the task.
-The IEDB tools in the container are *not* free software; their use is restricted to academic, non-profit research unless a licence is acquired.
+The only ``tool`` is ``pvactools``.
+The sections ``pvactools.pvacseq``, ``pvacfuse`` and ``pvacsplice`` enable each prediction separately, and only pVACseq is enabled by default.
+The enabled predictions share the preparation jobs of the task.
+The IEDB tools in the container are *not* free software.
+Without a licence, their use is restricted to academic, non-profit research.
 
 Inputs
 ------
 
 - ``depends_on.hla_types`` (required) lists one or more HLA typing tasks.
-  The task merges the HLA types of the tumor DNA library, its matched normal library and its matched RNA library from all of them, as far as each task typed these libraries.
+  The task merges the HLA types of the tumor DNA library, its matched normal library and its matched RNA library from all of them.
+  Each HLA typing task contributes the types of the libraries it typed.
 - ``depends_on.variants`` (pVACseq, pVACsplice): somatic variants annotated by VEP (``variant_annotation`` with ``tool: vep``), with the ``Frameshift`` and ``Wildtype`` plugins of pVACtools in ``vep.plugins``.
-  For all transcripts instead of one consequence per variant, it is an annotation task with ``vep.pick: false``.
+  An annotation task with ``vep.pick: false`` annotates all transcripts instead of one consequence per variant.
 - ``depends_on.fusions`` (pVACfuse): arriba fusions of the matched RNA library.
-- ``depends_on.alignments`` and ``depends_on.features`` (pVACsplice): STAR alignments of the matched RNA library, whose strandedness decision must be stranded, and the gene annotation.
+- ``depends_on.alignments`` and ``depends_on.features`` (pVACsplice): STAR alignments of the matched RNA library and the gene annotation.
+  The strandedness decision of the RNA library must be stranded.
 - ``depends_on.reference``: the genome.
 - ``depends_on.proteome`` (optional): a reference proteome FASTA from an ``external_data`` task (``{type: raw, tags: [proteome]}``, key ``fasta``) for the proteome similarity check of the epitopes.
 
@@ -21,14 +26,22 @@ pVACseq options and their inputs:
 
 - ``pileup``: read counts of the matched RNA library at the variants (``depends_on.alignments``).
 - ``expression``: salmon TPMs of the matched RNA library (``depends_on.expression``).
-- ``phasing``: germline variants near the somatic ones, phased with the tumor DNA (``depends_on.phased_variants``: a ``variant_phasing`` task with ``tool: gatk_read_backed_phasing_tumor`` or ``whatshap_tumor`` on the VEP-annotated output of ``combine_variants``, preferably annotated for all transcripts, as pVACseq matches the nearby variants by the transcript of the somatic variant).
+- ``phasing``: germline variants near the somatic ones, phased with the tumor DNA (``depends_on.phased_variants``).
+  The phased variants come from a ``variant_phasing`` task with ``tool: gatk_read_backed_phasing_tumor`` or ``whatshap_tumor`` on the VEP-annotated output of ``combine_variants``.
+  An annotation for all transcripts is preferable, because pVACseq matches the nearby variants by the transcript of the somatic variant.
 
-The matched normal library is the ``matched_normal_lib`` relationship (normal DNA of the donor); the matched RNA library is ``matched_rna_lib`` (tumor RNA of the same sample); both can be redefined in ``relationships``.
+The matched normal library is the ``matched_normal_lib`` relationship, the normal DNA of the donor.
+The matched RNA library is the ``matched_rna_lib`` relationship, the tumor RNA of the same sample.
+``relationships`` can redefine both.
 pVACfuse and pVACsplice skip tumor libraries without a matched RNA library.
 
-``net_chop`` (with the path of a local NetChop installation) and ``netmhc_stab`` (netMHCstabpan of the IEDB tools in the container, MHC class I) post-process the epitopes of each prediction.
+``net_chop`` and ``netmhc_stab`` post-process the epitopes of each prediction.
+``net_chop`` predicts proteasomal cleavage with a local NetChop installation and needs its path.
+``netmhc_stab`` predicts the stability of MHC class I epitopes with netMHCstabpan of the IEDB tools in the container.
 
-The jobs of pVACseq, pVACfuse, pVACsplice and netMHCstabpan run in the container image ``pvactools.container`` (pVACtools 7.1.3, pinned by its digest), which Snakemake pulls once per project.
+The jobs of pVACseq, pVACfuse, pVACsplice and netMHCstabpan run in the container image ``pvactools.container``.
+The default image holds pVACtools 7.1.3 and is pinned by its digest.
+Snakemake pulls the image once per project.
 The other jobs run in conda environments.
 
 Outputs

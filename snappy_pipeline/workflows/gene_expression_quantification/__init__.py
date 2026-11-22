@@ -3,23 +3,32 @@
 
 The step quantifies gene expression of RNA libraries or computes RNA QC metrics.
 Each task runs one tool, selected by the ``tool`` field.
-The step uses RNA libraries only; a task takes all RNA libraries unless it sets ``library_selection``.
+The step processes RNA libraries only.
+A task takes all RNA libraries unless it sets ``library_selection``.
 
 Quantification:
 
-- ``featurecounts``: counts reads per gene from the BAM files, with the GTF of ``depends_on.features``. Its result file is a table of counts and gene lengths.
-- ``salmon``: estimates expression from the FASTQ files, without prior mapping. It needs a prebuilt index and a table that maps transcripts to genes from ``depends_on.index``.
+- ``featurecounts``: counts reads per gene from the BAM files, with the GTF of ``depends_on.features``.
+  Its result file is a table of counts and gene lengths.
+- ``salmon``: estimates expression from the FASTQ files, without prior mapping.
+  It needs ``depends_on.reads``, ``depends_on.features`` and a salmon index in ``depends_on.index``.
+  It needs a prebuilt index and a table that maps transcripts to genes from ``depends_on.index``.
 
 QC and strandedness, all on the BAM files:
 
-- ``strandedness``: infers the strandedness of each library with RSeQC ``infer_experiment.py``. It needs a 6-column BED file of transcripts and their strand from ``depends_on.exons``.
-- ``dupradar``, ``duplication``, ``rnaseqc`` and ``stats``: estimate library complexity and duplication rate, and compute coverage and alignment metrics. ``dupradar`` needs BAM files marked for duplicates. ``dupradar`` reads the GTF of ``depends_on.features``.
-- ``rnaseqc`` reads a GTF prepared for RNA-SeQC 1.1.8 from ``depends_on.features``, tagged ``rnaseqc``: every record has a ``transcript_id`` (no ``gene`` records), and rRNA is marked by the GENCODE attribute ``transcript_type``.
+- ``strandedness``: infers the strandedness of each library with RSeQC ``infer_experiment.py``.
+  It needs a 6-column BED file of transcripts and their strand from ``depends_on.exons``.
+- ``dupradar``, ``duplication``, ``rnaseqc`` and ``stats``: estimate library complexity and duplication rate, and compute coverage and alignment metrics.
+  ``dupradar`` needs BAM files with marked duplicates and reads the GTF of ``depends_on.features``.
+- ``rnaseqc`` reads a GTF prepared for RNA-SeQC 1.1.8 from ``depends_on.features``, a task tagged ``rnaseqc``.
+  Every record of this GTF has a ``transcript_id``, so it has no ``gene`` records.
+  The GENCODE attribute ``transcript_type`` marks rRNA.
 
-``featurecounts`` and ``dupradar`` need the strandedness of each library; the QC tools ``duplication``, ``rnaseqc`` and ``stats`` have no strand option.
-It comes from a task of this step with ``tool: strandedness``, named in ``depends_on.strandedness``.
-The field ``strand`` forces the strandedness of featurecounts and dupradar (0 unstranded, 1 forward, 2 reverse) instead.
-A task with ``tool: strandedness`` forces its decision with ``strandedness.strand``, like ``ngs_mapping`` with STAR.
+``featurecounts`` and ``dupradar`` need the strandedness of each library.
+The QC tools ``duplication``, ``rnaseqc`` and ``stats`` have no strand option.
+The strandedness comes from a task of this step with ``tool: strandedness``, named in ``depends_on.strandedness``.
+The field ``strand`` forces the strandedness of featurecounts and dupradar instead: 0 unstranded, 1 forward, 2 reverse.
+A task with ``tool: strandedness`` forces its decision with ``strandedness.strand``, as ``ngs_mapping`` does with STAR.
 
 The example maps RNA reads with STAR, infers the strandedness, and counts with featurecounts:
 
@@ -78,7 +87,7 @@ The example maps RNA reads with STAR, infers the strandedness, and counts with f
 Outputs
 -------
 
-The task links the following result files below ``tasks/<task>/output/``, for each RNA library with name ``{library_name}``.
+For each RNA library ``{library_name}``, the task links the following result files below ``tasks/<task>/output/``.
 Each file has an ``.md5`` file.
 The files are in ``{library_name}/out/`` and start with ``{library_name}``:
 

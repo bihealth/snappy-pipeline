@@ -5,14 +5,16 @@ The step builds the background models that somatic variant and copy number calle
 The ``tool`` field selects the model:
 
 - ``mutect2`` creates the Mutect2 panel of normals (VCF) and the GenomicsDB it is built from.
-  It needs ``depends_on.germline_resource``: an ``external_data`` task with ``{type: variants, tags: [population]}`` and the key ``vcf``, for example the af-only gnomAD VCF of the GATK resource bundle.
+  It needs ``depends_on.germline_resource``, an ``external_data`` task with ``{type: variants, tags: [population]}`` and the key ``vcf``.
+  A suitable VCF is the af-only gnomAD VCF of the GATK resource bundle.
 - ``cnvkit`` creates the CNVkit reference from the target, antitarget and coverage files of the normals.
 - ``purecn`` creates the PureCN normal database, the mapping bias and the optimized intervals.
-- ``access`` creates the CNVkit access file (accessible regions) from the reference genome and, optionally, regions to exclude.
+- ``access`` creates the CNVkit access file (accessible regions) from the reference genome and optional regions to exclude.
 
-The task yields one result per cohort.
-All DNA libraries of the normal samples in the sample sheets build the panel, those of background data sets included, unless ``library_selection`` narrows them.
-For ``mutect2`` and ``purecn``, ``path_normals_list`` selects other libraries by name, one per line.
+The task gives one result from all its normal libraries, not one per library.
+The normal libraries are all DNA libraries of normal samples in the sample sheets, unless ``library_selection`` narrows them.
+This includes the libraries of background data sets.
+For ``mutect2`` and ``purecn``, ``path_normals_list`` names a file of library names, one per line, which replace this selection.
 The listed libraries are used even if the sample sheet does not flag them as normal.
 
 .. warning::
@@ -37,8 +39,9 @@ Downstream tasks read these keys through their ``depends_on.panel_of_normals``:
 - ``cnvkit``: ``panel_of_normals``, ``target`` and ``antitarget``.
 - ``purecn``: ``panel_of_normals``, ``mapping_bias`` and ``intervals``.
 
-The ``access`` task gives the key ``access``.
-A ``cnvkit`` task names it in ``depends_on.access``, as it can an ``external_data`` task that produces ``{type: raw, tags: [access]}`` with the key ``access``.
+A task with ``tool: access`` gives the key ``access``.
+A ``cnvkit`` task reads it through ``depends_on.access``.
+That field can also name an ``external_data`` task that produces ``{type: raw, tags: [access]}`` with the key ``access``.
 
 The CNVkit authors recommend checking the metrics and sex reports before a panel is used.
 The sex report predicts the donor sex from the coverage of the chromosomes X and Y.
@@ -52,23 +55,25 @@ The two data types differ in the workflow that creates the reference (CNVkit ``b
 The step follows the common practice and distributes the computations over several jobs.
 
 Without ``depends_on.kits``, ``cnvkit`` runs in whole genome mode.
-There, the reference has no edge correction, which models the coverage drop at bait edges, whatever ``cnvkit.reference.edge_correction`` says (as ``cnvkit.py batch --method wgs``).
-With it, the baits of the common kit of the normals are the targets.
+Whole genome mode ignores ``cnvkit.reference.edge_correction`` and builds the reference without edge correction, as ``cnvkit.py batch --method wgs`` does.
+Edge correction models the coverage drop at bait edges.
+With ``depends_on.kits``, the targets are the baits of the kit that all normals share.
 For exomes, the access file only restricts the antitarget regions.
-For whole genomes, ``autobin`` uses it to compute the average target size.
-Without normals, there is nothing to run ``autobin`` on, and ``cnvkit.target.default_avg_size`` is the average target size.
+For whole genomes, ``autobin`` uses the access file to compute the average target size.
+Without normals, ``autobin`` has no input, and ``cnvkit.target.default_avg_size`` sets the average target size.
 Without ``depends_on.access``, whole genome mode creates an access file with default settings.
 The CNVkit distribution provides an access file for ``GRCh37``, but it is incomplete for ``GRCh38``.
 Run a task with ``tool: access`` to create one from regions to exclude (``access.exclude``).
 
-There is no provision yet to create separate panels for males and females.
+The step cannot yet create separate panels for males and females.
 With enough samples collected alike, separate panels give the best results.
 
 Notes on PureCN
 ---------------
 
-A ``purecn`` panel is required by ``somatic_targeted_seq_cnv_calling`` with ``tool: purecn``.
-It needs a ``mutect2`` panel of normals task in ``depends_on.panel_of_normals``, because the step uses Mutect2 as variant caller (not Mutect, the PureCN default).
+``somatic_targeted_seq_cnv_calling`` with ``tool: purecn`` requires a ``purecn`` panel.
+The step uses Mutect2 as variant caller instead of Mutect, the PureCN default.
+So a ``purecn`` task needs a ``mutect2`` panel of normals task in ``depends_on.panel_of_normals``.
 PureCN runs in a container image, because its R package requirements are too complex for a conda environment.
 Snakemake pulls the image ``purecn.container`` and runs the PureCN jobs inside it with apptainer (see :ref:`usage`).
 The default image is pinned by its digest.

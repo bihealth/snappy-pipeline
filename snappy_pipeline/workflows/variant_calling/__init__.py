@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 """Small variant calling
 
-Calls small variants (SNVs and indels) on the alignments of the ``ngs_mapping`` step.
+The step calls small variants (SNVs and indels) on the alignments of the ``ngs_mapping`` step.
 The ``tool`` field selects the caller.
 
 ``gatk4_hc_gvcf``
@@ -11,7 +11,7 @@ The ``tool`` field selects the caller.
 
 ``gatk4_hc_joint``
     GATK 4 HaplotypeCaller with joint calling and direct VCF generation.
-    Useful to explore problems with *de novo* calls that the gVCF workflow may introduce.
+    It helps to explore problems with *de novo* calls that the gVCF workflow may introduce.
 
 ``gatk3_hc``
     GATK 3 HaplotypeCaller with joint calling.
@@ -21,7 +21,7 @@ The ``tool`` field selects the caller.
 
 ``bcftools_call``
     ``bcftools mpileup | bcftools call``.
-    Fast, with lower sensitivity and specificity, so suited for baseline calls in benchmarks.
+    It is fast but has lower sensitivity and specificity, which suits baseline calls in benchmarks.
     ``assembly`` (``GRCh37`` or ``GRCh38``) gives the ploidy of the sex chromosomes.
 
 ``mutect2``
@@ -29,50 +29,106 @@ The ``tool`` field selects the caller.
     The genome is split once per task into ``num_jobs`` regions, padded by ``padding``, and each tumor is called in each region.
 
 ``freebayes``
-    Candidate calling for ``varlociraptor``: ``freebayes --pooled-continuous`` jointly over the libraries of each entity (the primary DNA libraries of the pedigree with ``group_by: related``, else the library and its matched normal), in parallel over genome windows (``num_jobs``).
-    With ``depends_on.kits``, the candidates are restricted to the targets of the libraries' kit, and the windows hold equal numbers of target bases instead of equal lengths, so the jobs take about equally long.
-    The candidates are normalised against the reference (left-aligned indels, one record per allele, exact duplicates removed) and, with ``atomize`` (the default), complex alleles are split into their SNVs and indels, as the dna-seq-varlociraptor workflow does.
-    The calls are candidates, not genotype calls: they carry the tag ``candidates`` and feed ``depends_on.candidates`` of a ``varlociraptor`` task.
+    Candidate calling for ``varlociraptor``: ``freebayes --pooled-continuous`` jointly over the libraries of each entity, in parallel over genome windows (``num_jobs``).
+    These libraries are the primary DNA libraries of the pedigree with ``group_by: related``, else the library and its matched normal.
+    With ``depends_on.kits``, the candidates are restricted to the targets of the libraries' kit.
+    The windows then hold equal numbers of target bases instead of equal lengths, so the jobs take about equally long.
+    The candidates are normalised against the reference: left-aligned indels, one record per allele, exact duplicates removed.
+    With ``atomize`` (the default), complex alleles are split into their SNVs and indels, as the dna-seq-varlociraptor workflow does.
+    The calls are candidates, not genotype calls.
+    They carry the tag ``candidates`` and feed ``depends_on.candidates`` of a ``varlociraptor`` task.
 
 ``varlociraptor``
-    Calling with varlociraptor against a *scenario* of the entity's libraries, on the candidates of ``depends_on.candidates``: a ``freebayes`` task for small variants, or an ``sv_calling_targeted`` or ``sv_calling_wgs`` task for structural variants (the calls are then tagged ``sv``), with the same ``group_by`` and ``library_selection``.
-    The candidates of an entity are split into ``num_jobs`` chunks of equal summed depth (``INFO/DP``, so the observation jobs take about equally long), with the records of a breakend event in one chunk; alignment properties per library, observations per library and chunk, calls per chunk, concatenated.
+    Calling with varlociraptor against a *scenario* of the entity's libraries, on the candidates of ``depends_on.candidates``.
+    The candidates come from a ``freebayes`` task for small variants, or from an ``sv_calling_targeted`` or ``sv_calling_wgs`` task for structural variants.
+    With structural variants, the calls are tagged ``sv``.
+    The candidates task must have the same ``group_by`` and ``library_selection`` as this task.
+    The candidates of an entity are split into ``num_jobs`` chunks of equal summed depth (``INFO/DP``), so the observation jobs take about equally long.
+    The records of a breakend event stay in one chunk.
+    The task computes the alignment properties per library, the observations per library and chunk, and the calls per chunk, and concatenates the calls.
     The scenario is a preset (``scenario``), rendered from the sample sheets for each entity, or a YTE template (``template``):
 
     ``germline``
-        The pedigree (``group_by: related``, the default) or one library: each member with its sex and the ploidy of ``species`` (diploid when the sex is unknown); a member whose parents are both in the task inherits from them, in any constellation (trios, siblings, several generations, uncles and cousins with their parents).
-        An unsequenced relative that connects members (a parent of two sequenced siblings, the grandparents of cousins) joins the scenario as a sample without observations, named after the donor, so inheritance flows through it and the posteriors integrate over its genotype.
-        Varlociraptor models inheritance from both parents only, so a member with one parent in the scenario and an unknown other parent gets an unobserved one as well, named ``<donor>.father`` or ``<donor>.mother``; the VCF holds the observed libraries only.
-        The events partition the configurations in which a member carries the variant, by the sheet's ``isAffected``: ``denovo_<member>`` for each child whose parents are both in the scenario (the child carries a variant that its parents do not: a de novo mutation in that member, which its descendants inherit; ``<member>`` is the donor name in lower case), ``recessive`` (every affected member is homozygous and no unaffected member is), ``dominant`` (every affected member carries it and no unaffected member does) and ``present`` (the rest).
-        Each event excludes the ones before it, so ``dominant`` is inherited dominant and empty in a trio with unaffected parents; members of unknown status constrain nothing.
-        Without an affected member, ``recessive`` and ``dominant`` are the impossible event ``false``, and a pedigree without a child has no de novo event, so one FDR control over ``present``, ``denovo_*``, ``recessive`` and ``dominant`` fits every pedigree and keeps every variant, one over ``denovo_*`` and ``dominant`` the dominant hypothesis.
-        The call passes ``--full-prior`` (``full_prior``), so that the mendelian prior and ``germline_mutation_rate`` weigh the events: varlociraptor's default prior only tells absent from present and gives a child with unobserved parents a fixed share of ``denovo``.
-        A member with a sequenced parent outside the task (one that ``library_selection`` drops) is an error: take both parents into the task or give a ``template``.
+        The scenario holds the pedigree (``group_by: related``, the default) or one library.
+        Each member has its sex and the ploidy of ``species``, and a member of unknown sex is diploid.
+        A member whose parents are both in the task inherits from them.
+        This works in any constellation: trios, siblings, several generations, uncles and cousins with their parents.
+        An unsequenced relative that connects members joins the scenario as a sample without observations, named after the donor.
+        Examples are a parent of two sequenced siblings and the grandparents of cousins.
+        Inheritance flows through such a relative, and the posteriors integrate over its genotype.
+        Varlociraptor models inheritance from both parents only.
+        A member with one parent in the scenario and an unknown other parent therefore gets an unobserved second parent, named ``<donor>.father`` or ``<donor>.mother``.
+        The VCF holds the observed libraries only.
+        The events partition the configurations in which a member carries the variant, by the sheet's ``isAffected``.
+        ``denovo_<member>`` exists for each child whose parents are both in the scenario: the child carries a variant that its parents do not.
+        Such a variant is a de novo mutation in that member, which its descendants inherit.
+        ``<member>`` is the donor name in lower case.
+        ``recessive`` means that every affected member is homozygous and no unaffected member is.
+        ``dominant`` means that every affected member carries the variant and no unaffected member does.
+        ``present`` covers the rest.
+        Each event excludes the ones before it, so ``dominant`` means inherited dominant.
+        In a trio with unaffected parents, ``dominant`` is therefore empty.
+        Members of unknown status constrain nothing.
+        Without an affected member, ``recessive`` and ``dominant`` are the impossible event ``false``.
+        A pedigree without a child has no de novo event.
+        One FDR control over ``present``, ``denovo_*``, ``recessive`` and ``dominant`` therefore fits every pedigree and keeps every variant.
+        One over ``denovo_*`` and ``dominant`` fits the dominant hypothesis.
+        The call passes ``--full-prior`` (``full_prior``), so that the mendelian prior and ``germline_mutation_rate`` weigh the events.
+        Varlociraptor's default prior only tells absent from present, and it gives a child with unobserved parents a fixed share of ``denovo``.
+        A member whose sequenced parent is outside the task is an error.
+        This happens when ``library_selection`` drops the parent.
+        Take both parents into the task, or give a ``template``.
         Libraries without a pedigree (``group_by: library``) are called alone.
 
     ``somatic``
-        Each tumor with its matched normal (``tumor_normal_mode``, as for ``mutect2``), with the default scenario of dna-seq-varlociraptor: the events ``somatic_tumor_low``, ``somatic_tumor_medium`` and ``somatic_tumor_high`` (tumor allele frequency below 0.1, from 0.1 to 0.3, from 0.3), ``somatic_normal``, ``germline_het`` and ``germline_hom``.
-        The tumor purity is the sample sheet column ``purity`` (a custom field, from 0 to 1), as the contamination of the tumor by the normal; a tumor without one counts as pure, with a warning.
-        A tumor without a matched normal keeps the normal in the scenario as an unobserved sample named ``normal``, so the events stay the same; the VCF then has a sample ``normal`` without observations.
-        A donor with several tumors in the task (a primary and a relapse) is an error, since the preset calls one tumor with its normal: call each time point in a task of its own (``library_selection``), or give a ``template`` with ``group_by: related``, which then receives the donor's tumors (the entity is the primary tumor) and the normal for a joint scenario such as the tumor/normal/relapse one of the varlociraptor scenario catalog.
+        The scenario holds one tumor with its matched normal (``tumor_normal_mode``, as for ``mutect2``).
+        It is the default scenario of dna-seq-varlociraptor.
+        Its events are ``somatic_tumor_low``, ``somatic_tumor_medium`` and ``somatic_tumor_high`` (tumor allele frequency below 0.1, from 0.1 to 0.3, from 0.3), ``somatic_normal``, ``germline_het`` and ``germline_hom``.
+        The tumor purity comes from the sample sheet column ``purity``, a custom field from 0 to 1.
+        The scenario models it as the contamination of the tumor by the normal.
+        A tumor without a purity counts as pure, with a warning.
+        A tumor without a matched normal keeps the normal in the scenario as an unobserved sample named ``normal``, so the events stay the same.
+        The VCF then has a sample ``normal`` without observations.
+        The preset calls one tumor with its normal, so a donor with several tumors in the task (a primary and a relapse) is an error.
+        Call each time point in a task of its own (``library_selection``), or give a ``template`` with ``group_by: related``.
+        The template then receives the donor's tumors and the normal, and the entity is the primary tumor.
+        This allows a joint scenario such as the tumor/normal/relapse one of the varlociraptor scenario catalog.
 
-    An FFPE library (sample sheet custom field ``isFfpe``, ``Y`` or ``N``) gets varlociraptor's model of the artifacts of an FFPE fragment (``fragment_end_bias``) in both presets.
-    The samples of the scenario are the library names, and so are the samples of the VCF, which carries ``GT`` from ``varlociraptor genotype``.
-    The calls are all candidates with the posterior probability of each event (``INFO/PROB_<EVENT>``), not a filtered call set: chain a ``variant_filtration`` task with ``tool: varlociraptor`` (FDR control on the events of interest) before any consumer.
-    ``preprocess.max_depth`` caps the observations per library and position at 200 by downsampling; raise it where the expected allele frequencies are low, such as somatic variants of an impure tumor or mosaics, at the cost of runtime in preprocessing and calling.
-    A ``template`` is rendered with ``samples`` (the library table rows of the entity's libraries, as dicts with ``library_name``, ``role``, ``sex``, ``father_name``, ``mother_name``, ``disease_state``, ``matched_normal_lib`` and the sheet's other columns; for the germline scenario also the unsequenced relatives, with ``observed: false``), ``library_name`` (the entity) and ``settings`` (``species`` and ``purity``); its sample keys must be the library names.
+    In both presets, an FFPE library gets varlociraptor's model of the artifacts of an FFPE fragment (``fragment_end_bias``).
+    The sample sheet custom field ``isFfpe`` (``Y`` or ``N``) marks FFPE libraries.
+    The samples of the scenario are the library names, and so are the samples of the VCF.
+    The VCF carries ``GT`` from ``varlociraptor genotype``.
+    The calls are all candidates with the posterior probability of each event (``INFO/PROB_<EVENT>``), not a filtered call set.
+    Chain a ``variant_filtration`` task with ``tool: varlociraptor`` before any consumer, for FDR control on the events of interest.
+    ``preprocess.max_depth`` caps the observations per library and position at 200 by downsampling.
+    Raise it where the expected allele frequencies are low, such as for somatic variants of an impure tumor or for mosaics.
+    A higher cap costs runtime in preprocessing and calling.
+    A ``template`` is rendered with the variables ``samples``, ``library_name`` (the entity) and ``settings`` (``species`` and ``purity``).
+    ``samples`` holds the library table rows of the entity's libraries, as dicts with ``library_name``, ``role``, ``sex``, ``father_name``, ``mother_name``, ``disease_state``, ``matched_normal_lib`` and the sheet's other columns.
+    For the germline scenario, ``samples`` also holds the unsequenced relatives, with ``observed: false``.
+    The sample keys of the template must be the library names.
 
-By default (``group_by: related``), the germline callers call each pedigree jointly and produce one result per pedigree, named after the pedigree: its ``related_group``, the family id of the sample sheet (``pedigree_field``, else ``familyId``), else ``FAM_`` and the index donor.
+By default (``group_by: related``), the germline callers call each pedigree jointly and produce one result per pedigree.
+The result is named after the pedigree, its ``related_group``: the family id of the sample sheet (``pedigree_field``, else ``familyId``), else ``FAM_`` and the index donor.
 With ``group_by: library``, they call each library on its own and produce one result per library.
-``mutect2`` produces one result per tumor DNA library; ``library_selection`` can only narrow these.
+``mutect2`` produces one result per tumor DNA library.
+``library_selection`` can only narrow these.
 ``varlociraptor`` groups like the germline callers with ``scenario: germline`` and like ``mutect2`` with ``scenario: somatic``.
 The GATK callers need ``depends_on.dbsnp`` in addition to ``depends_on.reference``.
-With ``mutect2``, ``depends_on.panel_of_normals`` optionally names the panel VCF that Mutect2 uses to filter recurrent artefacts: a ``panel_of_normals`` task with ``tool: mutect2``, or an ``external_data`` task with ``{type: models, tags: [pon, mutect2]}`` and the key ``vcf``, for example ``1000g_pon.hg38.vcf.gz`` of the GATK resource bundle.
-``depends_on.germline_resource`` optionally names an ``external_data`` task with the population allele frequencies (``{type: variants, tags: [population]}``, key ``vcf``, for example the af-only gnomAD VCF of the GATK resource bundle).
-With ``mutect2.contamination.enabled``, ``depends_on.common_variants`` is required: an ``external_data`` task with ``{type: variants, tags: [common]}`` and the key ``vcf``, for example ``small_exac_common_3.vcf`` of the GATK resource bundle.
-Windows over the genome (GATK 4 ``PreprocessIntervals``) are processed in parallel; each caller's section has ``window_length`` and ``padding``, the bases added on both sides of a window.
-Each caller's section has ``ignore_contigs``, regular expressions for contigs that it skips (by default decoys, HLA, EBV and the hs37d5 extras); a YAML anchor in ``config.yaml`` shares one list between tasks.
-The ``FILTER`` IDs of the callers (``LowQual`` of the GATK callers; ``germline``, ``contamination`` and the other filters of ``FilterMutectCalls``) are reserved: no other task may be named like one of them, nor ``PASS``.
+With ``mutect2``, the optional ``depends_on.panel_of_normals`` names the panel VCF that Mutect2 uses to filter recurrent artefacts.
+The panel comes from a ``panel_of_normals`` task with ``tool: mutect2``, or from an ``external_data`` task with ``{type: models, tags: [pon, mutect2]}`` and the key ``vcf``.
+An example is ``1000g_pon.hg38.vcf.gz`` of the GATK resource bundle.
+The optional ``depends_on.germline_resource`` names an ``external_data`` task with the population allele frequencies (``{type: variants, tags: [population]}``, key ``vcf``).
+An example is the af-only gnomAD VCF of the GATK resource bundle.
+With ``mutect2.contamination.enabled``, ``depends_on.common_variants`` is required: an ``external_data`` task with ``{type: variants, tags: [common]}`` and the key ``vcf``.
+An example is ``small_exac_common_3.vcf`` of the GATK resource bundle.
+Windows over the genome (GATK 4 ``PreprocessIntervals``) are processed in parallel.
+The GATK callers and ``bcftools_call`` take ``window_length``, and these and ``mutect2`` take ``padding``, the bases by which neighbouring windows overlap.
+The sections of these callers and of ``freebayes`` have ``ignore_contigs``, regular expressions for contigs that they skip.
+By default, these are decoys, HLA, EBV and the hs37d5 extras.
+A YAML anchor in ``config.yaml`` shares one list between tasks.
+The ``FILTER`` IDs of the callers are reserved: ``LowQual`` of the GATK callers, and ``germline``, ``contamination`` and the other filters of ``FilterMutectCalls``.
+No other task may be named like one of them, nor like ``PASS``.
 
 Outputs
 -------
@@ -80,10 +136,11 @@ Outputs
 Below ``tasks/<task>/output/``, for each ``{library_name}``:
 
 - ``{library_name}/out/{library_name}.vcf.gz`` with ``.tbi``, ``.md5`` and ``.tbi.md5`` files.
-  For ``mutect2`` this is the filtered (PASS) calls.
+  For ``mutect2``, this file holds the filtered (PASS) calls.
 - ``{library_name}/out/{library_name}.g.vcf.gz`` with the same companion files, for ``gatk4_hc_gvcf`` only.
 
-- with ``calls_report``: ``{library_name}/report/calls/{library_name}.calls.tsv``, the calls of the VCF as a table (one row per call), and the same table as a datavzrd site below ``report/calls/html/``, which ``snappy report`` shows.
+- with ``calls_report``: ``{library_name}/report/calls/{library_name}.calls.tsv``, the calls of the VCF as a table (one row per call).
+  The same table is a datavzrd site below ``report/calls/html/``, which ``snappy report`` shows.
 
 Downstream tasks read ``vcf`` and ``vcf_tbi`` through ``depends_on``.
 The germline callers produce ``variants`` with tags ``germline``, ``snv``, ``indel``.
@@ -98,7 +155,9 @@ The enabled statistics are result files below ``{library_name}/report/``, with `
 
 ``bcftools_stats``
     ``bcftools stats`` per donor of each pedigree: ``bcftools_stats/{library_name}.{donor_library_name}.txt``.
-    One job per task also summarizes the statistics of all samples in the result file ``qc_summary/out/qc_summary.tsv`` (one row per sample and variant set: genotype counts, het/hom and Ts/Tv ratios, depth) and renders tables and charts (substitution types, indel length, depth and quality distributions) for the report below ``work/qc_summary/report/html/``.
+    One job per task also summarizes the statistics of all samples in the result file ``qc_summary/out/qc_summary.tsv``.
+    The summary has one row per sample and variant set, with genotype counts, het/hom and Ts/Tv ratios and depth.
+    The job also renders tables and charts for the report below ``work/qc_summary/report/html/``: substitution types, indel length, depth and quality distributions.
 
 ``bcftools_roh``
     Runs of homozygosity with ``bcftools roh``: ``roh/{library_name}.txt``.
@@ -160,9 +219,8 @@ Mutect2 with the resources of the GATK resource bundle, one ``external_data`` ta
           mutect2:
             contamination: {enabled: true}
 
-Varlociraptor on tumor/normal pairs of an exome cohort: candidates from freebayes in the kit's
-targets, calls against the somatic scenario, then FDR control on the somatic events, whose result
-the annotation and the other consumers read:
+Varlociraptor on tumor/normal pairs of an exome cohort: candidates from freebayes in the kit's targets, calls against the somatic scenario, then FDR control on the somatic events.
+The annotation and the other consumers read the result of the FDR control:
 
 .. code-block:: yaml
 

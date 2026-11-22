@@ -1,36 +1,31 @@
 # Snappy Pipeline Documentation
 
-This is the documentation for the snappy pipeline.
-It has five parts.
+The documentation of the snappy pipeline has five parts.
 
 Pipeline User Docs
-: Documentation for **pipeline users**.
-    Start here to learn about the pipeline.
-    This section starts at {ref}`quickstart`.
+: For **pipeline users**.
+    Read this part first.
+    It starts at {ref}`quickstart`.
 
 The somatic pipeline in detail
-: Documentation for the **users of the somatic pipeline**.
-    It covers adapter trimming, BQSR, the panel of normals and copy number calling.
-    This section starts at {ref}`somatic_ngs`.
+: For the **users of the somatic pipeline**: adapter trimming, BQSR, the panel of normals and copy number calling.
+    It starts at {ref}`somatic_ngs`.
 
 Pipeline Step Docs
-: Documentation for the individual pipeline steps.
-    Each page has a general description, the configuration, the inputs and the output files of a step.
-    This section starts at {ref}`pipeline_steps_introduction`.
+: One page per pipeline step, with its description, configuration, inputs and output files.
+    It starts at {ref}`pipeline_steps_introduction`.
 
 Pipeline Developers Docs
-: Documentation for **pipeline developers**.
-    Continue here if you want to fix, change or extend the pipeline.
-    This section starts at {ref}`dev_intro`.
+: For **pipeline developers**, who fix, change or extend the pipeline.
+    It starts at {ref}`dev_intro`.
 
 Project Info
-: Housekeeping information about the project, such as the release procedure, the author list and the changelog.
-    This section starts at {ref}`howto_release`.
+: About the project itself, such as the release procedure, the author list and the changelog.
+    It starts at {ref}`howto_release`.
 
 ```{note}
-Even if you want to modify the pipeline, read the user documentation first.
+If you want to modify the pipeline, read the user documentation first: you test your changes by running the pipeline.
 Start at {ref}`quickstart`, or at {ref}`installation` for the developer setup.
-You need to run the pipeline to test your changes.
 ```
 
 ```{toctree}

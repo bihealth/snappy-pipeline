@@ -3,10 +3,10 @@
 # Quickstart
 
 This chapter sets up a first project: a matched tumor/normal exome, mapped with BWA and called with Mutect2.
-It assumes that you have a reference genome with a BWA index, a sample sheet and the FASTQ files.
+You need a reference genome with a BWA index, a sample sheet and the FASTQ files.
 
 ```{note}
-This describes the setup as a pipeline user.
+This chapter covers the setup for pipeline users.
 For the developer setup, see {ref}`installation`.
 ```
 
@@ -27,26 +27,31 @@ See {ref}`installation` for details.
 
 ## Create the project
 
-`snappy init` creates the project directory with `config.yaml`, `README.md` and an empty sample sheet `samplesheet.tsv`, which `config.yaml` names as the data set `first_batch` with the FASTQ files below `raw/`:
+`snappy init` creates the project directory with `config.yaml`, `README.md` and an empty sample sheet `samplesheet.tsv`.
+`config.yaml` names this sheet as the data set `first_batch`, with its FASTQ files below `raw/`:
 
 ```shell
 snappy init my_project
 cd my_project
 ```
 
-On a terminal, `snappy init` asks for what no option gives; `--no-interactive` takes the defaults:
+On a terminal, `snappy init` asks for what no option gives:
 
 - the project name, its external id in a data management system such as the SODAR project UUID, and a description,
 - the sample sheet type (`generic`, `germline` or `cancer`),
 - the tasks,
 - the git settings.
 
+`--no-interactive` takes the defaults instead.
+
 The project is a git repository whose first commit holds `.gitignore`, `config.yaml` and `README.md`.
 Everything else is ignored: results, logs, caches, data and the sample sheet, which may hold personal data.
-`--track-sheet` adds the sample sheet, only if it holds no personal data or the remote is approved for such data.
-`--remote <url>` adds the remote `origin` without pushing, `--no-git` skips the repository, and inside an existing repository the files are staged there instead.
+`--track-sheet` adds the sample sheet.
+Use it only if the sheet holds no personal data or the remote is approved for such data.
+`--remote <url>` adds the remote `origin` without pushing, and `--no-git` skips the repository.
+Inside an existing git repository, `snappy init` stages the files there instead of creating a new repository.
 
-Add one task per step with `snappy task add`.
+Add a task for each step with `snappy task add`.
 Each argument is `[task_name=]step_type`.
 `snappy task list --available` lists the step types.
 
@@ -54,13 +59,15 @@ Each argument is `[task_name=]step_type`.
 snappy task add mapping=ngs_mapping calling=variant_calling
 ```
 
-The new tasks appear in `config.yaml` with every option commented out, and the required ones marked `REQUIRED`.
-`--config-mode full` writes all defaults active, `--config-mode minimal` writes the required fields only, without descriptions.
-`snappy task add` and `snappy init --task` print the change to `config.yaml` as a diff; keep the project in git for its history.
+The new tasks appear in `config.yaml` with every field and its description.
+The optional fields are commented out, and the required ones are marked `REQUIRED`.
+`--config-mode full` writes every field active, and `--config-mode minimal` writes only the required fields, without descriptions.
+`snappy task add` and `snappy init --task` print the change to `config.yaml` as a diff.
+Keep the project in git for the history of its configuration.
 
 ## Configure the tasks
 
-A project has one `config.yaml` with two sections.
+Besides `project`, `config.yaml` has two main sections.
 `data_sets` names the sample sheets and where their FASTQ files are.
 `tasks` lists the tasks, each with a `step`, a unique `name` and a `config`.
 
@@ -70,7 +77,7 @@ Each value is the name of a task, except `reads: data_sets`, which reads the FAS
 Every task sets one `tool` and configures it in the section of the same name.
 
 Reference data comes from `external_data` tasks.
-They have no rules and declare what the files are in `produces`.
+They have no rules and declare in `produces` what their files are.
 
 ```yaml
 project:
@@ -140,9 +147,11 @@ digraph {
 }
 ```
 
-Relative paths are relative to the project directory, the directory of `config.yaml`; `pathvars` can name roots for paths, see {ref}`config_paths`.
+Relative paths are relative to the directory of `config.yaml`.
+`pathvars` can name roots for paths, see {ref}`config_paths`.
 The genome FASTA needs its index and sequence dictionary next to it (`genome.fa.fai`, `genome.dict`).
-The index can also come from a `reference_index` task, and the reference from a `reference_download` task; a `reference_index` task builds the index from the genome that the mapping task names in `depends_on.reference`.
+A `reference_index` task can build the index instead, and a `reference_download` task can provide the genome.
+The mapping task must then name the genome of that index in `depends_on.reference`.
 
 ## Add the sample sheet and the reads
 
@@ -197,5 +206,5 @@ snappy run -- --cores 8
 snappy run -- --profile slurm
 ```
 
-Results of a task are in `tasks/<task_name>/work/`.
-`tasks/<task_name>/output/` links the result files, see {ref}`usage`.
+The files of a task are in `tasks/<task_name>/work/`.
+`tasks/<task_name>/output/` links its result files, see {ref}`usage`.

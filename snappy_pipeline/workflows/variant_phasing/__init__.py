@@ -1,19 +1,26 @@
 """Variant phasing with GATK or WhatsHap
 
-Phases germline variants of pedigrees, or the combined somatic and germline variants of tumor libraries.
+The step phases the germline variants of pedigrees, or the combined somatic and germline variants of tumor libraries.
 
 The ``tool`` field selects the phasing:
 
-- ``gatk_phase_by_transmission`` runs PhaseByTransmission on the annotated variants of ``depends_on.variants``. It changes the genotypes of some variants, which is a problem when phasing *de novo* variants.
-- ``gatk_read_backed_phasing`` runs ReadBackedPhasing on ``depends_on.variants`` with the alignments of the trio (``depends_on.alignments``), scattered over ``gatk_read_backed_phasing.num_jobs`` chunks of the genome. It is not fully reliable.
-- ``gatk_read_backed_phasing_tumor`` runs ReadBackedPhasing on the combined somatic and germline variants of each tumor DNA library (``depends_on.combined_variants``, from ``combine_variants``) with its alignments, as pVACtools describes it for the proximal variants of neoepitope prediction.
-- ``whatshap_tumor`` phases the same input with WhatsHap, a maintained read-based phasing tool, and writes the phase into the ``HP`` tag of ReadBackedPhasing (``--tag=HP``), which pVACseq reads; the genotypes stay unphased.
+- ``gatk_phase_by_transmission`` runs PhaseByTransmission on the annotated variants of ``depends_on.variants``.
+  It changes the genotypes of some variants, which is a problem when phasing *de novo* variants.
+- ``gatk_read_backed_phasing`` runs ReadBackedPhasing on ``depends_on.variants`` with the alignments of the trio (``depends_on.alignments``).
+  It is scattered over ``gatk_read_backed_phasing.num_jobs`` chunks of the genome.
+  It is not fully reliable.
+- ``gatk_read_backed_phasing_tumor`` runs ReadBackedPhasing on the combined somatic and germline variants of each tumor DNA library (``depends_on.combined_variants``, from ``combine_variants``) with its alignments.
+  pVACtools describes this phasing for the proximal variants of neoepitope prediction.
+- ``whatshap_tumor`` phases the same input with WhatsHap, a maintained read-based phasing tool.
+  It writes the phase into the ``HP`` tag of ReadBackedPhasing (``--tag=HP``), which pVACseq reads.
+  The genotypes stay unphased.
   WhatsHap assumes diploid data, so loss of heterozygosity, rearrangements and subclonal variants of a tumor limit it, as they limit ReadBackedPhasing.
 
-The pedigree tools produce one result per child in a pedigree whose parents are both sequenced, the tumor tool one per tumor DNA library.
+The pedigree tools produce one result per child whose parents are both sequenced.
+The tumor tools produce one result per tumor DNA library.
 
 One task runs one tool.
-To use both, add a ``gatk_read_backed_phasing`` task whose ``depends_on.variants`` names the ``gatk_phase_by_transmission`` task.
+To use both GATK pedigree tools, add a ``gatk_read_backed_phasing`` task whose ``depends_on.variants`` names the ``gatk_phase_by_transmission`` task.
 Only results of the GATK variant callers can be phased.
 It is unclear how useful the phasing is for clinical studies.
 
@@ -26,7 +33,9 @@ Below ``tasks/<task>/output/``:
 
 Here ``library_name`` is the library of the child, or the tumor library.
 The output has the tags of the input plus ``phased``.
-- with ``calls_report``: ``{library_name}/report/calls/{library_name}.calls.tsv``, the calls of the VCF as a table (one row per call), and the same table as a datavzrd site below ``report/calls/html/``, which ``snappy report`` shows.
+
+- with ``calls_report``: ``{library_name}/report/calls/{library_name}.calls.tsv``, the calls of the VCF as a table (one row per call).
+  The same table is a datavzrd site below ``report/calls/html/``, which ``snappy report`` shows.
 
 Downstream tasks read ``vcf`` and ``vcf_tbi`` through ``depends_on``.
 """

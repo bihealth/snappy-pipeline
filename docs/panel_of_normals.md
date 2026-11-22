@@ -8,13 +8,13 @@ Collect, process and sequence all normal samples of a panel in the same way.
 Use the panel only for tumor samples that were collected, processed and sequenced like the panel.
 
 A panel needs enough normal samples.
-With too few, the particulars of single normals count as bias and are corrected in the tumor samples.
+With too few normals, features of single normals count as technical bias, and later steps correct the tumor samples for them.
 
 ## Panel tasks
 
 The `panel_of_normals` step creates panels for somatic variant calling (`mutect2`) and for somatic copy number calling of exome data (`cnvkit`, `purecn`).
 Each panel is its own task, with one `tool`.
-A copy number task names the panel task in `depends_on.panel_of_normals`.
+A calling task names its panel task in `depends_on.panel_of_normals`.
 See {ref}`step_panel_of_normals` for the outputs and all options.
 
 ```{graphviz}
@@ -49,24 +49,24 @@ digraph panels {
 
 ## Somatic variant calling
 
-The panel for `mutect2` needs a germline resource, a VCF with the allele frequencies of known germline variants.
+The `mutect2` panel needs a germline resource in `depends_on.germline_resource`: a VCF with the population allele frequencies of known germline variants.
 The [GATK best practice bundle](https://console.cloud.google.com/storage/browser/gatk-best-practices) provides it.
 Look for VCF files with `af-only-gnomad` in their name.
 
 GATK [recommends](https://gatk.broadinstitute.org/hc/en-us/articles/360035890631-Panel-of-Normals-PON) at least 40 normals.
 Smaller panels are common.
-With too few samples, GATK provides a panel of normals in the same bundle.
+For projects with too few normals, the same bundle has a panel of normals from GATK.
 
-By default, all normal DNA libraries of the sample sheets build the panel.
+By default, the panel is built from all normal DNA libraries of the sample sheets, those of background data sets included.
 Two options change what goes into it:
 
 `path_normals_list`
-: Selects other libraries: a file with one library name per line.
-    These are used even if the sample sheet does not flag them as normal.
+: A file with one library name per line.
+    The panel is built from these libraries instead, even if the sample sheet does not flag them as normal.
 
 `ignore_contigs`
-: Restricts the panel to the sequences of interest.
-    It lists regular expressions, matched with `re.search` against the contig names.
+: Regular expressions, matched with `re.search` against the contig names.
+    The panel leaves out the matching contigs and so covers only the sequences of interest.
 
 ```yaml
 tasks:
@@ -112,18 +112,18 @@ tasks:
 ```
 
 The panel is `tasks/pon_mutect2/work/panel_of_normals/out/panel_of_normals.vcf.gz`.
-A `mutect2` variant calling task takes it from the panel task in `depends_on.panel_of_normals`.
+A `variant_calling` task with `tool: mutect2` reads it when its `depends_on.panel_of_normals` names the panel task.
 
 ## Copy numbers of exome data
 
-The panels for `cnvkit` and `purecn` need extra files.
-Their calling tasks read these files from the panel task.
+The panels for `cnvkit` and `purecn` need extra files, such as the regions of the exome kit.
+Their calling tasks take these files from the panel task and do not name them again.
 
 ### cnvkit
 
 Without `depends_on.kits`, `cnvkit` runs in whole genome mode.
 For exomes, `depends_on.kits` names an `external_data` task with `kits`.
-The baits of the kit of the normals are then the targets.
+The targets are then the baits of the normals' kit.
 All normals must be targeted libraries of the same kit.
 
 A `somatic_targeted_seq_cnv_calling` task reads an exome panel in `depends_on.panel_of_normals`.
@@ -131,11 +131,11 @@ A `somatic_wgs_cnv_calling` task reads a whole genome panel in the same key.
 
 An access file lists the regions that are suitable for coverage analysis, without repeats, hard-to-map regions or extreme GC content.
 CNVkit provides one for `GRCh37`, but it is incomplete for `GRCh38`.
-A task with `tool: access` creates it from the reference and from BED files of regions to exclude, such as mappability regions.
-Its file is `tasks/<access task>/work/panel_of_normals/out/panel_of_normals.accessible.bed`.
+A task with `tool: access` creates it from the reference and from BED files of regions to exclude (`access.exclude`), such as mappability regions.
+It writes the access file to `tasks/<access task>/work/panel_of_normals/out/panel_of_normals.accessible.bed`.
 
 The `cnvkit` task names the access task in `depends_on.access`.
-An `external_data` task with `produces: {type: raw, tags: [access]}` and `files: {access: <BED file>}` serves as well.
+An `external_data` task with `produces: {type: raw, tags: [access]}` and `files: {access: <BED file>}` can take its place.
 The access file is optional.
 Without it, exome mode does not restrict the antitarget regions.
 Whole genome mode creates an access file with default settings instead.
@@ -162,14 +162,14 @@ Whole genome mode creates an access file with default settings instead.
     cnvkit: {}
 ```
 
-The panel task writes `panel_of_normals.metrics.tsv` and `panel_of_normals.sex.tsv` reports in `panel_of_normals/report/`.
+The panel task writes the reports `panel_of_normals.metrics.tsv` and `panel_of_normals.sex.tsv` to `panel_of_normals/report/`.
 The CNVkit authors recommend checking them before the panel is used.
 The pipeline cannot yet create separate panels for male and female samples.
 
 ### PureCN
 
-`purecn` needs the `mutect2` panel, because it uses the GenomicsDB of the `mutect2` panel.
-It also needs `depends_on.kits`: the baits of the kit of the normals are its bait regions.
+`purecn` reads the GenomicsDB of a `mutect2` panel, so it needs a `mutect2` panel task.
+It also needs `depends_on.kits`, because the baits of the normals' kit are its bait regions.
 Create the `mutect2` task first, and name it in `depends_on.panel_of_normals`:
 
 ```yaml
@@ -190,5 +190,5 @@ Create the `mutect2` task first, and name it in `depends_on.panel_of_normals`:
 PureCN runs in a container image, because its R packages are too complex for a conda environment.
 Snakemake pulls the image `purecn.container` and runs the PureCN jobs inside it, see {ref}`usage`.
 The default image is pinned by its digest.
-The path of a local `.sif` file works too.
+`purecn.container` also takes the path of a local `.sif` file.
 See {ref}`somatic_cnv` for how a calling task uses the panel.

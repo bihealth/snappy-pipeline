@@ -1,9 +1,10 @@
 # -*- coding: utf-8 -*-
 """Somatic gene fusion calling from RNA-seq data
 
-The step detects gene fusions in cancer RNA-seq data; a task takes all RNA libraries unless it sets ``library_selection``.
+The step detects gene fusions in cancer RNA-seq data.
+A task takes all RNA libraries unless it sets ``library_selection``.
 Each tool starts at the raw RNA-seq reads and predicts the fusions itself.
-The reads come from the task named in ``depends_on.reads``.
+The reads come from ``depends_on.reads``: ``data_sets``, an ``external_data`` task or an ``adapter_trimming`` task.
 
 The ``tool`` field selects the caller:
 

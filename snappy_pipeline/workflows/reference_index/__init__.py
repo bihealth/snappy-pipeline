@@ -1,12 +1,13 @@
 # -*- coding: utf-8 -*-
 """Indices of a reference sequence
 
-Builds the indices of a reference FASTA file for one mapper.
+The step builds the indices of the reference FASTA file in ``depends_on.reference`` for one mapper.
 The ``tool`` field selects ``bwa``, ``bwa_mem2``, ``bwa_mem3``, ``minimap2`` or ``star``.
-STAR takes a gene annotation from ``depends_on.features`` to add splice junctions.
+STAR takes an optional gene annotation from ``depends_on.features`` to add splice junctions.
 The task produces data of type ``index``, tagged with the tool and with ``rna`` (``star``) or ``dna`` (the other tools).
 The task has one result per project, not per library.
-A task that reads the index must name the same genome in its ``depends_on.reference``; the project does not load otherwise.
+A task that reads the index must name the genome of this task in its ``depends_on.reference``.
+Otherwise the project does not load.
 
 Outputs
 -------
@@ -20,7 +21,7 @@ Below ``tasks/<task>/output/reference_index/out/``, with the prefix ``reference`
 - ``star``: the directory ``reference.index/`` with the STAR genome files, plus the splice junction files if ``features`` is set.
 
 Downstream tasks read the index through the key ``index``.
-This is the prefix of the files for ``bwa``, ``bwa_mem2`` and ``bwa_mem3``, the ``.mmi`` file for ``minimap2`` and the directory for ``star``.
+The key is the prefix of the files for ``bwa``, ``bwa_mem2`` and ``bwa_mem3``, the ``.mmi`` file for ``minimap2`` and the directory for ``star``.
 Rules that read the genome take its ``.fai`` and ``.dict`` from next to the FASTA of their ``depends_on.reference`` task, not from this task.
 """
 

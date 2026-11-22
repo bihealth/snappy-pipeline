@@ -1,22 +1,21 @@
 """IGV session generation
 
 The step writes an IGV session XML file per pedigree.
-The session shows the alignments of all pedigree members and the variant calls of the index as genome tracks.
+The session shows the alignments of all pedigree members with a DNA library and the variant calls of the index as genome tracks.
 The task has no ``tool`` field.
 
 ``depends_on.alignments`` names the ``ngs_mapping`` task.
 The variants come from exactly one of ``depends_on.variants`` (:ref:`step_variant_calling`), ``depends_on.annotated_variants`` (:ref:`step_variant_annotation`) or ``depends_on.phased_variants`` (:ref:`step_variant_phasing`).
-The session refers to the result files in ``output/`` of these tasks by relative path.
+The session refers to the result files in ``output/`` of these tasks, by paths relative to the directory of the session file.
 Only children whose parents both have a DNA library get a session.
-The session lists the alignments of all pedigree members with a DNA library.
-Paths in the session are relative to the directory of the session file.
 
 Outputs
 -------
 
 The task links the result file ``{library_name}/out/{library_name}.igv_session.xml`` and its ``.md5`` file below ``tasks/<task>/output/``.
-The path is the same as below ``work/``, and ``{library_name}`` is the DNA library of the index.
-The key ``xml`` is the one downstream tasks read through ``depends_on``.
+The path below ``work/`` is the same.
+``{library_name}`` is the DNA library of the index.
+Downstream tasks read the key ``xml``.
 """
 
 __author__ = "Manuel Holtgrewe <manuel.holtgrewe@bih-charite.de>"

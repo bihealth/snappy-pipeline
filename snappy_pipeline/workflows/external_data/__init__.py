@@ -2,7 +2,8 @@
 """Existing data from outside the project
 
 An ``external_data`` task provides existing files to other tasks.
-It declares what the files are in ``produces`` (a data type and tags), so that the contracts of its consumers are checked when the project loads.
+Its ``produces`` field declares what the files are, as a data type and tags.
+When the project loads, the contracts of its consumers are checked against this declaration.
 The task has no rules and no ``output/`` directory.
 Consumers read the files where they are.
 
@@ -11,15 +12,20 @@ With ``files``, it provides project-wide files by output key, such as a referenc
 A key may name a list of files, such as several transcript databases of mehari.
 With ``search_paths`` and ``search_patterns``, it provides per-library files from a folder named like the library, below one of the search paths.
 Each pattern maps output keys to regular expressions for the path below that folder.
-Reads (``type: raw``) need the keys ``left`` (and ``right``) and a ``(?P<readgroup>...)`` group, which pairs the mates, and ``mixed_se_pe: true`` accepts read groups without a ``right`` file.
+Reads (``type: raw``) need the key ``left``, the key ``right`` for paired-end data, and a ``(?P<readgroup>...)`` group, which pairs the mates.
+``mixed_se_pe: true`` accepts read groups without a ``right`` file.
 Per-library files are found like the reads of a data set, except that the folder is named like the library, not by the sample sheet.
 With ``kits``, it provides files per enrichment kit, by kit name and output key.
-A targeted library (``WES``, ``Panel_seq``) uses the kit named exactly like its ``libraryKit`` in the sample sheet, and a consumer fails when the project loads if a library's kit is missing.
-Kit names may contain letters, digits, ``_``, ``.`` and ``-``, and every kit has the same keys.
-Steps read the kit regions through ``depends_on.kits``, which needs the keys ``targets`` and ``baits`` (BED files; give one file twice if the kit has only one).
+A targeted library (``WES``, ``Panel_seq``) uses the kit named exactly like its ``libraryKit`` in the sample sheet.
+If a library's kit is missing, its consumer fails when the project loads.
+Kit names may contain letters, digits, ``_``, ``.`` and ``-``.
+Every kit has the same keys.
+Steps read the kit regions through ``depends_on.kits``, which needs the BED files ``targets`` and ``baits``.
+If a kit has only one BED file, give it for both keys.
 
 BED files of regions have ``type: regions``.
-A single BED file has the key ``bed``, as in ``files: {bed: /refs/GRCh38/blacklist.bed}``, and tags say what the regions are, such as ``exons``.
+A single BED file has the key ``bed``, as in ``files: {bed: /refs/GRCh38/blacklist.bed}``.
+Tags say what the regions are, such as ``exons``.
 
 The output keys must be the keys that the consumer reads through its ``depends_on`` field.
 Their names are checked against that field when the project loads.
@@ -63,7 +69,7 @@ Existing reads, a reference and a bwa index as input of ``ngs_mapping``:
           tool: bwa
           bwa: {}
 
-The regions of two exome kits, read by the coverage report of ``ngs_mapping``:
+The regions of two exome kits, read by the coverage QC of ``ngs_data_qc``:
 
 .. code-block:: yaml
 

@@ -79,6 +79,7 @@ def germline_scenario(samples: list[dict[str, Any]], species: dict[str, Any]) ->
     A member with a parent outside the samples (one parent sequenced,
     or a parent the task does not take) raises ``ValueError``;
     the preset would otherwise treat related libraries as unrelated.
+    The step adds unsequenced parents as unobserved samples first (``unknown_parents``).
     """
     names = [sample["library_name"] for sample in samples]
     observed = [sample["library_name"] for sample in samples if sample.get("observed", True)]

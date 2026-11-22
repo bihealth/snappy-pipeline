@@ -4,12 +4,14 @@
 The step detects copy number alterations in cancer samples from targeted sequencing (exomes or large panels).
 The ``tool`` field selects the caller, which starts from the aligned reads:
 
-- ``cnvkit`` compares the tumor coverage with a CNVkit panel of normals (``depends_on.panel_of_normals``, from a ``panel_of_normals`` task with ``tool: cnvkit``) and reads its target and antitarget regions.
+- ``cnvkit`` compares the tumor coverage with a CNVkit panel of normals and reads the panel's target and antitarget regions.
+  The panel comes from ``depends_on.panel_of_normals``, a ``panel_of_normals`` task with ``tool: cnvkit``.
 - ``sequenza`` compares the tumor with its matched normal and estimates the purity and ploidy.
-- ``purecn`` needs a PureCN panel of normals (``depends_on.panel_of_normals``, from a ``panel_of_normals`` task with ``tool: purecn``) and somatic variants (``depends_on.variants``).
+- ``purecn`` needs a PureCN panel of normals and somatic variants (``depends_on.variants``).
+  The panel comes from ``depends_on.panel_of_normals``, a ``panel_of_normals`` task with ``tool: purecn``.
   The variants must come from Mutect2 and include the germline variants.
-  The PureCN jobs run in the container image of the panel of normals task (its ``purecn.container``), so the panel and the calls use the same PureCN.
-  They also take the panel's ``purecn.genome_name`` and ``purecn.seed``.
+  The PureCN jobs run in the container image ``purecn.container`` of the panel of normals task, so the panel and the calls use the same PureCN.
+  The calls also take ``purecn.genome_name`` and ``purecn.seed`` from the panel of normals task.
   See :ref:`step_panel_of_normals`.
 
 The task gives one result per tumor DNA library.
@@ -25,7 +27,8 @@ Every caller has the result file ``{tumor_library}/out/{tumor_library}.dnacopy.s
 The other files depend on the tool and are generally not in a standard format.
 
 - ``cnvkit``: ``{tumor_library}/out/{tumor_library}.cnr``, ``.seg``, ``.bed.gz`` (with ``.tbi``) and ``.vcf.gz`` (with ``.tbi``).
-  The directory ``{tumor_library}/report/`` holds the tables ``{tumor_library}.breaks.txt``, ``.genemetrics.txt``, ``.segmetrics.txt``, ``.sex.txt`` and ``.metrics.txt``, and the plots ``{tumor_library}.diagram.pdf`` and ``{tumor_library}.scatter.png`` (also per chromosome, ``{tumor_library}.scatter.chr1.png`` and so on).
+  The directory ``{tumor_library}/report/`` holds the tables ``{tumor_library}.breaks.txt``, ``.genemetrics.txt``, ``.segmetrics.txt``, ``.sex.txt`` and ``.metrics.txt``.
+  It also holds the plots ``{tumor_library}.diagram.pdf`` and ``{tumor_library}.scatter.png``, and a scatter plot per chromosome (``{tumor_library}.scatter.chr1.png`` and so on).
 - ``sequenza``: ``{tumor_library}/out/{tumor_library}.seqz.gz``, and the directory ``{tumor_library}/report/`` (without ``.md5`` file) with the plots and tables of ``sequenza.results``.
 - ``purecn``: ``{tumor_library}/out/{tumor_library}.csv``, ``.amplification_pvalues.csv``, ``.loh.csv`` and ``.vcf.gz`` (with ``.tbi``).
 

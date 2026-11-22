@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 """Variant annotation with VEP or Mehari
 
-Annotates the VCF files of the task named in ``depends_on.variants``.
+The step annotates the VCF files of the task named in ``depends_on.variants``.
 The input can be somatic or germline.
 The ``tool`` field selects the annotator: ``vep`` runs Ensembl VEP, ``mehari`` runs Mehari.
 One task runs one tool, so a second annotation needs a second task.
@@ -11,12 +11,15 @@ Its ``files`` give the keys below.
 
 - ``vep``: ``cache`` (the VEP cache directory).
 - ``mehari``: ``transcript_db`` (one path or a list), and optionally ``frequency_db`` and ``clinvar_db``.
-  Mehari 0.51 reads only transcript databases built by mehari 0.47 or newer (mehari-data-tx 0.14 or newer); the VarFish export wrappers run the same mehari version, so one database task serves both.
+  Mehari 0.51 reads only transcript databases built by mehari 0.47 or newer (mehari-data-tx 0.14 or newer).
+  The VarFish export wrappers run the same mehari version, so one database task serves both.
 
-VEP annotates one consequence per variant (``--pick`` with ``vep.pick_order``); with ``vep.pick: false`` it annotates all transcripts.
-A task that needs all transcripts, such as neoepitope prediction, reads such an annotation task.
+VEP annotates one consequence per variant (``--pick`` with ``vep.pick_order``).
+With ``vep.pick: false``, it annotates all transcripts.
+A task that needs all transcripts, such as neoepitope prediction, reads an annotation task with ``vep.pick: false``.
 
-VEP runs the plugins in ``vep.plugins``, each a name and the path of its ``.pm`` file; neoepitope prediction needs ``Frameshift`` and ``Wildtype`` from pVACtools.
+VEP runs the plugins in ``vep.plugins``, each given as a name and the path of its ``.pm`` file.
+Neoepitope prediction needs the plugins ``Frameshift`` and ``Wildtype`` from pVACtools.
 
 The task produces one annotated VCF per input library.
 Its output has the input's tags plus ``annotated`` and the tool (``vep`` or ``mehari``), so a consumer can require an annotator.
@@ -29,10 +32,11 @@ Below ``tasks/<task>/output/``:
 - ``{library_name}/out/{library_name}.vcf.gz`` with ``.tbi``, ``.md5`` and ``.tbi.md5`` files.
 
 VEP also writes its summary, ``{library_name}/report/{library_name}.summary.html``, which ``snappy report`` shows.
-It is not a result file, and ``vep.output_options: [no_stats]`` switches it off.
+The summary is not a result file, and ``vep.output_options: [no_stats]`` switches it off.
 VEP's warnings go to the log.
 
-- with ``calls_report``: ``{library_name}/report/calls/{library_name}.calls.tsv``, the calls of the VCF as a table (one row per call), and the same table as a datavzrd site below ``report/calls/html/``, which ``snappy report`` shows.
+- with ``calls_report``: ``{library_name}/report/calls/{library_name}.calls.tsv``, the calls of the VCF as a table (one row per call).
+  The same table is a datavzrd site below ``report/calls/html/``, which ``snappy report`` shows.
 
 Downstream tasks read ``vcf`` and ``vcf_tbi`` through ``depends_on``.
 """

@@ -2,14 +2,15 @@
 """VarFish export of externally generated germline variants
 
 The step annotates externally generated (g)VCF files with ``varfish-annotator-cli annotate`` and creates the files that VarFish Server imports.
-The VCFs and, optionally, the BAM files come from ``external_data`` tasks.
+The VCFs and the optional BAM files come from ``external_data`` tasks.
 The step has no ``tool`` field.
 
-The task gives one result per pedigree, named after the primary DNA library of its index.
-With ``merge_vcf_flag``, VCFs of a pedigree that are still separate are merged first.
-With ``gvcf_option``, the inputs are converted from genomic VCFs.
+The task gives one result per pedigree, named after the pedigree (its ``related_group``).
+With ``merge_vcf_flag``, the step first merges the VCFs of a pedigree that are still separate.
+With ``gvcf_option`` (the default), the inputs are genomic VCFs, which the task converts to VCFs before the annotation; without it, the task merges the VCFs.
 With ``bam_available_flag``, the step also writes a BAM QC table from the BAM files in ``depends_on.alignments``.
-The target regions of each library's kit come from ``depends_on.kits``, so every library must be a targeted library (``WES``, ``Panel_seq``) whose kit that task has.
+The target regions of each library's kit come from ``depends_on.kits``.
+Every library must therefore be a targeted library (``WES``, ``Panel_seq``) whose kit is in that task.
 
 This step is experimental.
 
@@ -20,9 +21,9 @@ Outputs
 
 The task links the following result files below ``tasks/<task>/output/`` as symlinks to ``work/``, each with a ``.md5`` file.
 
-- ``varfish_annotated.{library_name}/out/varfish_annotated.{library_name}.gts.tsv.gz``
-- ``varfish_annotated.{library_name}/out/varfish_annotated.{library_name}.db-infos.tsv.gz``
-- ``varfish_annotated.{library_name}/out/varfish_annotated.{library_name}.bam-qc.tsv.gz``, only with ``bam_available_flag``.
+- ``varfish_annotated.{related_group}/out/varfish_annotated.{related_group}.gts.tsv.gz``
+- ``varfish_annotated.{related_group}/out/varfish_annotated.{related_group}.db-infos.tsv.gz``
+- ``varfish_annotated.{related_group}/out/varfish_annotated.{related_group}.bam-qc.tsv.gz``, only with ``bam_available_flag``.
 
 Here ``related_group`` is the name of the pedigree, whose index library holds the external files.
 Downstream tasks read the keys ``gts`` and ``db_infos``.

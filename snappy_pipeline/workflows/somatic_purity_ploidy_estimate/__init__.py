@@ -1,9 +1,10 @@
 # -*- coding: utf-8 -*-
 """Purity and ploidy estimation for somatic samples
 
-The step estimates the tumor cell content (purity) and the ploidy of tumor samples from the B-allele frequencies and the coverage of the tumor and its matched normal.
+The step estimates the tumor cell content (purity) and the ploidy of tumor samples.
+It uses the B-allele frequencies and the coverage of the tumor and its matched normal.
 The ``tool`` field has the value ``ascat``, which runs ASCAT.
-The B-allele frequencies are taken at the loci of the task in ``depends_on.snp_loci``.
+The step takes the B-allele frequencies at the loci of the task in ``depends_on.snp_loci``.
 The task gives one result per tumor DNA library with a matched normal.
 It leaves out the other tumor libraries, with a warning.
 

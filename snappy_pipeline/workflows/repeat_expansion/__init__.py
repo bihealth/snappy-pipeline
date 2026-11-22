@@ -1,9 +1,11 @@
 """Repeat expansion analysis with ExpansionHunter
 
 The step runs the tool selected by ``tool`` on the alignments from ``depends_on.alignments`` (:ref:`step_ngs_mapping`).
-The only value is ``expansionhunter``, which calls repeat expansions against the key ``catalog`` of ``depends_on.database`` and annotates them with its key ``annotation``.
+The only tool is ``expansionhunter``.
+It calls repeat expansions at the repeats that the key ``catalog`` of ``depends_on.database`` defines.
+The step annotates the calls with the key ``annotation`` of the same database.
 The database is an ``external_data`` task with ``{type: database, tags: [expansionhunter]}``.
-The step writes one result set per library with a DNA library.
+The step writes one result set per donor, for the donor's first DNA library that is not from a tumor sample.
 It is experimental.
 
 Outputs
@@ -15,7 +17,7 @@ The paths are the same as below ``work/``.
 - ``{library_name}/out/{library_name}.vcf``, the repeat expansion calls
 - ``annotated.{library_name}/out/annotated.{library_name}.json``, the calls with the annotation
 
-The key ``vcf`` is the one downstream tasks read through ``depends_on``.
+Downstream tasks read the key ``vcf``.
 """
 
 import os

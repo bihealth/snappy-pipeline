@@ -1,14 +1,19 @@
 """Export of germline variants for VarFish
 
-The step writes the tables that ``varfish-cli`` imports into VarFish, one set per pedigree, named after the pedigree (its ``related_group``):
-the pedigree file, the small variants annotated with Mehari (``mehari annotate seqvars``, then ``mehari postprocess varfish-seqvars`` for the table), with ``depends_on.structural_variants`` the structural variants (``mehari annotate strucvars``), and with ``depends_on.qc`` the BAM quality control table from the ``samtools`` reports of ``ngs_mapping`` and the target coverage of alfred.
+The step writes the tables that ``varfish-cli`` imports into VarFish.
+It writes one set per pedigree, named after the pedigree (its ``related_group``).
+A set holds the pedigree file and the small variants annotated with Mehari (``mehari annotate seqvars``, then ``mehari postprocess varfish-seqvars`` for the table).
+With ``depends_on.structural_variants``, set to an :ref:`step_sv_calling_targeted` or :ref:`step_sv_calling_wgs` task, it also holds the structural variants (``mehari annotate strucvars``).
+With ``depends_on.qc``, it also holds the BAM quality control table from the ``samtools`` reports of ``ngs_mapping`` and the target coverage of alfred.
 The task has no ``tool`` field.
 It reads the calls of ``variant_calling`` (``depends_on.variants``, one VCF per pedigree) and the reports of ``ngs_mapping`` (``depends_on.alignments``).
-The Mehari databases come from ``depends_on.database``, an ``external_data`` task of type ``database`` tagged ``mehari``, built by mehari 0.47 or newer (mehari-data-tx 0.14 or newer); the same task can serve a ``variant_annotation`` task with ``tool: mehari``.
-Its ``files`` give the paths ``hgnc_tsv`` (the HGNC table), ``transcript_db`` (one or a list), ``clinvar_db`` and ``frequency_db``.
-With ``depends_on.structural_variants``, set to an :ref:`step_sv_calling_targeted` or :ref:`step_sv_calling_wgs` task, it also exports structural variants.
+The Mehari databases come from ``depends_on.database``, an ``external_data`` task of type ``database`` tagged ``mehari``.
+They must be built by mehari 0.47 or newer (mehari-data-tx 0.14 or newer).
+The same task can serve a ``variant_annotation`` task with ``tool: mehari``.
+The ``files`` of the database task give the paths ``hgnc_tsv`` (the HGNC table), ``transcript_db`` (one or a list), ``clinvar_db`` and ``frequency_db``.
 
-The ``mehari`` section configures the annotation of the small variants as for ``variant_annotation``, with the defaults of the VarFish table: one row per variant and gene with its MANE transcript (``pick: gene``, ``pick_order``), intergenic variants kept.
+The ``mehari`` section configures the annotation of the small variants as for ``variant_annotation``.
+Its defaults are those of the VarFish table: one row per variant and gene with its MANE transcript (``pick: gene``, ``pick_order``), and intergenic variants are kept.
 ``mehari.assembly`` names the genome build that ``varfish-cli`` imports into.
 ``strucvars.rng_seed`` fixes the UUIDs of the structural variants, so that a rerun writes the same table.
 
@@ -18,14 +23,16 @@ With ``depends_on.exons``, a BED file of exons, the export keeps only the small 
 Outputs
 -------
 
-The task links these result files below ``tasks/<task>/output/``, each with a ``.md5`` file; ``{library_name}`` is the name of the pedigree:
+The task links these result files below ``tasks/<task>/output/``, each with a ``.md5`` file.
+Here ``{library_name}`` is the name of the pedigree.
 
 - ``{library_name}/out/{library_name}.ped``
 - ``{library_name}/out/{library_name}.seqvars.gts.tsv.gz``
 - ``{library_name}/out/{library_name}.strucvars.gts.tsv.gz``, only with ``depends_on.structural_variants``
 - ``{library_name}/out/{library_name}.bam_qc.tsv.gz``, only with ``depends_on.qc``, an ``ngs_data_qc`` task with ``tool: alfred``
 
-``varfish-cli importer caseimportinfo-create`` takes these files; it ignores a database info table and the feature effects of structural variants, which the task therefore no longer writes.
+``varfish-cli importer caseimportinfo-create`` takes these files.
+It ignores a database info table and the feature effects of structural variants, so the task no longer writes them.
 """
 
 import warnings

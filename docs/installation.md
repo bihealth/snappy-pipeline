@@ -5,9 +5,10 @@
 ## Prerequisites
 
 Install [pixi](https://pixi.sh) (see <https://pixi.sh/latest/#installation>).
-pixi manages all dependencies of the pipeline, the Python packages and the conda packages (BWA, STAR, samtools, ...).
+pixi installs the dependencies of the pipeline: the Python packages and conda packages such as samtools and bcftools.
 
-For cluster execution, a Snakemake profile of the system or the user selects the executor, for example SLURM; see {ref}`usage`.
+For cluster execution, a Snakemake profile of the system or the user selects the executor, for example SLURM.
+See {ref}`usage`.
 
 PureCN and pVACtools run from container images, which need [apptainer](https://apptainer.org) on the machines that run their jobs.
 On Ubuntu 24.04 and newer, apptainer also needs an AppArmor profile that allows unprivileged user namespaces.
@@ -28,11 +29,11 @@ Alternatively, activate the environment with `eval "$(pixi shell-hook)"`.
 `pixi install --frozen` installs the exact versions in `pixi.lock`.
 `pixi update` updates the lock file from `pyproject.toml`.
 
-The tools of each step are installed in conda environments that Snakemake creates on the first run.
+The tools of each step, such as BWA and STAR, are installed in conda environments that Snakemake creates on the first run.
 
 ## Developer installation
 
-Use the `dev` environment, which adds the test, lint and documentation tools:
+The `dev` environment adds the test, lint and documentation tools:
 
 ```shell
 pixi install -e dev

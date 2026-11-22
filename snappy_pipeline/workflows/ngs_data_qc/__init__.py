@@ -4,31 +4,36 @@
 The step runs a QC tool on the reads or the alignments of each library.
 The ``tool`` field selects the tool:
 
-- ``fastqc``: runs FastQC on the FASTQ files of DNA and RNA libraries. It reads ``depends_on.reads``, which names ``data_sets``, an ``external_data`` task, or an ``adapter_trimming`` task (:ref:`step_adapter_trimming`).
-- ``picard``: runs the Picard programs listed in ``picard.programs`` on the BAM files of DNA libraries. It reads ``depends_on.alignments``, for example an :ref:`step_ngs_mapping` task.
-- ``ngs_chew``: writes a fingerprint of each DNA library with `ngs-chew <https://github.com/bihealth/ngs-chew>`_, its genotypes at selected common germline variants, from the BAM files of ``depends_on.alignments``.
+- ``fastqc``: runs FastQC on the FASTQ files of DNA and RNA libraries.
+  It reads ``depends_on.reads``, which names ``data_sets``, an ``external_data`` task, or an ``adapter_trimming`` task (:ref:`step_adapter_trimming`).
+- ``picard``: runs the Picard programs listed in ``picard.programs`` on the BAM files of DNA libraries.
+  It reads ``depends_on.alignments``, for example an :ref:`step_ngs_mapping` task.
+- ``ngs_chew``: writes a fingerprint of each DNA library from the BAM files of ``depends_on.alignments``, with `ngs-chew <https://github.com/bihealth/ngs-chew>`_.
+  The fingerprint holds the library's genotypes at selected common germline variants.
   One job compares the fingerprints of all libraries of the task.
-- ``alfred``: reports the coverage of the targets of each DNA library's kit with ``alfred qc``, for the libraries that have a kit (``WES``, ``Panel_seq``); it reads the ``targets`` of the kit from ``depends_on.kits``.
+- ``alfred``: reports the coverage of the targets of each DNA library's kit with ``alfred qc``.
+  It runs only on the libraries that have a kit (``WES``, ``Panel_seq``) and reads the ``targets`` of the kit from ``depends_on.kits``.
   ``varfish_export`` reads the report through its ``depends_on.qc``.
 
 The result is one set of files per library.
-The task processes all libraries, normals and tumors alike, unless ``library_selection`` narrows them.
+Unless ``library_selection`` narrows them, the task processes all libraries, normals and tumors alike.
 
 Outputs
 -------
 
-The task links the following result files below ``tasks/<task>/output/``, for each library with name ``{library_name}``.
+For each library ``{library_name}``, the task links the following result files below ``tasks/<task>/output/``.
 
 With ``fastqc``:
 
-- ``{library_name}/report/.done``, which marks the finished run. The FastQC HTML reports are in ``work/{library_name}/report/html/`` and are no result files.
+- ``{library_name}/report/.done``, which marks the finished run.
+  The FastQC HTML reports are in ``work/{library_name}/report/html/`` and are not result files.
 
-With ``picard``, for each program in ``picard.programs``, with an ``.md5`` file:
+With ``picard``, one file per program in ``picard.programs``, each with an ``.md5`` file:
 
 - ``{library_name}/report/{library_name}.<program>.txt``
 - For the programs that ``CollectMultipleMetrics`` runs, ``{library_name}/report/{library_name}.CollectMultipleMetrics.<first metrics file>.txt``, for example ``alignment_summary_metrics`` for ``CollectAlignmentSummaryMetrics``.
 
-With ``ngs_chew``, with an ``.md5`` file:
+With ``ngs_chew``, each with an ``.md5`` file:
 
 - ``{library_name}/out/{library_name}.npz``, the fingerprint
 - ``cohort/out/cohort.relatedness.txt``, ``cohort.ibs0.txt`` and ``cohort.mask.txt``, for each pair of libraries the relatedness, the number of sites where they share no allele (IBS0) and the number of sites both cover
@@ -38,7 +43,8 @@ With ``alfred``, with an ``.md5`` file:
 
 - ``{library_name}/out/{library_name}.target_coverage.json.gz``
 
-With ``picard``, ``alfred`` and ``ngs_chew``, one job per task summarizes the files of all libraries in ``qc_summary/out/qc_summary.tsv``, one row per library (the QC summary of the notes).
+With ``picard``, ``alfred`` and ``ngs_chew``, one job per task summarizes the files of all libraries in ``qc_summary/out/qc_summary.tsv``, one row per library.
+The Notes section describes this QC summary.
 
 Downstream tasks read the key ``done``, ``npz`` with ``ngs_chew`` or ``alfred_qc`` with ``alfred``.
 
@@ -46,15 +52,29 @@ Notes
 -----
 
 The Picard metrics are registered as Snakemake ``report()`` outputs.
-With ``picard``, ``alfred`` and ``ngs_chew``, the QC summary job writes ``qc_summary/out/qc_summary.tsv`` and a site of tables and charts below ``work/qc_summary/report/html/``, which ``snappy report`` shows.
-For ``picard``, the site has one table per metrics class and a chart of each histogram (target coverage, insert size, base quality by cycle and quality distribution); the summary table joins the metrics of each library into one row, the columns prefixed with the metrics class.
-For ``alfred``, the summary table lists the mapping and coverage statistics of each library with the fraction of targets covered at least 10, 20, 30, 50 and 100 times, and the charts show the targets above a coverage, the on-target rate, the coverage and insert size distributions, the base quality by position and the GC content.
-With ``ngs_chew``, the report shows the relatedness of all pairs of libraries and the var(het) of each library, and the fingerprint checks: one row per library with the sample sheet's sex against the sex predicted from the chrX genotypes (the sheet sex whose cohort median ratio is nearer, so the cohort needs both sexes), the sheet's father and mother against the relatedness and IBS0 rate of the pair, whether every pair of the pedigree has the relatedness the sheet implies (kinship over the pedigree, unsequenced donors included) and the libraries of other pedigrees that are related at all; a scatter chart of the libraries by chrX ratio and chrY reads colored by the sheet's sex, a scatter chart of the pairs (sheet against fingerprints) and the table of the pairs.
-Libraries of one donor have a relatedness close to 1 and those of unrelated donors close to 0, so a sample swap shows as a pair that breaks this pattern.
+Besides ``qc_summary/out/qc_summary.tsv``, the QC summary job writes a site of tables and charts below ``work/qc_summary/report/html/``, which ``snappy report`` shows.
+For ``picard``, the site has one table per metrics class and a chart of each histogram: target coverage, insert size, base quality by cycle and quality distribution.
+The summary table joins the metrics of each library into one row, with each column prefixed by its metrics class.
+For ``alfred``, the summary table lists the mapping and coverage statistics of each library.
+It adds the fraction of targets covered at least 10, 20, 30, 50 and 100 times.
+The charts for ``alfred`` show the targets above a coverage, the on-target rate, the coverage and insert size distributions, the base quality by position and the GC content.
+With ``ngs_chew``, the report shows the relatedness of all pairs of libraries and the var(het) of each library.
+Its table of fingerprint checks has one row per library.
+Each row compares the sample sheet's sex with the sex predicted from the chrX genotypes.
+The predicted sex is the sheet sex whose cohort median chrX ratio is nearer to the library's ratio, so the cohort needs libraries of both sexes.
+Each row also checks the sheet's father and mother against the relatedness and IBS0 rate of each parent with the library.
+Each row further shows whether every pair of the pedigree has the relatedness that the sheet implies, from the kinship over the pedigree with unsequenced donors included.
+Finally, each row lists the libraries of other pedigrees that are related at all.
+A scatter chart shows the libraries by chrX ratio and chrY reads, colored by the sheet's sex.
+A second scatter chart shows each pair by the relatedness that the sheet implies against the relatedness from the fingerprints.
+A table lists the pairs.
+Libraries of one donor have a relatedness close to 1, and those of unrelated donors close to 0.
+A sample swap shows as a pair that breaks this pattern.
 A library contaminated with DNA of another person has a higher var(het) than the others.
 Fingerprints assign a sample to a patient more sensitively than HLA typing, which is matched between donor and recipient in stem-cell treatments.
-``CollectHsMetrics`` needs ``depends_on.kits``, an ``external_data`` task with ``kits``, and a kit for each DNA library, so it runs on targeted libraries only.
-The step converts the baits and targets BED files of each kit to interval lists in one preparation job per kit, ``work/{library_kit}/out/{library_kit}.{baits,targets}.interval_list``.
+``CollectHsMetrics`` needs ``depends_on.kits``, an ``external_data`` task with ``kits``.
+It also needs a kit for each DNA library, so it runs on targeted libraries only.
+One preparation job per kit converts the kit's baits and targets BED files to the interval lists ``work/{library_kit}/out/{library_kit}.{baits,targets}.interval_list``.
 The kit name labels the ``BAIT_SET`` column of the metrics.
 
 Enrichment kits
@@ -76,7 +96,8 @@ A library uses the kit named exactly like its ``libraryKit`` in the sample sheet
     case002 N1      N       DNA     WES     case002-N1-DNA1-WES1    V5_UTR
     [...]
 
-Only targeted libraries (library type ``WES`` or ``Panel_seq``) have a kit; ``alfred`` skips all others.
+Only targeted libraries (library type ``WES`` or ``Panel_seq``) have a kit.
+``alfred`` skips all other libraries.
 A ``libraryKit`` that the kits task lacks is an error.
 
 .. code-block:: yaml

@@ -5,8 +5,8 @@ The step annotates externally generated SV VCF files with ``varfish-annotator-cl
 The VCFs come from an ``external_data`` task.
 The step has no ``tool`` field.
 
-The task gives one result per pedigree, named after the primary DNA library of its index.
-With ``merge_vcf_flag``, VCFs of a pedigree that are still separate are merged first.
+The task gives one result per pedigree, named after the pedigree (its ``related_group``).
+With ``merge_vcf_flag``, the step first merges the VCFs of a pedigree that are still separate.
 ``varfish_server_compatibility`` builds output for VarFish Server v1.2 and early versions of v2.
 
 This step is experimental.
@@ -16,9 +16,9 @@ Outputs
 
 The task links the following result files below ``tasks/<task>/output/`` as symlinks to ``work/``, each with a ``.md5`` file.
 
-- ``varfish_annotated.{library_name}/out/varfish_annotated.{library_name}.gts.tsv.gz``
-- ``varfish_annotated.{library_name}/out/varfish_annotated.{library_name}.feature-effects.tsv.gz``
-- ``varfish_annotated.{library_name}/out/varfish_annotated.{library_name}.db-infos.tsv.gz``
+- ``varfish_annotated.{related_group}/out/varfish_annotated.{related_group}.gts.tsv.gz``
+- ``varfish_annotated.{related_group}/out/varfish_annotated.{related_group}.feature-effects.tsv.gz``
+- ``varfish_annotated.{related_group}/out/varfish_annotated.{related_group}.db-infos.tsv.gz``
 
 Here ``related_group`` is the name of the pedigree, whose index library holds the external files.
 Downstream tasks read the keys ``gts`` and ``db_infos``.

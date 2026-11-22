@@ -2,15 +2,15 @@
 
 The step finds mobile element insertions (MEI) in the alignments from ``depends_on.alignments`` (:ref:`step_ngs_mapping`).
 The only value of ``tool`` is ``scramble``, which runs Scramble.
-The step writes one VCF per library with a DNA library.
-It is experimental.
+The step writes one VCF per donor with a DNA library, for the donor's primary DNA library.
+The step is experimental.
 
 Outputs
 -------
 
 The task links the result file ``{library_name}/out/{library_name}.vcf.gz`` with ``.tbi`` and ``.md5`` files below ``tasks/<task>/output/``.
 The paths are the same as below ``work/``.
-The key ``vcf`` is the one downstream tasks read through ``depends_on``.
+Downstream tasks read the key ``vcf`` through ``depends_on``.
 """
 
 import os

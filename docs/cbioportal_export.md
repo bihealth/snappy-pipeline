@@ -2,11 +2,11 @@
 
 # Export to cBioPortal
 
-The `cbioportal_export` step turns the results of other tasks into a study for cBioPortal.
+The `cbioportal_export` step turns the results of other tasks into the files of a study that cBioPortal imports.
 It does these operations:
 
 - Converts the somatic variant VCF file of each sample to MAF format.
-- Applies the CNV segments of each sample to genes, for the coverage log ratio and the copy number count.
+- Converts the CNV segments of each sample into a log ratio of the coverage and a copy number count per gene.
 - Merges the sample files into one file per data type for the cohort: mutations, log ratios, copy numbers and, if present, expression levels.
 - Collects the clinical data of the patients and samples.
 - Creates the case lists for mutations, copy number changes and expression levels.
@@ -16,7 +16,7 @@ See {ref}`step_cbioportal_export` for the outputs and all options.
 
 ## Inputs
 
-The task reads these tasks through `depends_on`:
+The task reads other tasks through these `depends_on` keys:
 
 `variants`
 : Required.
@@ -26,15 +26,15 @@ The task reads these tasks through `depends_on`:
 
 `copy_number`
 : A task with somatic copy number segments in DNAcopy format, such as `somatic_targeted_seq_cnv_calling`.
-    Needed with `copy_number_alteration.enabled: true`.
+    Required with `copy_number_alteration.enabled: true`.
 
 `alignments`
 : An RNA `ngs_mapping` task with `tool: star`, whose gene counts are the expression levels.
-    Needed with `expression.enabled: true`.
+    Required with `expression.enabled: true`.
 
 `features`
 : The gene annotation, an `external_data` task.
-    Needed with `copy_number_alteration` or `expression`.
+    Required with `copy_number_alteration` or `expression`.
 
 ```{graphviz}
 :alt: The tasks that cbioportal_export reads and the depends_on keys that name them
@@ -61,7 +61,7 @@ digraph cbioportal {
 
 ## Configuration
 
-The conversion from VCF to MAF uses a script that needs a mapping from gene symbols to NCBI (Entrez) gene ids.
+The copy number and expression tables need a mapping from gene symbols to NCBI (Entrez) gene ids.
 The mapping does not depend on the genome release.
 `hgnc_complete_set.txt` from [HGNC](https://www.genenames.org/download/archive/) provides it.
 `path_gene_id_mappings` points to it.

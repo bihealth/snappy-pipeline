@@ -49,22 +49,22 @@ tasks:
 ```
 
 An optional `depends_on.panel_of_normals` names a `panel_of_normals` task with `tool: mutect2`.
-The `run` action then reads the panel VCF and its index from the keys `vcf` and `vcf_tbi` of that task, through `get_upstream_paths()`.
+The `run` action then reads the panel VCF and its index through `vcf_inputs("panel_of_normals")`, which takes the key `vcf` of that task from `get_upstream_paths()` and adds the index as a second rule input.
 
 ## Step parts and actions
 
 `VariantCallingWorkflow` registers `WritePedigreeStepPart`, the step part of the selected tool and the report step parts.
 `Mutect2StepPart` implements the scatter-gather pattern with these actions:
 
-| Action          | Job                                                      |
-| --------------- | -------------------------------------------------------- |
-| `scatter`       | splits the genome into regions                           |
-| `run`           | calls variants in one region (`{scatteritem}`)           |
-| `gather`        | joins the calls, the statistics and the read orientation |
-| `pileup_normal` | pileup of the normal library, for the contamination      |
-| `pileup_tumor`  | pileup of the tumor library, for the contamination       |
-| `contamination` | estimates the contamination                              |
-| `filter`        | filters the calls                                        |
+| Action          | Job                                                                   |
+| --------------- | --------------------------------------------------------------------- |
+| `scatter`       | splits the genome into regions                                        |
+| `run`           | calls variants in one region (`{scatteritem}`)                        |
+| `gather`        | joins the calls and the statistics, learns the read orientation model |
+| `pileup_normal` | pileup of the normal library, for the contamination estimate          |
+| `pileup_tumor`  | pileup of the tumor library, for the contamination estimate           |
+| `contamination` | estimates the contamination                                           |
+| `filter`        | filters the calls                                                     |
 
 ```{graphviz}
 :alt: The mutect2 actions: scatter, run per region, gather and filter; the two pileups feed contamination, which feeds filter
@@ -94,19 +94,19 @@ The outputs of `gather`, the pileups and the contamination tables are listed in 
 They are deleted only if the task's `delete_intermediates` names `intermediates`.
 
 The Snakefile declares `scattergather: mutect2=...` with `mutect2.num_jobs` as the number of regions.
-The step part reaches the scatter and gather functions through `self.parent.workflow.globals`.
+The step part inherits `RegionScatter`, which reaches Snakemake's `scatter` and `gather` functions through `self.parent.workflow.globals`.
 
 ## Libraries of a pair
 
 The wildcard of every rule is the tumor `library_name`.
-`default_relationships` of the workflow adds the column `matched_normal_lib`, found through the donor and the role `normal`.
-`Mutect2StepPart.get_normal_lib_name` reads it.
+The workflow's `default_relationships` adds the column `matched_normal_lib` to the library table: the normal DNA library of the same donor.
+`Mutect2StepPart.get_normal_lib_name` reads that column through `BaseStep.matched_normal`.
 Both BAM files come from `get_upstream_paths("alignments", library_name=...)`.
 
 ## Several outputs
 
 `VariantCallingWorkflow.task_produces` returns the signature of the task's tool.
-For mutect2, it returns two: all calls, and the same signature with the tag `filtered`.
+For mutect2, it returns two signatures: one for all calls, and the same with the tag `filtered` for the PASS calls.
 
 The `filter` action writes the PASS calls to `{library_name}.vcf.gz` and all calls to `{library_name}.full.vcf.gz`.
 `get_output_paths` returns the file that matches the signature it receives.

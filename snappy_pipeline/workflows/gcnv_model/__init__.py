@@ -1,40 +1,43 @@
 # -*- coding: utf-8 -*-
 """GATK gCNV model
 
-The step builds a model for GATK4 gCNV in cohort mode from the aligned germline reads of the whole cohort, background data sets included.
-The model has two parts, the contig ploidy model (``ploidy-model``) and the CNV calls model (``cnv_calls-model``) of each shard of the genome.
+The step builds a model for GATK4 gCNV in cohort mode from the aligned germline reads of the whole cohort, including background data sets.
+The model has two parts: the contig ploidy model (``ploidy-model``) and the CNV calls model (``cnv_calls-model``) of each shard of the genome.
 The ``gcnv`` tool of :ref:`step_sv_calling_targeted` and :ref:`step_sv_calling_wgs` runs gCNV in case mode with this model.
 These tasks name the model task in ``depends_on.gcnv_model``.
 The step has no ``tool`` field.
 ``depends_on.mappable_regions`` gives the uniquely mappable regions, which annotate the intervals.
-GATK queries this BED file by interval, so its index must be next to it: ``.idx`` from ``gatk IndexFeatureFile`` for a plain BED, ``.tbi`` for a bgzipped one.
+GATK queries this BED file by interval, so its index must lie next to it.
+A plain BED file needs an ``.idx`` index from ``gatk IndexFeatureFile``, a bgzipped one a ``.tbi`` index.
 The optional ``depends_on.par_regions`` gives the pseudo-autosomal regions, which the contig ploidy model excludes.
 
 The field ``intervals`` selects how the genome is binned:
 
 - ``targeted`` bins the target regions of each library kit, for exomes and panels.
-  ``depends_on.kits`` names an ``external_data`` task with ``kits``, and the step builds one model per kit from its ``targets``.
+  ``depends_on.kits`` names an ``external_data`` task with ``kits``.
+  The step builds one model per kit from the kit's ``targets``.
   A targeted library (``WES`` or ``Panel_seq``) belongs to the model of the kit named like its ``libraryKit``.
-  Other libraries are left out, and a kit missing from the kits task is an error.
+  Other libraries are left out.
+  A kit missing from the kits task is an error.
   ``snappy run`` warns about kits with fewer than 10 libraries.
 - ``wgs`` bins the whole genome.
   All libraries must be whole genomes of the same library kit.
-  The kit is named ``wgs``.
+  The kit of the model is named ``wgs``.
 
 Outputs
 -------
 
-The model directories stay in ``work/`` and are no result files:
+The model directories stay in ``work/`` and are not result files:
 
 - ``{library_kit}/out/{library_kit}.contig_ploidy/`` holds the ploidy model (``ploidy-model``) and the ploidy calls per sample.
-- ``{library_kit}/out/{library_kit}.{shard}.call_cnvs/`` holds, for each shard of the genome, the CNV calls model (``cnv_calls-model``), the calls per sample and the tracking data.
+- ``{library_kit}/out/{library_kit}.{shard}.call_cnvs/`` holds the CNV calls model (``cnv_calls-model``) of one shard of the genome, its calls per sample and its tracking data.
 - ``{library_kit}/out/{library_kit}.scatter_intervals/`` holds the interval lists of the shards, one directory ``temp_{shard}`` each.
-  The number of shards is known after the checkpoint ``scatter_intervals``.
+  The number of shards is known only after the checkpoint ``scatter_intervals`` has run.
 
-The keys for downstream tasks are ``interval_list`` (the binned intervals of the kit), ``ploidy`` and ``calls`` (the model directories) and ``shards`` (the directory of the shard interval lists).
+Downstream tasks read the keys ``interval_list`` (the binned intervals of the kit), ``ploidy`` and ``calls`` (the model directories) and ``shards`` (the directory of the shard interval lists).
 
 The task links the following result files below ``tasks/<task>/output/`` as symlinks to ``work/``.
-They are the calls on the cohort libraries themselves.
+They hold the calls on the cohort libraries themselves.
 
 - ``{library_name}/out/{library_name}.post_germline_calls.vcf.gz``
 - ``{library_name}/out/{library_name}.post_germline_calls.interval.vcf.gz``

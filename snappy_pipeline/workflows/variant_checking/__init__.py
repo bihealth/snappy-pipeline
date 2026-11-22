@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 """Variant checking with peddy
 
-Checks the germline variants of ``depends_on.variants`` against the pedigree.
+The step checks the germline variants of ``depends_on.variants`` against the pedigree.
 The ``tool`` field is ``peddy``, which compares the sex, the relatedness and the heterozygosity of the samples with the pedigree.
 The task produces one set of files per pedigree, named after the pedigree (its ``related_group``).
 
@@ -19,7 +19,12 @@ Below ``tasks/<task>/output/``, each file with a ``.md5`` file:
 
 Downstream tasks read ``ped_check`` through ``depends_on``.
 
-One job per task summarizes the checks of all pedigrees in ``qc_summary/out/qc_summary.tsv`` (one row per sample: sex check, heterozygosity and depth with their outlier flags, call rate, ancestry) and renders them for the report below ``work/qc_summary/report/html/``: the summary, a strip chart of the metrics, the pairs of every pedigree with their relatedness from the PED file and from the genotypes, as a table and as a scatter chart on which a swapped, unrelated or duplicated sample falls off the diagonal.
+One job per task summarizes the checks of all pedigrees in ``qc_summary/out/qc_summary.tsv``, one row per sample.
+A row holds the sex check, the heterozygosity and the depth with their outlier flags, the call rate and the ancestry.
+The job also renders the checks for the report below ``work/qc_summary/report/html/``.
+The report shows the summary, a strip chart of the metrics and the pairs of every pedigree.
+Each pair has its relatedness from the PED file and from the genotypes, shown as a table and as a scatter chart.
+On the scatter chart, a swapped, unrelated or duplicated sample falls off the diagonal.
 """
 
 from snappy_pipeline.utils import dictify

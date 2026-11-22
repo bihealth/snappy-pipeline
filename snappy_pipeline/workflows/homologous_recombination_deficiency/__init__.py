@@ -4,24 +4,23 @@
 The step computes the scarHRD score of tumor samples.
 The score combines loss of heterozygosity, large-scale transitions and telomeric imbalances.
 It is a proxy for the homologous recombination deficiency scores of SNP arrays, as described by `Sztupinszki et al. <https://doi.org/10.1038/s41523-018-0066-6>`_.
-The ``tool`` field has the value ``scarHRD``.
+The only value of the ``tool`` field is ``scarHRD``.
 
-The task gives one result per tumor DNA library with a matched normal, as Sequenza does.
-It leaves out the other tumor libraries, with a warning.
-It reads the ``seqz`` file of a ``somatic_targeted_seq_cnv_calling`` task with ``tool: sequenza`` (``depends_on.copy_number``).
+The task writes one result per tumor DNA library with a matched normal library, as Sequenza does.
+It leaves out the other tumor libraries and warns about them.
+It reads the ``seqz`` file of the task in ``depends_on.copy_number``, a ``somatic_targeted_seq_cnv_calling`` task with ``tool: sequenza``.
 Other CNV callers are rejected.
-scarHRD repeats some Sequenza steps with its own arguments.
-This is why the Sequenza output is required.
+scarHRD repeats some Sequenza steps with its own arguments, so it needs the Sequenza output.
 Decoupling scarHRD from Sequenza would need work, because scarHRD is poorly documented.
 
 scarHRD is not part of CRAN, Bioconductor or bioconda.
-It also needs versions of `sequenza <https://github.com/oicr-gsi/sequenza/tree/master>`_ and `copynumber <https://github.com/aroneklund/copynumber>`_ that are no longer on CRAN or Bioconductor.
-The conda environment of the wrapper installs these R packages at fixed commits with a post-deploy script, when Snakemake creates it.
+It also needs versions of `sequenza <https://bitbucket.org/sequenzatools/sequenza>`_ and `copynumber <https://github.com/aroneklund/copynumber>`_ that are no longer on CRAN or Bioconductor.
+When Snakemake creates the conda environment of the wrapper, a post-deploy script installs these R packages at fixed commits.
 
 Outputs
 -------
 
-The task links the result file ``{library_name}/out/{library_name}.hrd.json`` with a ``.md5`` file below ``tasks/<task>/output/`` as a symlink to ``work/``.
+Below ``tasks/<task>/output/``, the task links the result file ``{library_name}/out/{library_name}.hrd.json`` and its ``.md5`` file as symlinks to ``work/``.
 Downstream tasks read the key ``json``.
 """
 

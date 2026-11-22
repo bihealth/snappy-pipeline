@@ -55,20 +55,21 @@ tasks:
 
 `tool` selects the mapper.
 `BaseStep.__init__` registers the step part of that tool from `tool_parts` (`BwaStepPart`, `BwaMem2StepPart`, `BwaMem3StepPart`, `Minimap2StepPart` or `StarStepPart`).
-It also registers the report step parts.
+`NgsMappingWorkflow.__init__` adds the strandedness part for STAR, else the `bam_collect_doc` part when it is enabled, and the BAM QC summary part.
 The Snakefile defines the rules of the selected tool only.
 
 ## Reading FASTQ files
 
 `depends_on.reads` names the FASTQ source.
 It is `data_sets`, an `external_data` task or a task that writes FASTQ files such as `adapter_trimming`.
-`BaseStep.read_groups(library_name)` finds the files of a library and returns them as ordered read groups.
+`BaseStep.read_groups(library_name)` finds the files of a library and returns them as read groups, ordered by the path of the left file.
 `BaseStep.reads_input(library_name)` returns the rule inputs that provide them.
 
-`ReadMappingStepPart` passes them on through `reads_input_files` and `reads_params` (`snappy_pipeline/workflows/common/reads.py`):
+`ReadMappingStepPart` hands the reads to the mapping rule with `reads_input_files` and `reads_params` (`snappy_pipeline/workflows/common/reads.py`):
 
 - When the files exist before the run, the rule inputs are the FASTQ files themselves (`reads_left` and `reads_right`).
-- When another task writes them, the rule input is that task's `out/` directory, and the wrappers read the file lists from `params.args.input`.
+- When another task writes them, the rule input is that task's `out/` directory.
+  The wrappers then read the file lists from `params.args.input`.
 
 There are no link-in jobs.
 
@@ -87,7 +88,7 @@ def _get_input_files_run(self, wildcards):
 ## Outputs and the contract
 
 `NgsMappingWorkflow.task_produces` declares `alignments [dna]` for the DNA mappers and `alignments [rna]` for STAR.
-`load_project()` uses this to check every task with `depends_on.alignments`.
+`load_project()` checks these signatures for every task that names a mapping task in `depends_on.alignments`.
 
 `NgsMappingWorkflow.get_output_paths` returns the `work/` paths of the BAM file, its index and the QC reports.
 Consumers get them from `get_upstream_paths("alignments", library_name=...)`.

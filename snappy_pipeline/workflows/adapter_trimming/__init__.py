@@ -3,19 +3,20 @@
 
 Trims adapters and low-quality bases from the reads of each library.
 The ``tool`` field selects ``bbduk`` (BBDuk of BBTools) or ``fastp``.
-``bbduk`` trims the sequences of the files in ``adapter_sequences`` and of BBDuk's built-in references in ``builtin_references`` (such as ``adapters`` and ``phix``); it needs at least one.
-Each library gives one result, which keeps the sub-directory and file names of its input FASTQ files.
-Tasks that read reads name this task in ``depends_on.reads``.
+``bbduk`` trims the sequences of the files in ``adapter_sequences`` and of the BBDuk built-in references in ``builtin_references``, such as ``adapters`` and ``phix``.
+``bbduk`` needs at least one of the two fields.
+Each library gives one result, whose trimmed files keep the sub-directory and file names of the input FASTQ files.
+A task that reads the trimmed reads names this task in ``depends_on.reads``.
 
 Outputs
 -------
 
-The task links the following result directories below ``tasks/<task>/output/`` as symlinks to ``work/``, for each library with name ``{library_name}``:
+For each library ``{library_name}``, the task links the following result directories below ``tasks/<task>/output/`` as symlinks to ``work/``:
 
 - ``{library_name}/out/`` holds the trimmed FASTQ files.
 - ``{library_name}/report/`` holds the tool reports (``bbduk``: statistics and histograms per input file, ``fastp``: HTML and JSON reports).
 
-Reads that the tool filters out are kept in ``work/{library_name}/rejected/`` and are no result files.
+Reads that the tool filters out stay in ``work/{library_name}/rejected/`` and are not result files.
 Downstream tasks read the trimmed files from ``work/{library_name}/out/`` through the key ``fastq_dir``.
 """
 

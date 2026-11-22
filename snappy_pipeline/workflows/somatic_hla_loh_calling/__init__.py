@@ -1,8 +1,9 @@
 # -*- coding: utf-8 -*-
 """Somatic HLA loss of heterozygosity calling
 
-The step detects loss of heterozygosity at the HLA locus in cancer samples (whole genomes, exomes or large panels) with LOHHLA.
-LOHHLA compares the aligned reads of the tumor and its matched normal, using the HLA types of the normal from the ``hla_typing`` task in ``depends_on.hla_types``.
+With LOHHLA, the step detects loss of heterozygosity at the HLA locus in cancer samples: whole genomes, exomes or large panels.
+LOHHLA compares the aligned reads of the tumor and its matched normal.
+It uses the HLA types of the normal from the ``hla_typing`` task in ``depends_on.hla_types``.
 
 The step has no ``tool`` field.
 It gives one result per tumor DNA library, paired with its matched normal.
@@ -13,7 +14,8 @@ Outputs
 -------
 
 The task links the result directory ``{tumor_library}/out/`` below ``tasks/<task>/output/`` as a symlink to ``work/``.
-It holds the files that LOHHLA writes, and it is the key ``out`` for downstream tasks.
+The directory holds the files that LOHHLA writes.
+Downstream tasks read the key ``out``.
 """
 
 from snakemake.io import directory

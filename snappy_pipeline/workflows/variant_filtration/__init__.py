@@ -1,17 +1,18 @@
 # -*- coding: utf-8 -*-
 """Variant filtration
 
-Filters or tags the variants of the task named in ``depends_on.variants``.
+The step filters or tags the variants of the task named in ``depends_on.variants``.
 The ``tool`` field selects the filter, and one task applies one filter.
 Chain several tasks for a sequence of filters.
 
 ``bcftools``
-    Expression-based filtering with ``include`` or ``exclude``.
+    Filtering by a ``bcftools`` expression in ``include`` or ``exclude``.
 
 ``vembrane``
     Expression-based filtering with ``vembrane``: Python expressions on the fields of a record, with ``ANN`` parsed by default.
     It is the recommended filter for genotype-based criteria, such as inheritance patterns in a family.
-    With ``group_by: related`` upstream, one VCF holds the whole pedigree, and an expression addresses samples by name, for example ``is_het("child-N1-DNA1-WGS1") and is_hom_ref("father-N1-DNA1-WGS1") and is_hom_ref("mother-N1-DNA1-WGS1")`` for de novo variants.
+    With ``group_by: related`` upstream, one VCF holds the whole pedigree, and an expression addresses samples by name.
+    For example, ``is_het("child-N1-DNA1-WGS1") and is_hom_ref("father-N1-DNA1-WGS1") and is_hom_ref("mother-N1-DNA1-WGS1")`` selects de novo variants.
     Helpers that several expressions share go into ``context_files``.
 
 ``regions``
@@ -20,22 +21,35 @@ Chain several tasks for a sequence of filters.
 
 ``dkfz``
     DKFZ bias filter.
-    Needs ``depends_on.alignments`` and ``depends_on.reference``.
+    It needs ``depends_on.alignments`` and ``depends_on.reference``.
 
 ``ebfilter``
     EBFilter.
-    Variants with one of the ``skip_filters`` (by default the ``germline``, ``weak_evidence`` and ``OffExome`` filters of Mutect2, if the header declares them) skip EBFilter, and with an annotated input also those whose annotation contains ``skip_annotation`` (by default ``stream_gene_variant``, i.e. those in or near genes).
-    Needs ``depends_on.alignments`` and ``depends_on.reference``.
+    Variants with one of the ``skip_filters`` skip EBFilter, if the VCF header declares the filter.
+    By default, ``skip_filters`` holds the ``germline``, ``weak_evidence`` and ``OffExome`` filters of Mutect2.
+    With an annotated input, the variants whose annotation contains ``skip_annotation`` skip EBFilter too.
+    By default, ``skip_annotation`` is ``stream_gene_variant``, which marks the variants in or near genes.
+    It needs ``depends_on.alignments`` and ``depends_on.reference``.
 
 ``varlociraptor``
-    FDR control of the calls of a ``variant_calling`` task with ``tool: varlociraptor``: ``varlociraptor filter-calls control-fdr`` selects the records whose posterior probabilities for the ``events`` meet the ``fdr`` in the ``fdr_mode`` chosen, once per variant type.
-    Chain it right after the calling task, before annotation; the events are those of the calling task's scenario, such as ``somatic_tumor_high`` and ``somatic_tumor_medium``, or the germline events ``present``, ``denovo_*`` (a pattern for the per-member events ``denovo_<member>``), ``recessive`` and ``dominant``, which partition the carried variants, so a record passes only for the events listed (in smart mode, when they hold at least half of its probability): list all four to keep every variant.
-    An entry is an event name, which must exist in the calls, or a shell-style pattern, which may match none; the names and patterns work the same for the events of a scenario ``template``.
-    Its ``mode`` defaults to ``filter``, so the task after it reads a call set.
+    FDR control of the calls of a ``variant_calling`` task with ``tool: varlociraptor``.
+    ``varlociraptor filter-calls control-fdr`` selects the records whose posterior probabilities for the ``events`` meet the ``fdr`` in the chosen ``fdr_mode``.
+    The control runs once per variant type.
+    Chain this task right after the calling task, before annotation.
+    The events are those of the calling task's scenario, such as ``somatic_tumor_high`` and ``somatic_tumor_medium``.
+    The germline events are ``present``, ``denovo_*`` (a pattern for the per-member events ``denovo_<member>``), ``recessive`` and ``dominant``.
+    The germline events partition the carried variants, so a record passes only for the events listed.
+    In smart mode, a record passes when the listed events hold at least half of its probability.
+    List all four germline events to keep every variant.
+    An entry of ``events`` is an event name, which must exist in the calls, or a shell-style pattern, which may match none.
+    The names and patterns work the same for the events of a scenario ``template``.
+    The ``mode`` of ``varlociraptor`` defaults to ``filter``, so the task after it reads a call set.
 
 Every filter has a ``mode``: ``tag`` marks variants in ``FILTER``, ``filter`` removes them.
-``bcftools``, ``regions`` and ``ebfilter`` use the task name as ``FILTER`` ID, so each task of a chain has its own; ``vembrane`` uses the names of its ``expressions``, ``dkfz`` the IDs of the DKFZ bias filter (``bPcr``, ``bSeq``).
-No other task of the project may be named like one of these or like ``PASS``, and no task may write an ID that a task upstream of it writes (such as an expression named after a filter of mutect2).
+``bcftools``, ``regions``, ``ebfilter`` and ``varlociraptor`` in ``tag`` mode use the task name as ``FILTER`` ID, so each task of a chain has its own.
+``vembrane`` uses the names of its ``expressions``, and ``dkfz`` the IDs of the DKFZ bias filter (``bPcr``, ``bSeq``).
+No other task of the project may be named like one of these IDs or like ``PASS``.
+No task may write an ID that a task upstream of it writes, such as an expression named after a filter of mutect2.
 The task produces one VCF per VCF of its upstream task (per tumor library, or per pedigree for germline calls).
 Its output has the input's tags plus ``filtered``.
 
@@ -73,7 +87,8 @@ Outputs
 Below ``tasks/<task>/output/``:
 
 - ``{library_name}/out/{library_name}.vcf.gz`` with ``.tbi``, ``.md5`` and ``.tbi.md5`` files.
-- with ``calls_report``: ``{library_name}/report/calls/{library_name}.calls.tsv``, the calls of the VCF as a table (one row per call), and the same table as a datavzrd site below ``report/calls/html/``, which ``snappy report`` shows.
+- with ``calls_report``: ``{library_name}/report/calls/{library_name}.calls.tsv``, the calls of the VCF as a table (one row per call).
+  The same table is a datavzrd site below ``report/calls/html/``, which ``snappy report`` shows.
 
 Downstream tasks read ``vcf`` and ``vcf_tbi`` through ``depends_on``.
 """

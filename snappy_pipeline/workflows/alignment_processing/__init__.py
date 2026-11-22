@@ -1,23 +1,25 @@
 """Processing of the alignments of a mapping task
 
 Processes the BAM files of the task named in ``depends_on.alignments``, an ``ngs_mapping`` task or another ``alignment_processing`` task.
-The ``tool`` field selects the processing, and one task applies one.
-Chain several tasks for a sequence of tools.
-Downstream tasks read the BAM files of the last task of the chain, through the keys ``bam`` and ``bai`` as from a mapping task.
+The ``tool`` field selects the processing, and each task applies one tool.
+For a sequence of tools, chain several tasks.
+Downstream tasks read the BAM files of the last task in the chain through the keys ``bam`` and ``bai``, as from a mapping task.
 
 ``gatk4_bqsr``
     Base quality score recalibration (BQSR) with GATK ``BaseRecalibrator`` and ``ApplyBQSR``.
-    ``BaseRecalibrator`` models the errors of the base qualities per read group, by quality score, cycle and sequence context, and ignores the known variant sites of ``depends_on.common_variants`` (for example ``small_exac_common_3.vcf`` of the GATK resource bundle) and reads marked as duplicates.
+    ``BaseRecalibrator`` models the errors of the base qualities per read group, by quality score, cycle and sequence context.
+    It ignores reads marked as duplicates and the known variant sites of ``depends_on.common_variants``, for example ``small_exac_common_3.vcf`` of the GATK resource bundle.
     ``ApplyBQSR`` writes the BAM file with the recalibrated base qualities.
 
-The task processes the DNA libraries of its upstream task, those of background data sets included, unless ``library_selection`` narrows them.
-Its output has the input's tags plus ``recalibrated`` (``gatk4_bqsr``).
-With ``delete_intermediates: [bam]``, the BAM file of the task is temporary, for a later task that processes it further (see :ref:`usage`).
+Unless ``library_selection`` narrows them, the task processes the DNA libraries of its upstream task, including those of background data sets.
+Its output carries the tags of its input plus the tag of the tool, ``recalibrated`` for ``gatk4_bqsr``.
+With ``delete_intermediates: [bam]``, the BAM file of the task is temporary (see :ref:`usage`).
+Use it when a later task of the chain processes the BAM file further.
 
 Outputs
 -------
 
-The task links the following result files below ``tasks/<task>/output/``, for each library with name ``{library_name}``.
+For each library ``{library_name}``, the task links the following result files below ``tasks/<task>/output/``.
 Each file has an ``.md5`` file.
 
 - ``{library_name}/out/{library_name}.bam`` and ``{library_name}/out/{library_name}.bam.bai``

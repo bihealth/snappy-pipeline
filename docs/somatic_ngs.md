@@ -5,10 +5,10 @@
 Somatic variants in low-purity or degraded samples depend on the quality of the mapping.
 So do sub-clonal variants.
 Adapter trimming and base quality score recalibration (BQSR) can improve the quality of the mapping.
-snappy handles no molecular barcodes (UMIs) for now.
+snappy does not handle molecular barcodes (UMIs) yet.
 
-Both are tasks of their own: `adapter_trimming` before the mapping, `alignment_processing` after it.
-A chain of tasks combines them.
+Adapter trimming and BQSR are tasks of their own: `adapter_trimming` runs before the mapping, `alignment_processing` after it.
+Each task names the task before it in `depends_on`, so together they form a chain.
 The variant callers read the BAM files of the last task of the chain.
 
 ```{graphviz}
@@ -34,12 +34,12 @@ digraph chain {
 
 ## Adapter trimming
 
-`trim_adapters` in the `bwa`, `bwa_mem2` and `bwa_mem3` sections of `ngs_mapping` trims adapters on the fly.
-It is a fast option.
-Where that is not enough, `adapter_trimming` offers `bbduk` and `fastp`.
+`trim_adapters` in the `bwa`, `bwa_mem2` and `bwa_mem3` sections of `ngs_mapping` trims adapters on the fly, in the mapping job.
+This is fast and writes no trimmed FASTQ files.
+Where it is not enough, an `adapter_trimming` task trims with `bbduk` or `fastp`.
 
 Unlike other steps, `adapter_trimming` produces FASTQ files.
-A task that reads FASTQ files uses them when its `depends_on.reads` names the `adapter_trimming` task.
+A task reads the trimmed files when its `depends_on.reads` names the `adapter_trimming` task.
 These steps read FASTQ files:
 
 - `ngs_mapping`
@@ -82,19 +82,20 @@ tasks:
       bwa: {}
 ```
 
-The mapping task reads the FASTQ files from `tasks/trimming/work/`.
+The mapping task reads the trimmed FASTQ files from `tasks/trimming/work/`.
 `adapter_trimming` does not rename the files, so the `search_patterns` of the data set still apply.
 
 ## Base quality score recalibration
 
 [BQSR should generally be applied](https://gatk.broadinstitute.org/hc/en-us/articles/360035890531-Base-Quality-Score-Recalibration-BQSR).
 `alignment_processing` with `tool: gatk4_bqsr` recalibrates the base qualities of BAM files.
-It reads them from a mapping task or from another `alignment_processing` task.
+It reads the BAM files of the task in `depends_on.alignments`: a mapping task or another `alignment_processing` task.
 `depends_on.common_variants` names an `external_data` task with a VCF of common germline variants, for example `small_exac_common_3.vcf` of the GATK resource bundle.
+BQSR does not count these known variant sites as sequencing errors.
 
 ## Recipe: mapping and BQSR
 
-The mapping hands its BAM files on and deletes them once `bqsr` has read them (`delete_intermediates: [bam]`).
+With `delete_intermediates: [bam]`, the mapping task deletes its BAM files once `bqsr` has read them.
 Variant callers name `bqsr` in `depends_on.alignments`.
 
 ```yaml

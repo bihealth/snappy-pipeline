@@ -2,11 +2,16 @@
 
 Merges the somatic VCF of a tumor library with the germline VCF of its matched normal library.
 The task needs both ``depends_on.somatic_variants`` and ``depends_on.germline_variants``.
-It produces one VCF per tumor DNA library, which needs a matched normal library; ``library_selection`` can only narrow these.
-The merge runs GATK 3 ``CombineVariants``; the somatic sites carry the ``SOMATIC`` flag.
-The output has the tags that both inputs have, so annotated inputs (for example by VEP, as neoepitope prediction needs) give annotated combined calls.
+It writes one VCF per tumor DNA library.
+A tumor DNA library without a matched normal library is an error.
+``library_selection`` can only narrow the set of tumor DNA libraries.
+The merge runs GATK 3 ``CombineVariants``.
+The somatic sites carry the ``SOMATIC`` flag in the combined VCF.
+The output carries the tags that both inputs have.
+So if both inputs are annotated, the combined calls are annotated, too.
+Neoepitope prediction, for example, needs calls annotated by VEP.
 
-With ``rename_combined`` set to ``tumor`` or ``germline``, the sample in the combined VCF is named after the tumor or the matched normal library.
+``rename_combined`` names the sample in the combined VCF after the tumor library (``tumor``) or the matched normal library (``germline``).
 
 Outputs
 -------
@@ -15,7 +20,8 @@ Below ``tasks/<task>/output/``:
 
 - ``{library_name}/out/{library_name}.vcf.gz`` with ``.tbi``, ``.md5`` and ``.tbi.md5`` files.
 
-- with ``calls_report``: ``{library_name}/report/calls/{library_name}.calls.tsv``, the calls of the VCF as a table (one row per call), and the same table as a datavzrd site below ``report/calls/html/``, which ``snappy report`` shows.
+- with ``calls_report``: ``{library_name}/report/calls/{library_name}.calls.tsv``, the calls of the VCF as a table with one row per call.
+  ``snappy report`` shows the same table as a datavzrd site below ``report/calls/html/``.
 
 Downstream tasks read ``vcf`` and ``vcf_tbi`` through ``depends_on``.
 """

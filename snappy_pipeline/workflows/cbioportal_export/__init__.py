@@ -2,14 +2,17 @@
 """Export to cBioPortal
 
 The step converts the results of the somatic tumor pipeline into the study files that cBioPortal imports.
-It converts the somatic variants (``depends_on.variants``, annotated by VEP) to MAF with vcf2maf.
-Optionally, it adds the copy number alterations (``copy_number_alteration``, from ``depends_on.copy_number``) and the gene expression (``expression``, from the gene counts of ``depends_on.alignments``).
-The data of all samples is merged into single files per cohort.
+It converts the somatic variants of ``depends_on.variants`` to MAF with vcf2maf.
+These variants must be annotated by VEP.
+With ``copy_number_alteration``, it adds the copy number alterations of ``depends_on.copy_number``.
+With ``expression``, it adds the gene expression from the gene counts of ``depends_on.alignments``.
+It merges the data of all samples into one file per data type.
 
 The step has no ``tool`` field.
-The task gives one result per cohort, a single study in the directory ``upload``.
-Copy number data needs ``depends_on.copy_number``, and copy number and expression need ``depends_on.features``.
-The segment files are written only if the study uses the reference genome ``hg19``, which follows from ``vcf2maf.ncbi_build: GRCh37``.
+The task writes one study per cohort, in the directory ``upload``.
+Copy number data needs ``depends_on.copy_number``.
+Copy number data and expression data both need ``depends_on.features``.
+The task writes the segment files only for the reference genome ``hg19``, which ``vcf2maf.ncbi_build: GRCh37`` sets.
 
 Outputs
 -------

@@ -1,11 +1,17 @@
 """Concatenate variant calls
 
-Concatenates the VCFs of several tasks into one VCF per entity, for example the small variants and the structural variants of each pedigree after FDR control, so that one annotation, one filtration and one export follow.
+Concatenates the VCFs of several tasks into one VCF per entity.
+For example, it joins the small variants and the structural variants of each pedigree after FDR control.
+One annotation, one filtration and one export then process the concatenated VCF.
 ``depends_on.variants`` names the tasks.
-They must write the same entities, with the same ``group_by`` and ``library_selection``, and the task takes their grouping.
-``bcftools concat`` also needs the same samples in the same order in every input, which the calls of one pedigree or one library satisfy.
-The tool is ``bcftools concat --allow-overlaps``, which keeps every record of every input; ``extra_arguments`` such as ``--rm-dups exact`` drop records that two inputs share.
-The output carries the tags that all inputs have, such as ``germline``, ``varlociraptor`` or ``filtered``, and the variant kinds of any of them, such as ``snv``, ``indel`` and ``sv``.
+These tasks must write the same entities, with the same ``group_by`` and ``library_selection``.
+The task takes their grouping.
+``bcftools concat`` also needs the same samples in the same order in every input.
+The calls of one pedigree or one library meet this.
+The tool is ``bcftools concat --allow-overlaps``, which keeps every record of every input.
+``extra_arguments`` such as ``--rm-dups exact`` drop records that two inputs share.
+The output carries the tags that all inputs have, such as ``germline``, ``varlociraptor`` or ``filtered``.
+It also carries the variant kinds of any input, such as ``snv``, ``indel`` and ``sv``.
 
 Outputs
 -------
@@ -14,7 +20,8 @@ Below ``tasks/<task>/output/``:
 
 - ``{library_name}/out/{library_name}.vcf.gz`` with ``.tbi``, ``.md5`` and ``.tbi.md5`` files.
 
-- with ``calls_report``: ``{library_name}/report/calls/{library_name}.calls.tsv``, the calls of the VCF as a table (one row per call), and the same table as a datavzrd site below ``report/calls/html/``, which ``snappy report`` shows.
+- with ``calls_report``: ``{library_name}/report/calls/{library_name}.calls.tsv``, the calls of the VCF as a table with one row per call.
+  ``snappy report`` shows the same table as a datavzrd site below ``report/calls/html/``.
 
 Downstream tasks read ``vcf`` and ``vcf_tbi`` through ``depends_on``.
 """

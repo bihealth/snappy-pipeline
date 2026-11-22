@@ -1,16 +1,20 @@
 """Read mapping of DNA and RNA libraries
 
-The step aligns the reads of each library to the reference genome; its result files are sorted, indexed BAM files.
+The step aligns the reads of each library to the reference genome.
+Its result files are sorted, indexed BAM files.
 It also computes alignment statistics.
-Marking of duplicates and trimming of adapters depend on the tool configuration.
+The fields ``mask_duplicates`` and ``trim_adapters`` of the tool section turn duplicate marking and adapter trimming on or off.
+``minimap2`` does neither.
 
 The ``tool`` field selects the aligner:
 
 - ``bwa``, ``bwa_mem2`` and ``bwa_mem3``: short-read DNA.
 - ``minimap2``: long-read DNA (PacBio, Oxford Nanopore).
-- ``star``: short-read RNA. Its result files also include gene counts and the strandedness decision.
+- ``star``: short-read RNA.
+  Its result files also include gene counts and the strandedness decision.
 
-The task maps all libraries of its sample sheets, including those of background data sets, unless ``library_selection`` narrows them.
+The task maps all libraries of its sample sheets unless ``library_selection`` narrows them.
+This includes the libraries of background data sets.
 A task with a DNA tool maps the DNA libraries, a task with ``star`` the RNA libraries.
 
 Reads come from ``depends_on.reads``, which names ``data_sets``, an ``external_data`` task, or an ``adapter_trimming`` task (:ref:`step_adapter_trimming`).
@@ -26,7 +30,7 @@ Each file has an ``.md5`` file.
 - ``{library_name}/out/{library_name}.bam`` and ``{library_name}/out/{library_name}.bam.bai``
 - ``{library_name}/report/bam_qc/{library_name}.bam.bamstats.txt``, ``.bam.flagstats.txt`` and ``.bam.idxstats.txt``
 - ``{library_name}/out/{library_name}.cov.vcf.gz`` (with ``.tbi``), ``.cov.bw`` and ``.mq.bw``, if ``bam_collect_doc`` is enabled
-- ``qc_summary/out/qc_summary.tsv``, one row per library with the ``samtools stats`` counts and fractions (the QC summary of the notes)
+- ``qc_summary/out/qc_summary.tsv``, one row per library with the ``samtools stats`` counts and fractions (see "QC summary" in the notes)
 - with ``star``, for RNA libraries: ``{library_name}/out/{library_name}.GeneCounts.tab``, ``{library_name}/out/{library_name}.Junctions.tab``, ``{library_name}/out/{library_name}.Log.final.out`` (STAR's mapping summary) and ``{library_name}/strandedness/{library_name}.decision.json``
 
 Downstream tasks read the keys ``bam``, ``bai``, ``bamstats``, ``flagstats``, and ``idxstats``, and for RNA libraries ``gene_counts`` and ``strandedness``.
@@ -37,12 +41,14 @@ Reads and sample sheet
 A data set or an ``external_data`` task locates the reads below its ``search_paths``, in a folder per library.
 Each entry of ``search_patterns`` holds regular expressions for the path below that folder.
 The keys ``left`` and ``right`` select the mates, and a ``(?P<readgroup>...)`` group pairs the mates of one read group.
-``bwa``, ``bwa_mem2`` and ``bwa_mem3`` map each read group with its own ``@RG``: the ID is the name the group captured (for example ``<library>_L001``), ``SM`` the library name and ``PL`` the mapper's ``platform``.
-They mask duplicates (``mask_duplicates``) across all read groups of a library.
+``bwa``, ``bwa_mem2`` and ``bwa_mem3`` map each read group with its own ``@RG``.
+Its ``ID`` is the name that the ``readgroup`` group captured, for example ``<library>_L001``.
+Its ``SM`` is the library name, and its ``PL`` is the mapper's ``platform``.
+The three BWA mappers mask duplicates (``mask_duplicates``) across all read groups of a library.
 
 By default, every pattern must match as many ``left`` as ``right`` files.
 With ``mixed_se_pe: true`` in the data set or the ``external_data`` task, ``right`` may match nothing.
-Then a library is either single-end or paired-end, and different libraries may differ.
+Each library is then either single-end or paired-end, and libraries may differ.
 
 Notes
 -----
@@ -50,26 +56,32 @@ Notes
 QC summary
 ~~~~~~~~~~
 
-One job per task reads the ``samtools`` statistics of all mapped libraries and writes the summary table ``qc_summary/out/qc_summary.tsv`` (one row per library: reads, fractions of mapped, properly paired, duplicated and MAPQ 0 reads, error rate, read length, base quality and insert size) and a site of tables and charts below ``work/qc_summary/report/html/``, which ``snappy report`` shows: the summary, the insert size and coverage distributions, the mean base quality by cycle and the reads per contig.
+One job per task reads the ``samtools`` statistics of all mapped libraries.
+It writes the summary table ``qc_summary/out/qc_summary.tsv`` with one row per library.
+Each row holds the number of reads, the fractions of mapped, properly paired, duplicated and MAPQ 0 reads, the error rate, the read length, the base quality and the insert size.
+The job also writes a site of tables and charts below ``work/qc_summary/report/html/``, which ``snappy report`` shows.
+The site holds the summary, the insert size and coverage distributions, the mean base quality by cycle and the reads per contig.
 
 STAR
 ~~~~
 
-STAR needs a gene model for the gene counts and for the transcriptome alignment. It comes from the ``features`` task in ``depends_on``.
+STAR needs a gene model for the gene counts and for the transcriptome alignment.
+The gene model comes from ``depends_on.features``.
 STAR writes counts for unstranded, forward and reverse protocols.
 The step keeps the column of the library's strand and writes it as the result file ``GeneCounts.tab``.
-The strand is the configured protocol (0 unstranded, 1 forward, 2 reverse).
-Without it, the step infers the strand with ``infer_experiment`` from RSeQC.
-``infer_experiment`` runs in both cases and reads the BED file of ``depends_on.exons``: non-overlapping, sorted intervals of ubiquitously expressed genes with well-defined strand (12 columns, 6 also work).
+The strand is the protocol set in ``strandedness.strand`` (0 unstranded, 1 forward, 2 reverse).
+With the default ``-1``, the step infers the strand with ``infer_experiment`` from RSeQC.
+``infer_experiment`` runs in both cases and reads the BED file of ``depends_on.exons``.
+The file holds non-overlapping, sorted intervals of ubiquitously expressed genes with a well-defined strand, in 12 columns (6 also work).
 
-With ``transcriptome: true``, STAR also writes the reads mapped to the transcriptome to a BAM file.
-It is not indexed, because it has no positional order.
+With ``star.transcriptome: true``, STAR also writes the reads mapped to the transcriptome to a BAM file.
+This BAM file has no index, because its reads are not sorted by position.
 
 BQSR
 ~~~~
 
 ``alignment_processing`` with ``tool: gatk4_bqsr`` recalibrates the base qualities of the mapping.
-:ref:`somatic_ngs` has the complete chain.
+:ref:`somatic_ngs` shows the complete chain of tasks, from adapter trimming to BQSR.
 """
 
 import os

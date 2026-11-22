@@ -4,16 +4,17 @@ The step calls structural variants in whole genome samples from the aligned read
 The ``tool`` field selects the caller:
 
 - ``delly2`` calls the variants per library, merges the sites of a pedigree and genotypes them in every member.
-  The regions in ``depends_on.excluded_regions`` are optional and excluded.
+  It excludes the regions of the optional ``depends_on.excluded_regions``.
 - ``manta`` calls the variants of all members of a pedigree together.
 - ``popdel`` profiles each library and then calls the deletions of all libraries together.
-  ``popdel.num_jobs`` jobs share its windows of ``popdel.window_size`` bases, padded by ``popdel.max_sv_size``.
+  It calls in windows of ``popdel.window_size`` bases, padded by ``popdel.max_sv_size``, and ``popdel.num_jobs`` jobs share the windows.
 - ``gcnv`` runs GATK gCNV in case mode, with the model of the task in ``depends_on.gcnv_model``.
-  That task is a :ref:`step_gcnv_model` task with ``intervals: wgs``, and its intervals are the ones of the calls.
+  That task is a :ref:`step_gcnv_model` task with ``intervals: wgs``.
+  The calls use its intervals.
 - ``melt`` calls mobile element insertions, with the genes of the task in ``depends_on.gene_regions``.
 
 The task gives one result per pedigree, named after the pedigree (its ``related_group``).
-``skip_libraries`` of a tool skips the whole pedigree of a library.
+A tool's ``skip_libraries`` skips the whole pedigree of each listed library.
 
 Outputs
 -------

@@ -4,15 +4,19 @@
 The step determines the HLA type of each library from its reads.
 The ``tool`` field selects the typer:
 
-- ``optitype``: types DNA and RNA libraries from the FASTQ files. It reads ``depends_on.reads``, which names ``data_sets``, an ``external_data`` task, or an ``adapter_trimming`` task (:ref:`step_adapter_trimming`).
-- ``arcashla``: types RNA-seq libraries from the BAM files of ``depends_on.alignments``, for example an :ref:`step_ngs_mapping` task with ``tool: star``. A task takes all RNA libraries unless it sets ``library_selection``. A library is single-end if no read of its BAM file is paired; the options ``avg`` and ``std`` apply to single-end libraries only.
+- ``optitype``: types DNA and RNA libraries from the FASTQ files.
+  It reads ``depends_on.reads``, which names ``data_sets``, an ``external_data`` task, or an ``adapter_trimming`` task (:ref:`step_adapter_trimming`).
+- ``arcashla``: types RNA-seq libraries from the BAM files of ``depends_on.alignments``, for example an :ref:`step_ngs_mapping` task with ``tool: star``.
+  A task takes all RNA libraries unless it sets ``library_selection``.
+  A library is single-end if no read of its BAM file is paired.
+  The options ``avg`` and ``std`` give the mean and standard deviation of the fragment length, for single-end libraries only.
 
 The result is one set of files per library.
 
 Outputs
 -------
 
-The task links the following result files below ``tasks/<task>/output/``, for each library with name ``{library_name}``.
+For each library ``{library_name}``, the task links the following result files below ``tasks/<task>/output/``.
 Each file has an ``.md5`` file.
 
 - ``{library_name}/out/{library_name}.txt``

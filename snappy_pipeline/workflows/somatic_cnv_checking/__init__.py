@@ -3,14 +3,14 @@
 
 The step finds heterozygous germline variants in the matched normal and measures their B-allele frequency in the tumor.
 It then merges these frequencies with the segments of a somatic CNV caller.
-This shows whether the copy number calls agree with the allelic imbalance in the tumor.
-The variants in the regions of ``depends_on.excluded_regions`` are left out, if it is set.
+The result shows whether the copy number calls agree with the allelic imbalance in the tumor.
+If ``depends_on.excluded_regions`` is set, the step leaves out the variants in its regions.
 
 The step has no ``tool`` field.
 It gives one result per tumor DNA library, paired with its matched normal.
 It leaves out tumor libraries without a matched normal, with a warning.
 It has result files only when ``depends_on.copy_number`` names a CNV calling task.
-Without it, the pileups stay in ``work/`` as intermediate files.
+Without ``depends_on.copy_number``, the pileups stay in ``work/`` as intermediate files.
 
 Outputs
 -------
@@ -18,7 +18,7 @@ Outputs
 The task links the following result files below ``tasks/<task>/output/`` as symlinks to ``work/``, each with a ``.md5`` file.
 
 - ``{tumor_library}/out/{tumor_library}.vcf.gz`` with ``.tbi``: the heterozygous variants with their B-allele frequency, and the log2 ratio and copy number call of the segment.
-- ``{tumor_library}/out/{tumor_library}.tsv``
+- ``{tumor_library}/out/{tumor_library}.tsv``: the segments with their copy number, their log2 ratio and the distribution of the B-allele frequencies of their variants.
 - ``{tumor_library}/report/{tumor_library}.cnv.pdf``, ``{tumor_library}.locus.pdf`` and ``{tumor_library}.segment.pdf``: plots of the B-allele frequency against the copy number.
 
 Downstream tasks read the key ``vcf``.

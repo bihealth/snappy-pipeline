@@ -2,7 +2,7 @@
 
 # Somatic CNV calling
 
-Somatic copy number calling is implemented separately for targeted sequencing (exomes and panels) and for whole genomes.
+Somatic copy number calling has separate steps for targeted sequencing (exomes and panels) and for whole genomes.
 This page covers the targeted tools of `somatic_targeted_seq_cnv_calling`: `cnvkit`, `purecn` and `sequenza`.
 The whole genome step is `somatic_wgs_cnv_calling`, see its step page.
 
@@ -14,8 +14,9 @@ The segmentation and the number of copies assigned to a segment can differ consi
 ### Output
 
 There is no widely used standard to report copy number alterations.
-All tools write the segmentation table loosely following the [DNAcopy format](https://bioconductor.org/packages/devel/bioc/manuals/DNAcopy/man/DNAcopy.pdf).
-The copy number call may be missing, and chromosomes are named instead of numbered.
+All tools write the segments in a table that loosely follows the [DNAcopy format](https://bioconductor.org/packages/devel/bioc/manuals/DNAcopy/man/DNAcopy.pdf).
+The copy number call may be missing.
+Chromosomes appear by name, not by number.
 The segmentation of a tumor library is `tasks/<task>/output/<library>/out/<library>.dnacopy.seg`.
 
 ### Genome support
@@ -23,30 +24,30 @@ The segmentation of a tumor library is `tasks/<task>/output/<library>/out/<libra
 `purecn` and `sequenza` support `GRCh37` better than `GRCh38`.
 The segmentation packages they use have not been updated for `GRCh38`.
 Both offer remedies that are not in bioconda.
-So `purecn` runs in a container, and the environment of `sequenza` installs the R package from its repository at a fixed commit when it is created.
+So `purecn` runs in a container.
+When the environment of `sequenza` is created, it installs the `sequenza` R package from its repository at a fixed commit.
 
 ### Sex chromosomes
 
-The pipeline cannot yet treat male and female samples differently, although the sex strongly influences the results.
+The sex of a sample strongly influences the results, but the pipeline cannot yet treat male and female samples differently.
 Avoid calling CNVs on the sex chromosomes:
 
-- `sequenza` has the `ignore_contigs` option.
+- `sequenza` leaves out the contigs that match `sequenza.ignore_contigs`, by default `X` and `Y` among others.
 - `purecn` handles the sex of a sample itself.
 - `cnvkit` needs the sex chromosomes removed from the access file.
 
 ### Segmentation and calls
 
 `cnvkit` usually finds more and shorter segments than `purecn`.
-With default settings, `cnvkit` calls conservatively, and most segments are called diploid even if the log ratio suggests otherwise.
+With default settings, `cnvkit` calls conservatively.
+Most segments are called diploid, even where the log ratio suggests otherwise.
 Try different segmentation algorithms and sensitivity thresholds for best results.
 
 ### Purity and ploidy
 
-`purecn` models tumor purity and ploidy.
-They are in `tasks/<task>/output/<library>/out/<library>.csv`.
+`purecn` models tumor purity and ploidy and writes them to `tasks/<task>/output/<library>/out/<library>.csv`.
 
-`sequenza` estimates them too.
-They are only stored as R objects in `tasks/<task>/work/<library>/report/<library>_sequenza_cp_table.RData`.
+`sequenza` estimates them too, but stores them only as R objects in `tasks/<task>/work/<library>/report/<library>_sequenza_cp_table.RData`.
 
 ## Configuration
 
@@ -75,12 +76,12 @@ It reads the target and antitarget regions from the panel task, so the config ha
 
 1. A `purecn` panel of normals, which needs a `mutect2` panel of normals.
 2. VCF files with germline and somatic variants.
-   Mutect2 must call these with other options than the usual somatic calling.
-   So the `variant_calling` step runs a second time, as its own task.
-3. The container image of the panel task (`purecn.container`), so that the panel and the calls use the same PureCN.
-   The `cnv_purecn` task runs its PureCN jobs in the image of the task in `depends_on.panel_of_normals`.
+   Mutect2 must call them with other options than for the usual somatic calls.
+   So a second `variant_calling` task calls them.
+3. The container image of the panel task (`purecn.container`).
+   The `cnv_purecn` task runs its PureCN jobs in it, so that the panel and the calls use the same PureCN.
 
-The second `mutect2` task needs `--genotype-germline-sites true` and `--genotype-pon-sites true`, and the `mutect2` panel of normals.
+The second `mutect2` task needs the `mutect2` panel of normals and the `extra_arguments` `--genotype-germline-sites true` and `--genotype-pon-sites true`.
 
 ```{graphviz}
 :alt: The tasks of the PureCN example and the depends_on keys that connect them

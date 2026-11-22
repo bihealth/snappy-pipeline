@@ -14,7 +14,7 @@ After reading this chapter, you should
 - know that `snappy` is the main CLI entry point.
 ```
 
-This part of the documentation targets developers who change or extend the pipeline.
+This part of the documentation is for developers who change or extend the pipeline.
 It describes the architecture and points to the code of existing steps.
 Most of the system follows one programming and architecture style.
 New code should follow it, and {ref}`dev_conventions` states its rules.
@@ -81,13 +81,14 @@ digraph config_to_rules {
 }
 ```
 
-The step Snakefiles do not set up anything themselves.
-They fetch their workflow object with `task_instance(config["__task_name__"])`.
+A step Snakefile neither loads the config nor builds its workflow object.
+It fetches the object with `task_instance(config["__task_name__"])`.
 
 ### `work/` and `output/`
 
 By default, `snappy run` builds every task and links its result files into `output/`.
-`--task <name>` does so for one task, and `--frozen` with `--task` reads the outputs of the upstream tasks as existing files.
+`--task <name>` does so for one task.
+With `--task`, `--frozen` reads the outputs of the upstream tasks as existing files and never rebuilds them.
 
 `work/` is the contract between tasks.
 A task reads the `work/` files of its upstream tasks and never their `output/` files.
@@ -96,7 +97,7 @@ Each task with result files has one local `<task>_results` job, which links them
 
 ## Anatomy of a step
 
-For each step, there is a directory below `snappy_pipeline/workflows/` with these files:
+Each step has a directory below `snappy_pipeline/workflows/` with these files:
 
 - `__init__.py` holds the module docstring (the step's documentation page), the workflow class and the step part classes.
 - `model.py` holds the Pydantic config model, including the `depends_on` model.
@@ -126,9 +127,10 @@ digraph step_anatomy {
 ### Workflow class and step parts
 
 The workflow class derives from {class}`BaseStep <snappy_pipeline.workflows.abstract.BaseStep>`.
-It sets `name`, `config_model_class` and `produces`, and names its step parts in `tool_parts` and `helper_parts`, which `BaseStep.__init__` registers.
+It sets `name`, `config_model_class` and `produces`.
+It names its step parts in `tool_parts` and `helper_parts`, and `BaseStep.__init__` registers them.
 A step whose parts depend on more than the tool registers them itself with `register_sub_step_classes(...)`.
-The workflow classes are listed in `WORKFLOW_REGISTRY` in `snappy_pipeline/workflow_registry.py`.
+`WORKFLOW_REGISTRY` in `snappy_pipeline/workflow_registry.py` lists the workflow classes.
 A new step needs an entry there.
 
 A step part derives from {class}`BaseStepPart <snappy_pipeline.workflows.abstract.BaseStepPart>`.
@@ -140,10 +142,10 @@ A tool that runs as a single rule has the one action `run`.
 A tool that needs several rules has several actions.
 For example, mutect2 has the actions `scatter`, `run`, `gather`, `filter`, `contamination`, `pileup_normal` and `pileup_tumor`.
 
-A step has a singular `tool` in its task config.
+The task config of a step names a single `tool`.
 The workflow class registers only the step part of the selected tool (`tool_parts`) and the structural helper step parts (`helper_parts`).
 So only that tool's rules exist.
-Combining several tools means defining several tasks, not multiplexing within one task.
+To combine several tools, define one task per tool.
 
 ### Rules
 
@@ -181,10 +183,12 @@ The rule sits in a function because Snakemake evaluates the `wrapper:` expressio
 A rule defined in the loop itself would run the wrapper of the loop's last value.
 
 A step Snakefile defines `wf`, includes that file and writes only the rules the include cannot express: containers, checkpoints, `run:` and `shell:` blocks.
-{ref}`dev_conventions` lists the methods and the per-action methods behind them, and the `rule_options` of a part (`localrule`, `retries`, `cache`, `wildcard_constraints`, `explicit`).
+{ref}`dev_conventions` lists the methods and the per-action methods behind them.
+It also lists the `rule_options` of a part (`localrule`, `retries`, `cache`, `wildcard_constraints`, `explicit`).
 
 Business logic belongs in the Python classes.
-Python has tooling for tests, static analysis, documentation and style, and these tools stop at the first `rule` keyword of a Snakefile.
+Python has tooling for tests, static analysis, documentation and style.
+These tools stop at the first `rule` keyword of a Snakefile.
 
 ## Wrappers
 
@@ -214,12 +218,13 @@ digraph wrapper_job {
 A wrapper derives from a base class in `snappy_wrappers/snappy_wrapper.py`:
 
 `ShellWrapper`
-: Runs a Bash script; R code runs from a heredoc in it.
+: Runs a Bash script.
+    R code runs from a heredoc in the script.
 
 `PythonWrapper`
 : Runs a Python function.
 
-Both write the log, and they write the `<file>.md5` of every output that declares one.
+Both write the log and the `<file>.md5` of every output that declares one.
 A wrapper reads the values from `snakemake.params.args` and the files from `snakemake.input`.
 It never reads `snakemake.config`.
 
@@ -232,8 +237,8 @@ It wraps Snakemake and reads the project configuration from `config.yaml` in the
 
 `snappy run` calls Snakemake with snappy's workflow profile.
 The executor, such as SLURM, comes from a profile of the system or the user.
-Other arguments go to Snakemake.
+Arguments that `snappy run` does not define go to Snakemake.
 
 `snappy run --verbose` prints the Snakemake command line at the start of the run.
-The generally useful `snakemake` parameters are available through `snappy run`.
-If one is missing, please create a ticket.
+Every argument after `--` goes to Snakemake, so its options are available through `snappy run`.
+If one is missing, create a ticket.

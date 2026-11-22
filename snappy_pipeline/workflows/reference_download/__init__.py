@@ -1,11 +1,12 @@
 # -*- coding: utf-8 -*-
 """Download of a reference sequence
 
-Downloads one FASTA file from Ensembl, RefSeq or UCSC.
+The step downloads one FASTA file from Ensembl, RefSeq or UCSC.
 The required ``source`` field selects the source, and the section of the same name selects the file:
 
 - ``ensembl``: species, build, release (``version``) and ``datatype``, optionally single chromosomes (``chromosome``).
-- ``refseq``: the NCBI assembly, by ``assembly_accession`` and ``assembly_name``, such as ``GCF_000001405.40`` and ``GRCh38.p14``; both are required, so ``source: refseq`` needs the section.
+- ``refseq``: the NCBI assembly, by ``assembly_accession`` and ``assembly_name``, such as ``GCF_000001405.40`` and ``GRCh38.p14``.
+  Both fields are required, so ``source: refseq`` needs the section.
 - ``ucsc``: the UCSC genome database ``db``, such as ``hg38``.
 
 ``file_name`` picks another file of the release, assembly or database, and ``url`` replaces the generated URL.
