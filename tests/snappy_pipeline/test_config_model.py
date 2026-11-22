@@ -215,6 +215,46 @@ def test_default_config_marks_required_fields_and_readers():
     assert "# REQUIRED for tool: star" in minimal and "Options:" not in minimal
 
 
+def test_default_config_of_a_tool_leaves_out_what_the_tool_does_not_read():
+    model = WORKFLOW_REGISTRY["ngs_mapping"].config_model_class
+
+    bwa = default_config_yaml_string(model, "minimal", tool="bwa")
+
+    # The tool is set, its section written as such, the others and their keys left out
+    assert "tool: bwa\n" in bwa and "bwa: {}\n" in bwa and "REQUIRED; Options" not in bwa
+    assert "star" not in bwa and "features" not in bwa and "exons" not in bwa
+    assert re.search(r"\n  index:\s+# REQUIRED\n", bwa)
+    # A key the tool needs is REQUIRED, not "for" the tool
+    star = default_config_yaml_string(model, "minimal", tool="star")
+    assert re.search(r"\n  features:\s+# REQUIRED\n", star) and "features: ''" not in star
+    assert "REQUIRED for" not in star and "\nstar: {}" in star
+    commented = default_config_yaml_string(model, "commented", tool="bwa")
+    assert "\nbwa:\n" in commented and "#bwa:" not in commented and "#star:" not in commented
+    assert "#bwa_mem2:" not in commented and "REQUIRED for tool" not in commented
+    # A key a setting needs keeps its condition, without the tools it names
+    filtration = WORKFLOW_REGISTRY["variant_filtration"].config_model_class
+    vembrane = default_config_yaml_string(filtration, "minimal", tool="vembrane")
+    assert "# REQUIRED for calls_report.igv" in vembrane and "dkfz" not in vembrane
+    dkfz = default_config_yaml_string(filtration, "minimal", tool="dkfz")
+    assert re.search(r"\n  alignments:\s+# REQUIRED\n", dkfz) and "REQUIRED for" not in dkfz
+
+
+def test_default_config_writes_the_answers_without_tags():
+    external = WORKFLOW_REGISTRY["external_data"].config_model_class
+    answers = {"produces": {"type": "raw", "tags": ["dna", "reference"]}, "files": {"fasta": None}}
+
+    text = default_config_yaml_string(external, "minimal", answers=answers)
+
+    # An answered key has no tag; an answered None is a key to fill in
+    assert text.startswith("produces:\n  type: raw\n  tags:\n    - dna\n    - reference\n")
+    assert re.search(r"\nfiles:\n  fasta:\s+# REQUIRED\n", text)
+    mapping = WORKFLOW_REGISTRY["ngs_mapping"].config_model_class
+    text = default_config_yaml_string(
+        mapping, "commented", tool="bwa", answers={"depends_on": {"reads": "data_sets"}}
+    )
+    assert "\n  reads: data_sets\n" in text and re.search(r"\n  index:\s+# REQUIRED", text)
+
+
 def test_pedigree_field_needs_a_sheet_with_pedigrees():
     DataSet(type="germline_variants", pedigree_field="familyId")
     with pytest.raises(pydantic.ValidationError, match="matched_cancer sheet has no pedigrees"):

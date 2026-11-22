@@ -4,12 +4,10 @@ the tools of a step, the ``depends_on`` keys a tool requires, which of the tasks
 can provide a key, which steps could, and the settings of an ``external_data`` task for a key.
 """
 
-import enum
-import typing
 from dataclasses import dataclass
 from typing import Any
 
-from snappy_pipeline.models import RequiredBy, _is_optional, reader_markers
+from snappy_pipeline.models import RequiredBy, _is_optional, reader_markers, tool_values
 from snappy_pipeline.workflow_registry import WORKFLOW_REGISTRY
 from snappy_pipeline.workflows.abstract.protocol import (
     DataSignature,
@@ -69,15 +67,7 @@ def entries_of(config_yaml: dict | None) -> list[TaskEntry]:
 
 def step_tools(step: str) -> list[str]:
     """The tool values of ``step``; empty for a step without a tool."""
-    field = WORKFLOW_REGISTRY[step].config_model_class.model_fields.get("tool")
-    if field is None:
-        return []
-    annotation = field.annotation
-    if isinstance(annotation, type) and issubclass(annotation, enum.Enum):
-        return [member.value for member in annotation]
-    if typing.get_origin(annotation) is typing.Literal:
-        return [str(value) for value in typing.get_args(annotation)]
-    return []
+    return tool_values(WORKFLOW_REGISTRY[step].config_model_class)
 
 
 def required_keys(step: str, tool: str | None) -> list[Key]:
@@ -137,8 +127,9 @@ def providers(key: Key) -> list[str]:
 
 def external_data_settings(key: Key) -> dict[str, Any]:
     """The settings of an ``external_data`` task that provides ``key``: ``produces`` with the type
-    and the plain tags of the requirement, and the expected file keys without paths (``kits``
-    for kit files; nothing for files per library, which search patterns find)."""
+    and the plain tags of the requirement, and the expected file keys without paths, to fill in
+    (``kits`` as a whole for kit files; nothing for files per library, which search patterns
+    find)."""
     settings: dict[str, Any] = {}
     signature = key.contract.signature
     if signature is not None:
@@ -150,7 +141,7 @@ def external_data_settings(key: Key) -> dict[str, Any]:
         settings["produces"] = {"type": signature.type.value, "tags": tags}
     schema = key.contract.schema
     if schema is ExpectedKits:
-        settings["kits"] = {}
+        settings["kits"] = None
     elif schema is not None and schema not in PER_LIBRARY:
         settings["files"] = {name: None for name in schema.model_fields}
     return settings

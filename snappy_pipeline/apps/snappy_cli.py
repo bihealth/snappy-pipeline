@@ -229,8 +229,9 @@ CONFIG_FILENAME = CONFIG_FILE
 class AddTaskApp:
     """Implementation of task addition logic.
 
-    ``settings`` are values set in the generated block, as the questions of a terminal give
-    them: ``tool``, the ``depends_on`` keys, ``produces`` and the file keys of ``external_data``.
+    ``settings`` are the answers of a terminal, written into the generated block in place of the
+    defaults: ``tool``, which also tailors the block to the tool, the ``depends_on`` keys,
+    ``produces`` and the file keys of ``external_data`` (``None``: to fill in, tagged REQUIRED).
     """
 
     def __init__(
@@ -301,7 +302,7 @@ class AddTaskApp:
         yaml = self._yaml()
         step_cls = WORKFLOW_REGISTRY[self.step]
         step_config_yaml_str = step_cls.config_model_class.default_config_yaml_string(
-            self.config_mode
+            self.config_mode, tool=self.settings.get("tool"), answers=self.settings
         )
         # ruamel keeps the column of a comment, so the block is loaded at the column where it
         # ends up: below ``config:`` of a task entry
@@ -310,13 +311,6 @@ class AddTaskApp:
 
         if step_config_block is None:
             step_config_block = CommentedMap()
-        for key, value in self.settings.items():
-            # A key of the block keeps its comments; a commented-out key is added anew
-            if isinstance(value, dict) and isinstance(step_config_block.get(key), CommentedMap):
-                for sub_key, sub_value in value.items():
-                    step_config_block[key][sub_key] = sub_value
-            else:
-                step_config_block[key] = value
 
         task_block = CommentedMap()
         task_block["name"] = self.task_name

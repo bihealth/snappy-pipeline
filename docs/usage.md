@@ -29,7 +29,7 @@ snappy run -- --forcerun $(snappy rules --part calls_report --part qc_summary --
 Without a task name, the task is named after its step.
 On a terminal, `snappy task add` without arguments asks for the tasks one by one, and so does `snappy init` when it asks whether to add tasks: the step (type a part of its name to filter the list), the name, the tool and, for each `depends_on` key the tool requires, the task that provides it among those of the project, newest first.
 For a key that no task provides yet, the question offers to add such a task on the spot, which pulls in a chain top-down: a calling task asks for its alignments, which asks for a mapping task, which asks for the genome, where an `external_data` task gets its `produces` and its file keys from the requirement.
-The written block has the answers set and everything else as `snappy task add` writes it, so the tool sections and the paths of the data are still filled in `config.yaml`.
+The written block is that of the chosen tool: its section and the `depends_on` keys it reads, with the answers set and the keys still to fill in tagged `REQUIRED`, such as the paths of an `external_data` task.
 Besides `config.yaml`, `snappy init`:
 
 - puts the project into the directory given, else into the current directory if that is named like the project, else into a new directory named after the project.

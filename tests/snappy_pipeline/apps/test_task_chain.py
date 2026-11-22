@@ -101,7 +101,7 @@ def test_external_data_settings_name_the_data_and_the_file_keys():
     kits = next(key for key in required_keys("ngs_data_qc", "alfred") if key.name == "kits")
     assert external_data_settings(kits) == {
         "produces": {"type": "regions", "tags": ["kits"]},
-        "kits": {},
+        "kits": None,
     }
     entry = entry_for("genome", "external_data", None, external_data_settings(keys["reference"]))
     assert entry.produces == DataSignature(DataType.RAW, frozenset({"dna", "reference"}))

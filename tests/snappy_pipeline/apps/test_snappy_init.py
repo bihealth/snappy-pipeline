@@ -195,10 +195,13 @@ def test_init_asks_for_what_no_option_gives(tmp_path, git, answers):
     assert 'description: "A trio"' in text and "type: germline_variants" in text
     # The genome task was added while the mapping task was asked for, so it comes first
     assert text.index("- name: genome\n") < text.index("- name: mapping\n")
-    assert re.search(r"type: raw\b", text) and "- dna\n" in text and "- reference\n" in text
-    assert "\n      files:\n        fasta:\n" in text
-    assert "tool: bwa_mem3" in text and "reads: data_sets" in text and "reference: genome" in text
+    assert "type: raw\n" in text and "- dna\n" in text and "- reference\n" in text
+    assert re.search(r"\n      files:\n        fasta:\s+# REQUIRED\n", text)  # to fill in
+    assert "tool: bwa_mem3\n" in text and "reads: data_sets\n" in text
+    assert "reference: genome\n" in text
     assert re.search(r"\n\s+index:\s+# REQUIRED", text)  # left to be filled
+    # The block is that of bwa_mem3: its section, no keys that only STAR reads
+    assert "\n      bwa_mem3: {}\n" in text and "features" not in text and "exons" not in text
     # The remote is not approved for the sheet, so it stays untracked
     assert git(project, "ls-files").split() == [".gitignore", "README.md", "config.yaml"]
     assert git(project, "remote", "get-url", "origin").strip() == "git@example.org:lab/project.git"

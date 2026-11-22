@@ -406,9 +406,15 @@ class SnappyStepModel(SnappyModel, object):
         return self
 
     @classmethod
-    def default_config_yaml_string(cls, mode: ConfigMode | str = ConfigMode.COMMENTED) -> str:
-        """Return the annotated default ``config`` block of a task of this step."""
-        return default_config_yaml_string(cls, mode)
+    def default_config_yaml_string(
+        cls,
+        mode: ConfigMode | str = ConfigMode.COMMENTED,
+        tool: str | None = None,
+        answers: typing.Mapping[str, typing.Any] | None = None,
+    ) -> str:
+        """Return the annotated default ``config`` block of a task of this step
+        (see :func:`default_config_yaml_string`)."""
+        return default_config_yaml_string(cls, mode, tool, answers)
 
 
 # Generation of the annotated default configuration of a step from its pydantic model, for
@@ -426,7 +432,10 @@ TAG_COLUMN = 50
 
 
 def default_config_yaml_string(
-    model: type[BaseModel], mode: ConfigMode | str = ConfigMode.COMMENTED
+    model: type[BaseModel],
+    mode: ConfigMode | str = ConfigMode.COMMENTED,
+    tool: str | None = None,
+    answers: typing.Mapping[str, typing.Any] | None = None,
 ) -> str:
     """Return the annotated default configuration of ``model`` as YAML.
 
@@ -435,44 +444,112 @@ def default_config_yaml_string(
     comments out the optional fields and sections (a ``#`` right before the key). ``minimal``
     leaves them out, except for ``depends_on`` fields that a tool requires, and writes neither
     descriptions nor blank lines; of the tags, only the ``REQUIRED`` ones remain.
+
+    With ``tool``, the block is that of a task with this tool: the sections of the other tools
+    and the ``depends_on`` keys that only they read are left out, the tool's section is written,
+    and a key the tool needs regardless of a setting is ``REQUIRED``. ``answers`` are values
+    written in place of the defaults, nested like the block; an answered key is written without
+    tags, an answered ``None`` as a key to fill in, tagged ``REQUIRED``.
     """
-    writer = _ConfigWriter(ConfigMode(mode))
-    writer.write_model(model, _placeholder_data(model), indent=0, commented=False)
+    answers = dict(answers or {})
+    if tool is not None:
+        answers.setdefault("tool", tool)
+    writer = _ConfigWriter(ConfigMode(mode), tool)
+    writer.write_model(model, _placeholder_data(model), answers, indent=0, commented=False)
     return writer.render()
+
+
+def tool_values(model: type[BaseModel]) -> list[str]:
+    """The tool values of a step model, from the enum or literal of its ``tool`` field;
+    empty for a step without a tool."""
+    field = model.model_fields.get("tool")
+    if field is None:
+        return []
+    annotation = field.annotation
+    if isinstance(annotation, type) and issubclass(annotation, enum.Enum):
+        return [member.value for member in annotation]
+    if typing.get_origin(annotation) is typing.Literal:
+        return [str(value) for value in typing.get_args(annotation)]
+    return []
 
 
 class _ConfigWriter:
     """Collects the lines of the configuration with their tags, then aligns the tags."""
 
-    def __init__(self, mode: ConfigMode):
+    def __init__(self, mode: ConfigMode, tool: str | None = None):
         self.mode = mode
+        self.tool = tool
         #: (line, tags, width of the line without the comment char), so that the tags of the
         #: commented and the full configuration sit at the same column
         self.lines: list[tuple[str, str, int]] = []
 
-    def write_model(self, model: type[BaseModel], data: dict, indent: int, commented: bool):
+    def write_model(
+        self,
+        model: type[BaseModel],
+        data: dict,
+        answers: typing.Mapping[str, typing.Any],
+        indent: int,
+        commented: bool,
+    ):
         prefix = " " * indent
         documented = self.mode is not ConfigMode.MINIMAL
+        sections = set(tool_values(model))
         first = True
         for name, field in model.model_fields.items():
-            optional = _is_optional(field)
-            required_by = any(isinstance(m, RequiredBy) for m in reader_markers(field))
-            if not documented and optional and not required_by:
+            markers = reader_markers(field)
+            if self.tool is not None:
+                if name in sections and name != self.tool:
+                    continue  # the section of another tool
+                markers = [m for m in markers if not m.tools or self.tool in m.tools]
+                if reader_markers(field) and not markers:
+                    continue  # a key that only other tools read
+            answered = name in answers
+            needed = self.tool is not None and (
+                name == self.tool
+                or any(isinstance(m, RequiredBy) and m.when is None for m in markers)
+            )
+            required = not _is_optional(field) or needed or (answered and answers[name] is None)
+            required_by = any(isinstance(m, RequiredBy) for m in markers)
+            if not documented and not required and not required_by and not answered:
                 continue
-            comment_out = commented or (self.mode is ConfigMode.COMMENTED and optional)
+            comment_out = commented or (
+                self.mode is ConfigMode.COMMENTED and not required and not answered
+            )
             description = _description_lines(field, LINE_WIDTH - indent - 2) if documented else []
             sub_model = _sub_model(field.annotation)
             if documented and not first and (description or sub_model is not None):
                 self.lines.append(("", "", 0))
             first = False
             self.lines += [(f"{prefix}# {line}".rstrip(), "", 0) for line in description]
-            tags = _tags(field, documented)
-            value = data.get(name)
+            if (answered and answers[name] is not None) or name == self.tool:
+                tags = ""  # an answered key, or the section of the tool, which is just written
+            else:
+                tags = _tags(field, documented, markers, required, self.tool)
+            value = answers[name] if answered else data.get(name)
+            if needed and value == "":  # a key the tool needs, without its empty default
+                value = None
             if sub_model is not None:
                 self._add(f"{prefix}{name}:", comment_out, tags)
                 if not isinstance(value, dict):
                     value = _placeholder_data(sub_model)
-                self.write_model(sub_model, value, indent + INDENTATION, comment_out)
+                sub_answers = answers.get(name) if isinstance(answers.get(name), dict) else {}
+                before = len(self.lines)
+                self.write_model(sub_model, value, sub_answers, indent + INDENTATION, comment_out)
+                if len(self.lines) == before:  # a section without lines is still a section
+                    self.lines[-1] = (_commented(f"{prefix}{name}: {{}}", comment_out), tags, 0)
+            elif answered and isinstance(value, dict) and None in value.values():
+                # Answered keys to fill in, such as the files of an external_data task
+                self._add(f"{prefix}{name}:", comment_out, tags)
+                for sub_name, sub_value in value.items():
+                    first_line, *rest = _yaml_lines(sub_name, sub_value)
+                    sub_prefix = prefix + " " * INDENTATION
+                    self._add(
+                        sub_prefix + first_line,
+                        comment_out,
+                        "REQUIRED" if sub_value is None else "",
+                    )
+                    for line in rest:
+                        self._add(sub_prefix + line, comment_out, "")
             else:
                 first_line, *rest = _yaml_lines(name, value)
                 self._add(prefix + first_line, comment_out, tags)
@@ -522,17 +599,34 @@ def _description_lines(field, width: int) -> list[str]:
     return lines
 
 
-def _tags(field, documented: bool = True) -> str:
+def _tags(
+    field,
+    documented: bool = True,
+    markers: list[ReadBy] | None = None,
+    required: bool | None = None,
+    tool: str | None = None,
+) -> str:
     """The tags behind a key: whether it is required and by which readers; if ``documented``,
-    also its optional readers, examples and options."""
-    tags = [] if _is_optional(field) else ["REQUIRED"]
-    markers = reader_markers(field)
-    if required := [str(m) for m in markers if isinstance(m, RequiredBy)]:
-        tags.append(f"REQUIRED for {'; '.join(required)}")
+    also its optional readers, examples and options. For a task with ``tool``, ``markers`` are
+    the readers of that tool and ``required`` is settled, so a reader is named by its condition
+    only, and one without a condition not at all."""
+    if markers is None:
+        markers = reader_markers(field)
+    if required is None:
+        required = not _is_optional(field)
+
+    def reader(marker: ReadBy) -> str:
+        return str(marker) if tool is None else marker.condition()
+
+    tags = ["REQUIRED"] if required else []
+    needs = [m for m in markers if isinstance(m, RequiredBy) and (tool is None or m.when)]
+    if needs and not required:
+        tags.append(f"REQUIRED for {'; '.join(reader(m) for m in needs)}")
     if not documented:
         return "; ".join(tags)
-    if optional := [str(m) for m in markers if not isinstance(m, RequiredBy)]:
-        tags.append(f"optional for {'; '.join(optional)}")
+    reads = [m for m in markers if not isinstance(m, RequiredBy) and (tool is None or m.when)]
+    if reads:
+        tags.append(f"optional for {'; '.join(reader(m) for m in reads)}")
     if field.examples:
         tags.append(f"Examples: {', '.join(map(str, field.examples))}")
     extra = field.json_schema_extra if isinstance(field.json_schema_extra, dict) else {}
