@@ -77,9 +77,23 @@ directory_option = click.option(
 config_mode_option = click.option(
     "--config-mode",
     type=click.Choice([mode.value for mode in ConfigMode]),
-    default=ConfigMode.COMMENTED.value,
-    help="Style of the task configuration: 'commented' (every field with its description, the optional ones commented out), 'full' (every field active), 'minimal' (the required fields only, without descriptions).",
+    default=ConfigMode.MINIMAL.value,
+    help="Style of the task configuration: 'minimal' (the required fields only, without descriptions), 'commented' (every field with its description, the optional ones commented out), 'full' (every field active).",
 )
+#: The styles as prompt choices: value, title, description
+CONFIG_MODE_CHOICES = [
+    (
+        ConfigMode.MINIMAL.value,
+        "minimal",
+        "The required fields only, without descriptions; the docs explain the rest",
+    ),
+    (
+        ConfigMode.COMMENTED.value,
+        "commented",
+        "Every field with its description, the optional ones commented out",
+    ),
+    (ConfigMode.FULL.value, "full", "Every field active, without descriptions"),
+]
 
 
 #: Allowed steps
@@ -234,16 +248,6 @@ class AddTaskApp:
         self.settings = settings or {}
 
     def run(self):
-        log("")
-        log(
-            "Starting task {task_name} (using step {step}) in project dir {project_dir}",
-            args={
-                "step": self.step,
-                "task_name": self.task_name,
-                "project_dir": self.project_directory,
-            },
-        )
-
         config_yaml = self._load_config_yaml()
 
         # Check if the task name already exists in the tasks list
@@ -259,14 +263,9 @@ class AddTaskApp:
 
         # Setup the configuration by appending the task
         self._setup_configuration(config_yaml)
-
         log(
-            "\nDo not forget to fill out the REQUIRED fields in the project configuration file!\n",
-            level=LVL_IMPORTANT,
-        )
-        log(
-            "Task {task_name} (using step {step}) created.",
-            args={"task_name": self.task_name, "step": self.step},
+            "Added task {task_name} (step {step}) to {config}",
+            args={"task_name": self.task_name, "step": self.step, "config": self.config_filename},
             level=LVL_SUCCESS,
         )
         return 0
@@ -330,12 +329,16 @@ class AddTaskApp:
         yaml.dump(config_yaml, stream=buf)
         buf.seek(0)
         contents = buf.read()
-        update_file(
-            path=self.config_filename,
-            contents=contents,
-            message="Updating project config with required default config for task {task_name} (step {step})",
-            message_args={"task_name": self.task_name, "step": self.step},
-        )
+        update_file(self.config_filename, contents)
+
+
+def _required_hint(config_filename: str) -> None:
+    """The reminder after added tasks: a task block has fields to fill in."""
+    log(
+        "Fill in the REQUIRED fields of {config}",
+        {"config": config_filename},
+        level=LVL_IMPORTANT,
+    )
 
 
 def setup_logging(verbose):
@@ -370,7 +373,7 @@ def main():
 @click.option(
     "--project-name",
     type=str,
-    help="The name of the project, in README.md, config.yaml and the sample sheet; default: the directory name",
+    help="The name of the project, in README.md, config.yaml and the sample sheet; default: the directory name. Without DIRECTORY, a project named unlike the current directory gets a new directory of its name below it.",
 )
 @click.option(
     "--external-id",
@@ -439,10 +442,12 @@ def init(
     """Initialize a new snappy project directory.
 
     Creates config.yaml, README.md and the sample sheet samplesheet.tsv, and puts the
-    configuration under git. On a terminal, asks for what no option gives.
+    configuration under git. On a terminal, asks for what no option gives. The project goes
+    into DIRECTORY, else into the current directory if that is named like the project, else
+    into a new directory named after the project.
     """
-    project_directory = directory
-    default_name = os.path.basename(os.path.abspath(project_directory))
+    given_directory = ctx.get_parameter_source("directory") != ParameterSource.DEFAULT
+    default_name = os.path.basename(os.path.abspath(directory))
     if interactive is None:
         interactive = sys.stdin.isatty() and sys.stdout.isatty()
     add_tasks = False  # ask for the tasks once config.yaml exists
@@ -459,6 +464,10 @@ def init(
             description = ask_text("Description")
         if asked("sheet_type"):
             sheet_type = ask_select("Sample sheet type", SHEET_TYPE_CHOICES, default=sheet_type)
+        if asked("config_mode"):
+            config_mode = ask_select(
+                "Configuration style", CONFIG_MODE_CHOICES, default=config_mode
+            )
         if git:
             if asked("track_sheet"):
                 track_sheet = ask_confirm(
@@ -476,6 +485,11 @@ def init(
                     log("samplesheet.tsv stays untracked", level=LVL_IMPORTANT)
         add_tasks = asked("tasks") and ask_confirm("Add tasks now?", default=False)
     project_name = project_name or default_name
+    # A project named unlike the current directory gets a directory of its own
+    if given_directory or project_name == default_name:
+        project_directory = directory
+    else:
+        project_directory = os.path.join(directory, project_name)
 
     log("SNAPPY Pipeline -- init")
     log("================================")
@@ -595,6 +609,7 @@ class _TaskQuestions:
             if not ask_confirm("Add another task?", default=True):
                 break
         print_listing(_task_rows_of(_load_config_yaml(self.config_filename)), TASK_COLUMNS, "Tasks")
+        _required_hint(self.config_filename)
         return self.added
 
     def _step_choices(self, steps) -> list[tuple[str, str, str | None]]:
@@ -754,6 +769,7 @@ def task_add(tasks, directory, config_mode, interactive):
         res = app.run()
         if res:
             sys.exit(res)
+    _required_hint(_project_config(directory))
 
 
 @task.command(name="list")

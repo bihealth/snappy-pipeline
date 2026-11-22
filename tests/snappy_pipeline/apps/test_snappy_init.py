@@ -20,6 +20,30 @@ def test_init_default_cwd(tmp_path, monkeypatch):
     assert (tmp_path / "README.md").exists() and (tmp_path / "config.yaml").exists()
 
 
+def test_init_puts_a_named_project_into_a_directory_of_its_name(tmp_path, monkeypatch):
+    monkeypatch.chdir(tmp_path)
+
+    result = CliRunner().invoke(snappy_cli.main, ["init", "--no-git", "--project-name", "trio"])
+
+    assert result.exit_code == 0, result.output
+    assert (tmp_path / "trio" / "config.yaml").exists()
+    assert not (tmp_path / "config.yaml").exists()
+    assert 'name: "trio"' in (tmp_path / "trio" / "config.yaml").read_text()
+    # The current directory, if it is named like the project; a given directory always
+    monkeypatch.chdir(tmp_path / "trio")
+    (tmp_path / "trio" / "config.yaml").unlink()
+    result = CliRunner().invoke(snappy_cli.main, ["init", "--no-git", "--project-name", "trio"])
+    assert result.exit_code == 0, result.output
+    assert (tmp_path / "trio" / "config.yaml").exists() and not (
+        tmp_path / "trio" / "trio"
+    ).exists()
+    result = CliRunner().invoke(
+        snappy_cli.main, ["init", str(tmp_path / "other"), "--no-git", "--project-name", "trio"]
+    )
+    assert result.exit_code == 0, result.output
+    assert 'name: "trio"' in (tmp_path / "other" / "config.yaml").read_text()
+
+
 def test_init_fails_on_a_duplicate_task_but_keeps_the_others(tmp_path):
     project = tmp_path / "project"
     result = CliRunner().invoke(
@@ -142,6 +166,7 @@ def test_init_asks_for_what_no_option_gives(tmp_path, git, answers):
         "sodar-uuid",  # external id
         "A trio",  # description
         "germline",  # sheet type
+        "minimal",  # configuration style
         True,  # track the sheet
         "git@example.org:lab/project.git",  # remote
         False,  # the remote is not approved for the sheet
@@ -161,9 +186,10 @@ def test_init_asks_for_what_no_option_gives(tmp_path, git, answers):
 
     assert result.exit_code == 0, result.output
     assert answers.pending == []
-    assert answers.asked[7:11] == ["Add tasks now?", "Step", "Task name", "Tool"]
-    assert [q.split(":")[0] for q in answers.asked[11:14]] == ["reads", "index", "reference"]
-    assert answers.asked[14:16] == ["Step of the task", "Task name"]
+    assert answers.asked[3:5] == ["Sample sheet type", "Configuration style"]
+    assert answers.asked[8:12] == ["Add tasks now?", "Step", "Task name", "Tool"]
+    assert [q.split(":")[0] for q in answers.asked[12:15]] == ["reads", "index", "reference"]
+    assert answers.asked[15:17] == ["Step of the task", "Task name"]
     text = (project / "config.yaml").read_text()
     assert 'name: "My project"' in text and 'external_id: "sodar-uuid"' in text
     assert 'description: "A trio"' in text and "type: germline_variants" in text

@@ -32,6 +32,7 @@ For a key that no task provides yet, the question offers to add such a task on t
 The written block has the answers set and everything else as `snappy task add` writes it, so the tool sections and the paths of the data are still filled in `config.yaml`.
 Besides `config.yaml`, `snappy init`:
 
+- puts the project into the directory given, else into the current directory if that is named like the project, else into a new directory named after the project.
 - writes an empty sample sheet (`--sheet-type generic|germline|cancer`) that `config.yaml` names.
 - records the project name, external id and description.
 - makes the project a git repository that tracks only `.gitignore`, `config.yaml` and `README.md`.
@@ -40,8 +41,8 @@ Besides `config.yaml`, `snappy init`:
   `--no-interactive` takes the defaults instead.
 
 `--config-mode` sets the style of the generated task configuration.
-`commented`, the default, writes every field with its description and comments out the optional ones.
-`full` writes every field active, and `minimal` writes only the required fields, without descriptions.
+`minimal`, the default, writes only the required fields, without descriptions.
+`commented` writes every field with its description and comments out the optional ones, and `full` writes every field active.
 `config.yaml` lists `pathvars`, `data_sets` and `resources` before `tasks`, so that added tasks end the file.
 With `minimal`, the header of `config.yaml` points to the docs instead of explaining the sections.
 

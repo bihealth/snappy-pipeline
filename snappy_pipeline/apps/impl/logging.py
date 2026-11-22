@@ -18,14 +18,16 @@ LVL_IMPORTANT = "IMPORTANT"
 LVL_SUCCESS = "SUCCESS"
 
 
-def log(msg, args=None, level=None, file=sys.stderr):
+def log(msg, args=None, level=None, file=None):
     """Print log message for given levels of importance
 
     For LVL_ERROR, LVL_INFO, LVL_SUCCESS, the message will be prefixed with a colored keyword
     identifying the level.  For IMPORTANT, the message itself will be colored.
-    Colors are left out if ``file`` is not a terminal.
+    Colors are left out if ``file`` is not a terminal. ``file`` defaults to the stderr of the
+    moment, so that a test runner captures the messages.
     """
     args = args or {}
+    file = file or sys.stderr
     if level == LVL_IMPORTANT:
         click.echo(click.style(msg.format(**args), fg="yellow"), file=file)
     else:

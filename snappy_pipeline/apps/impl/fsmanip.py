@@ -5,17 +5,9 @@ The routines in this package provides helpers for creating files from templates,
 and creating directories and files while printing log messages.
 """
 
-import datetime
-import difflib
 import os
 
 from .logging import LVL_INFO, log
-
-
-def file_mtime(path):
-    """Return mtime of file at ``path``"""
-    t = datetime.datetime.fromtimestamp(os.stat(path).st_mtime)
-    return t.isoformat()
 
 
 def create_directory(path, msg_lvl=LVL_INFO, exist_ok=False):
@@ -45,32 +37,7 @@ def create_from_tpl(src_path, dest_path, format_args, message, message_args, msg
         f.write(formatted)
 
 
-def update_file(path, contents, message, message_args, msg_lvl=LVL_INFO, diff_context=3):
-    """Update file at path with the given contents.
-
-    Message is printed similar as in create_from_tpl.
-
-    Disable printing by setting ``msg_lvl`` to ``None``
-    """
-    if msg_lvl:
-        log(message, message_args, level=msg_lvl)
-    # Read in the template and fill in values
-    with open(path, "rt") as f:
-        old_contents = f.read()
-    slash = "/" if not os.path.isabs(path) else ""
-    # Create diff output and print
-    if msg_lvl:
-        diff = "".join(
-            difflib.unified_diff(
-                old_contents.splitlines(True),
-                contents.splitlines(True),
-                "a" + slash + path,
-                "b" + slash + path,
-                file_mtime(path),
-                datetime.datetime.now().isoformat(),
-                n=diff_context,
-            )
-        )
-    log("Applying the following change: \n\n{diff}", {"diff": diff}, level=LVL_INFO)
+def update_file(path, contents):
+    """Write ``contents`` to the file at ``path``; the caller tells what changed."""
     with open(path, "wt") as f:
         f.write(contents)

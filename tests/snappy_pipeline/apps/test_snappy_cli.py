@@ -321,10 +321,23 @@ def test_check_files_prints_configuration_errors_without_traceback(tmp_path):
 def test_task_add_keeps_the_style_of_the_config_and_comments_the_new_task(tmp_path):
     (tmp_path / "config.yaml").write_text(CHECK_FILES_CONFIG.replace("tool: bwa", 'tool: "bwa"'))
     result = CliRunner().invoke(
-        snappy_cli.main, ["task", "add", "--directory", str(tmp_path), "qc=ngs_data_qc"]
+        snappy_cli.main,
+        [
+            "task",
+            "add",
+            "--directory",
+            str(tmp_path),
+            "--config-mode",
+            "commented",
+            "qc=ngs_data_qc",
+        ],
     )
     assert result.exit_code == 0, result.output
     text = (tmp_path / "config.yaml").read_text()
+    # One line per task, no diff; the reminder once
+    assert "Added task qc (step ngs_data_qc)" in result.output
+    assert "Applying the following change" not in result.output
+    assert result.output.count("REQUIRED fields") == 1
     # The user's quotes and sequence style stay, and there is no backup copy
     assert 'tool: "bwa"' in text
     assert not (tmp_path / "config.yaml.bak").exists()

@@ -59,10 +59,8 @@ Each argument is `[task_name=]step_type`.
 snappy task add mapping=ngs_mapping calling=variant_calling
 ```
 
-The new tasks appear in `config.yaml` with every field and its description.
-The optional fields are commented out, and the required ones are marked `REQUIRED`.
-`--config-mode full` writes every field active, and `--config-mode minimal` writes only the required fields, without descriptions.
-`snappy task add` and `snappy init --task` print the change to `config.yaml` as a diff.
+The new tasks appear in `config.yaml` with their required fields, marked `REQUIRED`.
+`--config-mode commented` writes every field with its description, the optional ones commented out, and `--config-mode full` writes every field active.
 Keep the project in git for the history of its configuration.
 
 ## Configure the tasks
