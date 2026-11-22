@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 """Tests for ``snappy check-files``."""
 
+import json
 import re
 
 from click.testing import CliRunner
@@ -26,7 +27,17 @@ def test_check_files_lists_missing_files(tmp_path):
     (tmp_path / "config.yaml").write_text(CONFIG)
     result = CliRunner().invoke(main, ["check-files", "--directory", str(tmp_path)])
     assert result.exit_code == 1
-    assert result.output == f"genome\t{tmp_path}/refs/genome.fa\n"
+    assert result.output == f"file\tgenome\t{tmp_path}/refs/genome.fa\tdoes not exist\n"
+    result = CliRunner().invoke(main, ["check-files", "--json", "--directory", str(tmp_path)])
+    assert result.exit_code == 1
+    assert json.loads(result.output) == [
+        {
+            "kind": "file",
+            "task": "genome",
+            "item": f"{tmp_path}/refs/genome.fa",
+            "problem": "does not exist",
+        }
+    ]
 
 
 def test_check_files_succeeds_when_all_files_exist(tmp_path):

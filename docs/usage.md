@@ -15,6 +15,16 @@ The table lists each command with the first sentence of its help.
 ```{snappy-commands}
 ```
 
+The listing commands `snappy task list`, `snappy check-files` and `snappy rules` share one output style.
+On a terminal they print a table; on a pipe, or with `--plain`, tab-separated lines without header and frame; with `--json`, an array with one object per row.
+The data goes to stdout and the messages to stderr, so `snappy check-files --json > missing.json` holds only the rows.
+`snappy rules` lists the rules of the project as Snakemake names them: `<task>_<step>_<part>_<action>` for the jobs of a step part and `<task>_results` for the job that links the results of a task.
+`--task` and `--part` restrict the listing, and `--names` prints only the names, one per line, so that a rerun of the report jobs is one command:
+
+```shell
+snappy run -- --forcerun $(snappy rules --part calls_report --part qc_summary --names)
+```
+
 `snappy task add` takes `[task_name=]step_type` arguments, for example `mapping=ngs_mapping`, and so does `snappy init --task`.
 Without a task name, the task is named after its step.
 Besides `config.yaml`, `snappy init`:

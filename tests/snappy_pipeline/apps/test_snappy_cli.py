@@ -1,12 +1,14 @@
 # -*- coding: utf-8 -*-
 """Tests for ``snappy`` CLI subcommands, completion, and task listing."""
 
+import json
 import os
 import re
 import subprocess
 import sys
 import textwrap
 from pathlib import Path
+from types import SimpleNamespace
 
 import pytest
 from click.testing import CliRunner
@@ -38,12 +40,45 @@ def test_snappy_completion():
 
 
 def test_snappy_task_list_available():
-    """Check whether ``snappy task list --available`` lists available steps."""
+    """``snappy task list --available`` lists the steps: lines on a pipe, objects as JSON."""
     runner = CliRunner()
     result = runner.invoke(snappy_cli.main, ["task", "list", "--available"])
     assert result.exit_code == 0
-    assert "Available Workflow Steps in SNAPPY" in result.output
-    assert "ngs_mapping" in result.output
+    assert "ngs_mapping\tRead mapping" in result.output
+    result = runner.invoke(snappy_cli.main, ["task", "list", "--available", "--json"])
+    steps = {row["step"]: row["description"] for row in json.loads(result.output)}
+    assert steps["ngs_mapping"].startswith("Read mapping")
+
+
+def test_task_list_shows_name_step_tool_and_dependencies(tmp_path):
+    (tmp_path / "config.yaml").write_text(CHECK_FILES_CONFIG)
+    runner = CliRunner()
+
+    result = runner.invoke(snappy_cli.main, ["task", "list", "--directory", str(tmp_path)])
+
+    assert result.exit_code == 0
+    assert result.output.splitlines() == [
+        "genome\texternal_data\t\t",
+        "bwa_index\texternal_data\t\t",
+        "mapping\tngs_mapping\tbwa\treads: data_sets, reference: genome, index: bwa_index",
+    ]
+    result = runner.invoke(
+        snappy_cli.main, ["task", "list", "--json", "--directory", str(tmp_path)]
+    )
+    assert json.loads(result.output)[2] == {
+        "name": "mapping",
+        "step": "ngs_mapping",
+        "tool": "bwa",
+        "depends_on": {"reads": "data_sets", "reference": "genome", "index": "bwa_index"},
+    }
+    (tmp_path / "config.yaml").write_text("tasks: []\n")
+    result = runner.invoke(snappy_cli.main, ["task", "list", "--directory", str(tmp_path)])
+    assert result.exit_code == 0 and result.output == ""
+    result = runner.invoke(
+        snappy_cli.main, ["task", "list", "--json", "--plain", "--directory", str(tmp_path)]
+    )
+    assert result.exit_code == 2
+    assert "excludeeachother" in re.sub(r"\x1b\[[0-9;]*m|[\s│╭╮╰╯─]", "", result.output)
 
 
 def test_task_param_type_shell_complete():
@@ -124,7 +159,7 @@ def test_check_files_lists_missing_files_and_libraries_without_reads(tmp_path):
     result = CliRunner().invoke(snappy_cli.main, ["check-files", "--directory", str(tmp_path)])
     assert result.exit_code == 1
     assert result.output.splitlines() == [
-        f"mapping\tP001-N1-DNA1-WGS1\tFound no reads of 'P001' below {tmp_path}/raw",
+        f"reads\tmapping\tP001-N1-DNA1-WGS1\tFound no reads of 'P001' below {tmp_path}/raw",
     ]
 
     (tmp_path / "raw" / "P001").mkdir()
@@ -136,7 +171,65 @@ def test_check_files_lists_missing_files_and_libraries_without_reads(tmp_path):
     (tmp_path / "refs" / "genome.dict").unlink()
     result = CliRunner().invoke(snappy_cli.main, ["check-files", "--directory", str(tmp_path)])
     assert result.exit_code == 1
-    assert result.output.splitlines() == [f"genome\t{tmp_path}/refs/genome.dict"]
+    assert result.output.splitlines() == [
+        f"file\tgenome\t{tmp_path}/refs/genome.dict\tdoes not exist"
+    ]
+
+
+def test_rule_rows_name_the_task_step_part_and_action():
+    part = lambda name, *actions: SimpleNamespace(name=name, actions=actions)  # noqa: E731
+    instances = {
+        "mapping": SimpleNamespace(
+            name="ngs_mapping",
+            sub_steps={"bwa": part("bwa", "run"), "qc_summary": part("qc_summary", "run")},
+        ),
+        "mapping_qc": SimpleNamespace(
+            name="ngs_data_qc", sub_steps={"bam_collect_doc": part("bam_collect_doc", "run")}
+        ),
+    }
+    names = [
+        "all",
+        "mapping_ngs_mapping_bwa_run",
+        "mapping_ngs_mapping_qc_summary_run",
+        "mapping_qc_ngs_data_qc_bam_collect_doc_run",
+        "mapping_qc_results",
+        "mapping_results",
+    ]
+
+    rows = snappy_cli._rule_rows(names, instances)
+
+    assert [tuple(row.values()) for row in rows] == [
+        ("all", "", "", "", ""),
+        ("mapping_ngs_mapping_bwa_run", "mapping", "ngs_mapping", "bwa", "run"),
+        ("mapping_ngs_mapping_qc_summary_run", "mapping", "ngs_mapping", "qc_summary", "run"),
+        (
+            "mapping_qc_ngs_data_qc_bam_collect_doc_run",
+            "mapping_qc",
+            "ngs_data_qc",
+            "bam_collect_doc",
+            "run",
+        ),
+        ("mapping_qc_results", "mapping_qc", "ngs_data_qc", "", ""),
+        ("mapping_results", "mapping", "ngs_mapping", "", ""),
+    ]
+
+
+def test_rules_lists_the_rules_of_the_project(tmp_path):
+    """The names come from Snakemake, so this runs in a subprocess like the dry runs."""
+    _write_project(tmp_path / "project", CHECK_FILES_CONFIG)
+
+    result = _snappy(tmp_path / "project", "rules", "--plain")
+
+    assert result.returncode == 0, result.stderr
+    lines = result.stdout.splitlines()
+    assert "mapping_ngs_mapping_bwa_run\tmapping\tngs_mapping\tbwa\trun" in lines
+    assert "mapping_results\tmapping\tngs_mapping\t\t" in lines
+    assert "all\t\t\t\t" in lines
+    assert "[snappy]" not in result.stdout  # the library summary of the Snakefile is left out
+    result = _snappy(tmp_path / "project", "rules", "--part", "qc_summary", "--names")
+    assert result.stdout.splitlines() == ["mapping_ngs_mapping_qc_summary_run"]
+    result = _snappy(tmp_path / "project", "rules", "--task", "genome", "--json")
+    assert json.loads(result.stdout) == []
 
 
 #: Two tasks whose contract check fails in ``load_project()`` (``task_produces``)
@@ -169,14 +262,20 @@ def _write_project(directory: Path, config: str) -> None:
         (directory / "refs" / name).touch()
 
 
-def _snappy_run_dry(directory: Path) -> subprocess.CompletedProcess[str]:
-    """Run ``snappy run -n`` in a subprocess, as Snakemake keeps global state."""
+def _snappy(directory: Path, *args: str) -> subprocess.CompletedProcess[str]:
+    """Run a ``snappy`` command in a subprocess, as Snakemake keeps global state."""
     env = os.environ.copy()
     root = str(Path(__file__).resolve().parents[3])
     env["PYTHONPATH"] = os.pathsep.join(filter(None, [root, env.get("PYTHONPATH")]))
-    cmd = [sys.executable, "-m", "snappy_pipeline.apps.snappy_cli", "run", "-n"]
-    cmd += ["--directory", str(directory), "--", "--cores", "1", "--quiet"]
+    # The project directory goes to snappy, before anything that goes to Snakemake after --
+    cmd = [sys.executable, "-m", "snappy_pipeline.apps.snappy_cli", args[0]]
+    cmd += ["--directory", str(directory), *args[1:]]
     return subprocess.run(cmd, text=True, capture_output=True, check=False, env=env)
+
+
+def _snappy_run_dry(directory: Path) -> subprocess.CompletedProcess[str]:
+    """Run ``snappy run -n`` in a subprocess."""
+    return _snappy(directory, "run", "-n", "--", "--cores", "1", "--quiet")
 
 
 @pytest.mark.parametrize(

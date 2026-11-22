@@ -4,23 +4,24 @@
 Replaces the previous multi-script CLI entry points with a single `snappy` command.
 """
 
+import contextlib
 import datetime
 import importlib
 import io
 import json
 import logging
 import os
+import re
 import shutil
 import subprocess
 import sys
 import textwrap
 from types import SimpleNamespace
+from typing import Any
 
 import rich_click as click
 from click.core import ParameterSource
 import ruamel.yaml as ruamel_yaml
-from rich.console import Console
-from rich.table import Table
 from ruamel.yaml.comments import CommentedMap
 from ruamel.yaml.util import load_yaml_guess_indent
 from snakemake.cli import main as snakemake_main
@@ -39,6 +40,7 @@ from .impl.fsmanip import (
     update_file,
 )
 from .impl.logging import LVL_ERROR, LVL_IMPORTANT, LVL_INFO, LVL_SUCCESS, log
+from .impl.output import Column, listing_options, print_listing
 
 logger = logging.getLogger(__name__)
 
@@ -136,17 +138,38 @@ def _get_registered_steps_info():
     return info
 
 
-def _print_steps_table():
-    steps_info = _get_registered_steps_info()
-    console = Console()
-    table = Table(
-        title="Available Workflow Steps in SNAPPY", show_header=True, header_style="bold magenta"
-    )
-    table.add_column("Step Name", style="cyan", no_wrap=True)
-    table.add_column("Description", style="white")
-    for step_name, summary in steps_info:
-        table.add_row(step_name, summary)
-    console.print(table)
+#: The columns of the listings (:func:`print_listing`)
+STEP_COLUMNS = [Column("step", "Step", no_wrap=True), Column("description", "Description")]
+TASK_COLUMNS = [
+    Column("name", "Task", no_wrap=True),
+    Column("step", "Step"),
+    Column("tool", "Tool"),
+    Column("depends_on", "Depends on"),
+]
+CHECK_COLUMNS = [
+    Column("kind", "Kind"),
+    Column("task", "Task"),
+    Column("item", "Missing"),
+    Column("problem", "Problem"),
+]
+RULE_COLUMNS = [
+    Column("rule", "Rule", no_wrap=True),
+    Column("task", "Task"),
+    Column("step", "Step"),
+    Column("part", "Part"),
+    Column("action", "Action"),
+]
+
+
+def _task_row(item: dict) -> dict[str, Any]:
+    """A task entry of ``config.yaml`` as a row: name, step, tool and ``depends_on``."""
+    config = item.get("config") or {}
+    return {
+        "name": item.get("name", ""),
+        "step": item.get("step", ""),
+        "tool": config.get("tool", ""),
+        "depends_on": dict(config.get("depends_on") or {}),
+    }
 
 
 #: README file name
@@ -625,29 +648,30 @@ def task_add(tasks, directory, config_mode):
     default=False,
     help="List all available registered workflow steps in SNAPPY instead of configured tasks.",
 )
-def task_list(directory, available):
-    """List defined tasks in the project (or available steps with --available)."""
+@listing_options
+def task_list(directory, available, as_json, plain):
+    """List the tasks of the project: name, step, tool and the tasks it depends on
+    (with --available, the steps a task can use instead).
+    """
     if available:
-        _print_steps_table()
+        rows = [
+            {"step": name, "description": summary} for name, summary in _get_registered_steps_info()
+        ]
+        print_listing(rows, STEP_COLUMNS, "Steps", as_json=as_json, plain=plain)
         return
-
     config_filename = _project_config(directory)
-
     with open(config_filename, "rt") as f:
-        yaml = ruamel_yaml.YAML()
-        config_yaml = yaml.load(f.read())
-
-    tasks = config_yaml.get("tasks", [])
-    if not tasks:
-        click.echo("No tasks defined in config.yaml")
-        return
-
-    click.echo(f"Defined tasks in {config_filename}:")
-    for task_item in tasks:
-        if isinstance(task_item, dict):
-            name = task_item.get("name", "unnamed")
-            step = task_item.get("step", "unknown")
-            click.echo(f"  - {name} ({step})")
+        config_yaml = ruamel_yaml.YAML().load(f.read())
+    tasks = (config_yaml or {}).get("tasks") or []
+    rows = [_task_row(item) for item in tasks if isinstance(item, dict)]
+    print_listing(
+        rows,
+        TASK_COLUMNS,
+        "Tasks",
+        as_json=as_json,
+        plain=plain,
+        empty=f"No tasks in {config_filename}",
+    )
 
 
 @main.command(
@@ -765,7 +789,8 @@ def logs(directory, snakemake_log):
 
 @main.command(name="check-files")
 @directory_option
-def check_files(directory):
+@listing_options
+def check_files(directory, as_json, plain):
     """List the files that config.yaml names but that do not exist, and the libraries whose
     reads are not found.
 
@@ -774,25 +799,118 @@ def check_files(directory):
     The reads are checked for every library of the tasks that read FASTQ files, below the search
     paths of its data set or external_data task. Snakemake checks the inputs of the jobs it runs
     anyway; this command checks all of them, for example after moving a project to another
-    machine. It exits with 1 if a file is missing.
+    machine. Each row has the kind (file or reads), the task, the file or the library, and the
+    problem. It exits with 1 if a file is missing.
     """
     config_path = _project_config(directory)
     try:
         project = load_project(load_configfile(config_path), os.path.dirname(config_path))
         missing = missing_files(project)
-        for name, paths in missing.items():
-            for path in paths:
-                click.echo(f"{name}\t{path}")
         # The task objects load the sample sheets and find the reads as the Snakefile does
         problems = missing_reads(create_task_instances(None, project))
     except ConfigError as e:
         log(str(e), level=LVL_ERROR)
         sys.exit(1)
-    for problem in problems:
-        click.echo("\t".join(problem))
-    if missing or problems:
+    rows = [
+        {"kind": "file", "task": name, "item": path, "problem": "does not exist"}
+        for name, paths in missing.items()
+        for path in paths
+    ]
+    rows += [
+        {"kind": "reads", "task": task, "item": library, "problem": problem}
+        for task, library, problem in problems
+    ]
+    print_listing(rows, CHECK_COLUMNS, "Missing files and reads", as_json=as_json, plain=plain)
+    if rows:
         sys.exit(1)
     log("All files of {path} exist", {"path": config_path}, level=LVL_SUCCESS)
+
+
+def _rule_names(directory_path: str) -> list[str]:
+    """The rule names of the project from Snakemake's rule listing, which prints to stdout like
+    the library summary of the Snakefile; only the lines of one word (with a docstring in
+    parentheses) are rule names."""
+    argv = _snakemake_argv(directory_path, profile=False) + ["--list"]
+    listing = io.StringIO()
+    with contextlib.redirect_stdout(listing):
+        try:
+            snakemake_main(argv)  # ends with sys.exit, also after a listing
+        except SystemExit as e:
+            if e.code:
+                sys.exit(e.code)
+    names = []
+    for line in listing.getvalue().splitlines():
+        if match := re.fullmatch(r"(\w+)(?: \(.*\))?", line):
+            names.append(match.group(1))
+    return names
+
+
+def _rule_rows(names: list[str], instances: dict[str, Any]) -> list[dict[str, str]]:
+    """Rule name -> task, step, part and action: a rule is ``<task>_<step>_<part>_<action>`` for
+    the jobs of a step part or ``<task>_results``; a rule outside the pattern (``all``) keeps the
+    fields empty."""
+    rows = []
+    for name in names:
+        row = {"rule": name, "task": "", "step": "", "part": "", "action": ""}
+        task = max((t for t in instances if name.startswith(t + "_")), key=len, default=None)
+        if task is not None:
+            step = instances[task]
+            row["task"], row["step"] = task, step.name
+            rest = name.removeprefix(f"{task}_{step.name}_")
+            for part in sorted(step.sub_steps.values(), key=lambda p: -len(p.name)):
+                action = rest.removeprefix(part.name + "_")
+                if action != rest and action in part.actions:
+                    row["part"], row["action"] = part.name, action
+                    break
+        rows.append(row)
+    return rows
+
+
+@main.command()
+@directory_option
+@click.option(
+    "--task",
+    "task_names",
+    multiple=True,
+    shell_complete=_complete_task_names,
+    help="Only the rules of this task (repeatable).",
+)
+@click.option(
+    "--part",
+    "parts",
+    multiple=True,
+    help="Only the rules of this step part, such as calls_report or qc_summary (repeatable).",
+)
+@click.option(
+    "--names", is_flag=True, help="Only the rule names, one per line, for snakemake --forcerun."
+)
+@listing_options
+def rules(directory, task_names, parts, names, as_json, plain):
+    """List the rules of the project as Snakemake names them: <task>_<step>_<part>_<action> for
+    the jobs of a step part, <task>_results for the job that links the results of a task.
+
+    Rerun the report jobs of every task:
+        snappy run -- --forcerun $(snappy rules --part calls_report --part qc_summary --names)
+    """
+    if names and (as_json or plain):
+        raise click.UsageError("--names excludes --json and --plain")
+    config_path = _project_config(directory)
+    try:
+        project = load_project(load_configfile(config_path), os.path.dirname(config_path))
+        instances = create_task_instances(None, project)
+    except ConfigError as e:
+        log(str(e), level=LVL_ERROR)
+        sys.exit(1)
+    rows = _rule_rows(_rule_names(directory), instances)
+    if task_names:
+        rows = [row for row in rows if row["task"] in task_names]
+    if parts:
+        rows = [row for row in rows if row["part"] in parts]
+    if names:
+        for row in rows:
+            click.echo(row["rule"])
+        return
+    print_listing(rows, RULE_COLUMNS, "Rules", as_json=as_json, plain=plain, empty="No rules")
 
 
 def _project_config(directory_path: str) -> str:
@@ -807,8 +925,9 @@ def _project_config(directory_path: str) -> str:
     return path
 
 
-def _snakemake_argv(directory_path: str, config: tuple = ()) -> list[str]:
-    """Return the Snakemake arguments that snappy run and snappy report share."""
+def _snakemake_argv(directory_path: str, config: tuple = (), profile: bool = True) -> list[str]:
+    """Return the Snakemake arguments that snappy run and snappy report share; without
+    ``profile``, those of a listing (no workflow profile, so no logger database)."""
     apps = os.path.dirname(os.path.abspath(__file__))
     argv = [
         "--directory",
@@ -822,6 +941,8 @@ def _snakemake_argv(directory_path: str, config: tuple = ()) -> list[str]:
     ]
     if config:
         argv += ["--config", *config]
+    if not profile:
+        return argv
     # Conda, the logger and the database persistence backend; the executor comes from a profile
     # of the system or the user
     argv += ["--workflow-profile", os.path.join(apps, "profile")]
