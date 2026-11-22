@@ -91,6 +91,23 @@ The pieces are:
   `external_data` tasks name existing files, and `reference_download` and `reference_index` tasks create them.
 - `tasks/<task_name>/`, which `snappy run` creates for each task, with `work/` and `output/`.
 
+```{graphviz}
+digraph {
+    rankdir=LR; bgcolor="transparent"; nodesep=0.2; ranksep=0.5;
+    node [shape=box, style="rounded,filled", fillcolor="#ffffff", color="#c3c2b7", fontname="Helvetica", fontsize=9, fontcolor="#0b0b0b"];
+    edge [color="#898781", arrowsize=0.6, fontname="Helvetica", fontsize=8, fontcolor="#52514e"];
+    config [label="config.yaml\nproject, data_sets, tasks"];
+    sheets [label="sample sheets\nlibraries, pedigrees, tumor-normal pairs"];
+    raw [label="raw data\nFASTQ files below the search paths"];
+    refs [label="reference data\nexternal_data, reference_download, reference_index tasks"];
+    run [label="snappy run", style="rounded,filled", fillcolor="#e1e0d9"];
+    work [label="tasks/<task>/work/\nall files of a task; other tasks read here"];
+    output [label="tasks/<task>/output/\nlinks to the result files, .manifest.tsv"];
+    config -> run; sheets -> run; raw -> run; refs -> run;
+    run -> work; work -> output [label="results job"];
+}
+```
+
 The configuration is validated once when `snappy run` starts.
 It checks the task configurations, the `depends_on` links, dependency cycles and that each upstream task provides what its consumer needs.
 
@@ -197,6 +214,19 @@ Snakemake checks that it exists when a job needs it and reruns jobs when it chan
 To decide, ask whether the file must match the reference or other data of the project.
 If so, it is a dependency, even if only one tool reads it.
 Otherwise it is a task-local file.
+
+```{graphviz}
+digraph {
+    rankdir=LR; bgcolor="transparent"; nodesep=0.3; ranksep=0.5;
+    node [shape=box, style="rounded,filled", fillcolor="#ffffff", color="#c3c2b7", fontname="Helvetica", fontsize=9, fontcolor="#0b0b0b"];
+    edge [color="#898781", arrowsize=0.6, fontname="Helvetica", fontsize=8, fontcolor="#52514e"];
+    question [label="Must the file match the reference\nor other data of the project?", shape=diamond, style="filled", fillcolor="#e1e0d9"];
+    dependency [label="dependency\nan external_data task, named in depends_on\ntype, tags and keys are checked"];
+    local [label="task-local file\na path in the tool section\npassed to the rule as an input"];
+    question -> dependency [label="yes"];
+    question -> local [label="no"];
+}
+```
 
 BED files of regions have the type `regions` and the key `bed`.
 The regions filter of `variant_filtration` accepts any of them in `depends_on.regions`.
@@ -328,17 +358,34 @@ In a `germline_variants` or `generic` sheet, a row may leave `libraryType` empty
 It then describes a person without sequencing data, such as a parent who completes a pedigree.
 A sheet in which no row has a `libraryType` has no libraries, and snappy stops with an error.
 
+### Library selection
+
 Each step takes only libraries it can process, such as RNA libraries for expression quantification or tumor DNA libraries for somatic calling.
 The somatic steps take only libraries of cancer sample sheets.
-Without `library_selection`, a task takes the step's default: the tumor DNA libraries of cancer sample sheets and the DNA libraries of germline sample sheets, unless the step's page names another one.
-For example, mapping takes all libraries, the RNA steps all RNA libraries, and a panel of normals all normal DNA libraries.
-`library_selection` replaces that default with a pandas `DataFrame.query()` expression, for example `data_set == 'batch2'` or `donor_name != 'P003'`, but a task never takes libraries that its step cannot process.
+
+Without `library_selection`, a task takes the step's default, unless the step's page names another one:
+
+- the tumor DNA libraries of cancer sample sheets and the DNA libraries of germline sample sheets,
+- for example, mapping takes all libraries, the RNA steps all RNA libraries, and a panel of normals all normal DNA libraries.
+
+`library_selection` replaces that default with a pandas `DataFrame.query()` expression, for example `data_set == 'batch2'` or `donor_name != 'P003'`.
+A task never takes libraries that its step cannot process.
+
+### Group by
+
 `group_by` sets the granularity: `library` writes one output per library, `related` one per group of related libraries, where the step supports it.
 Related libraries are the members of a pedigree on germline sample sheets and the libraries of one donor on cancer sample sheets (the library table's column `related_group`).
-The group is named after the pedigree or donor, and so are the results of `group_by: related` tasks: the sheet's family id (the data set's `pedigree_field`, else the `familyId` custom field), else the index donor with `FAM_` on germline sheets, `PAT_` on cancer sheets and no prefix on generic sheets.
-Without it, a task takes its step's default, else the granularity of its upstream tasks, else `library`.
+
+The group is named after the pedigree or donor, and so are the results of `group_by: related` tasks:
+
+- the sheet's family id (the data set's `pedigree_field`, else the `familyId` custom field),
+- else the index donor, with `FAM_` on germline sheets, `PAT_` on cancer sheets and no prefix on generic sheets.
+
+Without `group_by`, a task takes its step's default, else the granularity of its upstream tasks, else `library`.
 Germline variant calling defaults to `related` and calls each pedigree jointly, so the tasks after it also write one result per pedigree.
 Steps that read one VCF per pedigree (VarFish export, peddy, IGV sessions, pedigree phasing) check when the project loads that their upstream task has `group_by: related`.
+
+### Background data sets
 
 A data set with `is_background: true` holds libraries that are no task's results, such as a reference cohort.
 Mapping and panels of normals process them, and the SV and gCNV callers add them as cohort members or model samples; `background_selection` narrows them per task, for example to `data_set == 'cohort_1000g'`.
@@ -379,4 +426,4 @@ resources:
 
 Partition limits are left to SLURM and its executor plugin.
 Every job that runs a wrapper, except rules cached between workflows, writes a benchmark (`tasks/<task>/benchmarks/...tsv`) with its wall time (`s`), peak memory (`max_rss`), I/O and CPU time.
-These measurements calibrate the requests.
+They record what each job used, so the requests can be checked against them.

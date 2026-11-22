@@ -49,10 +49,10 @@ pixi run -e dev test
 ### Style checks
 
 ```shell
-pixi run -e dev lint       # ruff check, ruff format --check and snakefmt --check
+pixi run -e dev lint       # ruff, snakefmt, shfmt and the module layout, all in check mode
 pixi run -e dev fmt        # format with ruff
 pixi run -e dev snakefmt   # format the Snakefiles
-pixi run -e dev srcfmt     # both formatters
+pixi run -e dev srcfmt     # all formatters and the module layout
 ```
 
 ### Documentation

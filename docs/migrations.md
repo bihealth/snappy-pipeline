@@ -1,7 +1,16 @@
 # Migrating from snappy 0.6
 
-This page collects what changed between snappy 0.6 (the `main` branch) and the task-based snappy on Snakemake 9: the configuration model in detail, the new command and defaults, what was removed or changes results on purpose, and step-by-step migration notes for existing projects.
+This page collects what changed between snappy 0.6 (the `main` branch) and the task-based snappy on Snakemake 9.
 The pipeline configs in `.tests/test-workflow/pipelines/*/config.yaml` are complete examples of the new layout.
+
+The page has four parts:
+
+- The configuration model in detail, from {ref}`tasks <migrations_tasks>` to the {ref}`developer contracts <migrations_contracts>`.
+- The new command, the changed defaults and the tooling, from {ref}`the snappy command <migrations_command>` to {ref}`CI <migrations_ci>`.
+- {ref}`What was removed <migrations_removed>`, {ref}`what did not change, and what changes results on purpose <migrations_results>`.
+- Step-by-step {ref}`migration notes <migrations_notes>` for existing projects, and an {ref}`example <migrations_example>` that translates a neoepitope config from main.
+
+(migrations_tasks)=
 
 ## Task-based configuration
 
@@ -27,7 +36,46 @@ config:
 
 This replaces the old multi-tool list pattern.
 It simplifies the Snakefiles, makes config validation more precise, and avoids ambiguity about which tool's resources or output paths apply.
-If a workflow needs several tools that cannot be split into separate tasks (rare, but possible), the workflow code handles that; the single-tool constraint applies at the config and task level.
+If a workflow needs several tools that cannot be split into separate tasks (rare, but possible), the workflow code handles that.
+The single-tool constraint applies at the config and task level.
+
+In the {ref}`example <migrations_example>` at the end of this page, the tool lists of main's `hla_typing` and `somatic_neoepitope_prediction` become five tasks:
+
+```{graphviz}
+:alt: The tool lists of main's hla_typing and somatic_neoepitope_prediction configs as five snake9 tasks
+
+digraph tool_lists {
+    rankdir=LR; nodesep=0.12; ranksep=0.35;
+    bgcolor="transparent"; fontname="Helvetica"; labelloc=b;
+    label=<<FONT POINT-SIZE="7" COLOR="#898781">Dashed arrows: a step config of main becomes tasks; solid arrows: depends_on.hla_types</FONT>>;
+    node [shape=box, style="rounded,filled", fillcolor="#ffffff", color="#c3c2b7", fontname="Helvetica", fontsize=9, fontcolor="#0b0b0b", margin="0.08,0.03"];
+    edge [arrowsize=0.5, penwidth=1.0];
+    subgraph cluster_main {
+        label=<<FONT POINT-SIZE="7" COLOR="#898781">main: step_config</FONT>>; color="#e1e0d9"; style="rounded"; labelloc=t;
+        "main_hla" [label=<<B>hla_typing</B><BR ALIGN="LEFT"/><FONT POINT-SIZE="7" COLOR="#52514e">tools: {dna: [optitype], rna: [optitype, arcashla]}</FONT><BR ALIGN="LEFT"/>>];
+        "main_neo" [label=<<B>somatic_neoepitope_prediction</B><BR ALIGN="LEFT"/><FONT POINT-SIZE="7" COLOR="#52514e">tools: [pvacseq, pvacfuse, pvacsplice]</FONT><BR ALIGN="LEFT"/><FONT POINT-SIZE="7" COLOR="#52514e">tools_hla_typing</FONT><BR ALIGN="LEFT"/>>];
+    }
+    subgraph cluster_tasks {
+        label=<<FONT POINT-SIZE="7" COLOR="#898781">snake9: tasks</FONT>>; color="#e1e0d9"; style="rounded"; labelloc=t;
+        "hla_optitype_dna" [label=<<B>hla_optitype_dna</B><BR ALIGN="LEFT"/><FONT POINT-SIZE="7" COLOR="#52514e">hla_typing, tool: optitype</FONT><BR ALIGN="LEFT"/><FONT POINT-SIZE="7" COLOR="#52514e">DNA libraries</FONT><BR ALIGN="LEFT"/>>];
+        "hla_optitype_rna" [label=<<B>hla_optitype_rna</B><BR ALIGN="LEFT"/><FONT POINT-SIZE="7" COLOR="#52514e">hla_typing, tool: optitype</FONT><BR ALIGN="LEFT"/><FONT POINT-SIZE="7" COLOR="#52514e">RNA libraries</FONT><BR ALIGN="LEFT"/>>];
+        "hla_arcashla" [label=<<B>hla_arcashla</B><BR ALIGN="LEFT"/><FONT POINT-SIZE="7" COLOR="#52514e">hla_typing, tool: arcashla</FONT><BR ALIGN="LEFT"/><FONT POINT-SIZE="7" COLOR="#52514e">alignments of mapping_rna</FONT><BR ALIGN="LEFT"/>>];
+        "neoepitopes" [label=<<B>neoepitopes</B><BR ALIGN="LEFT"/><FONT POINT-SIZE="7" COLOR="#52514e">somatic_neoepitope_prediction, tool: pvactools</FONT><BR ALIGN="LEFT"/><FONT POINT-SIZE="7" COLOR="#52514e">pvacseq, pvacfuse</FONT><BR ALIGN="LEFT"/>>];
+        "neoepitopes_splice" [label=<<B>neoepitopes_splice</B><BR ALIGN="LEFT"/><FONT POINT-SIZE="7" COLOR="#52514e">somatic_neoepitope_prediction, tool: pvactools</FONT><BR ALIGN="LEFT"/><FONT POINT-SIZE="7" COLOR="#52514e">pvacsplice</FONT><BR ALIGN="LEFT"/>>];
+    }
+    "main_hla" -> "hla_optitype_dna" [style=dashed, color="#898781"];
+    "main_hla" -> "hla_optitype_rna" [style=dashed, color="#898781"];
+    "main_hla" -> "hla_arcashla" [style=dashed, color="#898781"];
+    "main_neo" -> "neoepitopes" [style=dashed, color="#898781"];
+    "main_neo" -> "neoepitopes_splice" [style=dashed, color="#898781"];
+    "hla_optitype_dna" -> "neoepitopes" [color="#e87ba4b3"];
+    "hla_optitype_rna" -> "neoepitopes" [color="#e87ba4b3"];
+    "hla_arcashla" -> "neoepitopes" [color="#e87ba4b3"];
+    "hla_optitype_dna" -> "neoepitopes_splice" [color="#e87ba4b3"];
+    "hla_optitype_rna" -> "neoepitopes_splice" [color="#e87ba4b3"];
+    "hla_arcashla" -> "neoepitopes_splice" [color="#e87ba4b3"];
+}
+```
 
 ## Library selection
 
@@ -38,6 +86,9 @@ library_selection: "role == 'tumor' and extraction_type == 'dna'"
 ```
 
 The expression runs against a DataFrame with one row per NGS library.
+
+### Columns
+
 The columns that are **always available**:
 
 | Column            | Description                                                                                    |
@@ -64,25 +115,39 @@ Columns that are **optionally available** (via the `relationships` config, which
 
 - Any column added by a `RelationshipDefinition` in the step's `default_relationships` or the task's config-level `relationships`.
 
+```{note}
+The DataFrame is built from biomedsheets shortcut objects.
+We plan to move away from biomedsheets as a dependency in a future release, but the DataFrame interface and the query-based selection mechanism will stay.
+```
+
+### Which libraries a task takes
+
 A task's libraries come from three layers:
 
-- What its step can process at all, which always applies: for example RNA libraries for expression quantification and fusion calling, tumor DNA libraries for mutect2, normal DNA libraries for a panel of normals, and only libraries of cancer sample sheets for the somatic steps.
-- Without `library_selection`, the step's default: `role == 'tumor' and extraction_type == 'dna'` on cancer sample sheets and `extraction_type == 'dna'` on germline sample sheets, unless the step declares its own (mapping and `ngs_data_qc` take all libraries, the RNA steps all RNA libraries, a panel of normals all normal DNA libraries).
-- `library_selection` replaces that default, for example to select a batch (`data_set == 'batch2'`) or to drop samples, but never goes beyond what the step can process.
+- What its step can process at all.
+  This layer always applies, for example RNA libraries for expression quantification and fusion calling, tumor DNA libraries for mutect2, normal DNA libraries for a panel of normals, and only libraries of cancer sample sheets for the somatic steps.
+- Without `library_selection`, the step's default.
+  It is `role == 'tumor' and extraction_type == 'dna'` on cancer sample sheets and `extraction_type == 'dna'` on germline sample sheets.
+  Some steps declare their own: mapping and `ngs_data_qc` take all libraries, the RNA steps all RNA libraries, a panel of normals all normal DNA libraries.
+- `library_selection` replaces that default, for example to select a batch (`data_set == 'batch2'`) or to drop samples.
+  It never goes beyond what the step can process.
 
-Several data sets may have libraries of the same name; a task that would take two of them fails and suggests a `library_selection` such as `data_set == 'batch1'`.
+Several data sets may have libraries of the same name.
+A task that would take two of them fails and suggests a `library_selection` such as `data_set == 'batch1'`.
+
+### Background libraries
 
 Libraries of data sets with `is_background: true` (a reference cohort, for example) are no task's results.
-Mapping and panels of normals process them, and the SV and gCNV callers add them as cohort members or model samples; `background_selection` narrows them per task, such as `data_set == 'cohort_1000g'`.
-
-(Note: the DataFrame is built from biomedsheets shortcut objects.
-We plan to move away from biomedsheets as a dependency in a future release, but the DataFrame interface and the query-based selection mechanism will stay.)
+Mapping and panels of normals process them, and the SV and gCNV callers add them as cohort members or model samples.
+`background_selection` narrows them per task, such as `data_set == 'cohort_1000g'`.
 
 ## Group-by for aggregation level
 
 Some steps (variant calling, annotation, filtration) can produce output at different levels of aggregation:
 
-- `group_by: related`: one output per group of related libraries; for a germline trio, one joint VCF for the whole family, named after the pedigree: the sheet's family id (the data set's `pedigree_field`, else `familyId`), else `FAM_` and the index donor.
+- `group_by: related`: one output per group of related libraries.
+  For a germline trio, this is one joint VCF for the whole family, named after the pedigree.
+  The pedigree's name is the sheet's family id (the data set's `pedigree_field`, else `familyId`), else `FAM_` and the index donor.
   On a cancer sample sheet, the libraries of one donor are related, so one joint VCF per donor (tumor and normal together).
 - `group_by: library`: one output per library.
 - Unset: the step's default, else the setting that upstream tasks declare, else `library`.
@@ -92,11 +157,15 @@ The setting propagates **downstream**: a filtration step after joint variant cal
 This keeps the aggregation level consistent through a chain of dependent tasks.
 Steps that read one VCF per pedigree (VarFish export, peddy, IGV sessions, pedigree phasing) check when the project loads that their upstream task has `group_by: related`.
 
+(migrations_dependencies)=
+
 ## Dependencies and task-local files
 
 A task gets its input files in one of two ways.
 A **dependency** comes from another task, named in `depends_on`.
-It has a data type and tags, and the consumer checks both, and the keys it reads, when the project loads.
+It has a data type and tags.
+When the project loads, the consumer checks both, and the keys it reads.
+
 Reference data are dependencies too: the genome, the gene annotation, dbSNP, enrichment kits, exons and other regions, and the mapper indexes.
 `external_data` tasks provide existing files, and `reference_index` tasks build indexes.
 So each reference file is named once, and a switch to another genome build only changes these tasks.
@@ -107,17 +176,6 @@ So it is `depends_on.index`, from a task with `produces: {type: index, tags: [bw
 
 A **task-local file** belongs to the setup of one tool and does not depend on the reference, such as a jar or a Python file with vembrane helpers.
 It is a path in the tool section, which the step passes to the rule as an input.
-
-BED files of regions have their own data type `regions` with the key `bed`.
-The regions filter accepts any of them in `depends_on.regions`, and steps that need a certain kind of regions require a tag (`exons`, `kits`, `mappable`, `microsatellites`, ...).
-Population variants are `variants` with a tag, like dbSNP: `depends_on.germline_resource` (tag `population`) and `depends_on.common_variants` (tag `common`).
-Mutect2's resources on main (`mutect2.panel_of_normals`, `germline_resource` and `contamination.common_variants`) are `depends_on` fields of `variant_calling` with the same names; the panel of normals comes from a `panel_of_normals` task or an `external_data` task with `{type: models, tags: [pon, mutect2]}` and the key `vcf`.
-Every tool that reads a GTF reads `depends_on.features`; RNA-SeQC needs a GTF prepared for it, so it requires the tag `rnaseqc` as well.
-A tool's own database comes from `depends_on.database`, a task of type `database` tagged with the tool, such as the VEP cache or the mehari databases.
-The field's requirement names the task's tool, which the loader fills in, so a VEP cache wired to a mehari task fails when the project loads.
-Variant annotation and the VarFish export run mehari 0.51, which reads only transcript databases built by mehari 0.47 or newer (mehari-data-tx 0.14 or newer); one mehari database task serves both.
-Every job that reads the genome also has its `.fai` and `.dict` as inputs, so a missing sidecar fails when Snakemake builds the DAG.
-Likewise, a job that reads dbSNP or population variants has the VCF's index as an input: `.tbi` for a `.vcf.gz`, `.idx` for a plain `.vcf`.
 
 ```yaml
 # Entries of tasks:
@@ -146,22 +204,75 @@ Likewise, a job that reads dbSNP or population variants has the VCF's index as a
 ```
 
 All reference-specific files of the maintained tools follow this rule now.
-The external export steps (`variant_export_external`, `wgs_cnv_export_external`, `wgs_sv_export_external`) are left for later: they still run varfish-annotator with Jannovar `.ser` files from path fields.
+The external export steps (`variant_export_external`, `wgs_cnv_export_external`, `wgs_sv_export_external`) are left for later.
+They still run varfish-annotator with Jannovar `.ser` files from path fields.
+
+### Regions and variant resources
+
+BED files of regions have their own data type `regions` with the key `bed`.
+The regions filter accepts any of them in `depends_on.regions`.
+Steps that need a certain kind of regions require a tag (`exons`, `kits`, `mappable`, `microsatellites`, ...).
+
+Population variants are `variants` with a tag, like dbSNP: `depends_on.germline_resource` (tag `population`) and `depends_on.common_variants` (tag `common`).
+Mutect2's resources on main (`mutect2.panel_of_normals`, `germline_resource` and `contamination.common_variants`) are `depends_on` fields of `variant_calling` with the same names.
+The panel of normals comes from a `panel_of_normals` task or an `external_data` task with `{type: models, tags: [pon, mutect2]}` and the key `vcf`.
+
+### Gene annotation and tool databases
+
+Every tool that reads a GTF reads `depends_on.features`.
+RNA-SeQC needs a GTF prepared for it, so it requires the tag `rnaseqc` as well.
+
+A tool's own database comes from `depends_on.database`, a task of type `database` tagged with the tool, such as the VEP cache or the mehari databases.
+The field's requirement names the task's tool, which the loader fills in.
+So a VEP cache wired to a mehari task fails when the project loads.
+Variant annotation and the VarFish export run mehari 0.51, which reads only transcript databases built by mehari 0.47 or newer (mehari-data-tx 0.14 or newer).
+One mehari database task serves both.
+
+### Sidecar files
+
+Every job that reads the genome also has its `.fai` and `.dict` as inputs, so a missing sidecar fails when Snakemake builds the DAG.
+Likewise, a job that reads dbSNP or population variants has the VCF's index as an input: `.tbi` for a `.vcf.gz`, `.idx` for a plain `.vcf`.
 
 ## Relative path resolution
 
 Every path in `config.yaml` is relative to the project directory, the directory of the config file: sample sheets, search paths, `external_data` files and files in tool sections.
 `snappy run` passes the config as `--configfile`, so this also holds when Snakemake runs in another directory.
 The top-level `pathvars` section names roots for paths, such as `<refs>/genome.fa`, with the defaults and semantics of Snakemake's `pathvars`.
-snappy does not check whether the files exist when the project loads, so dry-runs work without them; `snappy check-files` lists the missing ones.
+snappy does not check whether the files exist when the project loads, so dry-runs work without them.
+`snappy check-files` lists the missing ones.
 
 ## Work and output directories
 
 Each task has its own directory `tasks/<task>/`.
-`work/` holds every file the jobs write and is the contract between tasks: a task reads the `work/` files of its upstream tasks, never their `output/`.
+`work/` holds every file the jobs write and is the contract between tasks.
+A task reads the `work/` files of its upstream tasks, never their `output/`.
 `output/` holds only the result files: one local `<task>_results` job per task with result files links them from `work/` and writes `output/.manifest.tsv`.
+
+```{graphviz}
+:alt: The jobs of a task write into work/, which the results job and the downstream tasks read; the results job links the result files into output/
+
+digraph work_output {
+    rankdir=LR; nodesep=0.12; ranksep=0.35;
+    bgcolor="transparent"; fontname="Helvetica";
+    node [shape=box, style="rounded,filled", fillcolor="#ffffff", color="#c3c2b7", fontname="Helvetica", fontsize=9, fontcolor="#0b0b0b", margin="0.08,0.03"];
+    edge [arrowsize=0.5, penwidth=1.0, color="#898781"];
+    "jobs" [label=<<B>jobs of a task</B>>];
+    "work" [style="rounded,dashed", label=<<B>tasks/&lt;task&gt;/work/</B><BR ALIGN="LEFT"/><FONT POINT-SIZE="7" COLOR="#52514e">every file the jobs write</FONT><BR ALIGN="LEFT"/>>];
+    "results" [label=<<B>&lt;task&gt;_results</B><BR ALIGN="LEFT"/><FONT POINT-SIZE="7" COLOR="#52514e">one local job</FONT><BR ALIGN="LEFT"/>>];
+    "output" [style="rounded,dashed", label=<<B>tasks/&lt;task&gt;/output/</B><BR ALIGN="LEFT"/><FONT POINT-SIZE="7" COLOR="#52514e">links to the result files</FONT><BR ALIGN="LEFT"/><FONT POINT-SIZE="7" COLOR="#52514e">.manifest.tsv</FONT><BR ALIGN="LEFT"/>>];
+    "downstream" [label=<<B>jobs of a downstream task</B>>];
+    "jobs" -> "work";
+    "work" -> "results";
+    "results" -> "output";
+    "work" -> "downstream";
+}
+```
+
 Only result files get an `.md5` file, logs hold only the log, and `snappy run` archives the logs of each run.
-Scatter fragments are temporary, and `delete_intermediates: [intermediates]` makes per-sample intermediates temporary, too; `[bam]` does so for the BAM of a mapping task that a later task processes further.
+Scatter fragments are temporary, and `delete_intermediates: [intermediates]` makes per-sample intermediates temporary, too.
+`delete_intermediates: [bam]` does so for the BAM of a mapping task that a later task processes further.
+
+(migrations_contracts)=
 
 ## Developer contracts: produces and DataSignature
 
@@ -176,6 +287,8 @@ For developers writing new workflow steps, `load_project()` validates the depend
 This catches mismatches like wiring an RNA alignment step into a variant caller that expects DNA, or a germline caller into a somatic pipeline.
 It also checks that an index from a `reference_index` task is built from the genome the reader names, and that `FILTER` IDs cannot mean two things.
 Consumers read upstream files only through `get_upstream_paths()`, which replaces the old implicit "the paths will probably work out" approach.
+
+(migrations_command)=
 
 ## The `snappy` command
 
@@ -211,41 +324,59 @@ It sets:
 - `persistence-backend: db`: a single SQLite file for Snakemake's metadata instead of many small files in `.snakemake/`.
   This matters when running on shared network filesystems (CephFS, NFS) that handle a single large file much better than thousands of tiny ones.
 
+Profiles are now passed via `--workflow-profile`, which is the recommended approach in Snakemake 9.
+Multiple `--workflow-profile` arguments are layered (later profiles override earlier ones), so the default profile is applied first and the SLURM profile overrides only what it needs to.
+
 ### Cluster execution
 
-The executor comes from a Snakemake profile of the system or the user (`--profile <name>` after `--`, or `SNAKEMAKE_PROFILE`), not from snappy: the old `--profile-snappy-pipeline` flag, the `pipeline_job.sh` job script and the `snappy refresh` and `snappy status` commands are gone.
-The Snakemake process runs in a terminal multiplexer on the login node or in an allocation (`salloc`), as the documentation of the SLURM executor recommends; {ref}`usage` has an example profile for SLURM.
+The executor comes from a Snakemake profile of the system or the user, not from snappy.
+Pass it as `--profile <name>` after `--`, or set `SNAKEMAKE_PROFILE`.
+The old `--profile-snappy-pipeline` flag, the `pipeline_job.sh` job script and the `snappy refresh` and `snappy status` commands are gone.
+The Snakemake process runs in a terminal multiplexer on the login node or in an allocation (`salloc`), as the documentation of the SLURM executor recommends.
+{ref}`usage` has an example profile for SLURM.
 
 ### Output path patterns
 
 Result file paths are now much shorter.
-The old patterns embedded the tool name and step substage (e.g. `bwa.filtered.vcf`, `bwa.raw.vcf`) into every path, even when there was only one tool and one substage involved.
+The old patterns embedded the tool name and step substage into every path (e.g. `bwa.filtered.vcf`, `bwa.raw.vcf`), even when there was only one tool and one substage involved.
 Since those values are already defined by the task config, repeating them in paths was redundant.
 Paths now contain only the truly variable parts, typically just the library name (for related libraries, the name of the pedigree or donor).
 In multi-tool workflows or substeps that require disambiguation, additional wildcards are still used, but the default case is a single wildcard.
-`report/` holds what the Snakemake report shows; data for other tools is in `out/`, such as the coverage VCF and bigWig files of `bam_collect_doc` (main: `report/cov/`).
-Tasks whose tools write statistics (`ngs_mapping`, `ngs_data_qc` with `alfred` or `picard`, `variant_calling` with `bcftools_stats`) add one job that writes the result file `qc_summary/out/qc_summary.tsv`, one row per library, and renders tables and charts of all libraries for the report (datavzrd).
-Files that main's wrappers wrote without declaring them are declared outputs now: PureCN's plots (`{library}.pdf`, `.local_optima.pdf`, `.segmentation.pdf` and `.chromosomes.pdf` instead of `_local_optima.pdf` and so on), STAR's `{library}.Log.final.out`, and Salmon's `{library}.lib_format_counts.json` and auxiliary directory `{library}.aux` (main: `out/aux/`); Salmon's own log is part of the job log.
 
-The mutect2 sections lost the knobs of the removed nested Snakemake runs (`use_profile`, `restart_times`, `max_jobs_per_second`, `max_status_checks_per_second`, `debug_trunc_tokens`, `keep_tmpdir`, `job_mult_memory`, `job_mult_time`, `merge_mult_memory`, `merge_mult_time`), which nothing read; `num_jobs` and `num_cores` stay.
+`report/` holds what the Snakemake report shows.
+Data for other tools is in `out/`, such as the coverage VCF and bigWig files of `bam_collect_doc` (main: `report/cov/`).
+Tasks whose tools write statistics (`ngs_mapping`, `ngs_data_qc` with `alfred`, `picard` or `ngs_chew`, `variant_calling` with `bcftools_stats`, `variant_checking`) add one job that writes the result file `qc_summary/out/qc_summary.tsv`, one row per library.
+The job also renders tables and charts of all libraries for the report (datavzrd).
+
+Files that main's wrappers wrote without declaring them are declared outputs now:
+
+- PureCN's plots: `{library}.pdf`, `.local_optima.pdf`, `.segmentation.pdf` and `.chromosomes.pdf` instead of `_local_optima.pdf` and so on.
+- STAR's `{library}.Log.final.out`.
+- Salmon's `{library}.lib_format_counts.json` and auxiliary directory `{library}.aux` (main: `out/aux/`).
+  Salmon's own log is part of the job log.
+
+### Rule names and the temporary directory
+
+The rules of the wrapper actions are generated from the step parts and named `<task>_<step>_<part>_<action>`, for example `calling_variant_calling_mutect2_run`.
+A rule that main named differently (`variant_annotation_vep`, `somatic_msi_calling_mantis_msi2`) now carries its action.
+So `--until`, `--omit-from` and `--allowed-rules` arguments need the new names.
+
 The temporary directory of the jobs is `resources.tmpdir` of the project config (main: `global_config.tmpdir`, with `$TODAY`), else `$TMPDIR`.
 
-`homologous_recombination_deficiency` has no `scarHRD.length` and no `depends_on.reference` anymore; scarHRD read neither, only the `seqz` file of the copy number task.
+### MSI calling and popdel
+
 `somatic_msi_calling` leaves out tumor libraries without a matched normal, with a warning, since MANTIS2 needs the normal.
 
-The rules of the wrapper actions are generated from the step parts and named `<task>_<step>_<part>_<action>`, for example `calling_variant_calling_mutect2_run`; a rule that main named differently (`variant_annotation_vep`, `somatic_msi_calling_mantis_msi2`) now carries its action, so `--until`, `--omit-from` and `--allowed-rules` arguments need the new names.
-
-Profiles are now passed via `--workflow-profile`, which is the recommended approach in Snakemake 9.
-Multiple `--workflow-profile` arguments are layered (later profiles override earlier ones), so the default profile is applied first and the SLURM profile overrides only what it needs to.
-
-`somatic_targeted_seq_cnv_calling` with `tool: purecn` lost `purecn.genome_name` and `purecn.seed`: its PureCN jobs take those of the panel of normals task, like its image.
-`somatic_targeted_seq_cnv_calling` lost `purecn.enrichment_kit_name`, which no wrapper read.
-The `cnvkit` section of `panel_of_normals` lost `genemetrics`, `segmetrics`, `breaks` and `drop_low_coverage`, which the panel report never read.
-
 `sv_calling_wgs` with `tool: popdel` calls with Snakemake's scatter-gather (main: one job per window, with the windows read from the `.fai` when Snakemake built the DAG).
-The windows stay the same: each contig that `ignore_contigs` keeps is cut into windows of `popdel.window_size` bases (10 Mbp) from its start, and each window is padded by `popdel.max_sv_size` bases (20 kbp) on both sides, within its contig.
-The new `popdel.num_jobs` (24) jobs share the windows in genome order, each at least one window and about equal bases, and call them one after the other; a reference with fewer windows than jobs is an error.
-Except at the start of a contig, popdel's region of a window starts one base later than on main, at the first base of the padded window (main passed the 0-based start as the 1-based one), so calls within `popdel.max_sv_size` of a window edge can differ from main.
+The windows stay the same.
+Each contig that `ignore_contigs` keeps is cut into windows of `popdel.window_size` bases (10 Mbp) from its start.
+Each window is padded by `popdel.max_sv_size` bases (20 kbp) on both sides, within its contig.
+
+The new `popdel.num_jobs` (24) jobs share the windows in genome order.
+Each job gets at least one window and about equal bases, and calls its windows one after the other.
+A reference with fewer windows than jobs is an error.
+Except at the start of a contig, popdel's region of a window starts one base later than on main, at the first base of the padded window.
+Main passed the 0-based start as the 1-based one, so calls within `popdel.max_sv_size` of a window edge can differ from main.
 
 ## Snakemake 7 to Snakemake 9
 
@@ -260,8 +391,11 @@ These improve type checking and make wrapper signatures more explicit compared t
 The Snakemake version bump also required updates to several dependencies (pandas, pydantic, etc.) to stay compatible with Snakemake's own dependency chain.
 
 snappy uses the development version of Snakemake, which deploys software through plugins.
-The conda plugin builds the wrapper environments from their pin files, below `.snakemake/software/`; `snappy run -- --deploy-software-envs` creates them without running jobs (formerly `--conda-create-envs-only`).
-R packages that are not on conda-forge or bioconda in the needed versions (for sequenza and scarHRD) are installed by the post-deploy script of the wrapper's environment, at fixed versions or commits, when the environment is created.
+The conda plugin builds the wrapper environments from their pin files, below `.snakemake/software/`.
+`snappy run -- --deploy-software-envs` creates them without running jobs (formerly `--conda-create-envs-only`).
+
+Some R packages are not on conda-forge or bioconda in the needed versions (for sequenza and scarHRD).
+The post-deploy script of the wrapper's environment installs them at fixed versions or commits when the environment is created.
 PureCN and pVACtools run from their container images (`software: container(...)`), which Snakemake pulls and runs with apptainer.
 
 ## Project management with pixi
@@ -278,113 +412,244 @@ The pixi configuration defines several development tasks:
 - `pixi run -e dev snakefmt`: auto-format Snakemake files
 - `pixi run -e dev srcfmt`: run both formatters (depends-on: fmt, snakefmt)
 
-Pixi also replaces the old `conda env create` / `pip install` workflow for developers, a single `pixi install` sets up everything.
+Pixi also replaces the old `conda env create` / `pip install` workflow for developers: a single `pixi install` sets up everything.
 
 ## Build system and packaging
 
 The build backend was migrated from `setuptools` to `hatchling`.
 The old `setup.py`, `setup.cfg`, `environment.yml`, and `Makefile` have been removed; pixi handles environment management and the build configuration lives entirely in `pyproject.toml`.
 
+(migrations_ci)=
+
 ## CI and test suite modernization
 
 The CI pipeline was updated to use `prefix-dev/setup-pixi` instead of the legacy `conda-cache` GitHub action.
 End-to-end integration tests (`.github/workflows/ci-e2e.yml`) now run test workflow configurations directly with `pixi run snappy run` against dedicated test datasets checked in via Git LFS (`.tests/test-workflow/pipelines/`).
 They dry-run and then run the cancer, germline and reference pipelines on small test data.
-Wrapper environments are pinned (`environment.linux-64.pin.txt`); in a pull request, a changed environment file must come with its changed pin file (`pixi run -e pins update-pins <file>`).
+Wrapper environments are pinned (`environment.linux-64.pin.txt`).
+In a pull request, a changed environment file must come with its changed pin file (`pixi run -e pins update-pins <file>`).
+
+(migrations_removed)=
 
 ## What was removed
 
-- **somatic_wgs_sv_calling workflow**: this workflow was a specialised SV calling pipeline for whole-genome data with its own complex config.
-  It was not widely used and has been removed entirely.
-  SV calling for targeted data via `sv_calling_targeted` is unaffected.
-- **Old `tpls/profile/` directory**: superseded by the workflow profile `snappy_pipeline/apps/profile/` and a Snakemake profile of the system or the user for the executor.
-- **`--profile-snappy-pipeline` flag, `pipeline_job.sh`, `snappy refresh` and `snappy status`**: cluster execution is configured in a Snakemake profile.
-- **Multi-tool list configs**: the `tools:` list in step configs is no longer supported.
-  Use `tool:` with a single value.
-- **Legacy `snappy-snake` entry point**: removed; use the `snappy` command instead.
-- **The additional command line tools** `snappy-bed_filter_jaccard`, `snappy-fix_vcf`, `snappy-genome_windows`, `snappy-quickvenn`, `snappy-vcf_first_header`, `snappy-vcf_filter_denovo` and `snappy-ped_to_vcf_header`, with `add_ped_header.sh`: nothing in the pipeline ran them.
-  `snappy-vcf_filter_to_info` and `snappy-vcf_filter_from_info` stay for the read-backed phasing wrapper.
-- **`config.yaml.bak` copies** of `snappy task add` and `snappy init --task`: the commands print the change as a diff, and git keeps the history.
-- **R package install jobs of sequenza and scarHRD** and their `work/R_packages/` directories: the environments install these packages when they are created.
-- **Container builds of PureCN and pVACtools**: the rules `panel_of_normals_purecn_install` (the `singularity` wrapper, `work/containers/`) and `somatic_neoepitope_prediction_pvactools_install` (`work/container/`), and the key `container` of a PureCN panel's outputs; Snakemake pulls the images.
-- **Jannovar statistics report** (`jannovar_stats` of `variant_calling`).
-- **`mbcs` tool of `ngs_mapping`** and its nested Snakemake run (`nested_snakemake.py`), with `depends_on.common_variants` of `ngs_mapping`: molecular barcodes have no replacement, BQSR is a task of its own (migration note 20).
-- **`fusioncatcher` tool of `somatic_gene_fusion_calling`**: it had no wrapper (main neither), so it could not run.
-- **`defuse`, `hera`, `jaffa` and `pizzly` tools of `somatic_gene_fusion_calling`**: untested and probably broken; `arriba` (recommended) and `star_fusion` remain.
-- **main's germline filters** (`variant_denovo_filtration`, the germline filters of main's `variant_filtration` and the `protected` rescue filter): they no longer ran on main (a deleted shell library, Jannovar inputs); `vembrane` expressions in a `variant_filtration` task cover their per-record criteria.
-- **Config fields that nothing read or that duplicated the upstream config**: `cbioportal_export` `vcf2maf.annotation_tool` (the export requires VEP annotations), `copy_number_alteration.copy_number_tool` and `patient_info`; `somatic_cnv_checking` `cnv_assay_type`; `hla_typing` `arcashla.mapper`; `somatic_targeted_seq_cnv_calling` `somatic_variant_caller` of PureCN.
-  A config that sets one fails validation.
+### Workflows and tools
+
+| Removed                                                                                                                                          | Reason or replacement                                                                                                                                         |
+| ------------------------------------------------------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **`somatic_wgs_sv_calling` workflow**: a specialised SV calling pipeline for whole-genome data with its own complex config                       | It was not widely used and has been removed entirely. SV calling for targeted data via `sv_calling_targeted` is unaffected.                                   |
+| **Jannovar statistics report** (`jannovar_stats` of `variant_calling`)                                                                           |                                                                                                                                                               |
+| **`mbcs` tool of `ngs_mapping`** and its nested Snakemake run (`nested_snakemake.py`), with `depends_on.common_variants` of `ngs_mapping`        | Molecular barcodes have no replacement; BQSR is a task of its own (migration note 20).                                                                        |
+| **`fusioncatcher` tool of `somatic_gene_fusion_calling`**                                                                                        | It had no wrapper (main neither), so it could not run.                                                                                                        |
+| **`defuse`, `hera`, `jaffa` and `pizzly` tools of `somatic_gene_fusion_calling`**                                                                | Untested and probably broken; `arriba` (recommended) and `star_fusion` remain.                                                                                |
+| **main's germline filters** (`variant_denovo_filtration`, the germline filters of main's `variant_filtration` and the `protected` rescue filter) | They no longer ran on main (a deleted shell library, Jannovar inputs). `vembrane` expressions in a `variant_filtration` task cover their per-record criteria. |
+
+### Commands, profiles and jobs
+
+| Removed                                                                                                                                                                                                                                                                  | Reason or replacement                                                                                                                     |
+| ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ----------------------------------------------------------------------------------------------------------------------------------------- |
+| **Old `tpls/profile/` directory**                                                                                                                                                                                                                                        | Superseded by the workflow profile `snappy_pipeline/apps/profile/` and a Snakemake profile of the system or the user for the executor.    |
+| **`--profile-snappy-pipeline` flag, `pipeline_job.sh`, `snappy refresh` and `snappy status`**                                                                                                                                                                            | Cluster execution is configured in a Snakemake profile.                                                                                   |
+| **Legacy `snappy-snake` entry point**                                                                                                                                                                                                                                    | Use the `snappy` command instead.                                                                                                         |
+| **The additional command line tools** `snappy-bed_filter_jaccard`, `snappy-fix_vcf`, `snappy-genome_windows`, `snappy-quickvenn`, `snappy-vcf_first_header`, `snappy-vcf_filter_denovo` and `snappy-ped_to_vcf_header`, with `add_ped_header.sh`                         | Nothing in the pipeline ran them. `snappy-vcf_filter_to_info` and `snappy-vcf_filter_from_info` stay for the read-backed phasing wrapper. |
+| **`config.yaml.bak` copies** of `snappy task add` and `snappy init --task`                                                                                                                                                                                               | The commands print the change as a diff, and git keeps the history.                                                                       |
+| **R package install jobs of sequenza and scarHRD** and their `work/R_packages/` directories                                                                                                                                                                              | The environments install these packages when they are created.                                                                            |
+| **Container builds of PureCN and pVACtools**: the rules `panel_of_normals_purecn_install` (the `singularity` wrapper, `work/containers/`) and `somatic_neoepitope_prediction_pvactools_install` (`work/container/`), and the key `container` of a PureCN panel's outputs | Snakemake pulls the images.                                                                                                               |
+
+### Config fields
+
+**Multi-tool list configs**: the `tools:` list in step configs is no longer supported.
+Use `tool:` with a single value.
+
+Config fields that nothing read or that duplicated the upstream config are removed, and a config that sets one fails validation:
+
+- `cbioportal_export`: `vcf2maf.annotation_tool` (the export requires VEP annotations), `copy_number_alteration.copy_number_tool` and `patient_info`.
+- `somatic_cnv_checking`: `cnv_assay_type`.
+- `hla_typing`: `arcashla.mapper`.
+- `somatic_targeted_seq_cnv_calling`: `somatic_variant_caller` of PureCN.
+
+These fields are gone as well:
+
+| Step or section                                        | Removed fields                                                                                                                                                                                         | Why                                                                                                  |
+| ------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ---------------------------------------------------------------------------------------------------- |
+| The mutect2 sections                                   | `use_profile`, `restart_times`, `max_jobs_per_second`, `max_status_checks_per_second`, `debug_trunc_tokens`, `keep_tmpdir`, `job_mult_memory`, `job_mult_time`, `merge_mult_memory`, `merge_mult_time` | The knobs of the removed nested Snakemake runs, which nothing read. `num_jobs` and `num_cores` stay. |
+| `homologous_recombination_deficiency`                  | `scarHRD.length`, `depends_on.reference`                                                                                                                                                               | scarHRD read neither, only the `seqz` file of the copy number task.                                  |
+| `somatic_targeted_seq_cnv_calling` with `tool: purecn` | `purecn.genome_name`, `purecn.seed`                                                                                                                                                                    | Its PureCN jobs take those of the panel of normals task, like its image.                             |
+| `somatic_targeted_seq_cnv_calling`                     | `purecn.enrichment_kit_name`                                                                                                                                                                           | No wrapper read it.                                                                                  |
+| The `cnvkit` section of `panel_of_normals`             | `genemetrics`, `segmetrics`, `breaks`, `drop_low_coverage`                                                                                                                                             | The panel report never read them.                                                                    |
+
+(migrations_results)=
 
 ## What did not change, and deliberate result changes
 
 The rules run the same tools (BWA, STAR, GATK, etc.).
-A real-run comparison of the e2e pipelines against main 0.6.3 gives the same results, with two exceptions: main's bcftools 1.15.1 drops every record of the dkfz-filtered calls (it cannot parse their GT), while snake9's bcftools 1.23.1 keeps and tags them, and `FILTER` IDs are task names (migration note 10).
 The per-step Snakefiles (`workflows/*/Snakefile`) still use the same patterns: `wf.config`, `wf.get_input_files()`, `wf.get_params()` and wrappers.
-Outside the e2e pipelines, results change on purpose where main was wrong or ignored a setting: MELT's GroupAnalysis reads the discovery output of all pedigree members (main read the first member's only), the `ignore_contigs` defaults apply to mutect2 and sequenza (migration note 14), arcasHLA gets `zygosity_threshold` (note 17), VEP annotates multiallelic records split into one record per allele (`bcftools norm`), the ebfilter panel draws from all normal DNA libraries instead of the normals matched to a tumor, Control-FREEC takes each donor's sex from the sample sheet (main used `XX` for every sample), a PureCN panel reads the GenomicsDB of its `mutect2` panel (main fails there, because the `genomicsdb` R package of the PureCN image needs integers where GATK writes strings), the BWA mappers read a fixed 100 Mbp per batch (`bases_per_batch`, `-K`), so their alignments no longer depend on `num_threads_align`, their read group IDs are the names of the discovered read groups (main: `<library>.0`, `<library>.1`, ... for `bwa` and one read group for all reads for `bwa_mem2`), `bwa_mem2` maps single-end reads (main read the right file, which they do not have) and fails when it cannot decompress the reads (main wrote an empty BAM), and the BWA mappers and STAR mask the duplicates of single-end reads (main's samblaster aborted on reads without mates, and `bwa` could not read single-end files at all).
-The family column of the PED files is the pedigree's name, so a sheet with a family id (`pedigree_field`, else `familyId`) gets that id instead of `FAM_` and the index donor, and the trio PED of a child who is not the index names the child's family; a pedigree whose index has no DNA library is processed like any other (main dropped its members).
-A joint germline call takes the pedigree members, one DNA library per donor, so a donor's RNA libraries and further DNA libraries stay out of it; on a cancer sheet it takes the normal, or the primary tumor of a donor without a normal (before: every library of the donor, the tumor included).
+
+### Comparison with main 0.6.3
+
+A real-run comparison of the e2e pipelines against main 0.6.3 gives the same results, with two exceptions:
+
+- Main's bcftools 1.15.1 drops every record of the dkfz-filtered calls (it cannot parse their GT), while snake9's bcftools 1.23.1 keeps and tags them.
+- `FILTER` IDs are task names (migration note 10).
+
+### Deliberate result changes
+
+Outside the e2e pipelines, results change on purpose where main was wrong or ignored a setting:
+
+| Step or tool         | Change                                                                                                                 | Main                                                                                                          |
+| -------------------- | ---------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------- |
+| MELT                 | GroupAnalysis reads the discovery output of all pedigree members.                                                      | Read the first member's only.                                                                                 |
+| mutect2 and sequenza | The `ignore_contigs` defaults apply (migration note 14).                                                               |                                                                                                               |
+| arcasHLA             | Gets `zygosity_threshold` (note 17).                                                                                   |                                                                                                               |
+| VEP                  | Annotates multiallelic records split into one record per allele (`bcftools norm`).                                     |                                                                                                               |
+| ebfilter             | The panel draws from all normal DNA libraries.                                                                         | The normals matched to a tumor.                                                                               |
+| Control-FREEC        | Takes each donor's sex from the sample sheet.                                                                          | Used `XX` for every sample.                                                                                   |
+| PureCN               | A panel reads the GenomicsDB of its `mutect2` panel.                                                                   | Fails there, because the `genomicsdb` R package of the PureCN image needs integers where GATK writes strings. |
+| BWA mappers          | Read a fixed 100 Mbp per batch (`bases_per_batch`, `-K`), so their alignments no longer depend on `num_threads_align`. |                                                                                                               |
+| BWA mappers          | Their read group IDs are the names of the discovered read groups.                                                      | `<library>.0`, `<library>.1`, ... for `bwa`, and one read group for all reads for `bwa_mem2`.                 |
+| `bwa_mem2`           | Maps single-end reads.                                                                                                 | Read the right file, which they do not have.                                                                  |
+| `bwa_mem2`           | Fails when it cannot decompress the reads.                                                                             | Wrote an empty BAM.                                                                                           |
+| BWA mappers and STAR | Mask the duplicates of single-end reads.                                                                               | samblaster aborted on reads without mates, and `bwa` could not read single-end files at all.                  |
+
+### Pedigrees and joint germline calls
+
+The family column of the PED files is the pedigree's name.
+So a sheet with a family id (`pedigree_field`, else `familyId`) gets that id instead of `FAM_` and the index donor, and the trio PED of a child who is not the index names the child's family.
+A pedigree whose index has no DNA library is processed like any other (main dropped its members).
+
+A joint germline call takes the pedigree members, one DNA library per donor, so a donor's RNA libraries and further DNA libraries stay out of it.
+On a cancer sheet it takes the normal, or the primary tumor of a donor without a normal (before: every library of the donor, the tumor included).
+
+(migrations_notes)=
 
 ## Migration notes
 
-To migrate an existing project:
+To migrate an existing project, go through these notes.
+
+### Configuration layout and commands
 
 1. Wrap each step's configuration in a `tasks:` list entry with `name` and `step` fields.
+
 2. Replace `tools: [bwa]` with `tool: bwa` and move tool-specific config out of the list to a top-level key matching the tool name.
+
 3. Remove `--profile-snappy-pipeline` references from scripts; the workflow profile of snappy is applied automatically.
    Put the cluster settings into a Snakemake profile of the system or the user and pass `--profile <name>` after `--`, or set `SNAKEMAKE_PROFILE`.
+
 4. Use `snappy run` instead of the old entry points.
+
 5. The old `config.yaml` structure without a `tasks:` key is rejected; run `snappy init` in a fresh directory to see the new layout.
-6. Move files that depend on the reference out of tool sections into `external_data` tasks named in `depends_on` (see Dependencies and task-local files); for example, a VEP task now needs a cache task in `depends_on.database`.
+
+### Reference files and sample sheets
+
+6. Move files that depend on the reference out of tool sections into `external_data` tasks named in `depends_on` (see {ref}`migrations_dependencies`).
+   For example, a VEP task now needs a cache task in `depends_on.database`.
+
 7. Sample sheets are no longer looked up in the parent directory of the project, and `data_sets` search paths are relative to the project directory instead of the sample sheet's directory.
    Give such paths relative to `config.yaml`, absolute, or with a `pathvars` root.
+
 8. `data_sets` `search_patterns` are regular expressions for the path below a library's folder, with a `(?P<readgroup>...)` group that pairs the `left` and `right` files, instead of glob patterns.
    A data set has no default `search_paths` (`../raw`) any more; `search_patterns` default to `(?P<readgroup>.+)\.R1\.fastq\.gz` and `(?P<readgroup>.+)\.R2\.fastq\.gz`.
    A library's reads are searched only below the search paths of its own data set, not those of all data sets.
-9. VEP annotates all transcripts in a task of its own with `vep.pick: false`, instead of the `.full.vcf.gz` side output; consumers that need all transcripts (`use_all_transcripts` of neoepitope prediction, `use_all_transcripts_for_*` of combine_variants) read such a task.
+
+### Steps and tools
+
+9. VEP annotates all transcripts in a task of its own with `vep.pick: false`, instead of the `.full.vcf.gz` side output.
+   Consumers that need all transcripts (`use_all_transcripts` of neoepitope prediction, `use_all_transcripts_for_*` of combine_variants) read such a task.
    VEP plugins (`vep.plugins`) are local `.pm` files; main's download from a URL is gone.
    Annotations are tagged with the annotator (`vep` or `mehari`), so a consumer can require one.
+
 10. The `bcftools`, `regions` and `ebfilter` filters of `variant_filtration` use the task name as FILTER ID instead of main's `<filter>_<position in filter_list>` (`bcftools_2`); expressions that test FILTER values need the new names.
-    No task may be named `PASS` or like a FILTER ID that another task writes (the filters of mutect2, `LowQual` of the GATK callers, the expression names of `vembrane` in tag mode, `bPcr` and `bSeq` of `dkfz`), and no task may write an ID that a task upstream of it writes.
+    No task may be named `PASS` or like a FILTER ID that another task writes (the filters of mutect2, `LowQual` of the GATK callers, the expression names of `vembrane` in tag mode, `bPcr` and `bSeq` of `dkfz`).
+    No task may write an ID that a task upstream of it writes, either.
+
 11. Every tool's config section takes `extra_arguments`, a list of additional arguments for the tool's main command line; a single-tool step without a section (such as `variant_checking` or `repeat_expansion`) takes it on its step model.
     The former `extra_args` fields (`bwa`, `bwa_mem2`, pVACtools, `reference_index` and `vembrane`, whose value was a string) are renamed.
     A tool with several commands passes them to one, such as HaplotypeCaller for `gatk4_hc_gvcf`, `segment` for cnvkit or `GermlineCNVCaller` for gCNV.
     The tumor phasing tools (`gatk_read_backed_phasing_tumor`, `whatshap_tumor`) and `somatic_variant_signatures` (`tabulate_vcf`) have new sections for it.
+
 12. The BED file of mappable regions for gCNV needs its index next to it (`.idx` from `gatk IndexFeatureFile`, or `.tbi` for a bgzipped BED); `snappy check-files` lists it.
-13. `somatic_neoepitope_prediction` is one task with `tool: pvactools`; `pvactools.pvacseq` (on by default), `pvacfuse` and `pvacsplice` are toggles instead of the `tools` list.
-    Its inputs come from `depends_on` instead of `path_*` and `tool_*` fields: `hla_types` lists the HLA typing tasks instead of `tools_hla_typing`, `alignments` (RNA) replaces the mapper of `pileup`, `pileup`, `quantification` (now `expression`) and `phasing` are pvacseq options, and `path_netchop` is `net_chop.path`.
-    Phasing runs in a `variant_phasing` task with `tool: gatk_read_backed_phasing_tumor` (GATK 3 ReadBackedPhasing of the combined variants with the tumor DNA, as on main) or `whatshap_tumor` (WhatsHap, writing ReadBackedPhasing's `HP` tag, which pVACseq reads), and the neoepitope task reads it through `depends_on.phased_variants`.
+
+13. `somatic_neoepitope_prediction` is one task with `tool: pvactools`.
+    `pvactools.pvacseq` (on by default), `pvacfuse` and `pvacsplice` are toggles instead of the `tools` list.
+    Its inputs come from `depends_on` instead of `path_*` and `tool_*` fields:
+
+    - `hla_types` lists the HLA typing tasks instead of `tools_hla_typing`.
+    - `alignments` (RNA) replaces the mapper of `pileup`.
+    - `pileup`, `quantification` (now `expression`) and `phasing` are pvacseq options.
+    - `path_netchop` is `net_chop.path`.
+
+    Phasing runs in a `variant_phasing` task, which the neoepitope task reads through `depends_on.phased_variants`.
+    Its tool is `gatk_read_backed_phasing_tumor` (GATK 3 ReadBackedPhasing of the combined variants with the tumor DNA, as on main) or `whatshap_tumor` (WhatsHap, writing ReadBackedPhasing's `HP` tag, which pVACseq reads).
     The phased variants should be annotated for all transcripts, as pVACseq matches nearby variants by the transcript of the somatic variant.
-    The variants must come from VEP with the pVACtools plugins `Frameshift` and `Wildtype`, which the task checks when Snakemake builds the workflow; for phasing, the germline calls must be VEP-annotated, too.
+
+    The variants must come from VEP with the pVACtools plugins `Frameshift` and `Wildtype`, which the task checks when Snakemake builds the workflow.
+    For phasing, the germline calls must be VEP-annotated, too.
     Predictions that read different annotations (pvacsplice with all transcripts, pvacseq without) are separate tasks.
     The proteome is an external FASTA (`depends_on.proteome`); building it from germline variants is not ported.
-   The example at the end of this page translates a neoepitope config from main.
+    The {ref}`example at the end of this page <migrations_example>` translates a neoepitope config from main.
+
 14. `ignore_chroms` is `ignore_contigs` in every step (`variant_calling`, `variant_phasing`, `sv_calling_wgs`, `panel_of_normals` and the `sequenza` section).
     The entries are regular expressions matched with `re.search`, where main's somatic steps used globs: `HLA-*` becomes `^HLA-`, `*_decoy` becomes `_decoy$`.
-    In `variant_calling`, the list is a field of each caller's section instead of the step, so a YAML anchor shares one list between tasks; mutect2 skips decoys, HLA, EBV and the hs37d5 extras by default, like the germline callers (on main it called on every contig).
+    In `variant_calling`, the list is a field of each caller's section instead of the step, so a YAML anchor shares one list between tasks.
+    mutect2 skips decoys, HLA, EBV and the hs37d5 extras by default, like the germline callers (on main it called on every contig).
+
 15. `bbduk.adapter_sequences` takes reference files only, with paths relative to the config file; BBDuk's keywords (`adapters`, `artifacts`, `phix`, `lambda`, `pjet`, `mtst`, `kapa`) go in `bbduk.builtin_references`.
+
 16. The `tag_mode` of main's vembrane filter is gone: an expression names the variants to tag, so `tag_mode: include` becomes the negated expression, `not (...)`.
+
 17. `arcashla.zygocity_threshold` is `arcashla.zygosity_threshold`, and it now reaches arcasHLA (main never passed it, so arcasHLA ran with its own default 0.1 instead of the configured 0.15).
+
 18. `somatic_wgs_cnv_calling` with `tool: cnvkit` needs `depends_on.panel_of_normals`: a whole-genome `panel_of_normals` task with `tool: cnvkit` (a flat reference when there are no normals).
-19. `purecn.container` and `pvactools.container` are the images that Snakemake pulls, pinned by digest by default (`markusriester/purecn` of 2024-05-28, `griffithlab/pvactools:7.1.3`); the path of a local `.sif` file works too, and `pvactools.container: null` is no longer valid.
+
+19. `purecn.container` and `pvactools.container` are the images that Snakemake pulls, pinned by digest by default (`markusriester/purecn` of 2024-05-28, `griffithlab/pvactools:7.1.3`).
+    The path of a local `.sif` file works too, and `pvactools.container: null` is no longer valid.
     A PureCN calling task runs the image of its panel of normals task.
     Jobs in a container see the project, `$HOME`, `/tmp` and the snappy installation; other directories they read go into `APPTAINER_BIND`, see {ref}`usage`.
+
+### `ngs_mapping` features as tasks
+
 20. `tool: mbcs` of `ngs_mapping` is removed with its AGeNT steps, and snappy handles no molecular barcodes for now.
     Its BQSR (`recalibrate`, `depends_on.common_variants`) is an `alignment_processing` task with `tool: gatk4_bqsr` after a mapping task with the tool of `mbcs.mapping_tool`, see the recipe in {ref}`somatic_ngs`.
     With main's mbcs output without BQSR as input, `gatk4_bqsr` writes main's recalibrated BAM.
+
 21. `ngs_chew_fingerprint` of `ngs_mapping` becomes an `ngs_data_qc` task with `tool: ngs_chew` and `depends_on.alignments` naming the mapping task; its `extra_arguments` go to `ngs_chew.extra_arguments`.
     The fingerprints are `{library}/out/{library}.npz` instead of `{library}/report/fingerprint/{library}.npz`, and the task also compares them across its libraries (relatedness and var(het), with plots in the report).
-    ngs-chew guesses the release from the contig lengths of complete GRCh37, hg19 or GRCh38 references; `extra_arguments: ["--genome-release", ...]` names it otherwise, but the reference still needs all contigs of the release, so the e2e pipelines with their chr12 reference have no fingerprint task.
+    ngs-chew guesses the release from the contig lengths of complete GRCh37, hg19 or GRCh38 references.
+    `extra_arguments: ["--genome-release", ...]` names it otherwise, but the reference still needs all contigs of the release.
+    So the e2e pipelines with their chr12 reference have no fingerprint task.
+
 22. `target_coverage_report` of `ngs_mapping` becomes an `ngs_data_qc` task with `tool: alfred` and `depends_on.kits`; `ngs_mapping` no longer takes `depends_on.kits`.
     The report is `{library}/out/{library}.target_coverage.json.gz` instead of `{library}/report/alfred_qc/{library}.alfred.json.gz`.
-    `varfish_export` reads it through `depends_on.qc` and writes its BAM QC only with it; pedigree members from background data sets have no target coverage there, since `ngs_data_qc` checks no background libraries (the mapping task did).
-23. `config.yaml` has a required `project` section: its `name`, and optionally the `external_id` of the project in a data management system (such as the SODAR project UUID, which tracks where the raw data lives) and a `description`; `snappy init` writes it.
-24. The results of `group_by: related` tasks (joint germline calls, SV calls, their annotation, filtration and checks, the exports) are named after the related group instead of the index library or the primary tumor: `work/FAM_<index donor>/` on germline sheets, or the sheet's family id (the data set's `pedigree_field`, else the `familyId` custom field), `work/PAT_<donor>/` on cancer sheets and the bare index donor on generic sheets; the `write_pedigree.<group>` PED carries the same name in its family column.
+    `varfish_export` reads it through `depends_on.qc` and writes its BAM QC only with it.
+    Pedigree members from background data sets have no target coverage there, since `ngs_data_qc` checks no background libraries (the mapping task did).
+
+### Project section and result names
+
+23. `config.yaml` has a required `project` section, which `snappy init` writes.
+    It holds its `name`, and optionally a `description` and the `external_id` of the project in a data management system (such as the SODAR project UUID, which tracks where the raw data lives).
+
+24. The results of `group_by: related` tasks are named after the related group instead of the index library or the primary tumor.
+    This affects joint germline calls, SV calls, their annotation, filtration and checks, and the exports.
+    The names are:
+
+    - on germline sheets, `work/FAM_<index donor>/`, or the sheet's family id (the data set's `pedigree_field`, else the `familyId` custom field);
+    - on cancer sheets, `work/PAT_<donor>/`;
+    - on generic sheets, the bare index donor.
+
+    The `write_pedigree.<group>` PED carries the same name in its family column.
     Rerun these tasks, or rename their `work/` directories and files.
+
+### Calling, export and expression
+
 25. `variant_calling` with `tool: bcftools_call` needs `bcftools_call.assembly` (`GRCh37` or `GRCh38`), the ploidy of the sex chromosomes for `bcftools call --ploidy`.
     Main guessed it from the path of the reference and called every contig diploid when the path named neither build.
+
 26. `variant_export_external` has no `external_tool` field: the merged VCF of a pedigree is named after the pedigree, without main's `dragen.` prefix.
+
 27. A `gene_expression_quantification` task with `tool: strandedness` forces its decision with `strandedness.strand`, as `ngs_mapping` does with STAR; main used the step's `strand`.
     The step's `strand` applies to `featurecounts`, `dupradar` and `salmon` only and takes -1, 0, 1 or 2; a `tool: strandedness` task with a `strand` other than -1 fails at load.
+
+(migrations_example)=
 
 ## Example: a neoepitope config from main and its translation
 
@@ -512,7 +777,8 @@ data_sets:
     naming_scheme: only_secondary_id
 ```
 
-The same in snake9 (loads with `load_project()`; the dry-run builds 84 jobs on a test sheet with a tumor RNA library, with either phasing tool):
+The same in snake9.
+It loads with `load_project()`, and the dry-run builds 84 jobs on a test sheet with a tumor RNA library, with either phasing tool:
 
 ```yaml
 project:

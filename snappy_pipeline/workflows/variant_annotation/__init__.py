@@ -11,7 +11,7 @@ Its ``files`` give the keys below.
 
 - ``vep``: ``cache`` (the VEP cache directory).
 - ``mehari``: ``transcript_db`` (one path or a list), and optionally ``frequency_db`` and ``clinvar_db``.
-  Mehari 0.51 reads only transcript databases built by mehari 0.47 or newer (mehari-data-tx 0.14 or newer); the VarFish export wrappers still run mehari 0.37, so they need a database task of their own.
+  Mehari 0.51 reads only transcript databases built by mehari 0.47 or newer (mehari-data-tx 0.14 or newer); the VarFish export wrappers run the same mehari version, so one database task serves both.
 
 VEP annotates one consequence per variant (``--pick`` with ``vep.pick_order``); with ``vep.pick: false`` it annotates all transcripts.
 A task that needs all transcripts, such as neoepitope prediction, reads such an annotation task.

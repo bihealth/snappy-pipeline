@@ -6,12 +6,15 @@
 Before reading this chapter, you should
 
 - know the pipeline from the user's perspective (start at {ref}`usage`),
+
 - have read {ref}`dev_intro` and {ref}`dev_conventions`.
 
 After reading this chapter, you should
 
 - know how a step reads FASTQ files,
+
 - know how a step reads a reference and an index from `external_data` tasks,
+
 - know how a step declares what it produces.
 ```
 
@@ -51,7 +54,7 @@ tasks:
 ```
 
 `tool` selects the mapper.
-`NgsMappingWorkflow.__init__` registers the step part of that tool (`BwaStepPart`, `BwaMem2StepPart`, `BwaMem3StepPart`, `Minimap2StepPart` or `StarStepPart`).
+`BaseStep.__init__` registers the step part of that tool from `tool_parts` (`BwaStepPart`, `BwaMem2StepPart`, `BwaMem3StepPart`, `Minimap2StepPart` or `StarStepPart`).
 It also registers the report step parts.
 The Snakefile defines the rules of the selected tool only.
 
@@ -62,9 +65,11 @@ It is `data_sets`, an `external_data` task or a task that writes FASTQ files suc
 `BaseStep.read_groups(library_name)` finds the files of a library and returns them as ordered read groups.
 `BaseStep.reads_input(library_name)` returns the rule inputs that provide them.
 
-`ReadMappingStepPart` passes them on through `reads_input_files` and `reads_params` (`snappy_pipeline/workflows/common/reads.py`).
-When the files exist before the run, the rule inputs are the FASTQ files themselves (`reads_left` and `reads_right`).
-When another task writes them, the rule input is that task's `out/` directory, and the wrappers read the file lists from `params.args.input`.
+`ReadMappingStepPart` passes them on through `reads_input_files` and `reads_params` (`snappy_pipeline/workflows/common/reads.py`):
+
+- When the files exist before the run, the rule inputs are the FASTQ files themselves (`reads_left` and `reads_right`).
+- When another task writes them, the rule input is that task's `out/` directory, and the wrappers read the file lists from `params.args.input`.
+
 There are no link-in jobs.
 
 ## Index and reference

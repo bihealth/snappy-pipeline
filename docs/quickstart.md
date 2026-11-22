@@ -34,7 +34,13 @@ snappy init my_project
 cd my_project
 ```
 
-On a terminal, `snappy init` asks for what no option gives: the project name, its external id in a data management system such as the SODAR project UUID, a description, the sample sheet type (`generic`, `germline` or `cancer`), tasks, and the git settings; `--no-interactive` takes the defaults.
+On a terminal, `snappy init` asks for what no option gives; `--no-interactive` takes the defaults:
+
+- the project name, its external id in a data management system such as the SODAR project UUID, and a description,
+- the sample sheet type (`generic`, `germline` or `cancer`),
+- the tasks,
+- the git settings.
+
 The project is a git repository whose first commit holds `.gitignore`, `config.yaml` and `README.md`.
 Everything else is ignored: results, logs, caches, data and the sample sheet, which may hold personal data.
 `--track-sheet` adds the sample sheet, only if it holds no personal data or the remote is approved for such data.
@@ -112,6 +118,26 @@ tasks:
       tool: mutect2
       mutect2:
         contamination: {enabled: false}
+```
+
+The tasks and what they read from each other:
+
+```{graphviz}
+digraph {
+    rankdir=LR; bgcolor="transparent"; nodesep=0.2; ranksep=0.5;
+    node [shape=box, style="rounded,filled", fillcolor="#ffffff", color="#c3c2b7", fontname="Helvetica", fontsize=9, fontcolor="#0b0b0b"];
+    edge [color="#898781", arrowsize=0.6, fontname="Helvetica", fontsize=8, fontcolor="#52514e"];
+    data_sets [label="data_sets\nFASTQ files of the sheet", style="rounded,dashed"];
+    genome [label="genome\nexternal_data"];
+    bwa_index [label="bwa_index\nexternal_data"];
+    mapping [label="mapping\nngs_mapping, bwa"];
+    calling [label="calling\nvariant_calling, mutect2"];
+    data_sets -> mapping [label="reads"];
+    genome -> mapping [label="reference"];
+    bwa_index -> mapping [label="index"];
+    mapping -> calling [label="alignments"];
+    genome -> calling [label="reference"];
+}
 ```
 
 Relative paths are relative to the project directory, the directory of `config.yaml`; `pathvars` can name roots for paths, see {ref}`config_paths`.

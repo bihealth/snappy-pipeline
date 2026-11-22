@@ -17,9 +17,12 @@ Validation fails with a clear message instead of choosing for the user.
 - `tool` has no default.
   Every task names its tool (`test_tool_is_required`).
 - `depends_on` keys have no task-name defaults (see {ref}`Contracts <dev_contracts>`).
-- A field's description (its attribute docstring) is plain text with literals in double backticks, no Sphinx roles, directives or references to names in the code.
-  It becomes a YAML comment in the configuration that `snappy task add` writes (`default_config_yaml_string`, which wraps it and turns the backticks into single ones) and a cell of the inputs table of the step's docs page (`test_field_descriptions_are_plain_text`).
-- A whole `config.yaml`, in the docs and in the test pipelines, lists `pathvars`, `data_sets` and `resources` before `tasks`, like `snappy init` writes it, so that an added task ends the file (`test_data_sets_precede_the_tasks`).
+- A field's description (its attribute docstring) is plain text with literals in double backticks.
+  It has no Sphinx roles, directives or references to names in the code.
+  It becomes a YAML comment in the configuration that `snappy task add` writes (`default_config_yaml_string`, which wraps it and turns the backticks into single ones).
+  It also becomes a cell of the inputs table of the step's docs page (`test_field_descriptions_are_plain_text`).
+- In the docs and in the test pipelines, a whole `config.yaml` lists `pathvars`, `data_sets` and `resources` before `tasks`, like `snappy init` writes it.
+  This way, an added task ends the file (`test_data_sets_precede_the_tasks`).
 
 ## Step part API
 
@@ -36,10 +39,24 @@ wf = task_instance(config["__task_name__"])
 It also returns the config of the upstream task set in `depends_on.<name>`.
 Anything else is an error.
 
-A step Snakefile defines `wf` and its global `wildcard_constraints`, then includes `snappy_pipeline/workflows/common/wrapper_rules.rules`, which writes one rule per action with a wrapper of every registered step part (`BaseStep.wrapper_rules`), named `<step>_<part>_<action>`.
-A part's `rule_options` give an action's `localrule`, `retries`, `cache` (such a rule has no benchmark) and `wildcard_constraints`, or mark it `explicit`: then the Snakefile writes the rule itself, which it does for containers (`software:`), checkpoints, `run:` and `shell:` blocks and outputs that are no dict.
+### Generated rules
+
+A step Snakefile defines `wf` and its global `wildcard_constraints`.
+Then it includes `snappy_pipeline/workflows/common/wrapper_rules.rules`.
+The include writes one rule per action with a wrapper of every registered step part (`BaseStep.wrapper_rules`), named `<step>_<part>_<action>`.
 Snakefiles stay thin and call the workflow object for everything.
-These are the methods a step part provides, which the generated and the explicit rules reach through the workflow object (`wf`); each takes the step part name before the action, for example `wf.get_input_files("bwa", "run")`.
+
+A part's `rule_options` give an action's `localrule`, `retries`, `cache` and `wildcard_constraints`.
+A rule with `cache` has no benchmark.
+`rule_options` can also mark an action `explicit`.
+Then the Snakefile writes the rule itself.
+It does so for containers (`software:`), checkpoints, `run:` and `shell:` blocks and outputs that are no dict.
+
+### Methods
+
+A step part provides these methods.
+The generated and the explicit rules reach them through the workflow object (`wf`).
+Each `wf` method takes the step part name before the action, for example `wf.get_input_files("bwa", "run")`.
 
 | Method                       | Returns                                                                    | Rule section                                                                            |
 | ---------------------------- | -------------------------------------------------------------------------- | --------------------------------------------------------------------------------------- |
@@ -52,121 +69,16 @@ These are the methods a step part provides, which the generated and the explicit
 | `get_wrapper(action)`        | the `file://` URL of the action's wrapper, from the part's `wrappers`      | `wrapper: wf.get_wrapper(...)`                                                          |
 
 `BaseStep` raises a `TypeError` at parse time if `get_input_files` or `get_params` returns anything but a function.
-A step names the part of each tool in `tool_parts` and its structural parts (`write_pedigree`) in `helper_parts`; `BaseStep.__init__` registers the helpers and the selected tool's part, so only a step whose parts depend on more than the tool registers them itself.
-A step part names the wrapper of each action that runs one in `wrappers`, as a path below `snappy_wrappers/wrappers` (a property where the config picks it, such as the whole-genome variants of the gCNV wrappers or the tool of a filtration task).
-Every rule that runs a wrapper passes `params: args=wf.get_params(...)`; an action without params of its own gets an empty dict, to which `BaseStep.get_params` adds `extra_arguments` and `code`.
 
-A step part implements these through per-action methods that `BaseStepPart` dispatches to after validating the action.
-These are `_get_input_files_<action>(wildcards)`, `_get_params_<action>(wildcards)`, `_get_output_files_<action>()` and `_get_log_file_<action>()`.
+A step part implements these methods through per-action methods.
+`BaseStepPart` validates the action and dispatches to them:
 
-### Module and class layout
+- `_get_input_files_<action>(wildcards)`
+- `_get_params_<action>(wildcards)`
+- `_get_output_files_<action>()`
+- `_get_log_file_<action>()`
 
-A step module lists its imports, constants and functions, then the step parts in the order the step class registers them (a base part before its subclasses), then the step class.
-A step or step part class lists its attributes first: those of its base classes in the bases' order (root first, so `name`, `actions`, `wrappers`, ... come before a part's own attributes), where a property that overrides a base attribute counts as that attribute.
-Then come the methods: `__init__` and the other overrides of base methods in the bases' order, the per-action methods by action (in `actions` order; inputs, outputs, log file, params within an action), then the class's own methods.
-`pixi run lint-layout` checks this and `pixi run layout` rewrites the modules (`tests/scripts/class_layout.py`); `test_workflow_modules_follow_the_layout` fails otherwise.
 One `_get_log_file(action)` can replace the log methods of all actions.
-Resource usage is declared, not computed.
-`default_resource_usage` holds it for all actions and `resource_usage` per action, each as a property when it depends on the config.
-`result_keys` names the output keys whose files are result files, for all actions or by action.
-`BaseStepPart.get_result_files` derives their `work/` paths for each output entity (`entity_wildcard`, other wildcards via `_result_wildcards`); a static path, such as a panel of normals, once.
-`BaseStep.get_result_files` collects them from all step parts.
-Override these only where the derivation does not fit.
-
-Wrappers read the params dict as `snakemake.params.args`.
-Snakemake does not allow `unpack()` in `params:`, so every rule passes it as the single key `args`.
-
-Wrappers never read `snakemake.config`.
-Every file a wrapper reads, such as the reference FASTA, is a rule input, and every other value is a param.
-Only inputs order the jobs that produce them first and trigger reruns when they change.
-`test_wrappers_get_the_params_they_read` checks that the jobs in the DAG snapshots pass every `args` key their wrapper reads.
-A changed param also triggers a rerun, so every value a wrapper uses is a config field passed as a param, never a constant in the wrapper or the Snakefile; rules with a `run:` block need params for the config values their output depends on, too.
-`test_wrappers_read_the_params_they_get` checks the other direction: every param of a wrapper job occurs in its wrapper (`WRAPPERS_READING_PARAMS_DYNAMICALLY` lists the exceptions with a reason).
-`test_files_are_inputs_not_params` fails for params that hold file paths.
-
-The config section of a tool inherits `ToolModel` (`snappy_pipeline/models`), whose `extra_arguments` are additional arguments for the tool's command line.
-`BaseStep.get_params` adds them to the params of the step part's `tool_section()` (by default `config.<name>`), for its `extra_arguments_action` or else its only action, unless the getter returns them itself.
-The wrapper puts `{extra_arguments}` on the tool's command; `ShellWrapper` fills it in, and an f-string writes `{{extra_arguments}}` to leave it to the base class.
-A single-tool step without a tool section takes `extra_arguments` on its step model, and its step part's `tool_section()` returns `self.config`.
-`test_tool_wrappers_get_extra_arguments` requires them for every wrapper, except those that `WRAPPERS_WITHOUT_EXTRA_ARGUMENTS` lists with a reason (Python and R code, installers, helpers, secondary actions).
-`test_wrappers_use_the_extra_arguments_they_get` and `test_wrappers_leave_extra_arguments_to_the_base_class` check that wrappers use them.
-Shell text that several wrappers share (the GNU parallel sharding of the GATK callers, the bwa-mem pipeline, the JVM heap) comes from functions in `snappy_wrappers/tools` that return finished shell, which the wrapper pastes into its template, or that run the whole wrapper (`bwa_mem.run`); the convention tests read a wrapper's own files and the tool modules behind it (`wrapper_code.code_files`), and `tests/scripts/shell_templates.py` checks the shared shell text with shfmt as well and flags a `set -x` or `set -euo pipefail` at the top of a template, which the `ShellWrapper` header already sets.
-
-Rules that run a wrapper declare `benchmark: wf.get_benchmark_file(part, action)`.
-This is the path of the rule's log below `benchmarks/` (`tasks/<task>/benchmarks/` in a project).
-Snakemake writes the wall time, memory and I/O of each job there.
-These files calibrate the resource requests.
-Rules cached between workflows (`cache:`) cannot have a benchmark.
-`test_wrapper_rules_write_a_benchmark` and `test_logs_and_benchmarks_are_unique_per_job` check this.
-
-A rule's log holds only its log file.
-The log file is named `log`, because the wrapper base classes write to `snakemake.log.log`; building the DAG in the snapshot tests fails for a wrapper rule without it.
-Snakemake's metadata in `.snakemake/` records the code, params, inputs and conda environment of every output.
-The pinned environments (`environment.linux-64.pin.txt`) fix the package versions.
-Logs are no result files, and `snappy run` archives them per run.
-Only result files, those linked into `output/`, have an md5 file, and every result file except a directory has one.
-SODAR needs one per uploaded file.
-A step declares `<file>.md5` next to `<file>` in the outputs, and the wrapper base classes write it.
-Wrappers never read md5 files.
-A step's `get_result_files` lists the result files as `work/` paths, each with its md5 file; only the results job derives their `output/` links.
-Bgzipped VCF and BED files also come with `.tbi` and `.tbi.md5`.
-One local job per task with result files, `<task>_results` (`snappy_pipeline/results.py`), links them and writes `output/.manifest.tsv`.
-The result files in `work/` are targets of `rule all` as well: Snakemake does not rerun a job whose output exists because an input is missing, so a manifest alone would hide result files that a failed rerun deleted (`test_result_files_are_targets`).
-No other rule writes into `output/`.
-`get_output_paths` returns `work/` paths, so tasks read each other's `work/` files and never `output/`.
-`test_only_the_results_job_writes_into_output`, `test_no_job_reads_from_output`, `test_logs_hold_only_logs`, `test_logs_are_no_result_files`, `test_md5_files_only_for_result_files`, `test_result_files_come_with_md5_and_index` and `test_wrappers_read_no_md5_or_conda_files` check this.
-
-A tool that writes a directory of files that the step does not name has a `directory()` output, not a `.done` marker file in it.
-A job whose files the step names declares them and no marker next to them.
-Snakemake removes the directory before the job runs and after a failure, so no file of an earlier run survives.
-Snakemake creates only the parent directory, so the wrapper creates the directory itself.
-No other output can be inside it, and only one job writes it.
-Consumers take the directory as their input; after the job, it also holds Snakemake's hidden `.snakemake_timestamp` file.
-A directory can be a result file: the results job links the directory, which has no md5 file.
-The DAG snapshots list the directory outputs of a job as `directory`.
-
-Every wrapper environment is pinned.
-Snakemake builds it from the exact package URLs in `environment.linux-64.pin.txt` next to `environment.yaml`.
-After changing an environment file, pin it again with `pixi run -e pins update-pins <environment.yaml> ...` (snakedeploy, needs conda); without files, the task pins every environment that has a pin file.
-A symlinked `environment.yaml` gets a symlink to its target's pin file.
-The `conda-autobump` GitHub workflow updates and re-pins the environments weekly, with one pull request per environment.
-`test_wrapper_envs_are_pinned` checks that each environment has its pin file and that the pin file holds every package of the environment file, at the exact versions it names.
-In a pull request, CI also checks that a changed environment file comes with its changed pin file.
-
-A step part lists the output keys of scatter fragments per action in `temp_outputs`.
-It lists those of per-sample intermediates that only later rules of the same task read in `intermediate_outputs`.
-`BaseStep.get_output_files` marks fragments `temp()` always and intermediates when the task's `delete_intermediates` names `intermediates`.
-Result files, contract outputs, files other tasks read and project-wide resources (installs, prepared references, pedigree files) are neither.
-The exception is a BAM that another task processes further: a step part lists it in `bam_outputs`, and it is `temp()` and no result file (without `.md5`) when `delete_intermediates` names `bam`; only steps with `bam_intermediate = True` in their config model accept `bam`.
-Every temp file needs a declared reader, otherwise Snakemake deletes it right after its job.
-A job that reads a temp file's index implicitly declares the index as input.
-The DAG snapshots are built with `delete_intermediates: [intermediates]`.
-`test_intermediates_are_temp` and `test_temp_files_are_intermediates` check them.
-
-Outputs for the Snakemake report are declared per action in a step part's `report_outputs`.
-It maps the output key to a `ReportOutput` (subcategory, caption, and for a directory `htmlindex` or `patterns` of the files to show).
-`BaseStep.get_output_files` flags them with `report()`, in the task's category and labelled by the wildcards of the path and the patterns.
-Captions are RST files in `report/` next to the step module.
-Every plot (PDF, PNG, SVG, HTML) and every `report/` directory and output below one is a report output, unless `OUTPUTS_NOT_IN_REPORT` names the reason; `test_plots_and_diagnostic_outputs_are_in_the_report` checks the DAG snapshots, which list them as `report`.
-
-The Snakemake report embeds only images, PDF and HTML, so a step whose tool writes tables of statistics adds a QC summary: a subclass of `QcSummaryStepPart` (`snappy_pipeline/workflows/common/qc_summary.py`) next to the tool part, which names the `source` part and action, the output keys to read by kind (`source_keys`) and the `format`, a parser module of `snappy_wrappers.tools.qc_summary` (polars).
-One job per task reads the files of all entities (`entities()`, the task's output entities by default; `label_wildcard` labels several files of one entity, such as the samples of a VCF), writes the summary table `qc_summary/out/qc_summary.tsv` (one row per library, a result file) and renders a datavzrd site below `qc_summary/report/html/` (a report output with `htmlindex`) through the `qc_summary` wrapper.
-A format module turns the files into a `Summary`: the summary `Table` and the views of the site, `Table` and `Chart` (vega-lite charts of long frames, thinned to `MAX_POINTS` per library).
-The params of every rule that runs a wrapper carry `code`, a hash of the wrapper's code (`snappy_pipeline/wrapper_code.py`): the files of its directory, the files they import from `snappy_wrappers` and the scripts of the package they run by path or as a console script, found by reading the imports without importing the tools, with Python files hashed without docstrings and comments.
-Snakemake's own code trigger covers shell commands and `run:` blocks only and records nothing for a `wrapper:` rule, so this param is what reruns the jobs of a changed wrapper, tool or base class (`test_wrapper_jobs_carry_the_code_of_their_wrapper`).
-A check that compares the files with the sample sheet gets the sheet facts as keyword arguments of `summarize`, from the part's `summary_options()` through the params (the fingerprint checks of `ngs_chew`: the libraries with donor, pedigree and sex, and the donors of the pedigrees with their parents), so a sheet change reruns the job.
-The charts follow Tufte: the data carries the ink, with no gridlines, hairline axes, thin lines and no frame (`CHART_CONFIG`).
-A `Column` has a datavzrd display mode (`display`: `pinned`, `normal`, `available`, `detail` or `hidden`), `links` (name to URL with `{value}` and `{Other column}` placeholders, which datavzrd fills without encoding) and an `ellipsis`; `pills()` colors categories on a fixed domain, `heatmap()` a magnitude on a ramp (`SEQUENTIAL`, `AGAINST`), and the `STATUS` colors mark states, never without their label.
-A `Table` can fix `max_in_memory_rows`, link its rows to the rows of another table (`links`), turn off the Excel download and leave columns out of the site's dataset while the result TSV keeps them (`exclude`); `Summary.default_view` names the view the site opens with.
-An asset that a tool would download in every job (igv.js for igv-reports) is fetched once by the environment's `environment.post-deploy.sh` into `$CONDA_PREFIX/share/<tool>/` with a checksum, and the wrapper reads it from `sys.prefix`; the calls report inlines it into the IGV page (`snappy_wrappers/tools/calls_report/igv.py`).
-A table cell shows its value as a tick on the range of its column (`ticks()`) or as a bar (`bars()`); every summary gets a strip chart of its key metrics (`metric_strips()`: one tick per library per metric, each metric on its own scale, so an outlier stands out and the tooltip names it); per-contig counts are dot charts (`mark="dots"`), with the table as their twin.
-Up to `MAX_COLORED` libraries get a color each, in a fixed, colorblind-safe order, with a legend that toggles them; a distribution or dot chart of more libraries becomes a heatmap (one row per library, the bins as columns, the value as a sequential color, `Chart.many`), which shows hundreds of libraries at once.
-Continuous axes zoom and pan; hovering a mark highlights its library, across the panels of a strip chart; a mark links to the row of its library in the summary table (`Chart.link`, a datavzrd `table-row` link named `LINK` with an `href` encoding).
-`thin()` bins distributions at round widths (`nice_width()`).
-`Chart(mark="scatter")` puts one dot per row on two quantitative axes (the relatedness of peddy's pairs); `tooltip` names further columns for the tooltip.
-A `Column` can carry a vega-lite plot per cell (`custom_plot`: a JS `data` function of the cell value and a `spec`), which the calls report uses for the observations and the allele frequency density of each sample (`snappy_wrappers/tools/calls_report/`, rendered per VCF by the `calls_report` wrapper for the shared `CallsReportStepPart` of `snappy_pipeline/workflows/common/calls_report.py`, which a VCF step registers when its `calls_report` section is set; the columns follow the VCF's header: varlociraptor's `PROB_*` fields or the FORMAT fields of other callers); the cell holds the compact strings of the VCF (`SAOBS|SROBS`, a thinned `AFD`), which the `data` function parses in the browser, so a row costs tens of bytes per sample.
-A table whose values can be drawn as a chart gets one; the table stays as the exact view.
-`tests/snappy_wrappers/tools/test_qc_summary.py` checks each format against fixtures and the generated configuration against datavzrd's schema; `test_qc_summary.py` of the workflows checks the step part.
 
 ### Defining input files and params
 
@@ -202,103 +114,548 @@ The Snakefile calls it as `wf.get_input_files(...)(wildcards, checkpoints)` from
 Each task is a Snakemake module with its own `checkpoints` object, so a task cannot use the checkpoint of an upstream task.
 It declares a local checkpoint instead, whose input is the upstream checkpoint output and whose output lists what the upstream checkpoint produced (`sv_calling_*` with `tool: gcnv`).
 
+### Registered parts and wrappers
+
+A step names the part of each tool in `tool_parts` and its structural parts (`write_pedigree`) in `helper_parts`.
+`BaseStep.__init__` registers the helpers and the selected tool's part.
+So only a step whose parts depend on more than the tool registers them itself.
+
+A step part names the wrapper of each action that runs one in `wrappers`, as a path below `snappy_wrappers/wrappers`.
+Where the config picks the wrapper, `wrappers` is a property, such as for the whole-genome variants of the gCNV wrappers or the tool of a filtration task.
+Every rule that runs a wrapper passes `params: args=wf.get_params(...)`.
+An action without params of its own gets an empty dict, to which `BaseStep.get_params` adds `extra_arguments` and `code`.
+
+### Module and class layout
+
+A step module lists, in this order:
+
+1. its imports, constants and functions,
+2. the step parts in the order the step class registers them (a base part before its subclasses),
+3. the step class.
+
+A step or step part class lists its attributes first.
+The attributes of its base classes come first, in the bases' order (root first, so `name`, `actions`, `wrappers`, ... come before a part's own attributes).
+A property that overrides a base attribute counts as that attribute.
+Then come the methods:
+
+1. `__init__` and the other overrides of base methods, in the bases' order,
+2. the per-action methods by action (in `actions` order; inputs, outputs, log file, params within an action),
+3. the class's own methods.
+
+`pixi run lint-layout` checks this, and `pixi run layout` rewrites the modules (`tests/scripts/class_layout.py`).
+`test_workflow_modules_follow_the_layout` fails otherwise.
+
+### Resource usage and result files
+
+Resource usage is declared, not computed.
+`default_resource_usage` holds it for all actions and `resource_usage` per action, each as a property when it depends on the config.
+
+`result_keys` names the output keys whose files are result files, for all actions or by action.
+`BaseStepPart.get_result_files` derives their `work/` paths for each output entity (`entity_wildcard`, other wildcards via `_result_wildcards`).
+It derives a static path, such as a panel of normals, once.
+`BaseStep.get_result_files` collects them from all step parts.
+Override these only where the derivation does not fit.
+
 ### Libraries, donors and pedigrees
 
 Step parts read the sample sheets only through the library DataFrame of the workflow object, never through the biomedsheets objects.
-`build_library_dataframe()` has one row per library, with its role, donor, group of related libraries (`related_group`), parents, sex and the extra sample sheet columns; `include_background=True` adds the libraries of background data sets.
-The project loads each sample sheet once (`Project.data_set_infos`); the table without relationships is built once per run and shared by all tasks (`BaseStep.library_table()`, `Project.library_tables`), and each task adds its `relationships`.
+`build_library_dataframe()` has one row per library, with its role, donor, group of related libraries (`related_group`), parents, sex and the extra sample sheet columns.
+`include_background=True` adds the libraries of background data sets.
+The project loads each sample sheet once (`Project.data_set_infos`).
+The table without relationships is built once per run and shared by all tasks (`BaseStep.library_table()`, `Project.library_tables`), and each task adds its `relationships`.
+
 Germline and generic sheets list all their libraries, with the pedigree columns of the biomedsheets germline view (joined by the data set's `pedigree_field`).
-`library_row(name)` returns the row of one library, which `library_selection` picks if several data sets have a library of that name; read per-library facts (data set, folder, kit) through it, not by indexing the dataframe by name.
-`libraries` is the one selection of the libraries a task takes: the library table (with background data sets if the step sets `background_results`), restricted to the step's `library_requirement`, and filtered by `library_selection` or else by the step's `library_default` (`None`: the default of each library's sheet kind, cancer tumor DNA and germline DNA; `""`: all libraries).
-`library_requirement` is what a step can process at all (RNA for expression quantification, `kind == 'cancer'` for the somatic steps); it always applies.
-Steps and tools that compare each tumor with its matched normal (the `matched_normal_lib` relationship) require `MATCHED_NORMAL_REQUIREMENT`, so they leave out tumors without one, and `BaseStep.library_warnings()` names these libraries; tumor-only tools keep them.
-Background libraries are in the default table only of steps that set `background_results`; steps that set `uses_background` add them where they need them, and a task's `background_selection` narrows them (`build_library_dataframe(include_background=True)` and `task_libraries` apply it).
+`library_row(name)` returns the row of one library.
+If several data sets have a library of that name, `library_selection` picks the row.
+Read per-library facts (data set, folder, kit) through it, not by indexing the dataframe by name.
+
+`libraries` is the one selection of the libraries a task takes:
+
+1. the library table, with background data sets if the step sets `background_results`,
+2. restricted to the step's `library_requirement`,
+3. filtered by `library_selection` or else by the step's `library_default` (`None`: the default of each library's sheet kind, cancer tumor DNA and germline DNA; `""`: all libraries).
+
+`library_requirement` is what a step can process at all (RNA for expression quantification, `kind == 'cancer'` for the somatic steps).
+It always applies.
 `library_selection` is the user's choice within it, such as a batch or dropped samples, and `library_default` replaces it when the task sets none.
 A step whose requirement or default depends on the task's config (its tool) overrides `task_library_requirement(config)` or `task_library_default(config)`.
+
+Steps and tools that compare each tumor with its matched normal (the `matched_normal_lib` relationship) require `MATCHED_NORMAL_REQUIREMENT`.
+They leave out tumors without one, and `BaseStep.library_warnings()` names these libraries.
+Tumor-only tools keep them.
+
+Background libraries are in the default table only of steps that set `background_results`.
+Steps that set `uses_background` add them where they need them.
+A task's `background_selection` narrows them (`build_library_dataframe(include_background=True)` and `task_libraries` apply it).
+
 `task_libraries(task_name)` gives the libraries of another task from its config, so a step can match the files of an upstream task also under `--frozen`.
 `output_entities` gives the entities a task writes, from `libraries` and `effective_group_by` (the task's `group_by`, else the step's `default_group_by(config)`, else what upstream tasks declare, else `library`).
-`primary_library(entity)` gives the library that stands for an entity (itself, or the `is_primary` member of its related group) and `member_libraries(entity)` the libraries it stands for in a joint result (the pedigree members, one DNA library per donor, which only an explicit `library_selection` restricts); a step never takes an entity for a library.
+`primary_library(entity)` gives the library that stands for an entity: itself, or the `is_primary` member of its related group.
+`member_libraries(entity)` gives the libraries it stands for in a joint result: the pedigree members, one DNA library per donor, which only an explicit `library_selection` restricts.
+A step never takes an entity for a library.
+
 `primary_dna_libraries()`, `pedigrees()`, `pedigree_members()`, `pedigree_of(library)`, `pedigree_index(pedigree)` and `children_with_both_parents()` give the germline view: one DNA library per donor, grouped by pedigree.
-`pedigree_donors()` gives the donor table of a pedigree (`build_donor_dataframe()`): every donor of the germline sheets, sequenced or not, with its parents as donor names, its sex and its DNA library, for steps that model unsequenced relatives.
+`pedigree_donors()` gives the donor table of a pedigree (`build_donor_dataframe()`), for steps that model unsequenced relatives.
+The donor table has every donor of the germline sheets, sequenced or not, with its parents as donor names, its sex and its DNA library.
+
+## Wrappers
+
+### Params
+
+Wrappers read the params dict as `snakemake.params.args`.
+Snakemake does not allow `unpack()` in `params:`, so every rule passes it as the single key `args`.
+
+Wrappers never read `snakemake.config`.
+Every file a wrapper reads, such as the reference FASTA, is a rule input, and every other value is a param.
+Only inputs order the jobs that produce them first and trigger reruns when they change.
+A changed param also triggers a rerun, so every value a wrapper uses is a config field passed as a param, never a constant in the wrapper or the Snakefile.
+Rules with a `run:` block need params for the config values their output depends on, too.
+
+- `test_wrappers_get_the_params_they_read` checks that the jobs in the DAG snapshots pass every `args` key their wrapper reads.
+- `test_wrappers_read_the_params_they_get` checks the other direction: every param of a wrapper job occurs in its wrapper (`WRAPPERS_READING_PARAMS_DYNAMICALLY` lists the exceptions with a reason).
+- `test_files_are_inputs_not_params` fails for params that hold file paths.
+
+### Code hash
+
+The params of every rule that runs a wrapper carry `code`, a hash of the wrapper's code (`snappy_pipeline/wrapper_code.py`).
+The hash covers:
+
+- the files of the wrapper's directory,
+- the files they import from `snappy_wrappers`,
+- the scripts of the package they run by path or as a console script.
+
+The files are found by reading the imports, without importing the tools.
+Python files are hashed without docstrings and comments.
+Snakemake's own code trigger covers shell commands and `run:` blocks only and records nothing for a `wrapper:` rule.
+So this param is what reruns the jobs of a changed wrapper, tool or base class (`test_wrapper_jobs_carry_the_code_of_their_wrapper`).
+
+### Extra arguments
+
+The config section of a tool inherits `ToolModel` (`snappy_pipeline/models`), whose `extra_arguments` are additional arguments for the tool's command line.
+`BaseStep.get_params` takes them from the step part's `tool_section()` (by default `config.<name>`).
+It adds them to the params of the part's `extra_arguments_action`, or else of its only action, unless the getter returns them itself.
+The wrapper puts `{extra_arguments}` on the tool's command.
+`ShellWrapper` fills it in, and an f-string writes `{{extra_arguments}}` to leave it to the base class.
+
+A single-tool step without a tool section takes `extra_arguments` on its step model.
+Its step part's `tool_section()` returns `self.config`.
+`test_tool_wrappers_get_extra_arguments` requires them for every wrapper, except those that `WRAPPERS_WITHOUT_EXTRA_ARGUMENTS` lists with a reason (Python and R code, installers, helpers, secondary actions).
+`test_wrappers_use_the_extra_arguments_they_get` and `test_wrappers_leave_extra_arguments_to_the_base_class` check that wrappers use them.
+
+### Shared shell text
+
+Several wrappers share shell text, such as the GNU parallel sharding of the GATK callers, the bwa-mem pipeline and the JVM heap.
+It comes from functions in `snappy_wrappers/tools`.
+Some of them return finished shell, which the wrapper pastes into its template.
+Others run the whole wrapper (`bwa_mem.run`).
+
+The convention tests read a wrapper's own files and the tool modules behind it (`wrapper_code.code_files`).
+`tests/scripts/shell_templates.py` checks the shared shell text with shfmt as well.
+It also flags a `set -x` or `set -euo pipefail` at the top of a template, which the `ShellWrapper` header already sets.
+
+### Environments
+
+Every wrapper environment is pinned.
+Snakemake builds it from the exact package URLs in `environment.linux-64.pin.txt` next to `environment.yaml`.
+After changing an environment file, pin it again with `pixi run -e pins update-pins <environment.yaml> ...` (snakedeploy, needs conda).
+Without files, the task pins every environment that has a pin file.
+A symlinked `environment.yaml` gets a symlink to its target's pin file.
+
+The `conda-autobump` GitHub workflow updates and re-pins the environments weekly, with one pull request per environment.
+`test_wrapper_envs_are_pinned` checks that each environment has its pin file and that the pin file holds every package of the environment file, at the exact versions it names.
+In a pull request, CI also checks that a changed environment file comes with its changed pin file.
+
+An asset that a tool would download in every job (igv.js for igv-reports) is fetched once by the environment's `environment.post-deploy.sh` into `$CONDA_PREFIX/share/<tool>/` with a checksum.
+The wrapper reads it from `sys.prefix`.
+The calls report inlines it into the IGV page (`snappy_wrappers/tools/calls_report/igv.py`).
+
+## Outputs
+
+### Benchmarks
+
+Rules that run a wrapper declare `benchmark: wf.get_benchmark_file(part, action)`.
+This is the path of the rule's log below `benchmarks/` (`tasks/<task>/benchmarks/` in a project).
+Snakemake writes the wall time, memory and I/O of each job there.
+These files calibrate the resource requests.
+
+Rules cached between workflows (`cache:`) cannot have a benchmark.
+`test_wrapper_rules_write_a_benchmark` and `test_logs_and_benchmarks_are_unique_per_job` check this.
+
+### Logs
+
+A rule's log holds only its log file (`test_logs_hold_only_logs`).
+The log file is named `log`, because the wrapper base classes write to `snakemake.log.log`.
+Building the DAG in the snapshot tests fails for a wrapper rule without it.
+
+Snakemake's metadata in `.snakemake/` records the code, params, inputs and conda environment of every output.
+The pinned environments (`environment.linux-64.pin.txt`) fix the package versions.
+Logs are no result files, and `snappy run` archives them per run (`test_logs_are_no_result_files`).
+
+### Result files and `output/`
+
+Result files are the files linked into `output/`.
+Only result files have an md5 file, and every result file except a directory has one.
+SODAR needs one per uploaded file.
+A step declares `<file>.md5` next to `<file>` in the outputs, and the wrapper base classes write it.
+Wrappers never read md5 files.
+
+A step's `get_result_files` lists the result files as `work/` paths, each with its md5 file.
+Bgzipped VCF and BED files also come with `.tbi` and `.tbi.md5`.
+Each task with result files has one local job, `<task>_results` (`snappy_pipeline/results.py`).
+It links the result files and writes `output/.manifest.tsv`.
+Only the results job derives their `output/` links, and no other rule writes into `output/`.
+
+```{graphviz}
+:alt: The results job links the result files from work/ into output/; downstream tasks read work/; rule all targets the result files and the manifest
+
+digraph outputs {
+    rankdir=LR; newrank=true; nodesep=0.2; ranksep=0.45;
+    bgcolor="transparent"; fontname="Helvetica";
+    node [shape=box, style="rounded,filled", fillcolor="#ffffff", color="#c3c2b7", fontname="Helvetica", fontsize=9, fontcolor="#0b0b0b", margin="0.08,0.03"];
+    edge [arrowsize=0.5, penwidth=1.0, color="#898781", fontname="Helvetica", fontsize=7, fontcolor="#52514e"];
+    subgraph cluster_task {
+        label=<<FONT POINT-SIZE="7" COLOR="#898781">tasks/&lt;task&gt;/</FONT>>; color="#e1e0d9"; style="rounded"; labelloc=t;
+        work [label=<<B>work/</B><BR ALIGN="LEFT"/><FONT POINT-SIZE="7" COLOR="#52514e">the outputs of the jobs,</FONT><BR ALIGN="LEFT"/><FONT POINT-SIZE="7" COLOR="#52514e">result files with their .md5</FONT><BR ALIGN="LEFT"/>>];
+        results [label=<<B>&lt;task&gt;_results</B><BR ALIGN="LEFT"/><FONT POINT-SIZE="7" COLOR="#52514e">one local job per task</FONT><BR ALIGN="LEFT"/>>];
+        output [label=<<B>output/</B><BR ALIGN="LEFT"/><FONT POINT-SIZE="7" COLOR="#52514e">links to the result files,</FONT><BR ALIGN="LEFT"/><FONT POINT-SIZE="7" COLOR="#52514e">.manifest.tsv</FONT><BR ALIGN="LEFT"/>>];
+    }
+    downstream [label=<<B>downstream task</B><BR ALIGN="LEFT"/><FONT POINT-SIZE="7" COLOR="#52514e">get_upstream_paths()</FONT><BR ALIGN="LEFT"/>>];
+    all [label=<<B>rule all</B><BR ALIGN="LEFT"/><FONT POINT-SIZE="7" COLOR="#52514e">targets</FONT><BR ALIGN="LEFT"/>>];
+    { rank=same; results; downstream; }
+    { rank=same; output; all; }
+    work -> results [label="result files"];
+    results -> output;
+    work -> downstream [label="get_output_paths()"];
+    work -> all [label="result files"];
+    output -> all [label=".manifest.tsv"];
+}
+```
+
+The result files in `work/` are targets of `rule all` as well.
+Snakemake does not rerun a job whose output exists because an input is missing.
+So a manifest alone would hide result files that a failed rerun deleted (`test_result_files_are_targets`).
+`get_output_paths` returns `work/` paths, so tasks read each other's `work/` files and never `output/`.
+
+`test_only_the_results_job_writes_into_output`, `test_no_job_reads_from_output`, `test_md5_files_only_for_result_files`, `test_result_files_come_with_md5_and_index` and `test_wrappers_read_no_md5_or_conda_files` check this.
+
+### Directory outputs
+
+A tool that writes a directory of files that the step does not name has a `directory()` output, not a `.done` marker file in it.
+A job whose files the step names declares them and no marker next to them.
+Snakemake removes the directory before the job runs and after a failure, so no file of an earlier run survives.
+Snakemake creates only the parent directory, so the wrapper creates the directory itself.
+No other output can be inside it, and only one job writes it.
+
+Consumers take the directory as their input.
+After the job, it also holds Snakemake's hidden `.snakemake_timestamp` file.
+A directory can be a result file: the results job links the directory, which has no md5 file.
+The DAG snapshots list the directory outputs of a job as `directory`.
+
+### Temp files and intermediates
+
+A step part lists output keys in these attributes, and `BaseStep.get_output_files` marks the outputs `temp()` accordingly:
+
+| Outputs                                                                                                                           | Step part attribute        | `temp()`                                                                            |
+| --------------------------------------------------------------------------------------------------------------------------------- | -------------------------- | ----------------------------------------------------------------------------------- |
+| Scatter fragments                                                                                                                 | `temp_outputs`, per action | always                                                                              |
+| Per-sample intermediates that only later rules of the same task read                                                              | `intermediate_outputs`     | when the task's `delete_intermediates` names `intermediates`                        |
+| Result files, contract outputs, files other tasks read and project-wide resources (installs, prepared references, pedigree files) | neither                    | no                                                                                  |
+| The exception: a BAM that another task processes further                                                                          | `bam_outputs`              | when `delete_intermediates` names `bam`; it is then no result file (without `.md5`) |
+
+Only steps with `bam_intermediate = True` in their config model accept `bam`.
+Every temp file needs a declared reader.
+Otherwise, Snakemake deletes it right after its job.
+A job that reads a temp file's index implicitly declares the index as input.
+
+The DAG snapshots are built with `delete_intermediates: [intermediates]`.
+`test_intermediates_are_temp` and `test_temp_files_are_intermediates` check them.
+
+### Report outputs
+
+Outputs for the Snakemake report are declared per action in a step part's `report_outputs`.
+It maps the output key to a `ReportOutput` (subcategory, caption, and for a directory `htmlindex` or `patterns` of the files to show).
+`BaseStep.get_output_files` flags them with `report()`, in the task's category and labelled by the wildcards of the path and the patterns.
+Captions are RST files in `report/` next to the step module.
+
+Every plot (PDF, PNG, SVG, HTML) and every `report/` directory and output below one is a report output, unless `OUTPUTS_NOT_IN_REPORT` names the reason.
+`test_plots_and_diagnostic_outputs_are_in_the_report` checks the DAG snapshots, which list them as `report`.
+
+### QC summaries
+
+The Snakemake report embeds only images, PDF and HTML.
+So a step whose tool writes tables of statistics adds a QC summary: a subclass of `QcSummaryStepPart` (`snappy_pipeline/workflows/common/qc_summary.py`) next to the tool part.
+The subclass names:
+
+- the `source` part and action,
+- the output keys to read by kind (`source_keys`),
+- the `format`, a parser module of `snappy_wrappers.tools.qc_summary` (polars).
+
+One job per task runs the `qc_summary` wrapper.
+It reads the files of all entities (`entities()`, the task's output entities by default).
+`label_wildcard` labels several files of one entity, such as the samples of a VCF.
+The job writes the summary table `qc_summary/out/qc_summary.tsv` (one row per library, a result file).
+It also renders a datavzrd site below `qc_summary/report/html/` (a report output with `htmlindex`).
+
+A format module turns the files into a `Summary`: the summary `Table` and the views of the site, `Table` and `Chart` (vega-lite charts of long frames, thinned to `MAX_POINTS` per library).
+A check that compares the files with the sample sheet gets the sheet facts as keyword arguments of `summarize`.
+They come from the part's `summary_options()` through the params, so a sheet change reruns the job.
+Examples are the fingerprint checks of `ngs_chew`.
+They get the libraries with donor, pedigree and sex, and the donors of the pedigrees with their parents.
+
+`tests/snappy_wrappers/tools/test_qc_summary.py` checks each format against fixtures and the generated configuration against datavzrd's schema.
+`test_qc_summary.py` of the workflows checks the step part.
+
+#### Tables
+
+A `Column` has a datavzrd display mode (`display`: `pinned`, `normal`, `available`, `detail` or `hidden`), `links` and an `ellipsis`.
+`links` maps a name to a URL with `{value}` and `{Other column}` placeholders, which datavzrd fills without encoding.
+A `Column` can also carry a vega-lite plot per cell (`custom_plot`: a JS `data` function of the cell value and a `spec`).
+
+| Function    | Shows                                                    |
+| ----------- | -------------------------------------------------------- |
+| `pills()`   | categories, colored on a fixed domain                    |
+| `heatmap()` | a magnitude, colored on a ramp (`SEQUENTIAL`, `AGAINST`) |
+| `ticks()`   | the value of a cell as a tick on the range of its column |
+| `bars()`    | the value of a cell as a bar                             |
+
+The `STATUS` colors mark states, never without their label.
+
+A `Table` can:
+
+- fix `max_in_memory_rows`,
+- link its rows to the rows of another table (`links`),
+- turn off the Excel download,
+- leave columns out of the site's dataset while the result TSV keeps them (`exclude`).
+
+`Summary.default_view` names the view the site opens with.
+
+#### Charts
+
+A table whose values can be drawn as a chart gets one.
+The table stays as the exact view.
+The charts follow Tufte: the data carries the ink, with no gridlines, hairline axes, thin lines and no frame (`CHART_CONFIG`).
+
+Every summary gets a strip chart of its key metrics (`metric_strips()`).
+It has one tick per library per metric, each metric on its own scale, so an outlier stands out and the tooltip names it.
+Per-contig counts are dot charts (`mark="dots"`), with the table as their twin.
+`Chart(mark="scatter")` puts one dot per row on two quantitative axes (the relatedness of peddy's pairs), and `tooltip` names further columns for the tooltip.
+`thin()` bins distributions at round widths (`nice_width()`).
+
+Up to `MAX_COLORED` libraries get a color each, in a fixed, colorblind-safe order, with a legend that toggles them.
+A distribution or dot chart of more libraries becomes a heatmap (`Chart.many`), which shows hundreds of libraries at once.
+The heatmap has one row per library, the bins as columns and the value as a sequential color.
+
+The charts are interactive:
+
+- Continuous axes zoom and pan.
+- Hovering a mark highlights its library, across the panels of a strip chart.
+- A mark links to the row of its library in the summary table (`Chart.link`, a datavzrd `table-row` link named `LINK` with an `href` encoding).
+
+### Calls report
+
+The calls report (`snappy_wrappers/tools/calls_report/`) uses `custom_plot` for the observations and the allele frequency density of each sample.
+The `calls_report` wrapper renders it per VCF for the shared `CallsReportStepPart` of `snappy_pipeline/workflows/common/calls_report.py`.
+A VCF step registers this step part when its `calls_report` section is set.
+The columns follow the VCF's header: varlociraptor's `PROB_*` fields or the FORMAT fields of other callers.
+The cell holds the compact strings of the VCF (`SAOBS|SROBS`, a thinned `AFD`), which the `data` function parses in the browser, so a row costs tens of bytes per sample.
 
 (dev_contracts)=
 
 ## Contracts
 
-A task's outputs are described by `DataSignature` objects: a data type plus tags such as `dna`, `somatic` or `filtered`.
+`DataSignature` objects describe a task's outputs: a data type plus tags such as `dna`, `somatic` or `filtered`.
 
-- A step lists what its tasks produce in `produces`.
-  If that depends on the task's config or its inputs, the step overrides the classmethod `task_produces(config, upstream)`.
-  For example, `ngs_mapping` produces `alignments [rna]` for STAR, and `variant_filtration` adds `filtered` to the tags of its input.
-  `variant_annotation` adds `annotated`, its tool and the genome build (`GRCh37`, `GRCh38`), which the steps after it keep and the calls report reads for its build-dependent linkouts.
-- A step whose tasks write `FILTER` IDs other than their task name returns them from the classmethod `filter_ids(config)`, such as the filters of mutect2 or the expression names of `vembrane` in tag mode.
-  `load_project()` rejects other tasks named like one of them or `PASS`, and a task that writes an ID that a task upstream of it writes.
-- `depends_on` keys are named after the data they bring in, not after the step that produces it: `reads`, `alignments`, `variants`, `copy_number`, `structural_variants`, `fusions`, `expression`, `hla_types`, `strandedness`, `qc`, `panel_of_normals`, `access`, `reference`, `features`, `proteome`, `dbsnp`, `common_variants`, `germline_resource`, `regions`, `excluded_regions`, `mappable_regions`, `par_regions`, `microsatellites`, `snp_loci`, `gene_regions`, `exons`, `kits`, `index`, `database` and `gcnv_model`.
-  A step with two inputs of one kind qualifies them by role: `somatic_variants`, `germline_variants`, `combined_variants`, `annotated_variants`, `phased_variants` and `candidates`.
-  A step that needs only one input of a kind uses the plain key, such as `alignments`, and narrows it by the tags of its `DataSignature` (`alignments [rna]`) instead.
-  `test_depends_on_keys_use_the_vocabulary` checks this.
-- A file that a step reads is a `depends_on` key if it must match the reference or other data of the project, even if only one tool reads it.
-  Examples are regions, variants, a genome, a gene annotation and a mapper index (type `index`, tagged with the tool and the molecule).
-  Such a field has a `DataSignature` and an `ExpectedPathSchema`, and the step reads it with `get_upstream_paths()`.
-  A field whose step reads one result per pedigree under the pedigree's name (`group_by: related`) adds `RELATED_LEVEL` (`Granularity`) to its metadata, one that reads the result of a library's group at either level `ANY_LEVEL` (looked up with `upstream_entity()`); `load_project()` checks the upstream task's resolved `group_by`, and for any other field rejects a per-library task behind one that writes per related group; a lookup of a related group that the upstream task does not write fails when the DAG is built, with the fix in the message (`_check_upstream_library`).
-  A field typed `list[str]` takes several tasks of the same kind, each checked like a single one; the step lists them with `upstream_task_names(field)` and reads each with `get_upstream_paths(field, upstream_task=...)`.
-  A file that belongs to the setup of one tool and does not depend on the reference, such as a jar or a script, is a path in the tool's section, which the step passes to the rule as an input.
-- A field that names a file or directory has the type `ConfigPath` (also in `list[...]` or `dict[str, ...]`).
-  `load_project()` expands its `pathvars` and resolves it against the project directory, and `snappy check-files` checks that it exists.
-- A problem that the user has to fix in `config.yaml` or the sample sheets raises `ConfigError` (`snappy_pipeline.base`, a `ValueError`) whose message states the problem only, such as `depends_on.reads names a task twice`; the sheet loader names the sheet file.
-  The orchestrator attaches the task with `in_task(task)` around its checks of one task, around `task_produces` and around the constructors of the workflow classes (`check_config`, kits, library selection, relationships, sheet columns), and the error then reads `Task 'mapping' (step ngs_mapping): invalid configuration:` followed by one line per field.
-  The main Snakefile and `snappy check-files` print it and exit instead of letting Snakemake frame it with its location and traceback lines (`test_run_prints_setup_errors_without_snakemake_framing`).
-  A `ValueError` or `TypeError` marks a programming error, such as a wildcard that names no library or a step part that returns no function.
-  An error raised in an input function always comes framed by Snakemake with the rule and its wildcards, so a check that can run at setup runs in the constructor.
-- A rule that reads the genome adds `self.parent.reference_inputs()` to its inputs: the FASTA (`reference`) with its `.fai` (`reference_fai`) and `.dict` (`reference_dict`), named by the convention in `ExpectedReference`.
-  A rule that reads a VCF resource (`dbsnp`, `germline_resource`, `common_variants`) adds `self.parent.vcf_inputs(field)`: the VCF (`<field>`) and its index (`<field>_index`), named by the convention in `ExpectedVcf`.
-  A BED file that GATK queries by interval (the mappable regions of gCNV) uses the schema `ExpectedIndexedRegions`, and the rule reads its `index` as well.
-- `reference` (genome FASTA), `features` (gene annotation GTF), `dbsnp`, `germline_resource` (tag `population`), `common_variants` (tag `common`) and the DNA alignments of a library use the shared field types `Reference`, `Features`, `Dbsnp`, `GermlineResource`, `CommonVariants` and `DnaAlignments` from `snappy_pipeline.workflows.abstract.protocol`, which also holds the shared schemas `ExpectedAlignments` (`bam`, `bai`) and `ExpectedVariants` (`vcf`, `vcf_tbi`).
-  A step whose result is a bgzipped VCF declares its four output keys with `vcf_outputs(prefix)` from `snappy_pipeline.workflows.common`, and its `get_output_paths` formats the same table as its parts.
-  Tags compose: one task with `tags: [population, common]` can serve both.
-  They usually name `external_data` tasks.
-- A tool's own database comes from `depends_on.database`: type `database`, tagged with the tool.
-  The field requires the tag `TOOL`, a placeholder that the loader replaces with the task's tool (`SnappyStepModel.tool_tag()`), and `ExpectedPathSchema.by_tool(...)` names the contract keys per tool.
-  `ngs_mapping` requires its index the same way.
-  Mapper and other indexes come from `depends_on.index` (type `index`, tags tool and molecule).
-- BED files of regions have the data type `regions` and the key `bed`.
-  The shared field type `Regions` accepts any of them, and `Exons` requires the tag `exons`.
-  A step-specific kind of regions is an `Annotated` field type in the step's model, with its own tag.
-  Add a field type with its own tag for a new kind of regions, so that a consumer cannot read the wrong kind.
-- `kits` uses the shared field type `Kits` (type `regions`, tag `kits`): an `external_data` task with `kits`, which gives the `targets` and `baits` BED files of each enrichment kit.
-  A targeted library (`WES`, `Panel_seq`) uses the kit named exactly like its `library_kit`; other libraries have no kit (`BaseStep.library_kits`), since long-read libraries use `libraryKit` for their chemistry.
-  `library_kit_paths(field, library_name)` returns the files of a library's kit.
-  A step calls `check_library_kits(field, library_names)` when it is set up, so that a kit missing from the kits task (often a typo) fails before Snakemake builds rules, with all such libraries in one message.
-  Steps that need a kit for each library they process require one; steps whose per-library output is optional (the coverage report, a targeted gCNV model) skip libraries without a kit (`require=False`).
-  `common_kit()` returns the one kit of a group of libraries, for jobs over several libraries such as a panel of normals.
-- A key that every tool of a step reads is required and has no default.
-  A key that only some tools or settings read defaults to `""` and names its readers in its `Annotated` metadata: `RequiredBy(...)` for those that need it, `ReadBy(...)` for those that read it if it is set (`snappy_pipeline/models`).
-  A reader is a set of tools (none: any tool) and an optional condition on a setting: `when` is a dotted path into the step's config, on if every toggle along it is enabled, every section on it is present and a bool at its end is true; `value` compares the setting instead, `contains` tests membership in a list.
-  Examples: `RequiredBy(Tool.gatk4_hc_gvcf, ...)` for `dbsnp`, `RequiredBy(Tool.mutect2, when="mutect2.contamination")` for `common_variants`, `RequiredBy(when="intervals", value=Intervals.targeted)` for the kits of `gcnv_model`.
-  Several markers combine with "or", such as `kits` of `ngs_data_qc`: `RequiredBy(Tool.alfred)` and `RequiredBy(Tool.picard, when="picard.programs", contains=PicardProgram.CollectHsMetrics)`.
-  A validator of `SnappyStepModel` requires the key while a `RequiredBy` reader is active and rejects it while no reader is, with all problems of a task in one `DependsOnError`; steps write no validators of their own for this.
-  Other optional keys default to `""`, meaning "not used".
-  No key defaults to a task name.
-- `reads` names an `external_data` task, a task that writes FASTQs (such as `adapter_trimming`), or the reserved value `data_sets`, which searches each library's FASTQs below the search paths of its data set.
-  Data sets and `external_data` reads tasks share `LibraryFolders` (`search_paths`, `search_patterns`, `mixed_se_pe`) and one code path in `BaseStep.read_groups()`; only the folder name differs (the sheet's `folderName`, or the library name).
-  No task may be called `data_sets`.
-- Each `depends_on` field states what it requires with a `DataSignature` in its `Annotated` metadata.
-  This annotation is the only place a requirement is declared.
-- A task can produce several signatures. mutect2 calling produces all calls and the PASS calls, which carry the `filtered` tag.
-  `select_signature` picks the one a consumer reads: the `filtered` one when several satisfy the requirement.
-  PASS calls are therefore the default, and `-filtered` asks for all calls.
-  `get_output_paths` receives the picked signature and returns the matching file.
-  `get_upstream_paths(field, signature=...)` narrows the requirement for a single lookup.
-- `load_project()` computes the signatures of every task in dependency order and checks each requirement before Snakemake builds any rule.
-  It also checks that the provider's `get_output_paths` for the picked signature has every required key of the field's `ExpectedPathSchema`.
-  So `get_output_paths` returns only the keys the task's config really produces.
-  A mismatch fails with a message that names both tasks.
-- Consumers read upstream files only through `get_upstream_paths(field, library_name=...)`.
-  It returns the provider's named outputs (`.bam`, `.vcf`, ...) wrapped in the field's `ExpectedPathSchema`, and the schema receives only the keys it declares.
-  Consumers never build a provider's paths themselves (`test_upstream_paths_come_from_contracts`).
-- `get_output_paths(config, signature, ...)` receives the config of the task whose outputs are requested.
-  It does not check the signature again.
-  It only uses it to choose between several outputs.
+```{graphviz}
+:alt: load_project() checks the signatures of the upstream task against the requirement of the depends_on field; get_output_paths() and get_upstream_paths() give the consumer the work/ paths of the picked signature
+
+digraph contract {
+    rankdir=LR; nodesep=0.12; ranksep=0.45;
+    bgcolor="transparent"; fontname="Helvetica";
+    node [shape=box, style="rounded,filled", fillcolor="#ffffff", color="#c3c2b7", fontname="Helvetica", fontsize=9, fontcolor="#0b0b0b", margin="0.08,0.03"];
+    edge [arrowsize=0.5, penwidth=1.0, color="#898781", fontname="Helvetica", fontsize=7, fontcolor="#52514e"];
+    upstream [label=<<B>upstream task</B><BR ALIGN="LEFT"/><FONT POINT-SIZE="7" COLOR="#52514e">produces or</FONT><BR ALIGN="LEFT"/><FONT POINT-SIZE="7" COLOR="#52514e">task_produces(config, upstream)</FONT><BR ALIGN="LEFT"/>>];
+    field [label=<<B>depends_on field</B><BR ALIGN="LEFT"/><FONT POINT-SIZE="7" COLOR="#52514e">DataSignature,</FONT><BR ALIGN="LEFT"/><FONT POINT-SIZE="7" COLOR="#52514e">ExpectedPathSchema</FONT><BR ALIGN="LEFT"/>>];
+    load [label=<<B>load_project()</B><BR ALIGN="LEFT"/><FONT POINT-SIZE="7" COLOR="#52514e">checks each requirement;</FONT><BR ALIGN="LEFT"/><FONT POINT-SIZE="7" COLOR="#52514e">select_signature picks a signature</FONT><BR ALIGN="LEFT"/>>];
+    output_paths [label=<<B>get_output_paths()</B><BR ALIGN="LEFT"/><FONT POINT-SIZE="7" COLOR="#52514e">the work/ paths of</FONT><BR ALIGN="LEFT"/><FONT POINT-SIZE="7" COLOR="#52514e">the picked signature</FONT><BR ALIGN="LEFT"/>>];
+    upstream_paths [label=<<B>get_upstream_paths()</B><BR ALIGN="LEFT"/><FONT POINT-SIZE="7" COLOR="#52514e">the consumer's inputs, with the keys</FONT><BR ALIGN="LEFT"/><FONT POINT-SIZE="7" COLOR="#52514e">of the field's ExpectedPathSchema</FONT><BR ALIGN="LEFT"/>>];
+    upstream -> load [label="signatures"];
+    field -> load [label="requirement"];
+    load -> output_paths [label="picked signature"];
+    output_paths -> upstream_paths;
+}
+```
+
+### Signatures
+
+A step lists what its tasks produce in `produces`.
+If that depends on the task's config or its inputs, the step overrides the classmethod `task_produces(config, upstream)`.
+For example, `ngs_mapping` produces `alignments [rna]` for STAR, and `variant_filtration` adds `filtered` to the tags of its input.
+`variant_annotation` adds `annotated`, its tool and the genome build (`GRCh37`, `GRCh38`).
+The steps after it keep them, and the calls report reads them for its build-dependent linkouts.
+
+Each `depends_on` field states what it requires with a `DataSignature` in its `Annotated` metadata.
+This annotation is the only place a requirement is declared.
+
+A task can produce several signatures.
+mutect2 calling produces all calls and the PASS calls, which carry the `filtered` tag.
+`select_signature` picks the one a consumer reads: the `filtered` one when several satisfy the requirement.
+PASS calls are therefore the default, and `-filtered` asks for all calls.
+
+`get_output_paths` receives the picked signature and returns the matching file.
+`get_upstream_paths(field, signature=...)` narrows the requirement for a single lookup.
+
+### Checks and lookups
+
+`load_project()` computes the signatures of every task in dependency order and checks each requirement before Snakemake builds any rule.
+It also checks that the provider's `get_output_paths` for the picked signature has every required key of the field's `ExpectedPathSchema`.
+So `get_output_paths` returns only the keys the task's config really produces.
+A mismatch fails with a message that names both tasks.
+
+Consumers read upstream files only through `get_upstream_paths(field, library_name=...)`.
+It returns the provider's named outputs (`.bam`, `.vcf`, ...) wrapped in the field's `ExpectedPathSchema`, and the schema receives only the keys it declares.
+Consumers never build a provider's paths themselves (`test_upstream_paths_come_from_contracts`).
+
+`get_output_paths(config, signature, ...)` receives the config of the task whose outputs are requested.
+It does not check the signature again.
+It only uses it to choose between several outputs.
+
+A field typed `list[str]` takes several tasks of the same kind, each checked like a single one.
+The step lists them with `upstream_task_names(field)` and reads each with `get_upstream_paths(field, upstream_task=...)`.
+
+### Granularity
+
+A field whose step reads one result per pedigree under the pedigree's name (`group_by: related`) adds `RELATED_LEVEL` (`Granularity`) to its metadata.
+A field that reads the result of a library's group at either level adds `ANY_LEVEL`, and its step looks the result up with `upstream_entity()`.
+`load_project()` checks the upstream task's resolved `group_by`.
+For any other field, it rejects a per-library task behind one that writes per related group.
+A lookup of a related group that the upstream task does not write fails when the DAG is built, with the fix in the message (`_check_upstream_library`).
+
+### The `depends_on` vocabulary
+
+`depends_on` keys are named after the data they bring in, not after the step that produces it: `reads`, `alignments`, `variants`, `copy_number`, `structural_variants`, `fusions`, `expression`, `hla_types`, `strandedness`, `qc`, `panel_of_normals`, `access`, `reference`, `features`, `proteome`, `dbsnp`, `common_variants`, `germline_resource`, `regions`, `excluded_regions`, `mappable_regions`, `par_regions`, `microsatellites`, `snp_loci`, `gene_regions`, `exons`, `kits`, `index`, `database` and `gcnv_model`.
+A step with two inputs of one kind qualifies them by role: `somatic_variants`, `germline_variants`, `combined_variants`, `annotated_variants`, `phased_variants` and `candidates`.
+A step that needs only one input of a kind uses the plain key, such as `alignments`, and narrows it by the tags of its `DataSignature` (`alignments [rna]`) instead.
+`test_depends_on_keys_use_the_vocabulary` checks this.
+
+### Required and optional keys
+
+A key that every tool of a step reads is required and has no default.
+A key that only some tools or settings read defaults to `""`.
+It names its readers in its `Annotated` metadata (`snappy_pipeline/models`):
+
+- `RequiredBy(...)` for those that need it,
+- `ReadBy(...)` for those that read it if it is set.
+
+A reader is a set of tools (none: any tool) and an optional condition on a setting:
+
+- `when` is a dotted path into the step's config.
+  The condition is on if every toggle along it is enabled, every section on it is present and a bool at its end is true.
+- `value` compares the setting instead.
+- `contains` tests membership in a list.
+
+Examples:
+
+- `RequiredBy(Tool.gatk4_hc_gvcf, ...)` for `dbsnp`,
+- `RequiredBy(Tool.mutect2, when="mutect2.contamination")` for `common_variants`,
+- `RequiredBy(when="intervals", value=Intervals.targeted)` for the kits of `gcnv_model`.
+
+Several markers combine with "or", such as `kits` of `ngs_data_qc`: `RequiredBy(Tool.alfred)` and `RequiredBy(Tool.picard, when="picard.programs", contains=PicardProgram.CollectHsMetrics)`.
+A validator of `SnappyStepModel` requires the key while a `RequiredBy` reader is active.
+It rejects the key while no reader is, with all problems of a task in one `DependsOnError`.
+Steps write no validators of their own for this.
+
+Other optional keys default to `""`, meaning "not used".
+No key defaults to a task name.
+
+### Files and paths
+
+A file that a step reads is a `depends_on` key if it must match the reference or other data of the project, even if only one tool reads it.
+Examples are regions, variants, a genome, a gene annotation and a mapper index (type `index`, tagged with the tool and the molecule).
+Such a field has a `DataSignature` and an `ExpectedPathSchema`, and the step reads it with `get_upstream_paths()`.
+A file that belongs to the setup of one tool and does not depend on the reference, such as a jar or a script, is a path in the tool's section, which the step passes to the rule as an input.
+
+A field that names a file or directory has the type `ConfigPath` (also in `list[...]` or `dict[str, ...]`).
+`load_project()` expands its `pathvars` and resolves it against the project directory, and `snappy check-files` checks that it exists.
+
+### Reference data and shared field types
+
+A rule that reads the genome adds `self.parent.reference_inputs()` to its inputs: the FASTA (`reference`) with its `.fai` (`reference_fai`) and `.dict` (`reference_dict`), named by the convention in `ExpectedReference`.
+A rule that reads a VCF resource (`dbsnp`, `germline_resource`, `common_variants`) adds `self.parent.vcf_inputs(field)`: the VCF (`<field>`) and its index (`<field>_index`), named by the convention in `ExpectedVcf`.
+A BED file that GATK queries by interval (the mappable regions of gCNV) uses the schema `ExpectedIndexedRegions`, and the rule reads its `index` as well.
+
+These inputs use the shared field types from `snappy_pipeline.workflows.abstract.protocol`:
+
+| Input                                  | Field type         |
+| -------------------------------------- | ------------------ |
+| `reference` (genome FASTA)             | `Reference`        |
+| `features` (gene annotation GTF)       | `Features`         |
+| `dbsnp`                                | `Dbsnp`            |
+| `germline_resource` (tag `population`) | `GermlineResource` |
+| `common_variants` (tag `common`)       | `CommonVariants`   |
+| the DNA alignments of a library        | `DnaAlignments`    |
+
+The module also holds the shared schemas `ExpectedAlignments` (`bam`, `bai`) and `ExpectedVariants` (`vcf`, `vcf_tbi`).
+Tags compose: one task with `tags: [population, common]` can serve both.
+These keys usually name `external_data` tasks.
+
+A step whose result is a bgzipped VCF declares its four output keys with `vcf_outputs(prefix)` from `snappy_pipeline.workflows.common`, and its `get_output_paths` formats the same table as its parts.
+
+### Databases and indexes
+
+A tool's own database comes from `depends_on.database`: type `database`, tagged with the tool.
+The field requires the tag `TOOL`, a placeholder that the loader replaces with the task's tool (`SnappyStepModel.tool_tag()`).
+`ExpectedPathSchema.by_tool(...)` names the contract keys per tool.
+`ngs_mapping` requires its index the same way.
+Mapper and other indexes come from `depends_on.index` (type `index`, tags tool and molecule).
+
+### Regions and kits
+
+BED files of regions have the data type `regions` and the key `bed`.
+The shared field type `Regions` accepts any of them, and `Exons` requires the tag `exons`.
+A step-specific kind of regions is an `Annotated` field type in the step's model, with its own tag.
+Add a field type with its own tag for a new kind of regions, so that a consumer cannot read the wrong kind.
+
+`kits` uses the shared field type `Kits` (type `regions`, tag `kits`).
+It names an `external_data` task with `kits`, which gives the `targets` and `baits` BED files of each enrichment kit.
+A targeted library (`WES`, `Panel_seq`) uses the kit named exactly like its `library_kit`.
+Other libraries have no kit (`BaseStep.library_kits`), since long-read libraries use `libraryKit` for their chemistry.
+`library_kit_paths(field, library_name)` returns the files of a library's kit.
+
+A step calls `check_library_kits(field, library_names)` when it is set up.
+So a kit missing from the kits task (often a typo) fails before Snakemake builds rules, with all such libraries in one message.
+Steps that need a kit for each library they process require one.
+Steps whose per-library output is optional (the coverage report, a targeted gCNV model) skip libraries without a kit (`require=False`).
+`common_kit()` returns the one kit of a group of libraries, for jobs over several libraries such as a panel of normals.
+
+### `reads`
+
+`reads` names an `external_data` task, a task that writes FASTQs (such as `adapter_trimming`), or the reserved value `data_sets`.
+`data_sets` searches each library's FASTQs below the search paths of its data set.
+Data sets and `external_data` reads tasks share `LibraryFolders` (`search_paths`, `search_patterns`, `mixed_se_pe`) and one code path in `BaseStep.read_groups()`.
+Only the folder name differs (the sheet's `folderName`, or the library name).
+No task may be called `data_sets`.
+
+### `FILTER` IDs
+
+A step whose tasks write `FILTER` IDs other than their task name returns them from the classmethod `filter_ids(config)`.
+Examples are the filters of mutect2 or the expression names of `vembrane` in tag mode.
+`load_project()` rejects other tasks named like one of them or `PASS`.
+It also rejects a task that writes an ID that a task upstream of it writes.
+
+### Configuration errors
+
+A problem that the user has to fix in `config.yaml` or the sample sheets raises `ConfigError` (`snappy_pipeline.base`, a `ValueError`).
+Its message states the problem only, such as `depends_on.reads names a task twice`.
+The sheet loader names the sheet file.
+
+The orchestrator attaches the task with `in_task(task)`.
+It does so around its checks of one task, around `task_produces` and around the constructors of the workflow classes (`check_config`, kits, library selection, relationships, sheet columns).
+The error then reads `Task 'mapping' (step ngs_mapping): invalid configuration:` followed by one line per field.
+The main Snakefile and `snappy check-files` print it and exit instead of letting Snakemake frame it with its location and traceback lines (`test_run_prints_setup_errors_without_snakemake_framing`).
+
+A `ValueError` or `TypeError` marks a programming error, such as a wildcard that names no library or a step part that returns no function.
+Snakemake always frames an error raised in an input function with the rule and its wildcards.
+So a check that can run at setup runs in the constructor.
 
 ## Paths
 
@@ -308,12 +665,17 @@ A task's outputs are described by `DataSignature` objects: a data type plus tags
   Underscores stay inside multi-word suffixes.
 
 `test_paths_follow_the_conventions` checks the last two rules on all DAG snapshots.
-A value of the step's `tool` field counts as a tool name if it equals a run of whole path parts between `/`, `.`, `_` and `-`, compared without these separators, so `eb_filter` counts as the tool `ebfilter`.
+A value of the step's `tool` field counts as a tool name if it equals a run of whole path parts between `/`, `.`, `_` and `-`, compared without these separators.
+So `eb_filter` counts as the tool `ebfilter`.
 
 ## I/O footprint on HPC
 
 On shared file systems such as cephfs, and with slurm, the number of small files, metadata operations (stat, readlink) and jobs costs more than bytes moved.
-Keep all three low: no extra jobs for bookkeeping, no companion files without a consumer, no declared outputs nobody needs.
+Keep all three low:
+
+- no extra jobs for bookkeeping,
+- no companion files without a consumer,
+- no declared outputs nobody needs.
 
 ## Testing
 

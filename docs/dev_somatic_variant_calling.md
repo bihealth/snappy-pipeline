@@ -66,10 +66,33 @@ The `run` action then reads the panel VCF and its index from the keys `vcf` and 
 | `contamination` | estimates the contamination                              |
 | `filter`        | filters the calls                                        |
 
+```{graphviz}
+:alt: The mutect2 actions: scatter, run per region, gather and filter; the two pileups feed contamination, which feeds filter
+
+digraph mutect2 {
+    rankdir=LR; nodesep=0.12; ranksep=0.35;
+    bgcolor="transparent"; fontname="Helvetica";
+    node [shape=box, style="rounded,filled", fillcolor="#ffffff", color="#c3c2b7", fontname="Helvetica", fontsize=9, fontcolor="#0b0b0b", margin="0.08,0.03"];
+    edge [arrowsize=0.5, penwidth=1.0, color="#898781", fontname="Helvetica", fontsize=7, fontcolor="#52514e"];
+    scatter [label=<<B>scatter</B>>];
+    run [label=<<B>run</B><BR ALIGN="LEFT"/><FONT POINT-SIZE="7" COLOR="#52514e">one job per region ({scatteritem})</FONT><BR ALIGN="LEFT"/>>];
+    gather [label=<<B>gather</B>>];
+    pileup_normal [label=<<B>pileup_normal</B>>];
+    pileup_tumor [label=<<B>pileup_tumor</B>>];
+    contamination [label=<<B>contamination</B>>];
+    filter [label=<<B>filter</B>>];
+    scatter -> run -> gather -> filter;
+    pileup_normal -> contamination;
+    pileup_tumor -> contamination;
+    contamination -> filter;
+}
+```
+
 The fragments of `scatter` and `run` are listed in `temp_outputs`.
 They are `temp()` and deleted after `gather`.
 The outputs of `gather`, the pileups and the contamination tables are listed in `intermediate_outputs`.
 They are deleted only if the task's `delete_intermediates` names `intermediates`.
+
 The Snakefile declares `scattergather: mutect2=...` with `mutect2.num_jobs` as the number of regions.
 The step part reaches the scatter and gather functions through `self.parent.workflow.globals`.
 
@@ -77,13 +100,14 @@ The step part reaches the scatter and gather functions through `self.parent.work
 
 The wildcard of every rule is the tumor `library_name`.
 `default_relationships` of the workflow adds the column `matched_normal_lib`, found through the donor and the role `normal`.
-`SomaticVariantCallingStepPart.get_normal_lib_name` reads it.
+`Mutect2StepPart.get_normal_lib_name` reads it.
 Both BAM files come from `get_upstream_paths("alignments", library_name=...)`.
 
 ## Several outputs
 
-`VariantCallingWorkflow.task_produces` returns one signature for the germline tools.
+`VariantCallingWorkflow.task_produces` returns the signature of the task's tool.
 For mutect2, it returns two: all calls, and the same signature with the tag `filtered`.
+
 The `filter` action writes the PASS calls to `{library_name}.vcf.gz` and all calls to `{library_name}.full.vcf.gz`.
 `get_output_paths` returns the file that matches the signature it receives.
 A consumer that requires `-filtered` gets the `.full.vcf.gz` file.

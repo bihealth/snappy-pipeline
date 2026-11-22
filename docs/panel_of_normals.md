@@ -10,11 +10,42 @@ Use the panel only for tumor samples that were collected, processed and sequence
 A panel needs enough normal samples.
 With too few, the particulars of single normals count as bias and are corrected in the tumor samples.
 
+## Panel tasks
+
 The `panel_of_normals` step creates panels for somatic variant calling (`mutect2`) and for somatic copy number calling of exome data (`cnvkit`, `purecn`).
 Each panel is its own task, with one `tool`.
 A copy number task names the panel task in `depends_on.panel_of_normals`.
-
 See {ref}`step_panel_of_normals` for the outputs and all options.
+
+```{graphviz}
+:alt: The panel of normals tasks of this page, what they read and which tasks read them
+
+digraph panels {
+    rankdir=LR; newrank=true; nodesep=0.12; ranksep=0.35;
+    bgcolor="transparent"; fontname="Helvetica";
+    node [shape=box, style="rounded,filled", fillcolor="#ffffff", color="#c3c2b7", fontname="Helvetica", fontsize=9, fontcolor="#0b0b0b", margin="0.08,0.03"];
+    edge [arrowsize=0.5, penwidth=1.0, fontname="Helvetica", fontsize=7, fontcolor="#52514e"];
+    "mapping" [label=<<B>ngs_mapping</B><BR ALIGN="LEFT"/><FONT POINT-SIZE="7" COLOR="#52514e">BAM files of the normals</FONT><BR ALIGN="LEFT"/>>];
+    "pon_access" [label=<<B>pon_access</B><BR ALIGN="LEFT"/><FONT POINT-SIZE="7" COLOR="#52514e">panel_of_normals, tool: access</FONT><BR ALIGN="LEFT"/>>];
+    "pon_mutect2" [label=<<B>pon_mutect2</B><BR ALIGN="LEFT"/><FONT POINT-SIZE="7" COLOR="#52514e">panel_of_normals, tool: mutect2</FONT><BR ALIGN="LEFT"/>>];
+    "pon_cnvkit" [label=<<B>pon_cnvkit</B><BR ALIGN="LEFT"/><FONT POINT-SIZE="7" COLOR="#52514e">panel_of_normals, tool: cnvkit</FONT><BR ALIGN="LEFT"/>>];
+    "pon_purecn" [label=<<B>pon_purecn</B><BR ALIGN="LEFT"/><FONT POINT-SIZE="7" COLOR="#52514e">panel_of_normals, tool: purecn</FONT><BR ALIGN="LEFT"/>>];
+    "variant_calling" [label=<<B>variant_calling</B><BR ALIGN="LEFT"/><FONT POINT-SIZE="7" COLOR="#52514e">tool: mutect2</FONT><BR ALIGN="LEFT"/>>];
+    "targeted" [label=<<B>somatic_targeted_seq_cnv_calling</B><BR ALIGN="LEFT"/><FONT POINT-SIZE="7" COLOR="#52514e">tool: cnvkit or purecn</FONT><BR ALIGN="LEFT"/>>];
+    "wgs" [label=<<B>somatic_wgs_cnv_calling</B><BR ALIGN="LEFT"/>>];
+    { rank=same; "mapping"; "pon_access"; }
+    { rank=same; "variant_calling"; "targeted"; "wgs"; }
+    "mapping" -> "pon_mutect2" [color="#eb6834b3"];
+    "mapping" -> "pon_purecn" [color="#eb6834b3"];
+    "mapping" -> "pon_cnvkit" [color="#eb6834b3"];
+    "pon_access" -> "pon_cnvkit" [color="#2a78d6b3"];
+    "pon_mutect2" -> "variant_calling" [color="#008300b3"];
+    "pon_mutect2" -> "pon_purecn" [color="#008300b3", label="GenomicsDB"];
+    "pon_purecn" -> "targeted" [color="#008300b3"];
+    "pon_cnvkit" -> "targeted" [color="#008300b3", label="exome"];
+    "pon_cnvkit" -> "wgs" [color="#008300b3", label="whole genome"];
+}
+```
 
 ## Somatic variant calling
 
@@ -27,11 +58,15 @@ Smaller panels are common.
 With too few samples, GATK provides a panel of normals in the same bundle.
 
 By default, all normal DNA libraries of the sample sheets build the panel.
-`path_normals_list` selects other libraries: a file with one library name per line.
-These are used even if the sample sheet does not flag them as normal.
+Two options change what goes into it:
 
-`ignore_contigs` restricts the panel to the sequences of interest.
-It lists regular expressions, matched with `re.search` against the contig names.
+`path_normals_list`
+: Selects other libraries: a file with one library name per line.
+    These are used even if the sample sheet does not flag them as normal.
+
+`ignore_contigs`
+: Restricts the panel to the sequences of interest.
+    It lists regular expressions, matched with `re.search` against the contig names.
 
 ```yaml
 tasks:
@@ -81,24 +116,29 @@ A `mutect2` variant calling task takes it from the panel task in `depends_on.pan
 
 ## Copy numbers of exome data
 
-The panels for `cnvkit` and `purecn` need extra files, and their calling tasks read these files from the panel task.
+The panels for `cnvkit` and `purecn` need extra files.
+Their calling tasks read these files from the panel task.
 
 ### cnvkit
 
 Without `depends_on.kits`, `cnvkit` runs in whole genome mode.
-For exomes, `depends_on.kits` names an `external_data` task with `kits`, and the baits of the kit of the normals are the targets.
+For exomes, `depends_on.kits` names an `external_data` task with `kits`.
+The baits of the kit of the normals are then the targets.
 All normals must be targeted libraries of the same kit.
-A `somatic_targeted_seq_cnv_calling` task reads an exome panel in `depends_on.panel_of_normals`, a `somatic_wgs_cnv_calling` task a whole genome panel.
+
+A `somatic_targeted_seq_cnv_calling` task reads an exome panel in `depends_on.panel_of_normals`.
+A `somatic_wgs_cnv_calling` task reads a whole genome panel in the same key.
 
 An access file lists the regions that are suitable for coverage analysis, without repeats, hard-to-map regions or extreme GC content.
-CNVkit provides one for `GRCh37` but not for `GRCh38`.
+CNVkit provides one for `GRCh37`, but it is incomplete for `GRCh38`.
 A task with `tool: access` creates it from the reference and from BED files of regions to exclude, such as mappability regions.
 Its file is `tasks/<access task>/work/panel_of_normals/out/panel_of_normals.accessible.bed`.
+
 The `cnvkit` task names the access task in `depends_on.access`.
 An `external_data` task with `produces: {type: raw, tags: [access]}` and `files: {access: <BED file>}` serves as well.
-
 The access file is optional.
-Without it, exome mode does not restrict the antitarget regions, and whole genome mode creates an access file with default settings.
+Without it, exome mode does not restrict the antitarget regions.
+Whole genome mode creates an access file with default settings instead.
 
 ```yaml
 - name: pon_access
@@ -122,7 +162,7 @@ Without it, exome mode does not restrict the antitarget regions, and whole genom
     cnvkit: {}
 ```
 
-The panel task writes `metrics.tsv` and `sex.tsv` reports in `panel_of_normals/report/`.
+The panel task writes `panel_of_normals.metrics.tsv` and `panel_of_normals.sex.tsv` reports in `panel_of_normals/report/`.
 The CNVkit authors recommend checking them before the panel is used.
 The pipeline cannot yet create separate panels for male and female samples.
 

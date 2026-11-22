@@ -36,11 +36,35 @@ The task reads these tasks through `depends_on`:
 : The gene annotation, an `external_data` task.
     Needed with `copy_number_alteration` or `expression`.
 
+```{graphviz}
+:alt: The tasks that cbioportal_export reads and the depends_on keys that name them
+
+digraph cbioportal {
+    rankdir=LR; nodesep=0.12; ranksep=0.35;
+    bgcolor="transparent"; fontname="Helvetica"; labelloc=b;
+    label=<<FONT POINT-SIZE="7" COLOR="#898781">Arrow labels: the depends_on key of the reading task, optional ones in parentheses</FONT>>;
+    node [shape=box, style="rounded,filled", fillcolor="#ffffff", color="#c3c2b7", fontname="Helvetica", fontsize=9, fontcolor="#0b0b0b", margin="0.08,0.03"];
+    edge [arrowsize=0.5, penwidth=1.0, fontname="Helvetica", fontsize=7, fontcolor="#52514e"];
+    "variant_calling" [label=<<B>variant_calling</B><BR ALIGN="LEFT"/>>];
+    "variant_annotation" [label=<<B>variant_annotation</B><BR ALIGN="LEFT"/><FONT POINT-SIZE="7" COLOR="#52514e">tool: vep</FONT><BR ALIGN="LEFT"/>>];
+    "cnv" [label=<<B>somatic_targeted_seq_cnv_calling</B><BR ALIGN="LEFT"/>>];
+    "rna" [label=<<B>ngs_mapping</B><BR ALIGN="LEFT"/><FONT POINT-SIZE="7" COLOR="#52514e">RNA, tool: star</FONT><BR ALIGN="LEFT"/>>];
+    "features" [label=<<B>external_data</B><BR ALIGN="LEFT"/><FONT POINT-SIZE="7" COLOR="#52514e">gene annotation</FONT><BR ALIGN="LEFT"/>>];
+    "cbioportal_export" [label=<<B>cbioportal_export</B><BR ALIGN="LEFT"/>>];
+    "variant_calling" -> "variant_annotation" [color="#1baf7ab3", label="variants"];
+    "variant_annotation" -> "cbioportal_export" [color="#1baf7ab3", label="variants"];
+    "cnv" -> "cbioportal_export" [color="#1baf7ab3", label="(copy_number)"];
+    "rna" -> "cbioportal_export" [color="#eb6834b3", label="(alignments)"];
+    "features" -> "cbioportal_export" [color="#2a78d6b3", label="(features)"];
+}
+```
+
 ## Configuration
 
 The conversion from VCF to MAF uses a script that needs a mapping from gene symbols to NCBI (Entrez) gene ids.
 The mapping does not depend on the genome release.
-`hgnc_complete_set.txt` from [HGNC](https://www.genenames.org/download/archive/) provides it, and `path_gene_id_mappings` points to it.
+`hgnc_complete_set.txt` from [HGNC](https://www.genenames.org/download/archive/) provides it.
+`path_gene_id_mappings` points to it.
 
 ```yaml
 tasks:
