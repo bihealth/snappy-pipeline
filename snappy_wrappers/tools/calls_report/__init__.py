@@ -56,6 +56,23 @@ def variant_type(ref: str, alt: str, info: dict[str, str]) -> str:
     return "INS" if len(alt) > len(ref) else "DEL"
 
 
+def sv_end(record: Record) -> int:
+    """The last reference base of the variant: ``END`` of a structural variant, else by the REF length."""
+    end = record.info.get("END")
+    return int(end) if end else record.position + len(record.ref) - 1
+
+
+def sv_length(record: Record) -> int | None:
+    """The length of a structural variant: ``SVLEN`` (of the allele), else the span to ``END``;
+    ``None`` for a breakend, which has neither."""
+    values = record.info.get("SVLEN", "").split(",")
+    value = values[record.alt_index] if len(values) > 1 else values[0]
+    if value not in ("", "."):
+        return abs(int(value))
+    end = record.info.get("END")
+    return int(end) - record.position if end else None
+
+
 def _core(record: Record) -> dict[str, Any]:
     return {
         "chromosome": record.chromosome,
@@ -81,7 +98,8 @@ def rows_and_columns(
     vcf: Vcf, options: Options = Options()
 ) -> tuple[list[dict[str, Any]], dict[str, Column]]:
     """The rows of the calls table and the rendering of its columns, in column order:
-    the core, the event probabilities, the annotation, the frequencies and ClinVar, the samples,
+    the core (with the length and the end of structural variants), the event probabilities,
+    the annotation, the frequencies and ClinVar, the samples,
     then ID, quality, filter, hints and the inspect link."""
     events = varlociraptor.events(vcf)
     annotated = annotation.annotation_of(vcf)
@@ -91,9 +109,14 @@ def rows_and_columns(
     inspect = events and "varlociraptor_inspect" in options.linkouts
     members = pedigree.members_of(list(options.pedigree), vcf.samples)
     with_pedigree = bool(events) and len(members) > 1 and any(m.sample for m in members)
+    # By the records: varlociraptor declares the SV fields in every header
+    structural = any("SVTYPE" in record.info for record in vcf.records)
     rows = []
     for record in vcf.records:
         row = _core(record)
+        if structural:
+            row["SV length"] = sv_length(record)
+            row["end"] = sv_end(record)
         if links["position"]:
             row["gnomad_chromosome"] = annotation.gnomad_chromosome(record.chromosome)
         if events:
@@ -113,7 +136,13 @@ def rows_and_columns(
         if inspect:
             row |= varlociraptor.inspect_values(record, events, vcf.samples)
         rows.append(row)
-    columns: dict[str, Column] = {name: Column() for name in CORE}
+    names = list(CORE)
+    if structural:  # the length after the type; the end, hidden, for the IGV views
+        names[3:3] = ["SV length", "end"]
+    columns: dict[str, Column] = {name: Column() for name in names}
+    if structural:
+        columns["SV length"] = Column(precision=0)
+        columns["end"] = Column(display="hidden")
     columns["position"] = Column(precision=0, links=links["position"] or None)
     if links["position"]:
         columns["gnomad_chromosome"] = Column(display="hidden")
@@ -222,6 +251,11 @@ def describe(vcf: Vcf, columns: dict[str, Column], options: Options) -> Descript
         )
     if "ClinVar" in columns:
         column_notes.append("`ClinVar`: the germline classifications; the VCV accession on demand.")
+    if "SV length" in columns:
+        column_notes.append(
+            "`SV length`: the length of a structural variant, `SVLEN` or else the span to `END`; "
+            "a breakend has none."
+        )
     on_demand = [name for name in ("id", "quality", "filter") if name in columns]
     if on_demand:
         column_notes.append(", ".join(f"`{name}`" for name in on_demand) + ": on demand.")

@@ -238,6 +238,7 @@ The columns follow what the VCF carries:
   The details of a row show the observations and the posterior density of the allele frequency.
   The observations are bars per strength of evidence, with reads for the alternative allele to the right and for the reference to the left.
 - Other callers: the genotype, allele frequency, alt reads, depth and genotype quality of each sample.
+- Structural variants: `SV length` after the type, from `SVLEN` or else the span to `END`; a breakend has none.
 - Annotated variants (mehari's `ANN` or VEP's `CSQ`): the gene, consequence, impact and HGVS of the picked annotation.
   The frequency and ClinVar fields of mehari add the gnomAD frequency and the ClinVar classification.
 - `linkouts` open in a new window: gnomAD, ClinVar, dbSNP, Ensembl, GeneCards, OMIM and varlociraptor-inspect.
@@ -269,6 +270,7 @@ With `calls_report: {igv: {}}`, the task also renders IGV views of the top calls
 For these views, it reads the BAMs of `depends_on.alignments` and the genome.
 `igv.top` (default 20) sets how many calls of each view get an IGV view, taken round-robin over the views.
 `igv.flanking` sets the width of the window around a call in base pairs.
+A structural variant spans to its `END`; one longer than `igv.max_span` (default 10 000 bp) gets a view of each breakpoint instead, so one large deletion cannot fill the page.
 `igv.max_size_mb` limits the size of the page, which drops the lowest-ranked calls until the page fits.
 The `igv` column of the table links a selected call to the page and every call to a running IGV desktop (`localhost:60151`).
 

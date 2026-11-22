@@ -16,7 +16,7 @@ from snappy_wrappers.tools.qc_summary import Summary, Table
 FIXTURES = Path(__file__).parent / "fixtures" / "qc_summary"
 
 
-def _view(name, positions, posteriors=None):
+def _view(name, positions, posteriors=None, ends=None):
     frame = pl.DataFrame(
         {
             "chromosome": ["1"] * len(positions),
@@ -27,13 +27,15 @@ def _view(name, positions, posteriors=None):
             "gene": ["G"] * len(positions),
         }
     )
+    if ends is not None:  # the hidden column of a table with structural variants
+        frame = frame.with_columns(pl.Series("end", ends, dtype=pl.Int64))
     return Table(name, name, frame)
 
 
 def test_select_sites_interleaves_the_views_by_rank_and_takes_each_call_once():
     views = [_view("denovo", [10, 20, 30]), _view("present", [20, 40]), _view("dominant", [])]
 
-    sites = igv.select_sites(views, top=2)
+    sites = igv.select_sites(views, top=2, max_span=10_000)
 
     # Rank 1 of every view, then rank 2; denovo's second call is present's first, counted once
     assert sites["rank"].to_list() == [1, 2, 3]
@@ -46,17 +48,45 @@ def test_select_sites_interleaves_the_views_by_rank_and_takes_each_call_once():
     assert sites["posterior"].to_list() == [0.9, 0.9, 0.9]
     assert list(sites.columns) == list(igv.SITE_COLUMNS)
     # Only the named views, top above their rows takes all they have
-    named = igv.select_sites(views, top=10, names=["present"])
+    named = igv.select_sites(views, top=10, names=["present"], max_span=10_000)
     assert named["begin"].to_list() == [20, 40]
     # A pattern names every per-member view; a name must exist
     per_member = [_view("denovo_idx", [10]), _view("denovo_sib1", [20]), _view("present", [30])]
-    assert igv.select_sites(per_member, top=5, names=["denovo_*"])["view"].to_list() == [
+    assert igv.select_sites(per_member, top=5, names=["denovo_*"], max_span=10_000)[
+        "view"
+    ].to_list() == [
         "denovo_idx",
         "denovo_sib1",
     ]
     with pytest.raises(ValueError, match="view 'denovo' is not one of"):
-        igv.select_sites(per_member, top=5, names=["denovo"])
-    assert igv.select_sites(views, top=5, names=["dominant"]).height == 0
+        igv.select_sites(per_member, top=5, names=["denovo"], max_span=10_000)
+    assert igv.select_sites(views, top=5, names=["dominant"], max_span=10_000).height == 0
+
+
+def test_select_sites_spans_a_structural_variant_and_splits_a_long_one():
+    # A deletion of 500 bp, a breakend (its end is its position) and a deletion of 50 kb
+    view = _view("present", [100, 5000, 9000], ends=[600, 5000, 59000])
+
+    sites = igv.select_sites([view], top=5, max_span=10_000)
+
+    assert sites.select("rank", "begin", "end", "breakpoint").rows() == [
+        (1, 100, 600, ""),
+        (2, 5000, 5000, ""),
+        (3, 9000, 9000, "start"),
+        (3, 59000, 59000, "end"),
+    ]
+    table = _view("all", [100, 5000, 9000], ends=[600, 5000, 59000])
+    summary = Summary(table=table, views=[view])
+
+    igv.annotate(summary, sites, requested=3, limit_mb=50)
+
+    # One rank per call, the end breakpoint joins no row; IGV desktop shows the whole span
+    assert table.frame["igv"].to_list() == [1, 2, 3]
+    assert table.columns["igv"].links["IGV desktop"] == (
+        "http://localhost:60151/goto?locus={chromosome}:{position}-{end}"
+    )
+    assert "The top 3 calls of this view have IGV views" in view.desc
+    assert "requested calls fit" not in table.desc
 
 
 def test_track_config_lists_the_calls_and_one_alignment_track_per_library():
@@ -125,6 +155,7 @@ def test_build_page_trims_the_sites_until_the_page_fits(tmp_path, monkeypatch):
         "top": 10,
         "views": [],
         "flanking": 300,
+        "max_span": 10_000,
         "max_size_mb": 10,
         "libraries": ["a", "b", "c"],
     }
@@ -169,7 +200,14 @@ def test_build_page_trims_the_sites_until_the_page_fits(tmp_path, monkeypatch):
 
 def test_build_page_without_sites_writes_no_page(tmp_path):
     summary = Summary(table=_view("all", []), views=[_view("present", [])])
-    settings = {"top": 5, "views": [], "flanking": 300, "max_size_mb": 50, "libraries": []}
+    settings = {
+        "top": 5,
+        "views": [],
+        "flanking": 300,
+        "max_span": 10_000,
+        "max_size_mb": 50,
+        "libraries": [],
+    }
 
     page, sites, requested = igv.build_page(
         summary, settings, [], [], "c.vcf.gz", "c.tbi", "ref.fa", str(tmp_path), "T", run=None

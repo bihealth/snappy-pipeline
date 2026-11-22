@@ -34,6 +34,10 @@ class IgvViews(ToolModel):
     flanking: int = 300
     """Width of the window around a call in base pairs, half on each side"""
 
+    max_span: int = 10_000
+    """Longest structural variant shown whole, in base pairs, its span plus the window;
+    a longer one gets a view of each breakpoint instead, so one large deletion cannot fill the page"""
+
     max_size_mb: int = 50
     """Size limit of the IGV page; the lowest-ranked calls are dropped until it fits"""
 

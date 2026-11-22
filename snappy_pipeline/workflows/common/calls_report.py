@@ -146,6 +146,7 @@ class CallsReportStepPart(BaseStepPart):
             "top": igv.top,
             "views": list(igv.views),
             "flanking": igv.flanking,
+            "max_span": igv.max_span,
             "max_size_mb": igv.max_size_mb,
             "extra_arguments": list(igv.extra_arguments),
             "libraries": self.igv_libraries(entity),

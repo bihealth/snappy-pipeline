@@ -38,6 +38,21 @@ GENERIC_VCF = """##fileformat=VCFv4.2
 1\t200\t.\tA\tAT\t.\tlow_qual\tDP=10\tGT:AD:DP:GQ\t0/0:10,0:10:30\t./.:.:.:.
 """
 
+#: Structural variants: a deletion with END, an insertion with SVLEN only, a breakend with neither
+SV_VCF = """##fileformat=VCFv4.2
+##contig=<ID=1>
+##contig=<ID=2>
+##INFO=<ID=SVTYPE,Number=1,Type=String,Description="Type of structural variant">
+##INFO=<ID=END,Number=1,Type=Integer,Description="End position of structural variant (inclusive, 1-based).">
+##INFO=<ID=SVLEN,Number=.,Type=Integer,Description="Difference in length between REF and ALT alleles">
+##INFO=<ID=MATEID,Number=.,Type=String,Description="ID of mate breakend">
+##FORMAT=<ID=GT,Number=1,Type=String,Description="Genotype">
+#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\tFORMAT\tS1
+1\t1000\t.\tN\t<DEL>\t.\tPASS\tSVTYPE=DEL;END=1500;SVLEN=-500\tGT\t0/1
+1\t3000\t.\tN\t<INS>\t.\tPASS\tSVTYPE=INS;SVLEN=50\tGT\t0/1
+1\t5000\tbnd_a\tN\tN[2:100[\t.\tPASS\tSVTYPE=BND;MATEID=bnd_b\tGT\t0/1
+"""
+
 
 def _validate(summary):
     """The datavzrd configuration of ``summary`` is valid against the schema."""
@@ -497,3 +512,22 @@ def test_a_vcf_without_calls_still_has_its_views():
     assert summary.default_view is None  # no view has calls, so the site opens with all calls
     assert summary.table.frame.height == 0
     _validate(summary)
+
+
+def test_structural_variants_get_their_length_and_a_hidden_end(tmp_path):
+    path = tmp_path / "sv.vcf"
+    path.write_text(SV_VCF)
+
+    summary = summarize(str(path), Options())
+
+    frame = summary.table.frame
+    assert frame.columns[:7] == ["chromosome", "position", "type", "SV length", "end", "ref", "alt"]
+    assert frame["type"].to_list() == ["DEL", "INS", "BND"]
+    assert frame["SV length"].to_list() == [500, 50, None]
+    assert frame["end"].to_list() == [1500, 3000, 5000]
+    assert summary.table.columns["end"].display == "hidden"
+    assert summary.table.columns["SV length"].precision == 0
+    assert "`SV length`: the length of a structural variant" in summary.table.desc
+    _validate(summary)
+    # Small variants have neither column, although varlociraptor declares the SV fields
+    assert "SV length" not in summarize(str(CALLS), Options()).table.frame.columns

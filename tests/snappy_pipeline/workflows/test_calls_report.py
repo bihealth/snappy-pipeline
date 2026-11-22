@@ -212,6 +212,7 @@ def test_igv_views_read_the_bams_of_the_members_and_their_matched_normals():
         "top": 5,
         "views": ["somatic_tumor_high"],
         "flanking": 300,
+        "max_span": 10000,
         "max_size_mb": 50,
         "extra_arguments": [],
         "libraries": ["P001-T1-DNA1-WES1", "P001-N1-DNA1-WES1"],

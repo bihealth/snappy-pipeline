@@ -5,6 +5,8 @@ The top calls of the chosen views, taken round-robin by rank so that every view 
 become the sites of one ``create_report`` run:
 a page with an igv.js session per site, the reads of every library sliced around it,
 and a table of the sites.
+A structural variant spans its ``END``; one longer than ``max_span`` gets two sites,
+its start and its end breakpoint, so one large deletion cannot fill the page.
 The page is cut to a size limit by dropping the lowest-ranked sites and rerunning.
 igv.js is inlined from the copy that the environment's post-deploy script fetched,
 so no job needs network,
@@ -37,13 +39,15 @@ IGV_JS_TAG = re.compile(
     r'<script[^>]*src="https://cdn\.jsdelivr\.net/npm/igv@3\.5\.2/dist/igv\.min\.js"[^>]*>\s*</script>'
 )
 
-#: Columns of the sites file, in order; ``create_report`` reads the sequence, begin and end
+#: Columns of the sites file, in order; ``create_report`` reads the sequence, begin and end;
+#: ``breakpoint`` is ``start`` or ``end`` for the two sites of a long structural variant
 SITE_COLUMNS = (
     "rank",
     "view",
     "chromosome",
     "begin",
     "end",
+    "breakpoint",
     "ref",
     "alt",
     "posterior",
@@ -69,10 +73,32 @@ def chosen_views(views: Sequence[Table], names: Sequence[str]) -> list[Table]:
     return [view for view in views if view.name in selected]
 
 
-def select_sites(views: Sequence[Table], top: int, names: Sequence[str] = ()) -> pl.DataFrame:
+def _site(
+    rank: int, view: str, call: dict[str, Any], begin: int, end: int, breakpoint: str
+) -> dict[str, Any]:
+    return {
+        "rank": rank,
+        "view": view,
+        "chromosome": call["chromosome"],
+        "begin": begin,
+        "end": end,
+        "breakpoint": breakpoint,
+        "ref": call["ref"],
+        "alt": call["alt"],
+        "posterior": call.get(f"P({view})"),
+        "gene": call.get("gene", ""),
+        "consequence": call.get("consequence", ""),
+    }
+
+
+def select_sites(
+    views: Sequence[Table], top: int, names: Sequence[str] = (), *, max_span: int
+) -> pl.DataFrame:
     """The sites of the page:
     the first ``top`` calls of each view in ``names`` (all views if empty),
-    interleaved by rank so that every view contributes, each call once."""
+    interleaved by rank so that every view contributes, each call once.
+    A call spans to its ``end`` (a structural variant's ``END``) when the table has one;
+    a span longer than ``max_span`` becomes two sites, the start and the end breakpoint."""
     chosen = chosen_views(views, names)
     heads = [view.frame.head(top).to_dicts() for view in chosen]
     rows: list[dict[str, Any]] = []
@@ -86,26 +112,20 @@ def select_sites(views: Sequence[Table], top: int, names: Sequence[str] = ()) ->
             if key in seen:
                 continue
             seen.add(key)
-            rows.append(
-                {
-                    "rank": len(rows) + 1,
-                    "view": view.name,
-                    "chromosome": call["chromosome"],
-                    "begin": call["position"],
-                    "end": call["position"] + len(call["ref"]) - 1,
-                    "ref": call["ref"],
-                    "alt": call["alt"],
-                    "posterior": call.get(f"P({view.name})"),
-                    "gene": call.get("gene", ""),
-                    "consequence": call.get("consequence", ""),
-                }
-            )
+            begin = call["position"]
+            end = call.get("end") or begin + len(call["ref"]) - 1
+            if end - begin + 1 > max_span:
+                rows.append(_site(len(seen), view.name, call, begin, begin, "start"))
+                rows.append(_site(len(seen), view.name, call, end, end, "end"))
+            else:
+                rows.append(_site(len(seen), view.name, call, begin, end, ""))
     schema = {
         "rank": pl.Int64,
         "view": pl.String,
         "chromosome": pl.String,
         "begin": pl.Int64,
         "end": pl.Int64,
+        "breakpoint": pl.String,
         "ref": pl.String,
         "alt": pl.String,
         "posterior": pl.Float64,
@@ -206,9 +226,11 @@ def build_page(
 ) -> tuple[str | None, pl.DataFrame, int]:
     """Create the page in ``workdir``:
     the path (``None`` without sites),
-    the sites it shows and the number of sites requested before the size limit cut them."""
-    sites = select_sites(summary.views, settings["top"], settings.get("views", ()))
-    requested = sites.height
+    the sites it shows and the number of calls requested before the size limit cut them."""
+    sites = select_sites(
+        summary.views, settings["top"], settings.get("views", ()), max_span=settings["max_span"]
+    )
+    requested = sites["rank"].n_unique()
     limit = settings["max_size_mb"] * 1024 * 1024
     tracks_path = os.path.join(workdir, "tracks.json")
     with open(tracks_path, "wt") as handle:
@@ -245,20 +267,25 @@ def annotate(summary: Summary, sites: pl.DataFrame, requested: int, limit_mb: in
     """Add the ``igv`` column (the rank of a selected call,
     linked to the page and to IGV desktop)
     to every table of ``summary`` and a sentence to the descriptions."""
-    ranks = sites.select(
+    calls = sites.filter(pl.col("breakpoint") != "end")  # one row per call
+    ranks = calls.select(
         *KEY[:1], pl.col("begin").alias("position"), "ref", "alt", pl.col("rank").alias("igv")
     )
+    # IGV desktop shows the whole structural variant
+    locus = "{chromosome}:{position}"
+    if "end" in summary.table.frame.columns:
+        locus += "-{end}"
     column = Column(
         precision=0,
         links={
             "IGV": f"../{PAGE}#{{value}}",
-            "IGV desktop": "http://localhost:60151/goto?locus={chromosome}:{position}",
+            "IGV desktop": f"http://localhost:60151/goto?locus={locus}",
         },
     )
     for table in (summary.table, *summary.views):
         table.frame = table.frame.join(ranks, on=list(KEY), how="left", maintain_order="left")
         table.columns = {**table.columns, "igv": column}
-    per_view = sites.group_by("view").len().to_dicts() if sites.height else []
+    per_view = calls.group_by("view").len().to_dicts() if calls.height else []
     counts = {row["view"]: row["len"] for row in per_view}
     for view in summary.views:
         if view.name in counts:
@@ -271,9 +298,9 @@ def annotate(summary: Summary, sites: pl.DataFrame, requested: int, limit_mb: in
         f"\n- IGV views of the top calls of the views are in `{PAGE}`; "
         "the `igv` column links a call to its view."
     )
-    if requested > sites.height:
+    if requested > calls.height:
         note += (
-            f"\n- {sites.height} of the {requested} requested calls fit the size limit of "
+            f"\n- {calls.height} of the {requested} requested calls fit the size limit of "
             f"{limit_mb} MB."
         )
     summary.table.desc += note
