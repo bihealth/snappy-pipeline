@@ -4,6 +4,7 @@ the VCF reader, the varlociraptor and the generic sample columns,
 the compact cells and the datavzrd configuration."""
 
 import json
+import re
 from pathlib import Path
 
 import fastjsonschema
@@ -19,7 +20,16 @@ from snappy_wrappers.tools.calls_report.varlociraptor import (
     phred_to_probability,
 )
 from snappy_wrappers.tools.calls_report.vcf import header_attributes, read_vcf
-from snappy_wrappers.tools.qc_summary import AGAINST, CELL_CONFIG, SEQUENTIAL, VEGA_LITE, config
+from snappy_wrappers.tools.calls_report import annotation
+from snappy_wrappers.tools.qc_summary import (
+    AGAINST,
+    CELL_CONFIG,
+    MUTED,
+    SEQUENTIAL,
+    STATUS,
+    VEGA_LITE,
+    config,
+)
 
 FIXTURES = Path(__file__).parent / "fixtures" / "qc_summary"
 CALLS = FIXTURES / "calls.vcf"
@@ -314,12 +324,42 @@ def test_annotated_calls_get_gene_consequence_impact_hgvs_and_the_other_entries(
     assert row["gene_id"] == "ENSG00000134532" and row["hgnc_id"] == "11201"
     assert row["other annotations"].startswith("ENST00000367206.3: downstream_gene_variant; ")
     assert columns["impact"].plot["pills"]["domain"] == ["HIGH", "MODERATE", "LOW", "MODIFIER"]
-    assert columns["consequence"].ellipsis == 32 and columns["hgvs.p"].ellipsis == 28
+    assert columns["hgvs.p"].ellipsis == 28
     assert columns["transcript"].display == "available"
     assert columns["other annotations"].display == "available"
     assert list(columns)[-2:] == ["other annotations", "hints"]  # last in the row details
     assert columns["gene_id"].display == "hidden"
     _validate(summary)
+
+
+def test_consequences_are_pills_split_at_ampersands_and_colored_by_their_own_impact():
+    """A JS renderer, as datavzrd's pills stay in one piece: the terms of a call in the
+    annotator's order, colored by their own impact (unknown terms as MODIFIERs), the
+    ``_variant`` suffix dropped from the label with the term on hover, on one line with a ``+N``
+    pill for the terms beyond the first two, and linked to the Sequence Ontology if selected."""
+    summary = summarize(str(ANNOTATED))
+    renderer = summary.table.columns["consequence"].custom
+
+    assert renderer == annotation.consequence_column({}).custom
+    assert renderer.startswith("function(value, row) {") and 'split("&")' in renderer
+    colors = json.loads(re.search(r"const colors = (\{.*?\});", renderer).group(1))
+    assert colors["stop_gained"] == STATUS["critical"]
+    assert colors["missense_variant"] == STATUS["serious"]
+    assert colors["synonymous_variant"] == STATUS["warning"]
+    assert "intron_variant" not in colors and f'|| "{MUTED}"' in renderer
+    assert 'term.endsWith("_variant") ? term.slice(0, -8) : term' in renderer
+    assert 'title="${term}"' in renderer and "white-space: nowrap" in renderer
+    assert "const shown = terms.length <= 3 ? terms.length : 2;" in renderer
+    assert "+${rest.length}" in renderer and "const link = null;" in renderer
+    assert summary.table.columns["consequence"].plot is None
+    _validate(summary)
+
+    linked = summarize(str(ANNOTATED), Options(linkouts=LINKOUTS)).table.columns["consequence"]
+    assert (
+        'const link = "https://www.sequenceontology.org/browser/current_release/search/?q=";'
+        in linked.custom
+    )
+    assert '<a href="${link}${encodeURIComponent(term)}" target="_blank"' in linked.custom
 
 
 def test_frequencies_and_clinvar_come_from_the_fields_mehari_adds():

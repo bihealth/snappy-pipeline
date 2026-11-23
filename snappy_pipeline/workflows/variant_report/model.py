@@ -23,6 +23,7 @@ class Linkout(enum.StrEnum):
     ensembl = "ensembl"
     genecards = "genecards"
     omim = "omim"
+    sequence_ontology = "sequence_ontology"
     varlociraptor_inspect = "varlociraptor_inspect"
 
 
@@ -91,8 +92,9 @@ class VariantReport(SnappyStepModel, ToolModel):
 
     linkouts: list[Linkout] = list(Linkout)
     """Links of a variant (``gnomad``, ``clinvar``, ``dbsnp``, and ``varlociraptor_inspect``,
-    which opens varlociraptor's observations of the call without any names)
-    and of its gene (``ensembl``, ``genecards``, ``omim``); empty for none.
+    which opens varlociraptor's observations of the call without any names),
+    of its gene (``ensembl``, ``genecards``, ``omim``)
+    and of its consequences (``sequence_ontology``); empty for none.
     gnomAD, ClinVar and dbSNP by position and Ensembl need the genome build,
     which an annotation task in the chain tags its variants with; without one they are left out"""
 

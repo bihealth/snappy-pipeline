@@ -16,6 +16,7 @@ Ensembl) need the assembly, which the annotation task tags its variants with.
 
 from __future__ import annotations
 
+import json
 import re
 from dataclasses import dataclass
 from typing import Any
@@ -28,6 +29,49 @@ from .vcf import Record, Vcf
 #: The impacts, highest first, and their colors (status colors; the label is always shown)
 IMPACTS = ("HIGH", "MODERATE", "LOW", "MODIFIER")
 IMPACT_COLORS = (STATUS["critical"], STATUS["serious"], STATUS["warning"], MUTED)
+
+#: The impact of each consequence term (Sequence Ontology) above MODIFIER, as VEP and mehari rate
+#: them; every other term, known or not, is a MODIFIER
+CONSEQUENCE_IMPACTS = {
+    term: impact
+    for impact, terms in {
+        "HIGH": (
+            "transcript_ablation",
+            "exon_loss_variant",
+            "splice_acceptor_variant",
+            "splice_donor_variant",
+            "stop_gained",
+            "frameshift_variant",
+            "stop_lost",
+            "start_lost",
+            "transcript_amplification",
+            "feature_elongation",
+            "feature_truncation",
+            "rare_amino_acid_variant",
+        ),
+        "MODERATE": (
+            "inframe_insertion",
+            "inframe_deletion",
+            "disruptive_inframe_insertion",
+            "disruptive_inframe_deletion",
+            "conservative_inframe_insertion",
+            "conservative_inframe_deletion",
+            "missense_variant",
+            "protein_altering_variant",
+        ),
+        "LOW": (
+            "splice_donor_5th_base_variant",
+            "splice_region_variant",
+            "splice_donor_region_variant",
+            "splice_polypyrimidine_tract_variant",
+            "incomplete_terminal_codon_variant",
+            "start_retained_variant",
+            "stop_retained_variant",
+            "synonymous_variant",
+        ),
+    }.items()
+    for term in terms
+}
 
 #: ClinVar's germline classifications and their colors:
 #: pathogenic on the status colors, benign in blue, conflicting in violet,
@@ -166,14 +210,65 @@ def values(record: Record, annotation: Annotation) -> dict[str, Any]:
     return row
 
 
-def columns(annotation: Annotation, links: dict[str, str]) -> dict[str, Column]:
-    """The rendering of the annotation columns, in order; ``links`` are the gene linkouts."""
+#: The datavzrd renderer of the consequences of a call, on one line: one pill per term, split at
+#: ``&`` in the annotator's order (mehari: the most severe first), colored by the impact of its
+#: own term like datavzrd's pills (the terms the table leaves out are MODIFIERs), labelled
+#: without the ``_variant`` suffix with the term on hover, and linked to the term's search in the
+#: Sequence Ontology (``link``: the URL the term is appended to, or null). A call with more than
+#: three consequences shows two and a ``+N`` pill, which lists the rest on hover and shows them
+#: on click, so the row keeps its height.
+CONSEQUENCE_RENDERER = """function(value, row) {
+  const colors = %(colors)s;
+  const link = %(link)s;
+  const dark = (hex) => {
+    const n = parseInt(hex.slice(1), 16);
+    return 0.299 * (n >> 16) + 0.587 * ((n >> 8) & 255) + 0.114 * (n & 255) < 128;
+  };
+  const shape = "display: inline-block; padding: 4px 8px; margin: 2px; border-radius: 12px; text-decoration: none;";
+  const terms = String(value).split("&").filter((term) => term);
+  const shown = terms.length <= 3 ? terms.length : 2;
+  const pills = terms.map((term, index) => {
+    const color = colors[term] || "%(muted)s";
+    const label = term.endsWith("_variant") ? term.slice(0, -8) : term;
+    const text = dark(color) ? "white" : "inherit";
+    const hidden = index < shown ? "" : " display: none;";
+    const attrs = `style="${shape} background-color: ${color}; color: ${text};${hidden}" title="${term}"${index < shown ? "" : " data-more"}`;
+    if (link) {
+      return `<a href="${link}${encodeURIComponent(term)}" target="_blank" ${attrs}>${label}</a>`;
+    }
+    return `<span ${attrs}>${label}</span>`;
+  });
+  if (shown < terms.length) {
+    const rest = terms.slice(shown);
+    const reveal = "for (const pill of this.parentElement.querySelectorAll('[data-more]')) pill.style.display = 'inline-block'; this.remove();";
+    pills.splice(shown, 0, `<span style="${shape} background-color: %(muted)s; cursor: pointer;" title="${rest.join(", ")}" onclick="${reveal}">+${rest.length}</span>`);
+  }
+  return `<div style="white-space: nowrap; margin: 6px 0;">${pills.join("")}</div>`;
+}"""
+
+
+def consequence_column(links: dict[str, str]) -> Column:
+    """The consequences of a call as pills (:data:`CONSEQUENCE_RENDERER`);
+    ``links`` holds the Sequence Ontology search URL the pills link to, if selected."""
+    colors = {
+        term: IMPACT_COLORS[impact_rank(impact)] for term, impact in CONSEQUENCE_IMPACTS.items()
+    }
+    link = next(iter(links.values()), None)
+    values = {"colors": json.dumps(colors), "link": json.dumps(link), "muted": MUTED}
+    return Column(custom=CONSEQUENCE_RENDERER % values)
+
+
+def columns(
+    annotation: Annotation, links: dict[str, str], consequence_links: dict[str, str] = {}
+) -> dict[str, Column]:
+    """The rendering of the annotation columns, in order; ``links`` are the gene linkouts,
+    ``consequence_links`` the one of the consequence pills."""
     fields = annotation.fields()
     result: dict[str, Column] = {}
     if "gene" in fields:
         result["gene"] = Column(links=links or None)
     if "consequence" in fields:
-        result["consequence"] = Column(ellipsis=32)
+        result["consequence"] = consequence_column(consequence_links)
     if "impact" in fields:
         result["impact"] = pills(IMPACTS, IMPACT_COLORS)
     for name in ("hgvs.c", "hgvs.p"):
@@ -297,10 +392,21 @@ def gnomad_chromosome(chromosome: str) -> str:
 
 
 def linkouts(selected: set[str], assembly: str | None) -> dict[str, dict[str, str]]:
-    """The linkouts by table column (``position``, ``gene``, ``id``, ``ClinVar``),
+    """The linkouts by table column (``position``, ``gene``, ``id``, ``ClinVar``,
+    ``consequence``: the URL a term is appended to, for the pills' renderer),
     for the ``selected`` names; the build-dependent ones only with a known ``assembly``."""
     build = assembly in ASSEMBLIES
-    result: dict[str, dict[str, str]] = {"position": {}, "gene": {}, "id": {}, "ClinVar": {}}
+    result: dict[str, dict[str, str]] = {
+        "position": {},
+        "gene": {},
+        "id": {},
+        "ClinVar": {},
+        "consequence": {},
+    }
+    if "sequence_ontology" in selected:
+        result["consequence"]["Sequence Ontology"] = (
+            "https://www.sequenceontology.org/browser/current_release/search/?q="
+        )
     if "gnomad" in selected and build:
         dataset = "gnomad_r4" if assembly == "GRCh38" else "gnomad_r2_1"
         result["position"]["gnomAD"] = (

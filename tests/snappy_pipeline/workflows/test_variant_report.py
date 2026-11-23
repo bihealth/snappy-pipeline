@@ -58,6 +58,7 @@ def test_the_report_reads_the_vcf_of_the_entity_from_the_upstream_task():
             "ensembl",
             "genecards",
             "omim",
+            "sequence_ontology",
             "varlociraptor_inspect",
         ],
         "assembly": None,

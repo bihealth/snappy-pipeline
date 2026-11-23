@@ -443,7 +443,7 @@ These checks get the libraries with donor, pedigree and sex, and the donors of t
 
 A `Column` has a datavzrd display mode (`display`: `pinned`, `normal`, `available`, `detail` or `hidden`), `links` and an `ellipsis`.
 `links` maps a name to a URL with `{value}` and `{Other column}` placeholders, which datavzrd fills without encoding.
-A `Column` can also carry a vega-lite plot per cell (`custom_plot`: a JS `data` function of the cell value and a `spec`).
+A `Column` can also carry a vega-lite plot per cell (`custom_plot`: a JS `data` function of the cell value and a `spec`), or a JS renderer of the cell's HTML (`custom`), as the consequence pills of the calls report do to wrap within a bounded width.
 
 | Function    | Shows                                                    |
 | ----------- | -------------------------------------------------------- |

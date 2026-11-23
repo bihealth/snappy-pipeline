@@ -38,7 +38,7 @@ class Options:
 
     page_size: int = 25
     max_in_memory_rows: int | None = None
-    #: The linkouts to render (names of ``snappy_pipeline.models.calls_report.Linkout``)
+    #: The linkouts to render (names of ``snappy_pipeline.workflows.variant_report.model.Linkout``)
     linkouts: tuple[str, ...] = ()
     #: The genome build of the variants (``GRCh37``, ``GRCh38``), for the build-dependent linkouts
     assembly: str | None = None
@@ -154,7 +154,7 @@ def rows_and_columns(
             row["pedigree"] = ""
         columns["pedigree"] = pedigree.column(members)
     if annotated:
-        columns |= annotation.columns(annotated, links["gene"])
+        columns |= annotation.columns(annotated, links["gene"], links["consequence"])
     columns |= annotation.frequency_column_specs(frequencies)
     if clinvar:
         columns |= annotation.clinvar_columns(links["ClinVar"])

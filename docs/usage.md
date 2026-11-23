@@ -255,8 +255,10 @@ The columns follow what the VCF carries:
 - Other callers: the genotype, allele frequency, alt reads, depth and genotype quality of each sample.
 - Structural variants: `SV length` after the type, from `SVLEN` or else the span to `END`; a breakend has none.
 - Annotated variants (mehari's `ANN` or VEP's `CSQ`): the gene, consequence, impact and HGVS of the picked annotation.
+  The consequences are pills on one line, split at `&` in the annotator's order (mehari: the most severe first), each colored by its own impact and labelled without the `_variant` suffix, with the term on hover; `impact` is the highest of them.
+  A call with more than three consequences shows two and a `+N` pill, which lists the rest on hover and shows them on click.
   The frequency and ClinVar fields of mehari add the gnomAD frequency and the ClinVar classification.
-- `linkouts` open in a new window: gnomAD, ClinVar, dbSNP, Ensembl, GeneCards, OMIM and varlociraptor-inspect.
+- `linkouts` open in a new window: gnomAD, ClinVar, dbSNP, Ensembl, GeneCards, OMIM, the Sequence Ontology (each consequence pill) and varlociraptor-inspect.
   varlociraptor-inspect shows the observations of a call and puts no sample names into its link.
   The linkouts that depend on the genome build need an annotation task in the chain, because that task tags its variants with the assembly.
   Without such a task, they are left out.

@@ -120,6 +120,8 @@ class Column:
     plot: dict | None = None
     #: A vega-lite plot per cell: ``{"data": <JS function of value and row>, "spec": {...}}``
     custom_plot: dict | None = None
+    #: A JS function of the cell value and the row that returns the HTML of the cell
+    custom: str | None = None
     #: Shown in the details of a row only (``display="detail"``)
     detail: bool = False
     #: Not shown at all (``display="hidden"``)
@@ -145,6 +147,8 @@ class Column:
             if isinstance(plot.get("spec"), dict):
                 plot["spec"] = json.dumps(plot["spec"])
             spec["custom-plot"] = plot
+        if self.custom:
+            spec["custom"] = self.custom
         display = self.display or ("detail" if self.detail else "hidden" if self.hidden else None)
         if display:
             spec["display-mode"] = display
@@ -159,8 +163,8 @@ class Column:
         return spec
 
     def check(self) -> None:
-        """datavzrd takes one of ellipsis, links, a custom plot and a cell plot per column,
-        plus the pairs heatmap with ellipsis or links and pills with links;
+        """datavzrd takes one of ellipsis, links, a custom plot, a custom renderer and a cell
+        plot per column, plus the pairs heatmap with ellipsis or links and pills with links;
         a pills plot has its own ``ellipsis``."""
         features = []
         if self.ellipsis:
@@ -169,6 +173,8 @@ class Column:
             features.append("link-to-url")
         if self.custom_plot:
             features.append("custom-plot")
+        if self.custom:
+            features.append("custom")
         features += list(self.plot or {})
         allowed = len(features) == 2 and (
             ("heatmap" in features and ("ellipsis" in features or "link-to-url" in features))
