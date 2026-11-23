@@ -37,6 +37,19 @@ def test_summary_counts_libraries_per_data_set_type_and_kit():
     assert lines[2].split() == ["second", "cancer", "rna", "mRNA_seq", "1"]
 
 
+def test_summary_splits_a_data_set_by_the_batches_of_the_sheet():
+    df = _libraries(
+        ("a", "first", "germline", "dna", "WES", "MedExome"),
+        ("b", "first", "germline", "dna", "WES", "MedExome"),
+        ("c", "first", "germline", "dna", "WES", "MedExome"),
+    )
+    df["batch_no"] = ["run-2024-A", "run-2024-B", "run-2024-A"]
+    lines = library_summary(df).splitlines()
+    assert lines[0].split()[:3] == ["data_set", "batch_no", "kind"]
+    assert lines[1].split() == ["first", "run-2024-A", "germline", "dna", "WES", "MedExome", "2"]
+    assert lines[2].split() == ["first", "run-2024-B", "germline", "dna", "WES", "MedExome", "1"]
+
+
 def test_warnings_name_mixed_rna_types_several_kits_and_missing_kits():
     df = _libraries(
         ("a", "first", "germline", "dna", "WES", "MedExome"),

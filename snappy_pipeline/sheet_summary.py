@@ -22,8 +22,9 @@ from snappy_pipeline.library_table import TARGETED_LIBRARY_TYPES
 #: JSON schema of the sample sheet values of one library
 LIBRARY_SCHEMA = os.path.join(os.path.dirname(__file__), "schemas", "library.schema.yaml")
 
-#: Columns of the summary table, where the sample sheets have them
-SUMMARY_COLUMNS = ["data_set", "kind", "extraction_type", "library_type", "library_kit"]
+#: Columns of the summary table, where the sample sheets have them (``batch_no`` is the sheet's
+#: ``batchNo`` custom field)
+SUMMARY_COLUMNS = ["data_set", "batch_no", "kind", "extraction_type", "library_type", "library_kit"]
 
 #: Number of libraries that a warning names before it shortens the list
 MAX_NAMES = 5
@@ -50,7 +51,7 @@ def check_libraries(df: pd.DataFrame) -> None:
 
 
 def library_summary(df: pd.DataFrame) -> str:
-    """Return the number of libraries per data set, kind, extraction type, library type and kit."""
+    """Return the number of libraries per data set, batch, kind, extraction type, library type and kit."""
     columns = [column for column in SUMMARY_COLUMNS if column in df.columns]
     counts = df[columns].fillna("").groupby(columns).size().rename("libraries")
     return counts.reset_index().to_string(index=False)
