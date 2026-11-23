@@ -22,7 +22,6 @@ from snappy_pipeline.workflows.abstract.protocol import (
     Reference,
     Regions,
 )
-from snappy_pipeline.models.calls_report import CallsReport
 
 
 class Tool(enum.StrEnum):
@@ -172,13 +171,9 @@ class VariantFiltrationDependsOn(SnappyModel):
         ExpectedPathSchema(ExpectedVariants),
     ]
 
-    alignments: Annotated[
-        DnaAlignments, RequiredBy(Tool.dkfz, Tool.ebfilter), RequiredBy(when="calls_report.igv")
-    ] = ""
+    alignments: Annotated[DnaAlignments, RequiredBy(Tool.dkfz, Tool.ebfilter)] = ""
 
-    reference: Annotated[
-        Reference, RequiredBy(Tool.dkfz, Tool.ebfilter), RequiredBy(when="calls_report.igv")
-    ] = ""
+    reference: Annotated[Reference, RequiredBy(Tool.dkfz, Tool.ebfilter)] = ""
 
     regions: Annotated[Regions, RequiredBy(Tool.regions)] = ""
     """Task with the BED file of the ``regions`` filter"""
@@ -186,9 +181,6 @@ class VariantFiltrationDependsOn(SnappyModel):
 
 class VariantFiltration(SnappyStepModel):
     depends_on: VariantFiltrationDependsOn
-
-    calls_report: CallsReport | None = None
-    """The calls of each VCF as a table and a datavzrd site for the report; unset: no report"""
 
     tool: Annotated[Tool, EnumField(Tool)]
     """One task = one tool. Vembrane supports both ``tag`` and ``filter`` modes."""

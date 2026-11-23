@@ -34,9 +34,6 @@ Below ``tasks/<task>/output/``:
 Here ``library_name`` is the library of the child, or the tumor library.
 The output has the tags of the input plus ``phased``.
 
-- with ``calls_report``: ``{library_name}/report/calls/{library_name}.calls.tsv``, the calls of the VCF as a table (one row per call).
-  The same table is a datavzrd site below ``report/calls/html/``, which ``snappy report`` shows.
-
 Downstream tasks read ``vcf`` and ``vcf_tbi`` through ``depends_on``.
 """
 
@@ -53,7 +50,6 @@ from snappy_pipeline.workflows.abstract import (
     WritePedigreeStepPart,
 )
 from snappy_pipeline.workflows.common import vcf_outputs
-from snappy_pipeline.workflows.common.calls_report import CallsReportStepPart
 from snappy_pipeline.workflows.common.scatter import RegionScatter
 from snappy_pipeline.workflows.abstract.protocol import DataSignature, DataType
 
@@ -317,11 +313,6 @@ class VariantPhasingWorkflow(BaseStep):
     def default_group_by(cls, config):
         """The tumor tools phase each tumor library; the pedigree tools declare the grouping of their variants task."""
         return "library" if config.tool in _TUMOR_TOOLS else None
-
-    def __init__(self, workflow, project, task_name):
-        super().__init__(workflow, project, task_name)
-        if self.config.calls_report:
-            self.register_sub_step_classes((CallsReportStepPart,))
 
     @cached_property
     def output_entities(self) -> list[str]:

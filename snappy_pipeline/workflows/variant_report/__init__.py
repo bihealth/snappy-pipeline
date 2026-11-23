@@ -1,14 +1,26 @@
 # -*- coding: utf-8 -*-
-"""The calls report of a task: one job per entity that renders the calls of its VCF as a table.
+"""Report of the variant calls of a task
 
-A step that writes VCFs registers :class:`CallsReportStepPart` when its ``calls_report`` section is set.
-With ``calls_report.igv`` the job also reads the BAMs of the entity's libraries (``depends_on.alignments``)
-and the genome, and writes IGV views of the top calls into the site.
-The job reads the task's own output VCF of the entity,
-writes the calls table as the result file ``{library_name}/report/calls/{library_name}.calls.tsv`` and renders a datavzrd site below ``{library_name}/report/calls/html/``,
-which the Snakemake report shows (``snappy report``).
-The ``calls_report`` wrapper builds the table with ``snappy_wrappers.tools.calls_report``;
-the columns follow what the VCF carries.
+The step renders the calls of each VCF of ``depends_on.variants`` as a table.
+The ``tool`` field is ``datavzrd``, which renders the table as a site for the report (``snappy report``).
+The task writes one report per entity of the upstream task: per library, or per pedigree or donor when that task writes one VCF per related group.
+The columns follow what the VCF carries:
+varlociraptor's event probabilities and observations, or the genotypes, allele frequencies and depths of other callers;
+the gene, consequence, impact and HGVS of annotated variants;
+the gnomAD frequency and ClinVar classification that mehari adds.
+The linkouts that depend on the genome build need an annotation task in the chain, which tags its variants with the build.
+With ``igv`` set, the job also reads the BAMs of the entity's libraries (``depends_on.alignments``) and the genome (``depends_on.reference``),
+and renders IGV views of the top calls of each view into the site.
+
+Outputs
+-------
+
+Below ``tasks/<task>/output/``:
+
+- ``{library_name}/report/calls/{library_name}.calls.tsv`` with ``.md5``, the calls of the VCF as a table (one row per call).
+  The same table is a datavzrd site below ``report/calls/html/``, which ``snappy report`` shows.
+
+The ``calls_report`` wrapper builds the table with ``snappy_wrappers.tools.calls_report``.
 """
 
 from __future__ import annotations
@@ -19,19 +31,23 @@ from snakemake.io import directory
 from snakemake.iocontainers import Wildcards
 
 from snappy_pipeline.utils import dictify
-from snappy_pipeline.workflows.abstract import BaseStepPart, ReportOutput, ResourceUsage
+from snappy_pipeline.workflows.abstract import BaseStep, BaseStepPart, ReportOutput, ResourceUsage
+from snappy_pipeline.workflows.abstract.protocol import DataSignature, DataType, ExpectedVariants
+from snappy_pipeline.workflows.variant_calling.scenario import event_suffix
+
+from .model import Tool
+from .model import VariantReport as VariantReportConfigModel
 
 #: The genome builds that an annotation task tags its variants with
 ASSEMBLIES = frozenset({"GRCh37", "GRCh38"})
 
 
-class CallsReportStepPart(BaseStepPart):
-    """The calls of each VCF of the task as a table and a datavzrd site for the report."""
+class DatavzrdStepPart(BaseStepPart):
+    """The calls of each VCF of the upstream task as a table and a datavzrd site for the report."""
 
-    name = "calls_report"
+    name = "datavzrd"
     actions = ("run",)
     wrappers = {"run": "calls_report"}
-    entity_wildcard = "library_name"
     result_keys = ("tsv", "tsv_md5")
 
     #: The site, and the table itself for download
@@ -44,14 +60,18 @@ class CallsReportStepPart(BaseStepPart):
 
     default_resource_usage = ResourceUsage(threads=1, runtime="2h", mem="8GB")
 
+    def tool_section(self):
+        """datavzrd has no section of its own: the ``extra_arguments`` are the step's"""
+        return self.config
+
     def _get_input_files_run(self, wildcards: Wildcards) -> dict[str, Any]:
-        """The task's own output VCF of the entity (the PASS calls of mutect2);
+        """The VCF of the entity from ``depends_on.variants``;
         with IGV views the BAMs of its libraries and the genome."""
-        paths = self.parent.get_output_paths(
-            self.parent.config, library_name=wildcards.library_name
+        variants: ExpectedVariants = self.parent.get_upstream_paths(
+            "variants", library_name=wildcards.library_name
         )
-        inputs: dict[str, Any] = {"vcf": paths["vcf"], "vcf_tbi": paths["vcf_tbi"]}
-        if self.parent.config.calls_report.igv:
+        inputs: dict[str, Any] = {"vcf": variants.vcf, "vcf_tbi": variants.vcf_tbi}
+        if self.config.igv:
             alignments = [
                 self.parent.get_upstream_paths("alignments", library_name=library)
                 for library in self.igv_libraries(wildcards.library_name)
@@ -72,12 +92,11 @@ class CallsReportStepPart(BaseStepPart):
         return {"log": "work/{library_name}/log/{library_name}.calls_report.log"}
 
     def _get_params_run(self, wildcards: Wildcards) -> dict[str, Any]:
-        settings = self.parent.config.calls_report
         return {
             "title": f"{self.parent.task_name}: calls of {wildcards.library_name}",
-            "page_size": settings.page_size,
-            "max_in_memory_rows": settings.max_in_memory_rows,
-            "linkouts": [str(link) for link in settings.linkouts],
+            "page_size": self.config.page_size,
+            "max_in_memory_rows": self.config.max_in_memory_rows,
+            "linkouts": [str(link) for link in self.config.linkouts],
             "assembly": self.assembly(),
             "igv": self._igv_params(wildcards.library_name),
             "pedigree": self.pedigree(wildcards.library_name),
@@ -94,12 +113,9 @@ class CallsReportStepPart(BaseStepPart):
         return libraries
 
     def assembly(self) -> str | None:
-        """The genome build the task's variants are tagged with (``variant_annotation`` adds it and the steps after it keep it), else ``None``."""
-        for signature in self.parent.project.signatures[self.parent.task_name]:
-            for tag in signature.tags:
-                if tag in ASSEMBLIES:
-                    return tag
-        return None
+        """The genome build the variants are tagged with (``variant_annotation`` adds it and the steps after it keep it), else ``None``."""
+        tags = self.parent.upstream_signature("variants").tags
+        return next((tag for tag in tags if tag in ASSEMBLIES), None)
 
     def pedigree(self, entity: str) -> list[dict[str, Any]]:
         """The members of the entity's pedigree for the pedigree plot: every donor of the
@@ -107,9 +123,6 @@ class CallsReportStepPart(BaseStepPart):
         after the donor, with its parents, sex and affected status, and for a sequenced one
         its part of a per-member event name (``denovo_<member>``), so the plot marks the member
         of such an event; empty for an entity that is no pedigree."""
-        # Imported here: the variant_calling package imports this module
-        from snappy_pipeline.workflows.variant_calling.scenario import event_suffix
-
         if self.parent.effective_group_by != "related":
             return []
         donors = self.parent.pedigree_donors(entity, include_background=True)
@@ -139,7 +152,7 @@ class CallsReportStepPart(BaseStepPart):
         return members
 
     def _igv_params(self, entity: str) -> dict[str, Any] | None:
-        igv = self.parent.config.calls_report.igv
+        igv = self.config.igv
         if not igv:
             return None
         return {
@@ -151,3 +164,19 @@ class CallsReportStepPart(BaseStepPart):
             "extra_arguments": list(igv.extra_arguments),
             "libraries": self.igv_libraries(entity),
         }
+
+
+class VariantReportWorkflow(BaseStep):
+    """Render the calls of the VCFs of a task as tables for the report"""
+
+    name = "variant_report"
+
+    produces = [DataSignature(DataType.TABULAR, frozenset({"calls"}))]
+    config_model_class = VariantReportConfigModel
+    tool_parts = {Tool.datavzrd: DatavzrdStepPart}
+
+    @classmethod
+    def get_output_paths(cls, config, signature=None, **kwargs) -> dict[str, str]:
+        """The calls table of an entity, a ``work/`` path."""
+        lib = kwargs.get("library_name", "{library_name}")
+        return {"tsv": f"work/{lib}/report/calls/{lib}.calls.tsv"}

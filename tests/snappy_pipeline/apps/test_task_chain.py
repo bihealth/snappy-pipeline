@@ -56,7 +56,8 @@ def test_required_keys_follow_the_tool():
         "features",
         "exons",
     ]
-    # Keys a setting needs (calls_report.igv) are not asked for
+    # Keys a setting needs (the igv views of variant_report) are not asked for
+    assert [key.name for key in required_keys("variant_report", "datavzrd")] == ["variants"]
     assert [key.name for key in required_keys("variant_filtration", "vembrane")] == ["variants"]
     assert [key.name for key in required_keys("variant_filtration", "dkfz")] == [
         "variants",

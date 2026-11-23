@@ -662,7 +662,6 @@ WRAPPERS_WITHOUT_EXTRA_ARGUMENTS = {
             "pvactools/features",
             "pvactools/hla_types",
             "reference_download/ensembl",
-            "calls_report",
             "varlociraptor/split_candidates",
         ),
         "an R script without command line arguments": (
@@ -774,7 +773,8 @@ def test_tool_wrappers_get_extra_arguments():
 
 def test_wrappers_use_the_extra_arguments_they_get():
     """A rule whose params carry the tool's ``extra_arguments`` runs a wrapper that puts them on
-    the command line, as ``{extra_arguments}`` (filled in by the wrapper base classes)."""
+    the command line: as ``{extra_arguments}`` in a shell template (filled in by the wrapper base
+    classes), or as the list ``args["extra_arguments"]`` of a Python wrapper's command."""
     found = set()
     for _, job in _snapshot_jobs():
         args = job["params"].get("args")
@@ -782,7 +782,7 @@ def test_wrappers_use_the_extra_arguments_they_get():
             continue
         wrapper = job["wrapper"].split("/snappy_wrappers/wrappers/", 1)[1]
         code = "".join(p.read_text(encoding="utf-8") for p in _wrapper_python_files(wrapper))
-        if "{extra_arguments}" not in code:
+        if "{extra_arguments}" not in code and 'args["extra_arguments"]' not in code:
             found.add(wrapper)
     assert not found, f"wrappers that ignore their extra_arguments: {sorted(found)}"
 

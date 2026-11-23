@@ -10,7 +10,6 @@ from snappy_pipeline.models import (
     SnappyStepModel,
     ToolModel,
 )
-from snappy_pipeline.models.calls_report import CallsReport
 from snappy_pipeline.workflows.abstract.protocol import (
     RELATED_LEVEL,
     DataSignature,
@@ -63,7 +62,6 @@ class VariantPhasingDependsOn(SnappyModel):
         RequiredBy(
             Tool.gatk_read_backed_phasing, Tool.gatk_read_backed_phasing_tumor, Tool.whatshap_tumor
         ),
-        RequiredBy(when="calls_report.igv"),
     ] = ""
     variants: Annotated[
         str,
@@ -88,9 +86,6 @@ class VariantPhasingDependsOn(SnappyModel):
 
 class VariantPhasing(SnappyStepModel):
     depends_on: VariantPhasingDependsOn
-
-    calls_report: CallsReport | None = None
-    """The calls of each VCF as a table and a datavzrd site for the report; unset: no report"""
 
     tool: Annotated[Tool, EnumField(Tool)]
 

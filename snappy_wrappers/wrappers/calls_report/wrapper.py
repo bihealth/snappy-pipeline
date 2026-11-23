@@ -46,7 +46,13 @@ def main():
                 args["title"],
             )
             igv.annotate(summary, sites, requested, settings["max_size_mb"])
-        render(summary, args["title"], snakemake.output.tsv, snakemake.output.html)
+        render(
+            summary,
+            args["title"],
+            snakemake.output.tsv,
+            snakemake.output.html,
+            args["extra_arguments"],
+        )
         igv.install_page(page, snakemake.output.html)
 
 

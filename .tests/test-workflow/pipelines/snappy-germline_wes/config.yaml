@@ -99,13 +99,19 @@ tasks:
     step: variant_filtration
     config:
       tool: vembrane
-      calls_report: {}
       depends_on:
         variants: annotation
       vembrane:
         mode: filter
         expression: 'QUAL > 10'
         extra_arguments: ["--backend pysam"]
+
+  - name: report_final
+    step: variant_report
+    config:
+      depends_on:
+        variants: filtration_final
+      tool: datavzrd
 
   # Varlociraptor on the trio: candidates per pedigree in the kit's targets, calls against the
   # germline scenario, FDR control on present and de novo variants, then the annotation
@@ -139,9 +145,15 @@ tasks:
       depends_on:
         variants: calling_varlociraptor
       tool: varlociraptor
-      calls_report: {}
       varlociraptor:
         events: [present, denovo_*, recessive, dominant]
+
+  - name: report_fdr_varlociraptor
+    step: variant_report
+    config:
+      depends_on:
+        variants: fdr_varlociraptor
+      tool: datavzrd
 
   - name: annotation_varlociraptor
     step: variant_annotation
@@ -151,9 +163,15 @@ tasks:
         reference: genome
         database: mehari_db
       tool: "mehari"
-      calls_report: {}
       mehari:
         assembly: GRCh37
+
+  - name: report_annotation_varlociraptor
+    step: variant_report
+    config:
+      depends_on:
+        variants: annotation_varlociraptor
+      tool: datavzrd
 
   # Structural variants of the trio from delly2 as candidates for varlociraptor
   - name: sv_calling

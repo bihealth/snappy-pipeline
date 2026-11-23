@@ -490,8 +490,7 @@ The charts are interactive:
 ### Calls report
 
 The calls report (`snappy_wrappers/tools/calls_report/`) uses `custom_plot` for the observations and the allele frequency density of each sample.
-The `calls_report` wrapper renders it per VCF for the shared `CallsReportStepPart` of `snappy_pipeline/workflows/common/calls_report.py`.
-A VCF step registers this step part when its `calls_report` section is set.
+The `calls_report` wrapper renders it per VCF for the `variant_report` step (`snappy_pipeline/workflows/variant_report/`), which reads the VCFs of `depends_on.variants`.
 The columns follow the VCF's header: varlociraptor's `PROB_*` fields or the FORMAT fields of other callers.
 The cell holds the compact strings of the VCF (`SAOBS|SROBS`, a thinned `AFD`).
 The `data` function parses them in the browser, so a row costs tens of bytes per sample.

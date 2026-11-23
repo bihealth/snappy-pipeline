@@ -1002,7 +1002,7 @@ def _rule_rows(names: list[str], instances: dict[str, Any]) -> list[dict[str, st
     "--part",
     "parts",
     multiple=True,
-    help="Only the rules of this step part, such as calls_report or qc_summary (repeatable).",
+    help="Only the rules of this step part, such as qc_summary (repeatable).",
 )
 @click.option(
     "--names", is_flag=True, help="Only the rule names, one per line, for snakemake --forcerun."
@@ -1012,8 +1012,8 @@ def rules(directory, task_names, parts, names, as_json, plain):
     """List the rules of the project as Snakemake names them: <task>_<step>_<part>_<action> for
     the jobs of a step part, <task>_results for the job that links the results of a task.
 
-    Rerun the report jobs of every task:
-        snappy run -- --forcerun $(snappy rules --part calls_report --part qc_summary --names)
+    Rerun the QC summaries of every task:
+        snappy run -- --forcerun $(snappy rules --part qc_summary --names)
     """
     if names and (as_json or plain):
         raise click.UsageError("--names excludes --json and --plain")

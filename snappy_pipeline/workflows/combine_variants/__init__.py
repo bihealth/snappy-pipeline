@@ -20,9 +20,6 @@ Below ``tasks/<task>/output/``:
 
 - ``{library_name}/out/{library_name}.vcf.gz`` with ``.tbi``, ``.md5`` and ``.tbi.md5`` files.
 
-- with ``calls_report``: ``{library_name}/report/calls/{library_name}.calls.tsv``, the calls of the VCF as a table with one row per call.
-  ``snappy report`` shows the same table as a datavzrd site below ``report/calls/html/``.
-
 Downstream tasks read ``vcf`` and ``vcf_tbi`` through ``depends_on``.
 """
 
@@ -40,7 +37,6 @@ from snappy_pipeline.workflows.abstract import (
     ResourceUsage,
 )
 from snappy_pipeline.workflows.common import vcf_outputs
-from snappy_pipeline.workflows.common.calls_report import CallsReportStepPart
 from snappy_pipeline.workflows.abstract.protocol import DataSignature, DataType
 
 from .model import CombineVariants as CombineVariantsConfigModel
@@ -146,5 +142,3 @@ class CombineVariantsWorkflow(BaseStep):
 
         super().__init__(workflow, project, task_name)
         self.register_sub_step_classes((CombineVariantsStepPart,))
-        if self.config.calls_report:
-            self.register_sub_step_classes((CallsReportStepPart,))

@@ -19,10 +19,10 @@ The listing commands `snappy task list`, `snappy check-files` and `snappy rules`
 On a terminal they print a table; on a pipe, or with `--plain`, tab-separated lines without header and frame; with `--json`, an array with one object per row.
 The data goes to stdout and the messages to stderr, so `snappy check-files --json > missing.json` holds only the rows.
 `snappy rules` lists the rules of the project as Snakemake names them: `<task>_<step>_<part>_<action>` for the jobs of a step part and `<task>_results` for the job that links the results of a task.
-`--task` and `--part` restrict the listing, and `--names` prints only the names, one per line, so that a rerun of the report jobs is one command:
+`--task` and `--part` restrict the listing, and `--names` prints only the names, one per line, so that a rerun of the QC summaries of every task is one command:
 
 ```shell
-snappy run -- --forcerun $(snappy rules --part calls_report --part qc_summary --names)
+snappy run -- --forcerun $(snappy rules --part qc_summary --names)
 ```
 
 `snappy task add` takes `[task_name=]step_type` arguments, for example `mapping=ngs_mapping`, and so does `snappy init --task`.
@@ -241,9 +241,9 @@ A scatter chart shows the pairs, and a swapped, unrelated or duplicated sample f
 
 ### Calls report
 
-When its `calls_report` section is set, a task renders the calls of each of its VCFs as a table.
-The steps `variant_calling`, `variant_filtration`, `variant_annotation`, `concat_variants`, `variant_phasing` and `combine_variants` have this section.
-`calls_report: {}` turns the report on with the defaults.
+A `variant_report` task renders the calls of each VCF of the task named in its `depends_on.variants` as a table.
+Its `tool` is `datavzrd`, and any task that produces variants can be reported: calling, filtration, annotation, phasing, concatenated or combined calls.
+The task writes one report per entity of the upstream task: per library, or per pedigree or donor when that task writes one VCF per related group.
 The table is also the result file `report/calls/<entity>.calls.tsv`.
 
 The columns follow what the VCF carries:
@@ -280,8 +280,8 @@ For a pedigree, the row details also draw the pedigree of the call:
   The gray background of this bar is as wide as the most reads of a member.
 - The title is the event with its posterior.
 
-With `calls_report: {igv: {}}`, the task also renders IGV views of the top calls of each view into one page, `igv/top.html` of the site.
-For these views, it reads the BAMs of `depends_on.alignments` and the genome.
+With `igv: {}`, the task also renders IGV views of the top calls of each view into one page, `igv/top.html` of the site.
+For these views, it reads the BAMs of `depends_on.alignments` and the genome of `depends_on.reference`.
 `igv.top` (default 20) sets how many calls of each view get an IGV view, taken round-robin over the views.
 `igv.flanking` sets the width of the window around a call in base pairs.
 A structural variant spans to its `END`; one longer than `igv.max_span` (default 10 000 bp) gets a view of each breakpoint instead, so one large deletion cannot fill the page.

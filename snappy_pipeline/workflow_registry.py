@@ -48,6 +48,7 @@ from snappy_pipeline.workflows.variant_checking import VariantCheckingWorkflow
 from snappy_pipeline.workflows.variant_export_external import VariantExportExternalWorkflow
 from snappy_pipeline.workflows.variant_filtration import VariantFiltrationWorkflow
 from snappy_pipeline.workflows.variant_phasing import VariantPhasingWorkflow
+from snappy_pipeline.workflows.variant_report import VariantReportWorkflow
 from snappy_pipeline.workflows.wgs_cnv_export_external import WgsCnvExportExternalWorkflow
 from snappy_pipeline.workflows.wgs_sv_export_external import WgsSvExportExternalWorkflow
 
@@ -93,6 +94,7 @@ WORKFLOW_REGISTRY = {
         VariantExportExternalWorkflow,
         VariantFiltrationWorkflow,
         VariantPhasingWorkflow,
+        VariantReportWorkflow,
         WgsCnvExportExternalWorkflow,
         WgsSvExportExternalWorkflow,
     )

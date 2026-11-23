@@ -321,9 +321,7 @@ TASK_CONFIG: dict[tuple[str, str | None], dict[str, Any]] = {
     ("variant_filtration", "vembrane"): {"vembrane": {"expressions": {"some_filter": "True"}}},
     ("variant_filtration", "varlociraptor"): {
         "varlociraptor": {"events": ["somatic_tumor_high", "somatic_tumor_medium"]},
-        "calls_report": {},
     },
-    ("variant_annotation", "mehari"): {"calls_report": {}},
     ("wgs_cnv_export_external", None): VARIANT_EXPORT_EXTERNAL,
     ("wgs_sv_export_external", None): VARIANT_EXPORT_EXTERNAL,
 }
@@ -411,20 +409,28 @@ EXTRA_TASKS: list[dict[str, Any]] = [
     _external_vcfs("external_sv", ["germline", "sv"]),
     # The inputs of neoepitope prediction that other closures do not need
     _external_file("proteome", "raw", ["proteome"], "fasta", PLACEHOLDER),
-    # FDR control of the germline varlociraptor calls with IGV views of the top calls, which
-    # read the BAMs and the genome
+    # FDR control of the germline varlociraptor calls per pedigree, and its calls report with IGV
+    # views of the top calls, which read the BAMs and the genome
     {
         "step": "variant_filtration",
-        "name": "variant_filtration_varlociraptor_igv",
+        "name": "variant_filtration_varlociraptor_germline",
+        "config": {
+            "depends_on": {"variants": "variant_calling_varlociraptor_germline"},
+            "tool": "varlociraptor",
+            "varlociraptor": {"events": ["present", "denovo_*", "recessive", "dominant"]},
+        },
+    },
+    {
+        "step": "variant_report",
+        "name": "variant_report_igv",
         "config": {
             "depends_on": {
-                "variants": "variant_calling_varlociraptor_germline",
+                "variants": "variant_filtration_varlociraptor_germline",
                 "alignments": "ngs_mapping_bwa",
                 "reference": "genome",
             },
-            "tool": "varlociraptor",
-            "varlociraptor": {"events": ["present", "denovo_*", "recessive", "dominant"]},
-            "calls_report": {"igv": {}},
+            "tool": "datavzrd",
+            "igv": {},
         },
     },
     # Candidate calling per pedigree, as the germline varlociraptor closure reads it

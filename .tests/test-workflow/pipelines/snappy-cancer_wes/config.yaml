@@ -125,12 +125,18 @@ tasks:
     step: variant_filtration
     config:
       tool: vembrane
-      calls_report: {}
       depends_on:
         variants: tag_complex
       vembrane:
         mode: filter
         expression: '"modifier" not in FILTER'
+
+  - name: report_final
+    step: variant_report
+    config:
+      depends_on:
+        variants: filtration_final
+      tool: datavzrd
 
 
   # Varlociraptor on the tumor and its normal: candidates in the kit's targets, calls against
@@ -164,6 +170,12 @@ tasks:
       depends_on:
         variants: calling_varlociraptor
       tool: varlociraptor
-      calls_report: {}
       varlociraptor:
         events: [somatic_tumor_high, somatic_tumor_medium]
+
+  - name: report_fdr_varlociraptor
+    step: variant_report
+    config:
+      depends_on:
+        variants: fdr_varlociraptor
+      tool: datavzrd

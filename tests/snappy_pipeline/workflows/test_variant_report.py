@@ -1,45 +1,54 @@
 # -*- coding: utf-8 -*-
-"""Tests of the shared calls report step part of the VCF steps."""
+"""Tests of the ``variant_report`` step: the calls of the VCFs of an upstream task as tables."""
 
 from types import SimpleNamespace
 
+import pytest
+from pydantic import ValidationError
 from snakemake.io import is_flagged
 
-from snappy_pipeline.models.calls_report import CallsReport
 from snappy_pipeline.workflows.abstract.protocol import DataSignature, DataType
-from snappy_pipeline.workflows.common.calls_report import CallsReportStepPart
+from snappy_pipeline.workflows.variant_report import DatavzrdStepPart, VariantReportWorkflow
+from snappy_pipeline.workflows.variant_report.model import VariantReport
 
 
-def _paths(config, library_name):
-    return {
-        "vcf": f"work/{library_name}/out/{library_name}.vcf.gz",
-        "vcf_tbi": f"work/{library_name}/out/{library_name}.vcf.gz.tbi",
-    }
+def _upstream_paths(field, library_name):
+    if field == "alignments":
+        return SimpleNamespace(
+            bam=f"tasks/mapping/work/{library_name}/out/{library_name}.bam",
+            bai=f"tasks/mapping/work/{library_name}/out/{library_name}.bam.bai",
+        )
+    assert field == "variants"
+    return SimpleNamespace(
+        vcf=f"tasks/fdr/work/{library_name}/out/{library_name}.vcf.gz",
+        vcf_tbi=f"tasks/fdr/work/{library_name}/out/{library_name}.vcf.gz.tbi",
+    )
 
 
-def _part(tags=frozenset({"germline", "filtered"}), **settings):
-    part = object.__new__(CallsReportStepPart)
-    signatures = {"fdr": (DataSignature(DataType.VARIANTS, frozenset(tags)),)}
+def _part(tags=frozenset({"germline", "filtered"}), depends_on=None, **settings):
+    part = object.__new__(DatavzrdStepPart)
+    depends_on = {"variants": "fdr", **(depends_on or {})}
+    part.config = VariantReport(depends_on=depends_on, tool="datavzrd", **settings)
     part.parent = SimpleNamespace(
-        task_name="fdr",
-        config=SimpleNamespace(calls_report=CallsReport(**settings)),
-        get_output_paths=_paths,
-        project=SimpleNamespace(signatures=signatures),
+        task_name="report",
+        config=part.config,
+        get_upstream_paths=_upstream_paths,
+        upstream_signature=lambda field: DataSignature(DataType.VARIANTS, frozenset(tags)),
         effective_group_by="library",
     )
     return part
 
 
-def test_the_report_reads_the_tasks_own_vcf_of_the_entity():
+def test_the_report_reads_the_vcf_of_the_entity_from_the_upstream_task():
     part = _part(page_size=10)
     wildcards = SimpleNamespace(library_name="P001-N1-DNA1-WES1")
 
     assert part._get_input_files_run(wildcards) == {
-        "vcf": "work/P001-N1-DNA1-WES1/out/P001-N1-DNA1-WES1.vcf.gz",
-        "vcf_tbi": "work/P001-N1-DNA1-WES1/out/P001-N1-DNA1-WES1.vcf.gz.tbi",
+        "vcf": "tasks/fdr/work/P001-N1-DNA1-WES1/out/P001-N1-DNA1-WES1.vcf.gz",
+        "vcf_tbi": "tasks/fdr/work/P001-N1-DNA1-WES1/out/P001-N1-DNA1-WES1.vcf.gz.tbi",
     }
     assert part._get_params_run(wildcards) == {
-        "title": "fdr: calls of P001-N1-DNA1-WES1",
+        "title": "report: calls of P001-N1-DNA1-WES1",
         "page_size": 10,
         "max_in_memory_rows": 50000,
         "linkouts": [
@@ -55,6 +64,16 @@ def test_the_report_reads_the_tasks_own_vcf_of_the_entity():
         "igv": None,
         "pedigree": [],
     }
+
+
+def test_the_steps_extra_arguments_reach_the_datavzrd_command():
+    part = _part(extra_arguments=["--debug"])
+
+    assert part.tool_section() is part.config
+    params = part.with_extra_arguments("run", part._get_params_run)
+    assert params(SimpleNamespace(library_name="P001-N1-DNA1-WES1"))["extra_arguments"] == [
+        "--debug"
+    ]
 
 
 def test_the_pedigree_of_a_related_entity_names_every_donor_with_parents_and_status():
@@ -150,7 +169,7 @@ def test_the_pedigree_of_a_related_entity_names_every_donor_with_parents_and_sta
     assert _part().pedigree("P001-N1-DNA1-WES1") == []  # per library: no pedigree
 
 
-def test_the_assembly_is_the_tag_of_the_tasks_own_variants():
+def test_the_assembly_is_the_tag_of_the_upstream_variants():
     tagged = _part(tags={"germline", "annotated", "mehari", "GRCh37"}, linkouts=["gnomad"])
 
     assert tagged.assembly() == "GRCh37"
@@ -166,26 +185,25 @@ def test_the_report_writes_the_calls_table_and_the_site():
     assert outputs["tsv_md5"] == outputs["tsv"] + ".md5"
     assert is_flagged(outputs["html"], "directory")
     assert str(outputs["html"]) == "work/{library_name}/report/calls/html"
-    assert CallsReportStepPart.result_keys == ("tsv", "tsv_md5")
-    spec = CallsReportStepPart.report_outputs["run"]["html"]
+    assert DatavzrdStepPart.result_keys == ("tsv", "tsv_md5")
+    spec = DatavzrdStepPart.report_outputs["run"]["html"]
     assert (spec.subcategory, spec.htmlindex) == ("calls", "index.html")
     assert _part()._get_log_file_run() == {
         "log": "work/{library_name}/log/{library_name}.calls_report.log"
     }
+    assert VariantReportWorkflow.get_output_paths(None, library_name="FAM_P1") == {
+        "tsv": "work/FAM_P1/report/calls/FAM_P1.calls.tsv"
+    }
 
 
 def _part_with_igv(matched_normal=None, **igv):
-    part = _part(igv=igv)
+    part = _part(depends_on={"alignments": "mapping", "reference": "genome"}, igv=igv)
     rows = [{"library_name": "P001-N1-DNA1-WES1", "matched_normal_lib": ""}]
     if matched_normal is not None:
         rows = [{"library_name": "P001-T1-DNA1-WES1", "matched_normal_lib": matched_normal}]
     normals = {row["library_name"]: row["matched_normal_lib"] for row in rows}
     part.parent.matched_normal = lambda library: normals.get(library, "")
     part.parent.member_libraries = lambda entity: [rows[0]["library_name"]]
-    part.parent.get_upstream_paths = lambda field, library_name: SimpleNamespace(
-        bam=f"tasks/mapping/work/{library_name}/out/{library_name}.bam",
-        bai=f"tasks/mapping/work/{library_name}/out/{library_name}.bam.bai",
-    )
     part.parent.reference_inputs = lambda: {
         "reference": "genome.fa",
         "reference_fai": "genome.fa.fai",
@@ -202,6 +220,7 @@ def test_igv_views_read_the_bams_of_the_members_and_their_matched_normals():
     params = part._get_params_run(wildcards)
 
     assert part.igv_libraries("P001-T1-DNA1-WES1") == ["P001-T1-DNA1-WES1", "P001-N1-DNA1-WES1"]
+    assert inputs["vcf"] == "tasks/fdr/work/P001-T1-DNA1-WES1/out/P001-T1-DNA1-WES1.vcf.gz"
     assert inputs["bam"] == [
         "tasks/mapping/work/P001-T1-DNA1-WES1/out/P001-T1-DNA1-WES1.bam",
         "tasks/mapping/work/P001-N1-DNA1-WES1/out/P001-N1-DNA1-WES1.bam",
@@ -228,21 +247,14 @@ def test_without_igv_the_report_reads_only_the_vcf():
 
 
 def test_igv_views_need_the_alignments_and_the_genome():
-    import pytest
-    from pydantic import ValidationError
-
-    from snappy_pipeline.workflows.variant_filtration.model import VariantFiltration
-
-    settings = {
-        "depends_on": {"variants": "calling"},
-        "tool": "varlociraptor",
-        "varlociraptor": {"events": ["present"]},
-        "calls_report": {"igv": {}},
-    }
+    settings = {"depends_on": {"variants": "fdr"}, "tool": "datavzrd", "igv": {}}
     with pytest.raises(
-        ValidationError,
-        match="calls_report.igv needs depends_on.alignments and depends_on.reference",
+        ValidationError, match="igv needs depends_on.alignments and depends_on.reference"
     ):
-        VariantFiltration(**settings)
+        VariantReport(**settings)
     settings["depends_on"] |= {"alignments": "mapping", "reference": "genome"}
-    assert VariantFiltration(**settings).calls_report.igv.top == 20
+    assert VariantReport(**settings).igv.top == 20
+    # Without IGV views, nothing reads the BAMs
+    del settings["igv"]
+    with pytest.raises(ValidationError, match="depends_on.alignments is read only by igv"):
+        VariantReport(**settings)

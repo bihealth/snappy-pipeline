@@ -10,7 +10,7 @@ import fastjsonschema
 import polars as pl
 import pytest
 
-from snappy_pipeline.models.calls_report import Linkout
+from snappy_pipeline.workflows.variant_report.model import Linkout
 from snappy_wrappers.tools.calls_report import Options, summarize, variant_type
 from snappy_wrappers.tools.calls_report.varlociraptor import (
     biases,

@@ -231,10 +231,11 @@ def test_default_config_of_a_tool_leaves_out_what_the_tool_does_not_read():
     commented = default_config_yaml_string(model, "commented", tool="bwa")
     assert "\nbwa:\n" in commented and "#bwa:" not in commented and "#star:" not in commented
     assert "#bwa_mem2:" not in commented and "REQUIRED for tool" not in commented
-    # A key a setting needs keeps its condition, without the tools it names
+    # A key a setting needs keeps its condition, a key the tool needs is REQUIRED
+    report = WORKFLOW_REGISTRY["variant_report"].config_model_class
+    datavzrd = default_config_yaml_string(report, "minimal", tool="datavzrd")
+    assert "# REQUIRED for igv" in datavzrd and "REQUIRED for tool" not in datavzrd
     filtration = WORKFLOW_REGISTRY["variant_filtration"].config_model_class
-    vembrane = default_config_yaml_string(filtration, "minimal", tool="vembrane")
-    assert "# REQUIRED for calls_report.igv" in vembrane and "dkfz" not in vembrane
     dkfz = default_config_yaml_string(filtration, "minimal", tool="dkfz")
     assert re.search(r"\n  alignments:\s+# REQUIRED\n", dkfz) and "REQUIRED for" not in dkfz
 

@@ -27,6 +27,7 @@ import math
 import os
 import subprocess
 import tempfile
+from collections.abc import Sequence
 from dataclasses import dataclass, field
 
 import polars as pl
@@ -502,8 +503,11 @@ def summarize(format: str, files: dict[str, list[str]], labels: list[str], **opt
     return module.summarize(files, labels, **options)
 
 
-def render(summary: Summary, title: str, tsv: str, site: str) -> None:
-    """Write the summary table to ``tsv`` and the datavzrd site of all views to ``site``."""
+def render(
+    summary: Summary, title: str, tsv: str, site: str, extra_arguments: Sequence[str] = ()
+) -> None:
+    """Write the summary table to ``tsv`` and the datavzrd site of all views to ``site``;
+    ``extra_arguments`` go to the datavzrd command."""
     os.makedirs(os.path.dirname(os.path.abspath(tsv)), exist_ok=True)
     summary.table.frame.write_csv(tsv, separator="\t")
     with tempfile.TemporaryDirectory() as tmpdir:
@@ -515,7 +519,8 @@ def render(summary: Summary, title: str, tsv: str, site: str) -> None:
         with open(config_path, "wt") as f:
             json.dump(config(views, title, tmpdir, summary.default_view), f, indent=1)
         subprocess.run(
-            ["datavzrd", config_path, "--output", site, "--overwrite-output"], check=True
+            ["datavzrd", config_path, "--output", site, "--overwrite-output", *extra_arguments],
+            check=True,
         )
 
 

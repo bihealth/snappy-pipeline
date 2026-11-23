@@ -35,9 +35,6 @@ VEP also writes its summary, ``{library_name}/report/{library_name}.summary.html
 The summary is not a result file, and ``vep.output_options: [no_stats]`` switches it off.
 VEP's warnings go to the log.
 
-- with ``calls_report``: ``{library_name}/report/calls/{library_name}.calls.tsv``, the calls of the VCF as a table (one row per call).
-  The same table is a datavzrd site below ``report/calls/html/``, which ``snappy report`` shows.
-
 Downstream tasks read ``vcf`` and ``vcf_tbi`` through ``depends_on``.
 """
 
@@ -49,7 +46,6 @@ from snappy_pipeline.workflows.abstract import (
     ResourceUsage,
 )
 from snappy_pipeline.workflows.common import vcf_outputs
-from snappy_pipeline.workflows.common.calls_report import CallsReportStepPart
 from snappy_pipeline.workflows.abstract.protocol import DataSignature, DataType
 
 from .model import Tool
@@ -162,8 +158,3 @@ class VariantAnnotationWorkflow(BaseStep):
         lib = kwargs.get("library_name", "{library_name}")
         paths = vcf_outputs(_OUT_PREFIX.format(library_name=lib))
         return {key: paths[key] for key in ("vcf", "vcf_tbi")}
-
-    def __init__(self, workflow, project, task_name):
-        super().__init__(workflow, project, task_name)
-        if self.config.calls_report:
-            self.register_sub_step_classes((CallsReportStepPart,))

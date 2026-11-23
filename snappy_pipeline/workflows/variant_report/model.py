@@ -1,8 +1,19 @@
-"""The ``calls_report`` section of the steps that write VCFs."""
-
 import enum
+from typing import Annotated
 
-from snappy_pipeline.models import SnappyModel, ToolModel
+from snappy_pipeline.models import EnumField, RequiredBy, SnappyModel, SnappyStepModel, ToolModel
+from snappy_pipeline.workflows.abstract.protocol import (
+    DataSignature,
+    DataType,
+    DnaAlignments,
+    ExpectedPathSchema,
+    ExpectedVariants,
+    Reference,
+)
+
+
+class Tool(enum.StrEnum):
+    datavzrd = "datavzrd"
 
 
 class Linkout(enum.StrEnum):
@@ -42,14 +53,34 @@ class IgvViews(ToolModel):
     """Size limit of the IGV page; the lowest-ranked calls are dropped until it fits"""
 
 
-class CallsReport(SnappyModel):
-    """The calls of each VCF of the task as a datavzrd site for the report,
+class VariantReportDependsOn(SnappyModel):
+    variants: Annotated[
+        str,
+        DataSignature(DataType.VARIANTS),
+        ExpectedPathSchema(ExpectedVariants),
+    ]
+    """The task whose VCFs the report renders, one report per entity of that task"""
+
+    alignments: Annotated[DnaAlignments, RequiredBy(when="igv")] = ""
+    """The BAMs of the libraries, for the IGV views of ``igv``"""
+
+    reference: Annotated[Reference, RequiredBy(when="igv")] = ""
+    """The genome, for the IGV views of ``igv``"""
+
+
+class VariantReport(SnappyStepModel, ToolModel):
+    """The calls of each VCF of ``depends_on.variants`` as a datavzrd site for the report,
     and the same table as a result file.
     The columns follow what the VCF carries:
     varlociraptor's event probabilities and observations, or the genotypes,
     allele frequencies and depths of other callers;
     the gene, consequence, impact and HGVS of annotated variants;
-    the gnomAD frequency and ClinVar classification that mehari adds."""
+    the gnomAD frequency and ClinVar classification that mehari adds.
+    ``extra_arguments`` go to ``datavzrd``."""
+
+    depends_on: VariantReportDependsOn
+
+    tool: Annotated[Tool, EnumField(Tool)]
 
     page_size: int = 25
     """Rows per page"""

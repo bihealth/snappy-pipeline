@@ -2,13 +2,11 @@
  {
   "benchmark": null,
   "input": [
-   "tasks/variant_filtration_varlociraptor_igv/work/FAM_case001subregion/out/FAM_case001subregion.vcf.gz",
-   "tasks/variant_filtration_varlociraptor_igv/work/FAM_case001subregion/out/FAM_case001subregion.vcf.gz.tbi",
-   "tasks/variant_filtration_varlociraptor_igv/work/FAM_case001subregion/out/FAM_case001subregion.vcf.gz.md5",
-   "tasks/variant_filtration_varlociraptor_igv/work/FAM_case001subregion/out/FAM_case001subregion.vcf.gz.tbi.md5",
-   "tasks/variant_filtration_varlociraptor_igv/work/FAM_case001subregion/report/calls/FAM_case001subregion.calls.tsv",
-   "tasks/variant_filtration_varlociraptor_igv/work/FAM_case001subregion/report/calls/FAM_case001subregion.calls.tsv.md5",
-   "tasks/variant_filtration_varlociraptor_igv/output/.manifest.tsv"
+   "tasks/variant_filtration_varlociraptor_germline/work/FAM_case001subregion/out/FAM_case001subregion.vcf.gz",
+   "tasks/variant_filtration_varlociraptor_germline/work/FAM_case001subregion/out/FAM_case001subregion.vcf.gz.tbi",
+   "tasks/variant_filtration_varlociraptor_germline/work/FAM_case001subregion/out/FAM_case001subregion.vcf.gz.md5",
+   "tasks/variant_filtration_varlociraptor_germline/work/FAM_case001subregion/out/FAM_case001subregion.vcf.gz.tbi.md5",
+   "tasks/variant_filtration_varlociraptor_germline/output/.manifest.tsv"
   ],
   "log": [],
   "output": [],
@@ -969,150 +967,40 @@
  {
   "benchmark": null,
   "input": [
-   "tasks/variant_filtration_varlociraptor_igv/work/FAM_case001subregion/out/FAM_case001subregion.vcf.gz",
-   "tasks/variant_filtration_varlociraptor_igv/work/FAM_case001subregion/out/FAM_case001subregion.vcf.gz.tbi",
-   "tasks/variant_filtration_varlociraptor_igv/work/FAM_case001subregion/out/FAM_case001subregion.vcf.gz.md5",
-   "tasks/variant_filtration_varlociraptor_igv/work/FAM_case001subregion/out/FAM_case001subregion.vcf.gz.tbi.md5",
-   "tasks/variant_filtration_varlociraptor_igv/work/FAM_case001subregion/report/calls/FAM_case001subregion.calls.tsv",
-   "tasks/variant_filtration_varlociraptor_igv/work/FAM_case001subregion/report/calls/FAM_case001subregion.calls.tsv.md5"
+   "tasks/variant_filtration_varlociraptor_germline/work/FAM_case001subregion/out/FAM_case001subregion.vcf.gz",
+   "tasks/variant_filtration_varlociraptor_germline/work/FAM_case001subregion/out/FAM_case001subregion.vcf.gz.tbi",
+   "tasks/variant_filtration_varlociraptor_germline/work/FAM_case001subregion/out/FAM_case001subregion.vcf.gz.md5",
+   "tasks/variant_filtration_varlociraptor_germline/work/FAM_case001subregion/out/FAM_case001subregion.vcf.gz.tbi.md5"
   ],
   "local": true,
   "log": [],
   "output": [
-   "tasks/variant_filtration_varlociraptor_igv/output/.manifest.tsv"
+   "tasks/variant_filtration_varlociraptor_germline/output/.manifest.tsv"
   ],
   "params": {
-   "task_dir": "tasks/variant_filtration_varlociraptor_igv"
+   "task_dir": "tasks/variant_filtration_varlociraptor_germline"
   },
   "resources": {},
-  "rule": "variant_filtration_varlociraptor_igv_results",
+  "rule": "variant_filtration_varlociraptor_germline_results",
   "temp": [],
   "threads": 1,
   "wildcards": {},
   "wrapper": null
  },
  {
-  "benchmark": "tasks/variant_filtration_varlociraptor_igv/benchmarks/FAM_case001subregion/FAM_case001subregion.calls_report.tsv",
-  "directory": [
-   "tasks/variant_filtration_varlociraptor_igv/work/FAM_case001subregion/report/calls/html"
-  ],
-  "input": [
-   "tasks/variant_filtration_varlociraptor_igv/work/FAM_case001subregion/out/FAM_case001subregion.vcf.gz",
-   "tasks/variant_filtration_varlociraptor_igv/work/FAM_case001subregion/out/FAM_case001subregion.vcf.gz.tbi",
-   "tasks/ngs_mapping_bwa/work/case001subregion-N1-DNA1-WES1/out/case001subregion-N1-DNA1-WES1.bam",
-   "tasks/ngs_mapping_bwa/work/case001subregionFather-N1-DNA1-WES1/out/case001subregionFather-N1-DNA1-WES1.bam",
-   "tasks/ngs_mapping_bwa/work/case001subregionMother-N1-DNA1-WES1/out/case001subregionMother-N1-DNA1-WES1.bam",
-   "tasks/ngs_mapping_bwa/work/case001subregion-N1-DNA1-WES1/out/case001subregion-N1-DNA1-WES1.bam.bai",
-   "tasks/ngs_mapping_bwa/work/case001subregionFather-N1-DNA1-WES1/out/case001subregionFather-N1-DNA1-WES1.bam.bai",
-   "tasks/ngs_mapping_bwa/work/case001subregionMother-N1-DNA1-WES1/out/case001subregionMother-N1-DNA1-WES1.bam.bai",
-   "<repo>/.tests/test-workflow/resources/refs/subregion.fa",
-   "<repo>/.tests/test-workflow/resources/refs/subregion.fa.fai",
-   "<repo>/.tests/test-workflow/resources/refs/subregion.dict"
-  ],
-  "log": [
-   "tasks/variant_filtration_varlociraptor_igv/work/FAM_case001subregion/log/FAM_case001subregion.calls_report.log"
-  ],
-  "output": [
-   "tasks/variant_filtration_varlociraptor_igv/work/FAM_case001subregion/report/calls/FAM_case001subregion.calls.tsv",
-   "tasks/variant_filtration_varlociraptor_igv/work/FAM_case001subregion/report/calls/FAM_case001subregion.calls.tsv.md5",
-   "tasks/variant_filtration_varlociraptor_igv/work/FAM_case001subregion/report/calls/html"
-  ],
-  "params": {
-   "args": {
-    "assembly": null,
-    "code": "<hash>",
-    "igv": {
-     "extra_arguments": [],
-     "flanking": 300,
-     "libraries": [
-      "case001subregion-N1-DNA1-WES1",
-      "case001subregionFather-N1-DNA1-WES1",
-      "case001subregionMother-N1-DNA1-WES1"
-     ],
-     "max_size_mb": 50,
-     "max_span": 10000,
-     "top": 20,
-     "views": []
-    },
-    "linkouts": [
-     "gnomad",
-     "clinvar",
-     "dbsnp",
-     "ensembl",
-     "genecards",
-     "omim",
-     "varlociraptor_inspect"
-    ],
-    "max_in_memory_rows": 50000,
-    "page_size": 25,
-    "pedigree": [
-     {
-      "affected": true,
-      "event_suffix": "case001subregion",
-      "father": "case001subregionFather-N1-DNA1-WES1",
-      "label": "case001subregion",
-      "mother": "case001subregionMother-N1-DNA1-WES1",
-      "name": "case001subregion-N1-DNA1-WES1",
-      "sample": "case001subregion-N1-DNA1-WES1",
-      "sex": "male"
-     },
-     {
-      "affected": false,
-      "event_suffix": "case001subregionfather",
-      "father": "0",
-      "label": "case001subregionFather",
-      "mother": "0",
-      "name": "case001subregionFather-N1-DNA1-WES1",
-      "sample": "case001subregionFather-N1-DNA1-WES1",
-      "sex": "male"
-     },
-     {
-      "affected": false,
-      "event_suffix": "case001subregionmother",
-      "father": "0",
-      "label": "case001subregionMother",
-      "mother": "0",
-      "name": "case001subregionMother-N1-DNA1-WES1",
-      "sample": "case001subregionMother-N1-DNA1-WES1",
-      "sex": "female"
-     }
-    ],
-    "title": "variant_filtration_varlociraptor_igv: calls of FAM_case001subregion"
-   }
-  },
-  "report": [
-   "tasks/variant_filtration_varlociraptor_igv/work/FAM_case001subregion/report/calls/FAM_case001subregion.calls.tsv",
-   "tasks/variant_filtration_varlociraptor_igv/work/FAM_case001subregion/report/calls/html"
-  ],
-  "resources": {
-   "mem": "8 GB",
-   "mem_mb": 8000,
-   "mem_mib": 7630,
-   "partition": "medium",
-   "runtime": 120
-  },
-  "rule": "variant_filtration_varlociraptor_igv_variant_filtration_calls_report_run",
-  "temp": [],
-  "threads": 1,
-  "wildcards": {
-   "library_name": "FAM_case001subregion"
-  },
-  "wrapper": "file://<repo>/snappy_wrappers/wrappers/calls_report"
- },
- {
-  "benchmark": "tasks/variant_filtration_varlociraptor_igv/benchmarks/FAM_case001subregion/FAM_case001subregion.tsv",
+  "benchmark": "tasks/variant_filtration_varlociraptor_germline/benchmarks/FAM_case001subregion/FAM_case001subregion.tsv",
   "input": [
    "tasks/variant_calling_varlociraptor_germline/work/FAM_case001subregion/out/FAM_case001subregion.vcf.gz",
    "tasks/variant_calling_varlociraptor_germline/work/FAM_case001subregion/out/FAM_case001subregion.vcf.gz.tbi"
   ],
   "log": [
-   "tasks/variant_filtration_varlociraptor_igv/work/FAM_case001subregion/log/FAM_case001subregion.log"
+   "tasks/variant_filtration_varlociraptor_germline/work/FAM_case001subregion/log/FAM_case001subregion.log"
   ],
   "output": [
-   "tasks/variant_filtration_varlociraptor_igv/work/FAM_case001subregion/out/FAM_case001subregion.vcf.gz",
-   "tasks/variant_filtration_varlociraptor_igv/work/FAM_case001subregion/out/FAM_case001subregion.vcf.gz.tbi",
-   "tasks/variant_filtration_varlociraptor_igv/work/FAM_case001subregion/out/FAM_case001subregion.vcf.gz.md5",
-   "tasks/variant_filtration_varlociraptor_igv/work/FAM_case001subregion/out/FAM_case001subregion.vcf.gz.tbi.md5"
+   "tasks/variant_filtration_varlociraptor_germline/work/FAM_case001subregion/out/FAM_case001subregion.vcf.gz",
+   "tasks/variant_filtration_varlociraptor_germline/work/FAM_case001subregion/out/FAM_case001subregion.vcf.gz.tbi",
+   "tasks/variant_filtration_varlociraptor_germline/work/FAM_case001subregion/out/FAM_case001subregion.vcf.gz.md5",
+   "tasks/variant_filtration_varlociraptor_germline/work/FAM_case001subregion/out/FAM_case001subregion.vcf.gz.tbi.md5"
   ],
   "params": {
    "args": {
@@ -1146,7 +1034,7 @@
    "partition": "medium",
    "runtime": 240
   },
-  "rule": "variant_filtration_varlociraptor_igv_variant_filtration_filter_run",
+  "rule": "variant_filtration_varlociraptor_germline_variant_filtration_filter_run",
   "temp": [],
   "threads": 1,
   "wildcards": {

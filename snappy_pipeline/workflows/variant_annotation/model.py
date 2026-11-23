@@ -3,18 +3,16 @@ from typing import Annotated
 
 from pydantic import Field
 
-from snappy_pipeline.models import EnumField, RequiredBy, SnappyModel, SnappyStepModel
+from snappy_pipeline.models import EnumField, SnappyModel, SnappyStepModel
 from snappy_pipeline.models.annotation import Mehari, Vep
 from snappy_pipeline.workflows.abstract.protocol import (
     DataSignature,
     DataType,
-    DnaAlignments,
     ExpectedPathSchema,
     ExpectedVariants,
     Reference,
     TOOL,
 )
-from snappy_pipeline.models.calls_report import CallsReport
 
 
 class Tool(enum.StrEnum):
@@ -45,9 +43,6 @@ class VariantAnnotationDependsOn(SnappyModel):
 
     reference: Reference
 
-    alignments: Annotated[DnaAlignments, RequiredBy(when="calls_report.igv")] = ""
-    """The BAMs of the libraries, for the IGV views of ``calls_report.igv``"""
-
     database: Annotated[
         str,
         DataSignature(DataType.DATABASE, frozenset({TOOL})),
@@ -58,9 +53,6 @@ class VariantAnnotationDependsOn(SnappyModel):
 
 class VariantAnnotation(SnappyStepModel):
     depends_on: VariantAnnotationDependsOn
-
-    calls_report: CallsReport | None = None
-    """The calls of each VCF as a table and a datavzrd site for the report; unset: no report"""
 
     tool: Annotated[Tool, EnumField(Tool)]
 

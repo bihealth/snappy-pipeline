@@ -11,8 +11,8 @@ The check reads the VCF of the ``fdr`` task and requires:
 - at least ``MIN_CALLED`` of all simulated variants are called, and at least ``MIN_CORRECT`` of the
   called ones have their expected event in front;
 - no called variant has ``denovo`` or ``recessive`` in front unless the truth says so;
-- the calls report of the ``fdr`` task has its IGV page (``igv/top.html``) below the size limit,
-  with igv.js inlined and the planted de novo site of the index among its sites.
+- the calls report of the ``report`` task has its IGV page (``igv/top.html``) below the size
+  limit, with igv.js inlined and the planted de novo site of the index among its sites.
 
 Exit code 1 on failure, with the offending sites printed.
 """
@@ -36,9 +36,9 @@ IGV_LIMIT_MB = 50
 
 def check_igv_page(truth: list[dict[str, str]]) -> list[str]:
     """The IGV page of the calls report exists, is self-contained and shows the de novo site."""
-    pages = sorted((HERE / "tasks" / "fdr" / "work").glob("*/report/calls/html/igv/top.html"))
+    pages = sorted((HERE / "tasks" / "report" / "work").glob("*/report/calls/html/igv/top.html"))
     if len(pages) != 1:
-        return [f"expected one IGV page of the fdr calls report, found {[str(p) for p in pages]}"]
+        return [f"expected one IGV page of the report task, found {[str(p) for p in pages]}"]
     page = pages[0]
     failures = []
     size = page.stat().st_size
