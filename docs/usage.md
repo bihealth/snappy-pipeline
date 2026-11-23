@@ -34,6 +34,7 @@ Besides `config.yaml`, `snappy init`:
 
 - puts the project into the directory given, else into the current directory if that is named like the project, else into a new directory named after the project.
 - writes an empty sample sheet (`--sheet-type generic|germline|cancer`) that `config.yaml` names.
+  Its custom fields are `extractionType`, `libraryKit`, the cancer sheet's `purity`, and `batchNo`, the sequencing batch of a library as a string, which the library summary of a run shows and `library_selection` reads as `batch_no`.
 - records the project name, external id and description.
 - makes the project a git repository that tracks only `.gitignore`, `config.yaml` and `README.md`.
   `--track-sheet` adds the sheet, `--remote <url>` adds the remote `origin` without pushing, and `--no-git` skips the repository.

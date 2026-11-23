@@ -7,6 +7,7 @@ description	%(description)s
 [Custom Fields]
 key	annotatedEntity	docs	type	minimum	maximum	unit	choices	pattern
 libraryKit	ngsLibrary	enrichment kit, or the chemistry of long reads	string	0	0	0	0	0
+batchNo	ngsLibrary	sequencing batch of the library	string	0	0	0	0	0
 
 [Data]
-bioEntity	bioSample	testSample	ngsLibrary	extractionType	libraryType	folderName	libraryKit
+bioEntity	bioSample	testSample	ngsLibrary	extractionType	libraryType	folderName	batchNo	libraryKit

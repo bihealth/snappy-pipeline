@@ -8,6 +8,7 @@ description	%(description)s
 key	annotatedEntity	docs	type	minimum	maximum	unit	choices	pattern
 extractionType	bioSample	extraction type	string	0	0	0	0	0
 libraryKit	ngsLibrary	enrichment kit, or the chemistry of long reads	string	0	0	0	0	0
+batchNo	ngsLibrary	sequencing batch of the library	string	0	0	0	0	0
 
 [Data]
-patientName	fatherName	motherName	sex	isAffected	extractionType	libraryType	folderName	libraryKit	hpoTerms
+patientName	fatherName	motherName	sex	isAffected	extractionType	libraryType	folderName	batchNo	libraryKit	hpoTerms

@@ -9,6 +9,7 @@ key	annotatedEntity	docs	type	minimum	maximum	unit	choices	pattern
 extractionType	testSample	extraction type	string	0	0	0	0	0
 libraryKit	ngsLibrary	enrichment kit, or the chemistry of long reads	string	0	0	0	0	0
 purity	bioSample	tumor purity	number	0	1	0	0	0
+batchNo	ngsLibrary	sequencing batch of the library	string	0	0	0	0	0
 
 [Data]
-patientName	sampleName	isTumor	extractionType	libraryType	folderName	libraryKit	purity
+patientName	sampleName	isTumor	extractionType	libraryType	folderName	batchNo	libraryKit	purity

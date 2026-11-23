@@ -125,6 +125,10 @@ def test_init_creates_a_sample_sheet_that_the_config_names(tmp_path, sheet_type)
     with open(project / "samplesheet.tsv") as f:
         sheet = SHEET_READERS[sheet_type](f, "samplesheet.tsv")
     assert sheet.bio_entities == {} and sheet.json_data["title"] == "project"
+    # The batch is a string field of the library, with a column in the data header
+    assert sheet.json_data["extraInfoDefs"]["ngsLibrary"]["batchNo"]["type"] == "string"
+    header = (project / "samplesheet.tsv").read_text().partition("[Data]\n")[2].splitlines()[0]
+    assert "\tfolderName\tbatchNo\t" in header
     # The configuration loads and names the sheet with its type
     config = load_configfile(str(project / "config.yaml"))
     loaded = load_project(config, str(project))
