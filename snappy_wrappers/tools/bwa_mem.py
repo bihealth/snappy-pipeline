@@ -238,18 +238,20 @@ TEMPLATE = """
 
 
 def _fill(template: str, **values) -> str:
-    """``template`` with the placeholders of ``values`` filled in, as Snakemake would format them;
-    the other placeholders and the doubled braces stay for ``ShellWrapper``."""
+    """``template`` with the placeholders of ``values`` filled in as literal text: ``ShellWrapper``
+    formats the result once more, so their braces are doubled (the shell functions of the final
+    texts), while the other placeholders and the doubled braces of the template stay for it."""
     return re.sub(
         r"\{(" + "|".join(map(re.escape, values)) + r")\}",
-        lambda match: str(values[match.group(1)]),
+        lambda match: str(values[match.group(1)]).replace("{", "{{").replace("}", "}}"),
         template,
     )
 
 
-def run(snakemake, mapper: str) -> None:
-    """The wrapper of ``mapper`` (``bwa-mem2`` or ``bwa-mem3``): map the reads of every read
-    group of the library, mask duplicates, merge, sort, index and count."""
+def command(snakemake, mapper: str) -> str:
+    """The shell template of the wrapper of ``mapper`` (``bwa-mem2`` or ``bwa-mem3``), with the
+    placeholders that ``ShellWrapper`` fills: the sample name, the platform and the extra
+    arguments."""
     args = getattr(snakemake.params, "args", {})
 
     # The reads are inputs. If another task wrote them, the input is that task's out directory and
@@ -261,7 +263,7 @@ def run(snakemake, mapper: str) -> None:
     mapper_function = "run_" + mapper.replace("-", "_")
     # The read group IDs, one per read group (file pair) of the library
     read_groups = " ".join(args["read_groups"])
-    cmd = _fill(
+    return _fill(
         TEMPLATE,
         read_functions_text=read_functions(
             input_left,
@@ -287,5 +289,9 @@ def run(snakemake, mapper: str) -> None:
             args["num_threads_bam_sort"],
         ),
     )
-    # ShellWrapper fills in the sample name, the platform and the extra arguments
-    ShellWrapper(snakemake).run(cmd)
+
+
+def run(snakemake, mapper: str) -> None:
+    """The wrapper of ``mapper`` (``bwa-mem2`` or ``bwa-mem3``): map the reads of every read
+    group of the library, mask duplicates, merge, sort, index and count."""
+    ShellWrapper(snakemake).run(command(snakemake, mapper))

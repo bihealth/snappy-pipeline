@@ -5,6 +5,7 @@ import pathlib
 from types import SimpleNamespace
 
 import pytest
+from snakemake.utils import format as snakemake_format
 
 from snappy_wrappers.tools import bwa_mem, gcnv_ploidy, java, shards
 
@@ -60,6 +61,47 @@ def test_bwa_mem_pipeline_calls_the_mapper():
     assert text.count("| run_bwa_mem3 ") == 2
     assert "samtools idxstats x.bam > i\n" in text
     assert text.endswith("check_input_line_counts")
+
+
+def test_bwa_mem_command_renders_through_the_shell_wrapper():
+    """The final shell texts are pasted into the template, which ShellWrapper formats once more:
+    their braces must survive that pass, and the placeholders it fills must be the only ones left."""
+    args = {
+        "read_groups": ["rg1"],
+        "trim_adapters": True,
+        "num_threads_trimming": 2,
+        "mask_duplicates": True,
+        "split_as_secondary": False,
+        "num_threads_align": 4,
+        "bases_per_batch": 100,
+        "num_threads_bam_view": 1,
+        "memory_bam_sort": "1G",
+        "num_threads_bam_sort": 1,
+        "sample_name": "S1",
+        "platform": "ILLUMINA",
+    }
+    reads = {"reads_left": ["l1.fq.gz"], "reads_right": ["r1.fq.gz"]}
+    snakemake = SimpleNamespace(
+        params=SimpleNamespace(args=args),
+        input=SimpleNamespace(index=["ref.fa.amb"], get=lambda key, default=None: reads.get(key)),
+        output=SimpleNamespace(
+            bam="x.bam",
+            bam_bai="x.bam.bai",
+            report_bamstats_txt="s",
+            report_flagstats_txt="f",
+            report_idxstats_txt="i",
+        ),
+    )
+
+    script = snakemake_format(
+        bwa_mem.command(snakemake, "bwa-mem3"), snakemake=snakemake, extra_arguments="-Y"
+    )
+
+    assert "input_files() {\n    set -x\n    i=$1\n" in script
+    assert "${#reads_right[@]}" in script and "{{" not in script and "}}" not in script
+    assert "run_bwa_mem3() {\n" in script and "| run_bwa_mem3 0 \\\n" in script
+    assert "    bwa-mem3 mem \\\n        ref.fa \\\n" in script
+    assert "\\tSM:S1\\tPL:ILLUMINA" in script and "        -Y \\\n" in script
 
 
 @pytest.mark.parametrize("module", [shards, java, bwa_mem, gcnv_ploidy])
