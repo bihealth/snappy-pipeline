@@ -22,6 +22,8 @@ import tempfile
 from dataclasses import dataclass
 from pathlib import Path
 
+from snappy_wrappers.snappy_wrapper import SCRIPT_SUFFIXES, script_path
+
 #: ``log:`` line of a job in the Snakemake log, with comma-separated paths
 _JOB_LOGS = re.compile(r"^    log: (.+)$", re.M)
 
@@ -125,9 +127,11 @@ def build_archive(directory: Path, snakemake_log: Path) -> Path:
         if git_record.is_file():
             tar.add(git_record, arcname=arcname(git_record))
         for name in run_log_files(snakemake_log):
-            path = directory / name
-            if path.is_file():
-                tar.add(path, arcname=arcname(path))
+            # A job log and the scripts of the job next to it
+            scripts = [directory / script_path(name, suffix) for suffix in SCRIPT_SUFFIXES]
+            for path in [directory / name, *scripts]:
+                if path.is_file():
+                    tar.add(path, arcname=arcname(path))
         db = directory / SNKMT_DB
         if db.is_file():
             # snkmt may still write, so copy with SQLite's backup API instead of the file

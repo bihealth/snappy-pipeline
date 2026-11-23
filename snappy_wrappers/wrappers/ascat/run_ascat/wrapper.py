@@ -60,9 +60,17 @@ for name in baf_tumor baf_normal cnv_tumor cnv_normal; do
 done
 
 # -------------------------------------------------------------------------------------------------
-# Write ASCAT script and call R
+# Run ASCAT in the temp directory, where its input files are
 #
-cat << "EOF" > $TMPDIR/run_ascat.R
+cd $TMPDIR
+Rscript --vanilla {scripts.R}
+
+# -------------------------------------------------------------------------------------------------
+# Keep the declared output
+#
+{copy_results}
+""",
+    R=r"""
 library(ASCAT)
 
 ascat.bc = ascat.loadData(
@@ -83,14 +91,5 @@ write.table(ascat.output$ploidy, "{args[tumor_library]}.ploidy.txt");
 write.table(ascat.output$segments, "{args[tumor_library]}.segments.txt");
 write.table(ascat.output$segments_raw, "{args[tumor_library]}.segments_raw.txt");
 write.table(ascat.output$aberrantcellfraction, "{args[tumor_library]}.aberrantcellfraction.txt");
-EOF
-
-cd $TMPDIR
-R --vanilla < run_ascat.R
-
-# -------------------------------------------------------------------------------------------------
-# Keep the declared output
-#
-{copy_results}
-"""
+""",
 )

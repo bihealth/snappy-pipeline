@@ -1,18 +1,15 @@
 # -*- coding: utf-8 -*-
 """Wrapper vor cnvkit.py call"""
 
-from snappy_wrappers.snappy_wrapper import ShellWrapper
+from snappy_wrappers.snappy_wrapper import RWrapper
 
 __author__ = "Manuel Holtgrewe"
 __email__ = "manuel.holtgrewe@bih-charite.de"
 
 args = getattr(snakemake.params, "args", {})
 
-ShellWrapper(snakemake).run(
+RWrapper(snakemake).run(
     r"""
-# -----------------------------------------------------------------------------
-
-cat << _EOF | R --vanilla --slave
 segments <- read.table("{snakemake.input.segment}", sep="\t", header=1, stringsAsFactors=FALSE)
 stopifnot(all(c("chromosome", "start", "end", "log2", "probes") %in% colnames(segments)))
 calls <- read.table("{snakemake.input.call}", sep="\t", header=1, stringsAsFactors=FALSE)
@@ -56,6 +53,5 @@ colnames(segments) <- dna_copy_columns[colnames(segments)]
 segments <- segments[,dna_copy_columns]
 
 write.table(segments, file="{snakemake.output.final}", sep="\t", col.names=TRUE, row.names=FALSE, quote=FALSE)
-_EOF
 """
 )

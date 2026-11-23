@@ -3,7 +3,7 @@
 
 import os
 
-from snappy_wrappers.snappy_wrapper import ShellWrapper
+from snappy_wrappers.snappy_wrapper import RWrapper
 
 __author__ = "Eric Blanc <eric.blanc@bih-charite.de>"
 
@@ -20,17 +20,13 @@ if "features" in snakemake.input.keys():
     extra["tx_obj"] = snakemake.input.features
 extra_args = ", ".join(['"{}"="{}"'.format(str(k), str(v)) for k, v in extra.items()])
 
-ShellWrapper(snakemake).run(
+RWrapper(snakemake).run(
     r"""
-# Run the R script --------------------------------------------------------------------------------
-
-R --vanilla --slave << __EOF
 source("{helper_functions}")
 source("{r_script}")
 write.table(
     merge_tables(list({filenames}), mappings="{mappings}", type="{args[action_type]}", args=list({extra_args})),
     file="{snakemake.output}", sep="\t", col.names=TRUE, row.names=FALSE, quote=FALSE
 )
-__EOF
 """
 )

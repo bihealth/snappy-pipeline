@@ -599,10 +599,10 @@ WRAPPERS_WITHOUT_BASE_CLASS = {"pvactools/create_proteome": "on hold with create
 
 
 def test_wrappers_use_a_base_class():
-    """Wrappers run through ShellWrapper or PythonWrapper (log, md5), in their own file or in a
+    """Wrappers run through ShellWrapper, RWrapper or PythonWrapper (log, md5), in their own file or in a
     module of ``snappy_wrappers`` that holds the whole wrapper (``tools/bwa_mem.py``)."""
     wrappers = REPO / "snappy_wrappers" / "wrappers"
-    found, base = [], re.compile(r"\b(ShellWrapper|PythonWrapper)\(")
+    found, base = [], re.compile(r"\b(ShellWrapper|RWrapper|PythonWrapper)\(")
     for path in sorted(wrappers.rglob("wrapper.py")):
         name = str(path.parent.relative_to(wrappers))
         code = "".join(p.read_text(encoding="utf-8") for p in _wrapper_python_files(name))

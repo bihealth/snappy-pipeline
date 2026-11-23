@@ -25,27 +25,22 @@ export VROOM_CONNECTION_SIZE=2000000000
 
 # Necessary because scarHRD litters the current directory
 pushd $TMPDIR
-
-fn=hrd.json
-
-cat << __EOF | R --vanilla --slave
+Rscript --vanilla {scripts.R}
+popd
+""",
+    R=r"""
 library("scarHRD")
 
 tbl <- scar_score("{seqz}", reference="{genome_name}", seqz=TRUE, chr.in.name={chr_in_name})
 
 warnings()
 
-cat('{{\n', file="$fn")
-cat('    "HRD": ', tbl[1,1], ',\n', sep="", file="$fn", append=TRUE)
-cat('    "Telomeric AI": ', tbl[1,2], ',\n', sep="", file="$fn", append=TRUE)
-cat('    "LST": ', tbl[1,3], ',\n', sep="", file="$fn", append=TRUE)
-cat('    "HRD-sum": ', tbl[1,4], '\n', sep="", file="$fn", append=TRUE)
-cat('}}\n', file="$fn", append=TRUE)
-
-__EOF
-
-popd
-
-cp $TMPDIR/$fn {hrd}
-"""
+fn <- "{hrd}"
+cat('{{\n', file=fn)
+cat('    "HRD": ', tbl[1,1], ',\n', sep="", file=fn, append=TRUE)
+cat('    "Telomeric AI": ', tbl[1,2], ',\n', sep="", file=fn, append=TRUE)
+cat('    "LST": ', tbl[1,3], ',\n', sep="", file=fn, append=TRUE)
+cat('    "HRD-sum": ', tbl[1,4], '\n', sep="", file=fn, append=TRUE)
+cat('}}\n', file=fn, append=TRUE)
+""",
 )

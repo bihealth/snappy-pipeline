@@ -104,7 +104,9 @@ tail -n +2 {snakemake.output.tsv} \
         > {snakemake.output.txt}
 
 # create final .json file with the two alleles of each gene
-python3 - {snakemake.output.tsv} {snakemake.output.json} << 'EOF'
+python3 {scripts.py} {snakemake.output.tsv} {snakemake.output.json}
+""",
+    py=r"""
 import csv
 import json
 import sys
@@ -115,6 +117,5 @@ genes = (("A", 1), ("B", 3), ("C", 5))
 lines = ['    "%s": %s' % (gene, json.dumps(row[i : i + 2])) for gene, i in genes]
 with open(sys.argv[2], "wt") as f:
     f.write("{{\n" + ",\n".join(lines) + "\n}}\n")
-EOF
-"""
+""",
 )

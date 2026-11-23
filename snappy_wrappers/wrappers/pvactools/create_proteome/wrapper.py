@@ -44,7 +44,11 @@ OUTPUT="{snakemake.output.proteome}"
 
 mkdir -p $(dirname $OUTPUT)
 
-python << 'PYEOF'
+python {scripts.py}
+
+md5 {snakemake.output.proteome}
+""",
+    py=r"""
 import gzip
 import os
 
@@ -63,8 +67,5 @@ md5sum = subprocess.run(
 )
 with open(output + ".md5", "w") as f:
     f.write(md5sum.stdout)
-PYEOF
-
-md5 {snakemake.output.proteome}
-"""
+""",
 )

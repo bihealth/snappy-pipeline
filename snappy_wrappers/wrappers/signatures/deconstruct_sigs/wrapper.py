@@ -1,15 +1,14 @@
 # -*- coding: utf-8 -*-
 """CUBI+Snakemake wrapper code for deconstructSigs"""
 
-from snappy_wrappers.snappy_wrapper import ShellWrapper
+from snappy_wrappers.snappy_wrapper import RWrapper
 
 __author__ = "Clemens Messerschmidt"
 
 args = getattr(snakemake.params, "args", {})
 
-ShellWrapper(snakemake).run(
+RWrapper(snakemake).run(
     r"""
-cat << "EOF" > $TMPDIR/deconstruct_sigs.R
 library(tidyverse)
 library(deconstructSigs)
 
@@ -37,8 +36,5 @@ write_tsv(sigs, path = "{snakemake.output.tsv}")
 pdf("{snakemake.output.pdf}", 7, 7)
 plotSignatures(output.sigs)
 dev.off()
-EOF
-
-Rscript --vanilla $TMPDIR/deconstruct_sigs.R
 """
 )

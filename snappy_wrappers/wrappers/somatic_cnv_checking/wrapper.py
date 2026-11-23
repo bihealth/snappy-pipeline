@@ -4,7 +4,7 @@
 import os
 from typing import TYPE_CHECKING
 
-from snappy_wrappers.snappy_wrapper import ShellWrapper
+from snappy_wrappers.snappy_wrapper import RWrapper
 
 if TYPE_CHECKING:
     from snakemake.iocontainers import snakemake
@@ -15,10 +15,8 @@ rscript = os.path.join(os.path.dirname(os.path.realpath(__file__)), "cnv-check-p
 
 args = getattr(snakemake.params, "args", {})
 
-ShellWrapper(snakemake).run(
+RWrapper(snakemake).run(
     r"""
-# Write helper script and call R
-R --vanilla --slave << __EOF
 source("{rscript}")
 
 genome_lengths <- chromosome_lengths("{snakemake.input.reference}") |> dplyr::mutate(n=dplyr::row_number())
@@ -43,6 +41,5 @@ dev.off()
 pdf("{snakemake.output.segment}", height=6.22, width=12.44)
 plot_segment(y, genome_lengths |> dplyr::filter(CHROM %in% y[["CHROM"]]))
 dev.off()
-__EOF
 """
 )

@@ -44,7 +44,9 @@ export VROOM_CONNECTION_SIZE=2000000000
 
 mkdir -p {snakemake.output.report}
 
-R --vanilla --slave << __EOF
+Rscript --vanilla {scripts.R}
+""",
+    R=r"""
 library(sequenza)
 
 # Follow sequenza documentation https://bitbucket.org/sequenzatools/sequenza/src/master/
@@ -83,6 +85,5 @@ dnacopy <- dnacopy[,names(col_names)]
 colnames(dnacopy) <- col_names
 
 write.table(dnacopy, file="{snakemake.output.seg}", sep="\t", col.names=TRUE, row.names=FALSE, quote=FALSE)
-__EOF
-"""
+""",
 )

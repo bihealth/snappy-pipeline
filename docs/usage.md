@@ -300,6 +300,8 @@ It holds:
   The run writes it at its start, with the commit of the configuration and the diff of uncommitted changes to tracked files.
   snappy warns about uncommitted changes.
 
+Next to each job log lie the scripts of the job with every placeholder filled in: `<name>.sh`, the shell script as run, and `<name>.R` or `<name>.py` when the wrapper embeds an R or Python script.
+From the project directory, `bash <name>.sh` reruns the job and `Rscript <name>.R` its R part; the archive holds the scripts.
 snappy finds the job logs through the Snakemake log, so it does not search the task directories.
 Dry-runs write no archive.
 

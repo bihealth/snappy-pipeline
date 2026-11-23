@@ -3,7 +3,7 @@
 
 import os
 
-from snappy_wrappers.snappy_wrapper import ShellWrapper
+from snappy_wrappers.snappy_wrapper import RWrapper
 
 __author__ = "Eric Blanc <eric.blanc@bih-charite.de>"
 
@@ -12,17 +12,13 @@ helper_functions = os.path.join(os.path.dirname(r_script), "..", "helper_functio
 
 args = getattr(snakemake.params, "args", {})
 
-ShellWrapper(snakemake).run(
+RWrapper(snakemake).run(
     r"""
-# Run the R script --------------------------------------------------------------------------------
-
-R --vanilla --slave << __EOF
 source("{helper_functions}")
 source("{r_script}")
 write.table(
     cns_to_cna("{snakemake.input.DNAcopy}", "{snakemake.input.features}", "{args[pipeline_id]}"),
     file="{snakemake.output}", sep="\t", col.names=TRUE, row.names=FALSE, quote=FALSE
 )
-__EOF
 """
 )

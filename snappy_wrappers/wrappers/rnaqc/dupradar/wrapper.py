@@ -33,9 +33,28 @@ fi
 
 mkdir $TMPDIR/dupradar
 
-# Write helper script and call R
-#
-cat << __EOF > $TMPDIR/dupradar/run_dupradar.R
+if [[ ${{paired}} -eq 0 ]]; then
+    paired_cmd="FALSE"
+else
+    paired_cmd="TRUE"
+fi
+
+snake_log=${{PWD}}/$(dirname {snakemake.log.log})
+
+pushd $TMPDIR/dupradar
+Rscript --vanilla {scripts.R} \
+    "{snakemake.input.bam}" \
+    results.tsv \
+    {snakemake.input.features} \
+    ${{strand}} \
+    ${{paired_cmd}} \
+    {args[num_threads]} \
+    "."
+popd
+
+mv $TMPDIR/dupradar/results.tsv {snakemake.output.dupradar}
+""",
+    R=r"""
 library(dupRadar)
 
 args = commandArgs(trailingOnly=TRUE)
@@ -51,27 +70,5 @@ outdir = args[7]
 dm = analyzeDuprates(file, gtf, stranded, paired, threads)
 
 write.table(dm, file=out, sep="\t", col.names=TRUE, row.names=FALSE, quote=FALSE)
-__EOF
-
-if [[ ${{paired}} -eq 0 ]]; then
-    paired_cmd="FALSE"
-else
-    paired_cmd="TRUE"
-fi
-
-snake_log=${{PWD}}/$(dirname {snakemake.log.log})
-
-pushd $TMPDIR/dupradar
-Rscript --vanilla run_dupradar.R \
-    "{snakemake.input.bam}" \
-    results.tsv \
-    {snakemake.input.features} \
-    ${{strand}} \
-    ${{paired_cmd}} \
-    {args[num_threads]} \
-    "."
-popd
-
-mv $TMPDIR/dupradar/results.tsv {snakemake.output.dupradar}
-"""
+""",
 )

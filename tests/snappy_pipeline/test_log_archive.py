@@ -64,8 +64,13 @@ def test_run_log_files_lists_job_and_slurm_logs(tmp_path):
 
 
 def test_build_archive_holds_the_run_logs_and_the_snkmt_database(tmp_path):
+    """The job logs with the scripts next to them, the slurm logs and the database."""
     snakemake_log = _project(
-        tmp_path, "tasks/mapping/work/L1/log/L1.log", "slurm_log/mapping_run/4711.log"
+        tmp_path,
+        "tasks/mapping/work/L1/log/L1.log",
+        "tasks/mapping/work/L1/log/L1.sh",
+        "tasks/mapping/work/L1/log/L1.R",
+        "slurm_log/mapping_run/4711.log",
     )
     archive = build_archive(tmp_path, snakemake_log)
 
@@ -75,7 +80,9 @@ def test_build_archive_holds_the_run_logs_and_the_snkmt_database(tmp_path):
             f".snakemake/log/{STAMP}.snakemake.log",
             ".snakemake/log/snkmt.sqlite",
             "slurm_log/mapping_run/4711.log",
+            "tasks/mapping/work/L1/log/L1.R",
             "tasks/mapping/work/L1/log/L1.log",
+            "tasks/mapping/work/L1/log/L1.sh",
         ]
 
 

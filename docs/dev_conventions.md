@@ -274,6 +274,9 @@ Others run the whole wrapper (`bwa_mem.run`).
 The convention tests read a wrapper's own files and the tool modules behind it (`wrapper_code.code_files`).
 `tests/scripts/shell_templates.py` checks the shared shell text with shfmt as well.
 It also flags a `set -x` or `set -euo pipefail` on an unindented line of a template, which the `ShellWrapper` header already sets.
+The `ShellWrapper` keeps the script it ran next to the job log, `<name>.sh` for `<name>.log`, so `bash` reruns the job.
+A wrapper embeds no script in a heredoc: `ShellWrapper.run(cmd, R=code)` writes the R code next to the log as `<name>.R` with its placeholders filled in and names it in `cmd` as `{scripts.R}` (`py=code` and `{scripts.py}` for Python), and `RWrapper.run(code)` runs an R script that way with `Rscript --vanilla`.
+So the R or Python code of a job is a file to read and to run on its own.
 
 ### Environments
 

@@ -3,13 +3,18 @@
 
 import hashlib
 import os
+import subprocess
+from types import SimpleNamespace
 
 import pytest
 
+from snappy_wrappers import snappy_wrapper
 from snappy_wrappers.snappy_wrapper import (
     PythonWrapper,
+    RWrapper,
     ShellWrapper,
     SnappyWrapper,
+    script_path,
     write_declared_md5s,
 )
 
@@ -178,6 +183,59 @@ def test_shell_wrapper_removes_its_exported_temp_directory(tmp_path):
     tmpdir = seen.read_text().strip()
     assert tmpdir
     assert not os.path.exists(tmpdir)
+
+
+def test_shell_wrapper_keeps_its_script_next_to_the_log(tmp_path):
+    """The script stays as ``<name>.sh`` next to the log: the command as run, a heredoc body
+    (an R script) included, which the trace of the log does not show; bash reruns it."""
+    snakemake = _FakeSnakemake(str(tmp_path / "rule.log"))
+    snakemake.output = []
+    snakemake.params = SimpleNamespace(args={"extra_arguments": ["--fast"]})
+
+    ShellWrapper(snakemake).run('cat <<"EOF"\nlibrary(sequenza)  # {extra_arguments}\nEOF\n')
+
+    script = tmp_path / "rule.sh"
+    assert script_path(str(tmp_path / "rule.log")) == str(script)
+    assert script_path("rule.txt") == "rule.txt.sh" and script_path("a.log", "R") == "a.R"
+    text = script.read_text()
+    assert "library(sequenza)  # --fast" in text and os.access(script, os.X_OK)
+    log = (tmp_path / "rule.log").read_text()
+    assert "+ cat" in log and "library(sequenza)  # --fast" in log  # the heredoc's output
+    # A rerun writes the log again
+    (tmp_path / "rule.log").unlink()
+    subprocess.run(["bash", str(script)], check=True, capture_output=True)
+    assert "library(sequenza)  # --fast" in (tmp_path / "rule.log").read_text()
+
+
+def test_shell_wrapper_writes_an_embedded_script_next_to_the_log(tmp_path):
+    """A script the command embeds (``py=code``) is written as ``<name>.py`` with its
+    placeholders filled in, and the command names it by its absolute path."""
+    snakemake = _FakeSnakemake(str(tmp_path / "rule.log"))
+    snakemake.output = []
+    snakemake.params = SimpleNamespace(args={"extra_arguments": ["--fast"]})
+
+    ShellWrapper(snakemake).run(
+        "python3 {scripts.py} {extra_arguments}",
+        py="import sys\nprint('hello', sys.argv[1:], '{snakemake.threads}')\n",
+    )
+
+    assert (tmp_path / "rule.py").read_text() == "import sys\nprint('hello', sys.argv[1:], '4')\n\n"
+    assert f"python3 {tmp_path / 'rule.py'} --fast" in (tmp_path / "rule.sh").read_text()
+    assert "hello ['--fast'] 4" in (tmp_path / "rule.log").read_text()
+
+
+def test_r_wrapper_runs_its_script_with_rscript(tmp_path, monkeypatch):
+    """``RWrapper.run(code)`` writes ``<name>.R`` and runs ``Rscript --vanilla`` on it."""
+    commands = []
+    monkeypatch.setattr(snappy_wrapper, "shell", lambda script: commands.append(script))
+    snakemake = _FakeSnakemake(str(tmp_path / "rule.log"))
+    snakemake.output = []
+
+    RWrapper(snakemake).run('library(x)\nread.table("{snakemake.log.log}")\n')
+
+    assert (tmp_path / "rule.R").read_text() == f'library(x)\nread.table("{tmp_path}/rule.log")\n\n'
+    assert commands == [str(tmp_path / "rule.sh")]
+    assert f"Rscript --vanilla {tmp_path / 'rule.R'}" in (tmp_path / "rule.sh").read_text()
 
 
 def test_python_wrapper_requires_a_log_named_log(tmp_path):

@@ -11,6 +11,7 @@ import sys
 import tempfile
 import textwrap
 from abc import ABCMeta, abstractmethod
+from types import SimpleNamespace
 
 from snakemake.shell import shell
 from snakemake.utils import format as snakemake_format
@@ -39,6 +40,17 @@ def write_declared_md5s(snakemake) -> None:
             f.write("{}  {}\n".format(digest.hexdigest(), os.path.basename(path)))
 
 
+#: The suffixes of the scripts a job leaves next to its log: the shell script of the job and the
+#: R or Python script a wrapper embeds (the log archive takes them along)
+SCRIPT_SUFFIXES = ("sh", "R", "py")
+
+
+def script_path(log: str, suffix: str = "sh") -> str:
+    """A script of a job next to its log: ``<name>.<suffix>`` for ``<name>.log``."""
+    stem = log[: -len(".log")] if log.endswith(".log") else log
+    return "{}.{}".format(stem, suffix)
+
+
 class SnappyWrapper(metaclass=ABCMeta):
     header = r"""
         #!/usr/bin/env bash
@@ -51,8 +63,10 @@ class SnappyWrapper(metaclass=ABCMeta):
             exec > >(tee -a "{snakemake.log.log}") 2>&1
         fi
 
-        # Temp directory of the job, which the wrapper base class removes afterwards
+        # Temp directory of the job, which the wrapper base class removes afterwards; a rerun of
+        # this script creates it again
         export TMPDIR="{tmpdir}"
+        mkdir -p "$TMPDIR"
 
         # The job's threads for OpenMP and BLAS: Snakemake's shell() sets these to None when a
         # wrapper calls it
@@ -93,73 +107,91 @@ class SnappyWrapper(metaclass=ABCMeta):
     def run(self, cmd: str) -> None:
         pass
 
-    def _run(self, cmd: str) -> None:
+    def _run(self, cmd: str, scripts=None) -> None:
         """
-        Creates a temp file for the script, executes it & writes the declared md5 files
+        Writes the scripts next to the log, executes the shell script & writes the declared
+        md5 files. The scripts stay, with every placeholder filled in: ``<name>.sh`` is the
+        command as run, which ``bash`` reruns; ``scripts`` (suffix -> template) are the scripts
+        the command embeds, ``<name>.R`` or ``<name>.py``, named in the command as
+        ``{scripts.R}`` or ``{scripts.py}`` by their absolute paths.
 
         :param cmd: The command string (after snakemake input/output/params expansion)
         """
-        tempfilename = None
-        tmpdir = tempfile.mkdtemp()
-        try:
-            # delete=False is safe on all Python versions.
-            # It ensures the file is not unlinked upon closing the context manager.
-            with tempfile.NamedTemporaryFile(mode="wt", delete=False) as f:
-                tempfilename = f.name
-
+        log = str(self._snakemake.log.log)
+        os.makedirs(os.path.dirname(os.path.abspath(log)), exist_ok=True)
+        paths = {}
+        for suffix, template in (scripts or {}).items():
+            paths[suffix] = os.path.abspath(script_path(log, suffix))
+            with open(paths[suffix], "wt") as f:
                 print(
                     textwrap.dedent(
-                        "\n".join(
-                            (
+                        snakemake_format(
+                            template,
+                            stepout=4,
+                            snakemake=self._snakemake,
+                            extra_arguments=self.extra_arguments,
+                        )
+                    ),
+                    file=f,
+                )
+        script = script_path(log)
+        tmpdir = tempfile.mkdtemp()
+        try:
+            with open(script, "wt") as f:
+                print(
+                    "\n".join(
+                        (
+                            textwrap.dedent(
                                 snakemake_format(
                                     SnappyWrapper.header,
                                     stepout=4,
                                     snakemake=self._snakemake,
                                     tmpdir=tmpdir,
-                                ),
+                                )
+                            ),
+                            snakemake_format(
+                                cmd,
+                                stepout=4,
+                                snakemake=self._snakemake,
+                                extra_arguments=self.extra_arguments,
+                                scripts=SimpleNamespace(**paths),
+                            ),
+                            textwrap.dedent(
                                 snakemake_format(
-                                    cmd,
-                                    stepout=4,
-                                    snakemake=self._snakemake,
-                                    extra_arguments=self.extra_arguments,
-                                ),
-                                snakemake_format(
-                                    SnappyWrapper.footer,
-                                    stepout=4,
-                                    snakemake=self._snakemake,
-                                ),
-                            )
+                                    SnappyWrapper.footer, stepout=4, snakemake=self._snakemake
+                                )
+                            ),
                         )
                     ),
                     file=f,
                 )
-                f.flush()
-                # Exiting the 'with' context manager safely closes the file.
-
-            # Since the file is closed, we can reliably adjust permissions and run it.
-            current_permissions = stat.S_IMODE(os.lstat(tempfilename).st_mode)
-            os.chmod(tempfilename, current_permissions | stat.S_IXUSR)
-
-            shell(tempfilename)
-
+            os.chmod(script, stat.S_IMODE(os.lstat(script).st_mode) | stat.S_IXUSR)
+            shell(script)
         finally:
-            # Manually clean up the file and the temp directory on exit, regardless of exceptions
+            # The temp directory goes regardless of exceptions; the script stays
             shutil.rmtree(tmpdir, ignore_errors=True)
-            if tempfilename is not None:
-                try:
-                    os.unlink(tempfilename)
-                except OSError:
-                    pass
 
         write_declared_md5s(self._snakemake)
 
 
 class ShellWrapper(SnappyWrapper):
-    def _run_bash(self, cmd: str) -> None:
-        self._run(cmd)
+    def _run_bash(self, cmd: str, scripts=None) -> None:
+        self._run(cmd, scripts)
+
+    def run(self, cmd: str, **scripts: str) -> None:
+        """Run ``cmd``, a bash template. ``scripts`` are the scripts it embeds, by suffix:
+        ``R=code`` or ``py=code``, written next to the log as ``<name>.R`` or ``<name>.py`` with
+        their placeholders filled in, and named in ``cmd`` as ``{scripts.R}`` or ``{scripts.py}``.
+        """
+        self._run_bash(cmd, scripts)
+
+
+class RWrapper(ShellWrapper):
+    """A wrapper whose command is an R script: ``run(code)`` writes it next to the log as
+    ``<name>.R``, with its placeholders filled in, and runs it with ``Rscript --vanilla``."""
 
     def run(self, cmd: str) -> None:
-        self._run_bash(cmd)
+        self._run_bash("Rscript --vanilla {scripts.R}", {"R": cmd})
 
 
 class PythonWrapper:
