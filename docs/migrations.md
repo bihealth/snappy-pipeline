@@ -324,6 +324,10 @@ A single `snappy` command with subcommands replaces the old entry-point scripts.
 | `snappy-refresh-step`  | none: the executor comes from a Snakemake profile                    |
 | `snappy-slurm-status`  | none: the SLURM executor plugin of Snakemake keeps track of the jobs |
 
+`snappy pull-sheet` writes the batch of SODAR verbatim into the `batchNo` custom field, which it declares as a `string`.
+Main declared it an `integer` and wrote the first number of the batch, or 1 without a batch column.
+A sheet that declares `batchNo` as an `integer` still cannot hold batch ids such as `run-2024-A`: biomedsheets rejects them.
+
 ### `snappy run` options
 
 - `--task <name>`: build only the named task and the upstream files it needs, and link its result files (default: every task).

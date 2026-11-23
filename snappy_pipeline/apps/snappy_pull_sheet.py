@@ -1,6 +1,5 @@
 """Pull biomedsheet sample sheet from SODAR API."""
 
-import re
 import sys
 
 import requests
@@ -21,7 +20,7 @@ HEADER_TPL = (
     "",
     "[Custom Fields]",
     "key\tannotatedEntity\tdocs\ttype\tminimum\tmaximum\tunit\tchoices\tpattern",
-    "batchNo\tbioEntity\tBatch No.\tinteger\t.\t.\t.\t.\t.",
+    "batchNo\tbioEntity\tBatch\tstring\t.\t.\t.\t.\t.",
     "familyId\tbioEntity\tFamily\tstring\t.\t.\t.\t.\t.",
     "projectUuid\tbioEntity\tProject UUID\tstring\t.\t.\t.\t.\t.",
     "projectName\tbioEntity\tProject Name\tstring\t.\t.\t.\t.\t.",
@@ -172,7 +171,8 @@ def run(args):  # noqa: C901
             )
             continue
         # ENDOF HACK
-        batch = re.search(r"(\d+)", dict_source.get("Batch", "1")).group(1)
+        # The batch of SODAR verbatim: an id, not a number; "." without a batch column
+        batch = dict_source.get("Batch") or "."
         row = [
             dict_source["Family"],
             dict_source["Name"],

@@ -374,7 +374,8 @@ Without `library_selection`, a task takes the step's default:
 - another set where the step's page names one.
   For example, mapping takes all libraries, the RNA steps take all RNA libraries, and a panel of normals takes all normal DNA libraries.
 
-`library_selection` replaces that default with a pandas `DataFrame.query()` expression, for example `data_set == 'batch2'` or `donor_name != 'P003'`.
+`library_selection` replaces that default with a pandas `DataFrame.query()` expression, for example `data_set == 'batch2'`, `donor_name != 'P003'` or `batch_no == 'run-2024-A'`.
+The custom fields of the sheet are columns too, in snake case, with the values of the sheet: a `batchNo` field declared as `string` keeps batch ids.
 A task never takes libraries that its step cannot process.
 
 ### Group by
