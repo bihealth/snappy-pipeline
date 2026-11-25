@@ -3,11 +3,15 @@
 
 import os
 import re
+import shutil
 
 import click
 from click.testing import CliRunner
+import pytest
 
 from snappy_pipeline.apps import snappy_cli
+
+needs_git = pytest.mark.skipif(shutil.which("git") is None, reason="git is not installed")
 
 
 def _compact(output: str) -> str:
@@ -125,3 +129,89 @@ def test_run_leaves_the_executor_to_the_profile_of_the_user(mocker, tmp_path):
     profiles = [argv[i + 1] for i, arg in enumerate(argv) if arg == "--workflow-profile"]
     assert [os.path.basename(p) for p in profiles] == ["profile"]
     assert argv[argv.index("--profile") + 1] == "slurm"
+
+
+def _repository(tmp_path, git) -> None:
+    """A repository with config.yaml committed and then changed."""
+    git(tmp_path, "init", "-q")
+    (tmp_path / "config.yaml").write_text("tasks: []\n")
+    git(tmp_path, "add", "config.yaml")
+    git(tmp_path, "commit", "-q", "-m", "Initialize the snappy project")
+    (tmp_path / "config.yaml").write_text("tasks: [a]\n")
+
+
+def test_run_offers_to_commit_on_a_terminal_unless_dry_run(mocker, tmp_path):
+    mocker.patch("snappy_pipeline.apps.snappy_cli._interactive", return_value=True)
+    offer_commit = mocker.patch("snappy_pipeline.apps.snappy_cli.offer_commit")
+
+    _invoke_run(mocker, ["--directory", str(tmp_path), "--", "--cores", "1"])
+    offer_commit.assert_called_once_with(str(tmp_path))
+
+    for dry_run in (["-n"], ["-np"], ["--dry-run"], ["--dryrun", "--cores", "1"]):
+        offer_commit.reset_mock()
+        _invoke_run(mocker, ["--directory", str(tmp_path), "--", *dry_run])
+        offer_commit.assert_not_called()
+
+
+def test_run_asks_nothing_without_a_terminal(mocker, tmp_path):
+    mocker.patch("snappy_pipeline.apps.snappy_cli._interactive", return_value=False)
+    offer_commit = mocker.patch("snappy_pipeline.apps.snappy_cli.offer_commit")
+
+    _invoke_run(mocker, ["--directory", str(tmp_path)])
+
+    offer_commit.assert_not_called()
+
+
+@needs_git
+def test_offer_commit_commits_the_changes_with_the_given_message(tmp_path, git, answers):
+    _repository(tmp_path, git)
+    answers(True, "Add the calling task")
+
+    snappy_cli.offer_commit(str(tmp_path))
+
+    assert answers.asked == [
+        "Commit the changes to config.yaml before the run?",
+        "Commit message",
+    ]
+    assert git(tmp_path, "status", "--porcelain") == ""
+    assert git(tmp_path, "log", "-1", "--format=%s") == "Add the calling task\n"
+
+
+@needs_git
+def test_offer_commit_declined_leaves_the_changes(tmp_path, git, answers):
+    _repository(tmp_path, git)
+    answers(False)
+
+    snappy_cli.offer_commit(str(tmp_path))
+
+    assert answers.asked == ["Commit the changes to config.yaml before the run?"]
+    assert git(tmp_path, "status", "--porcelain") == " M config.yaml\n"
+
+
+@needs_git
+def test_offer_commit_without_a_message_leaves_the_changes(tmp_path, git, answers, capsys):
+    _repository(tmp_path, git)
+    answers(True, "  ")
+
+    snappy_cli.offer_commit(str(tmp_path))
+
+    assert git(tmp_path, "status", "--porcelain") == " M config.yaml\n"
+    assert "No commit message" in capsys.readouterr().err
+
+
+@needs_git
+def test_offer_commit_asks_nothing_when_committed(tmp_path, git, answers):
+    _repository(tmp_path, git)
+    git(tmp_path, "commit", "-q", "-a", "-m", "Add a task")
+
+    snappy_cli.offer_commit(str(tmp_path))
+
+    assert answers.asked == []
+
+
+def test_offer_commit_asks_nothing_outside_a_repository(tmp_path, answers):
+    (tmp_path / "config.yaml").write_text("tasks: []\n")
+
+    snappy_cli.offer_commit(str(tmp_path))
+
+    assert answers.asked == []

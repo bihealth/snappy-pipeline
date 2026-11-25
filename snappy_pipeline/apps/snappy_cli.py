@@ -29,7 +29,7 @@ from snakemake.common.configfile import load_configfile
 
 from .. import __version__
 from ..base import ConfigError
-from ..log_archive import SNKMT_DB, build_archive, latest_snakemake_log
+from ..log_archive import SNKMT_DB, build_archive, git_state, latest_snakemake_log
 from ..models import ConfigMode
 from ..orchestration import CONFIG_FILE, create_task_instances, load_project, missing_files
 from ..sheet_summary import missing_reads
@@ -63,6 +63,11 @@ click.rich_click.GROUP_ARGUMENTS_OPTIONS = True
 
 def _get_cwd():
     return os.getcwd()
+
+
+def _interactive() -> bool:
+    """Whether to ask questions: stdin and stdout are a terminal."""
+    return sys.stdin.isatty() and sys.stdout.isatty()
 
 
 #: The project directory of the commands that work on a project
@@ -443,7 +448,7 @@ def init(
     given_directory = ctx.get_parameter_source("directory") != ParameterSource.DEFAULT
     default_name = os.path.basename(os.path.abspath(directory))
     if interactive is None:
-        interactive = sys.stdin.isatty() and sys.stdout.isatty()
+        interactive = _interactive()
     add_tasks = False  # ask for the tasks once config.yaml exists
     if interactive:
 
@@ -746,7 +751,7 @@ def task_add(tasks, directory, config_mode, interactive):
     """
     if not tasks:
         if interactive is None:
-            interactive = sys.stdin.isatty() and sys.stdout.isatty()
+            interactive = _interactive()
         if not interactive:
             raise click.UsageError(
                 "Give the tasks as [NAME=]STEP_TYPE, or run on a terminal to be asked for them"
@@ -797,6 +802,44 @@ def task_list(directory, available, as_json, plain):
     )
 
 
+def _dry_run(snakemake_args: list[str]) -> bool:
+    """Whether the Snakemake arguments ask for a dry-run: ``--dry-run``, ``--dryrun`` or ``-n``,
+    also combined with other short options (``-np``)."""
+    return any(
+        arg in ("--dry-run", "--dryrun") or (re.fullmatch(r"-[a-zA-Z]+", arg) and "n" in arg)
+        for arg in snakemake_args
+    )
+
+
+def offer_commit(directory: str) -> None:
+    """Ask to commit the uncommitted changes to the tracked files of the project before a run,
+    and for the commit message. Declined, or no git repository: nothing happens, the run records
+    the diff and warns. A failed commit is reported and the run goes on."""
+    state = git_state(directory)
+    if state is None or not state.status:
+        return
+    files = ", ".join(state.changed_files)
+    if not ask_confirm(f"Commit the changes to {files} before the run?", default=True):
+        return
+    message = ask_text("Commit message", default=f"Update {files}").strip()
+    if not message:
+        log("No commit message: the changes stay uncommitted", level=LVL_IMPORTANT)
+        return
+    commit = subprocess.run(
+        ["git", "-C", directory, "commit", "-q", "-a", "-m", message],
+        capture_output=True,
+        text=True,
+    )
+    if commit.returncode != 0:
+        log(
+            "The commit failed, the changes stay uncommitted: {error}",
+            {"error": commit.stderr.strip()},
+            level=LVL_IMPORTANT,
+        )
+        return
+    log("Committed {files}", {"files": files}, level=LVL_SUCCESS)
+
+
 @main.command(
     context_settings=dict(
         ignore_unknown_options=True,
@@ -835,6 +878,8 @@ def run(ctx, directory, task_name, frozen, verbose):
     setup_logging(verbose)
 
     snakemake_args = list(ctx.args)
+    if _interactive() and not _dry_run(snakemake_args):
+        offer_commit(directory)
 
     config_args = []
     if task_name:

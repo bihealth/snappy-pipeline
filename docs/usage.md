@@ -66,6 +66,9 @@ By default, `snappy run` builds every task and links its result files into `outp
 `--verbose`
 : Also log debug messages, such as the Snakemake command line.
 
+On a terminal, `snappy run` offers to commit uncommitted changes to the tracked files of the project, such as `config.yaml`, and asks for the commit message.
+Declined, without a terminal or in a dry-run, the run starts anyway: it records the commit and the diff and warns (see [Log archive](#log-archive)).
+
 Everything after `--` goes to Snakemake:
 
 ```shell
