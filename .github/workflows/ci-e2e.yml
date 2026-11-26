@@ -42,6 +42,7 @@ jobs:
         run: |
           git lfs pull --include=".tests/test-workflow/resources/refs/subregion.fa"
           pixi run python .tests/test-workflow/simulate_pedigree.py
+          pixi run python .tests/test-workflow/simulate_umi.py
 
       - name: Dry-run each pipeline
         run: |
@@ -87,8 +88,10 @@ jobs:
           key: sdm-${{ hashFiles('snappy_wrappers/wrappers/**/environment.linux-64.pin.txt') }}
           restore-keys: sdm-
 
-      - name: Simulate the pedigree reads
-        run: pixi run python .tests/test-workflow/simulate_pedigree.py
+      - name: Simulate the pedigree and the UMI reads
+        run: |
+          pixi run python .tests/test-workflow/simulate_pedigree.py
+          pixi run python .tests/test-workflow/simulate_umi.py
 
       - name: Run each pipeline
         run: |
@@ -108,3 +111,6 @@ jobs:
 
       - name: Check the events of the simulated pedigree
         run: pixi run python .tests/test-workflow/pipelines/snappy-germline_pedigree/check_events.py
+
+      - name: Check the consensus reads of the simulated UMI library
+        run: pixi run python .tests/test-workflow/pipelines/snappy-umi/check_consensus.py

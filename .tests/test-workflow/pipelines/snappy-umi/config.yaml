@@ -1,0 +1,90 @@
+project:
+  name: snappy-umi
+
+# A simulated library of the IDT duplex design (8 bp UMIs on both reads, 32 fixed UMIs) with planted
+# variants; ../../simulate_umi.py writes raw/, resources/umis.txt and the truth tables, and
+# check_consensus.py checks the consensus BAM files and the duplex yield
+data_sets:
+  umi:
+    file: samplesheet.tsv
+    search_patterns:
+      - { left: '(?P<readgroup>.+)\.R1\.fastq\.gz', right: '(?P<readgroup>.+)\.R2\.fastq\.gz' }
+    search_paths:
+      - raw
+    type: matched_cancer
+    naming_scheme: only_secondary_id
+
+tasks:
+  - name: genome
+    step: external_data
+    config:
+      produces: {type: raw, tags: [reference, dna]}
+      files: {fasta: ../../resources/refs/subregion.fa}
+
+  - name: kits
+    step: external_data
+    config:
+      produces: {type: regions, tags: [kits]}
+      kits:
+        SimExome:
+          targets: ../snappy-germline_pedigree/resources/SimExome.chr12.bed
+          baits: ../snappy-germline_pedigree/resources/SimExome.chr12.bed
+
+  - name: umis
+    step: external_data
+    config:
+      produces: {type: tabular, tags: [umis]}
+      files: {umis: resources/umis.txt}
+
+  - name: bwa_mem3_index
+    step: reference_index
+    config:
+      depends_on:
+        reference: genome
+      tool: bwa_mem3
+
+  # Duplex consensus reads, with the UMIs corrected against the kit's 32 UMIs (minimum pairwise
+  # distance 3, so one mismatch is always correctable)
+  - name: umi_duplex
+    step: umi_mapping
+    config:
+      depends_on:
+        reads: data_sets
+        reference: genome
+        index: bwa_mem3_index
+        umis: umis
+      tool: fgumi
+      consensus: duplex
+      fgumi:
+        aligner: {num_threads: 2}
+        num_threads: 1
+        correct: {max_mismatches: 1, min_distance: 2}
+        duplex: {}
+
+  # Simplex consensus reads of the same reads (adjacency grouping over both UMIs), clipped at the
+  # fragment ends
+  - name: umi_simplex
+    step: umi_mapping
+    config:
+      depends_on:
+        reads: data_sets
+        reference: genome
+        index: bwa_mem3_index
+      tool: fgumi
+      consensus: simplex
+      fgumi:
+        aligner: {num_threads: 2}
+        num_threads: 1
+        simplex: {}
+        clip: {read_one_five_prime: 15, read_one_three_prime: 8, read_two_five_prime: 15, read_two_three_prime: 8}
+
+  # A consumer of the consensus alignments
+  - name: coverage_qc
+    step: ngs_data_qc
+    config:
+      depends_on:
+        alignments: umi_duplex
+        reference: genome
+        kits: kits
+      tool: alfred
+      alfred: {}

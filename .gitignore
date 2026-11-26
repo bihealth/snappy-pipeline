@@ -117,6 +117,16 @@ work/
 # simulate_pedigree.py writes the reads and the truth table
 .tests/test-workflow/pipelines/snappy-germline_pedigree/raw/
 .tests/test-workflow/pipelines/snappy-germline_pedigree/truth.tsv
+!.tests/test-workflow/simulate_umi.py
+!.tests/test-workflow/pipelines/snappy-umi/
+!.tests/test-workflow/pipelines/snappy-umi/config.yaml
+!.tests/test-workflow/pipelines/snappy-umi/samplesheet.tsv
+!.tests/test-workflow/pipelines/snappy-umi/check_consensus.py
+# simulate_umi.py writes the reads, the UMI whitelist and the truth tables
+.tests/test-workflow/pipelines/snappy-umi/raw/
+.tests/test-workflow/pipelines/snappy-umi/resources/
+.tests/test-workflow/pipelines/snappy-umi/truth.tsv
+.tests/test-workflow/pipelines/snappy-umi/truth_molecules.tsv
 !.tests/test-workflow/resources/
 !.tests/test-workflow/resources/.gitattributes
 !.tests/test-workflow/resources/mehari/
