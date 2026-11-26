@@ -29,7 +29,13 @@ from snakemake.common.configfile import load_configfile
 
 from .. import __version__
 from ..base import ConfigError
-from ..log_archive import SNKMT_DB, build_archive, git_state, latest_snakemake_log
+from ..log_archive import (
+    SNKMT_DB,
+    build_archive,
+    git_state,
+    latest_snakemake_log,
+    untracked_sheet_hints,
+)
 from ..models import ConfigMode
 from ..orchestration import CONFIG_FILE, create_task_instances, load_project, missing_files
 from ..sheet_summary import missing_library_files
@@ -219,6 +225,10 @@ def _task_row(item: dict) -> dict[str, Any]:
 README_FILENAME = "README.md"
 GITIGNORE_FILENAME = ".gitignore"
 SHEET_FILENAME = "samplesheet.tsv"
+READS_TABLE_FILENAME = "reads.tsv"
+#: The sheets of a project: the sample sheet and the files table of the reads task of the
+#: templates; ``snappy init --track-sheets`` tracks them
+SHEET_FILES = (SHEET_FILENAME, READS_TABLE_FILENAME)
 #: The columns of the sample sheet that ``snappy init`` writes, besides the core columns: the
 #: pedigree of a germline project, the tumors of a cancer project, and the files
 SHEET_COLUMNS = (
@@ -402,15 +412,15 @@ def main():
     help="List of tasks to create automatically, formatted as [name=]step_type",
 )
 @click.option(
-    "--track-sheet/--no-track-sheet",
+    "--track-sheets/--no-track-sheets",
     default=False,
-    help="Track samplesheet.tsv in git. Only if it holds no personal data, or the remote is approved for such data (such as the internal GitLab).",
+    help="Track the sample sheet and the files table (samplesheet.tsv, reads.tsv) in git. Only if they hold no personal data, or the remote is approved for such data (such as the internal GitLab).",
 )
 @config_mode_option
 @click.option(
     "--git/--no-git",
     default=True,
-    help="Track the configuration in a git repository: .gitignore, config.yaml and README.md, nothing else unless --track-sheet.",
+    help="Track the configuration in a git repository: .gitignore, config.yaml and README.md, nothing else unless --track-sheets.",
 )
 @click.option(
     "--remote",
@@ -431,7 +441,7 @@ def init(
     external_id,
     description,
     tasks,
-    track_sheet,
+    track_sheets,
     config_mode,
     git,
     remote,
@@ -465,20 +475,20 @@ def init(
                 "Configuration style", CONFIG_MODE_CHOICES, default=config_mode
             )
         if git:
-            if asked("track_sheet"):
-                track_sheet = ask_confirm(
-                    "Track samplesheet.tsv in git? Only if it holds no personal data, or the "
-                    "remote is approved for such data (such as the internal GitLab)",
+            if asked("track_sheets"):
+                track_sheets = ask_confirm(
+                    "Track samplesheet.tsv and reads.tsv in git? Only if they hold no personal "
+                    "data, or the remote is approved for such data (such as the internal GitLab)",
                     default=False,
                 )
             if asked("remote"):
                 remote = ask_text("Git remote URL (origin; nothing is pushed)")
-            if track_sheet and remote:
-                track_sheet = ask_confirm(
-                    f"Is {remote} approved for the data in the sample sheet?", default=False
+            if track_sheets and remote:
+                track_sheets = ask_confirm(
+                    f"Is {remote} approved for the data in the sheets?", default=False
                 )
-                if not track_sheet:
-                    log("samplesheet.tsv stays untracked", level=LVL_IMPORTANT)
+                if not track_sheets:
+                    log("samplesheet.tsv and reads.tsv stay untracked", level=LVL_IMPORTANT)
         add_tasks = asked("tasks") and ask_confirm("Add tasks now?", default=False)
     project_name = project_name or default_name
     # A project named unlike the current directory gets a directory of its own
@@ -514,6 +524,7 @@ def init(
         "external_id_yaml": json.dumps(external_id, ensure_ascii=False),
         "description_yaml": json.dumps(description, ensure_ascii=False),
         "sheet_file": SHEET_FILENAME,
+        "reads_table": READS_TABLE_FILENAME,
     }
 
     # Create config file in subdirectory based on template; the minimal one has a short header
@@ -566,7 +577,7 @@ def init(
         _prompt_tasks(project_directory, config_mode)
 
     if git:
-        init_git(project_directory, remote or None, track_sheet)
+        init_git(project_directory, remote or None, track_sheets)
     if failed:
         sys.exit(failed)
 
@@ -658,9 +669,10 @@ def _prompt_tasks(project_directory: str, config_mode: ConfigMode | str) -> list
     return _TaskQuestions(project_directory, config_mode).run()
 
 
-def init_git(project_directory: str, remote: str | None, track_sheet: bool = False) -> None:
+def init_git(project_directory: str, remote: str | None, track_sheets: bool = False) -> None:
     """Put the configuration under version control: the first commit of a new repository with
-    .gitignore, config.yaml and README.md (and the sample sheet with ``track_sheet``), or these
+    .gitignore, config.yaml and README.md (and the sheets with ``track_sheets``: the sample
+    sheet now, the files table once ``snappy scan-files`` has written it), or these
     files staged in the repository that already contains the directory (no nested repository,
     no remote). A remote is added without pushing. Without git or without a commit identity
     the files stay staged and the gap is reported; init does not fail."""
@@ -673,10 +685,10 @@ def init_git(project_directory: str, remote: str | None, track_sheet: bool = Fal
         message_args={"path": gitignore},
     )
     files = [GITIGNORE_FILENAME, CONFIG_FILENAME, README_FILENAME]
-    if track_sheet:
+    if track_sheets:
         with open(gitignore, "at") as f:
-            f.write(f"!/{SHEET_FILENAME}\n")
-        files.append(SHEET_FILENAME)
+            f.writelines(f"!/{name}\n" for name in SHEET_FILES)
+        files += [n for n in SHEET_FILES if os.path.exists(os.path.join(project_directory, n))]
     git = shutil.which("git")
     if git is None:
         log("git is not installed: the project is not under version control", level=LVL_IMPORTANT)
@@ -1007,6 +1019,15 @@ def scan_files_command(directory, task_names, search_paths, patterns):
         sys.exit(1)
     for message in written:
         log(message, level=LVL_IMPORTANT)
+    tables = [
+        table
+        for name, config in project.task_configs.items()
+        if project.task(name).step == "external_data"
+        for table in config.library_files
+        if os.path.exists(table)
+    ]
+    for hint in untracked_sheet_hints(project.project_dir, tables, project.model.sample_sheets):
+        log(hint, level=LVL_IMPORTANT)
     for problem in problems:
         log(problem, level=LVL_ERROR)
     if problems:

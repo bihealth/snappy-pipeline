@@ -18,4 +18,4 @@ tasks:
     step: external_data
     config:
       produces: {type: reads}
-      library_files: [reads.tsv]
+      library_files: [%(reads_table)s]

@@ -38,7 +38,7 @@ Besides `config.yaml`, `snappy init`:
 - writes the header of an empty sample sheet `samplesheet.tsv`, which `config.yaml` names: the core columns and the ones a germline or cancer project usually fills (`family_id`, `father`, `mother`, `sex`, `is_affected`, `is_index`, `sample_name`, `is_tumor`, `library_kit`, `folder_name`); delete the columns the project does not need, add others (see the sample sheets section of the overview).
 - records the project name, external id and description.
 - makes the project a git repository that tracks only `.gitignore`, `config.yaml` and `README.md`.
-  `--track-sheet` adds the sheet, `--remote <url>` adds the remote `origin` without pushing, and `--no-git` skips the repository.
+  `--track-sheets` adds the sample sheet and the files table `reads.tsv`, `--remote <url>` adds the remote `origin` without pushing, and `--no-git` skips the repository.
 - asks on a terminal for what no option gives.
   `--no-interactive` takes the defaults instead.
 

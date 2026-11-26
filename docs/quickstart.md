@@ -45,9 +45,10 @@ On a terminal, `snappy init` asks for what no option gives:
 `--no-interactive` takes the defaults instead.
 
 The project is a git repository whose first commit holds `.gitignore`, `config.yaml` and `README.md`.
-Everything else is ignored: results, logs, caches, data and the sample sheet, which may hold personal data.
-`--track-sheet` adds the sample sheet.
-Use it only if the sheet holds no personal data or the remote is approved for such data.
+Everything else is ignored: results, logs, caches, data, the sample sheet and the files tables, which may hold personal data.
+`--track-sheets` adds the sample sheet and the files table `reads.tsv`, so that the record of a run covers the files of the libraries.
+Use it only if they hold no personal data or the remote is approved for such data.
+`snappy scan-files` points out a table that the repository misses.
 `--remote <url>` adds the remote `origin` without pushing, and `--no-git` skips the repository.
 Inside an existing git repository, `snappy init` stages the files there instead of creating a new repository.
 

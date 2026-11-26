@@ -1,6 +1,6 @@
 # A snappy project tracks only its configuration. Everything else stays out: results, work,
-# logs, caches, data, and the sample sheets, which may hold personal data.
-# Add a line like "!/notes/" to track more.
+# logs, caches, data, and the sheets (the sample sheet and the files tables), which may hold
+# personal data; `snappy init --track-sheets` adds them. Add a line like "!/notes/" to track more.
 /*
 !/.gitignore
 !/config.yaml

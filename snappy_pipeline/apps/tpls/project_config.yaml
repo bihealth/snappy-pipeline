@@ -26,7 +26,7 @@ project:
 # The sample sheets: plain TSV files, one row per library (donor_name, library_name,
 # library_type and the columns the tasks need; see the documentation), checked by
 # `snappy sheet check`. The FASTQ files of the libraries come from the `reads` task below:
-# `snappy scan-files` lists them in reads.tsv from the files below raw/ in a folder named like
+# `snappy scan-files` lists them in %(reads_table)s from the files below raw/ in a folder named like
 # the library (or its folder_name), or named after it (<library>_..., flat or in batch folders),
 # with the common namings (_R1_001.fastq.gz, .R1.fastq.gz, _1.fq.gz, ...). Another layout takes
 # --search-path and --pattern key=regex; the table records the command for later rescans.
@@ -83,10 +83,10 @@ sample_sheets:
 #       files: {cache: /path/to/vep/cache}
 #
 tasks:
-  # The FASTQ files of the libraries: `snappy scan-files` lists them in reads.tsv, one row per
+  # The FASTQ files of the libraries: `snappy scan-files` lists them in %(reads_table)s, one row per
   # read group, from the folders below raw/ (one per library, named like the sheet's folderName)
   - name: reads
     step: external_data
     config:
       produces: {type: reads}
-      library_files: [reads.tsv]
+      library_files: [%(reads_table)s]

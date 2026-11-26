@@ -12,6 +12,7 @@ that record too.
 """
 
 import contextlib
+import os
 import re
 import shutil
 import sqlite3
@@ -63,22 +64,54 @@ class GitState:
         return record
 
 
-def git_state(directory: Path) -> GitState | None:
-    """Return the git state of ``directory``, or ``None`` without git, outside a repository or
-    before its first commit."""
+def run_git(directory: Path | str, *args: str) -> subprocess.CompletedProcess | None:
+    """Run git in ``directory`` and return the result, ``None`` without git."""
     git = shutil.which("git")
     if git is None:
         return None
+    return subprocess.run([git, "-C", str(directory), *args], capture_output=True, text=True)
 
-    def run(*args: str) -> subprocess.CompletedProcess:
-        return subprocess.run([git, "-C", str(directory), *args], capture_output=True, text=True)
 
-    head = run("rev-parse", "HEAD")
-    if head.returncode != 0:
+def git_state(directory: Path) -> GitState | None:
+    """Return the git state of ``directory``, or ``None`` without git, outside a repository or
+    before its first commit."""
+    head = run_git(directory, "rev-parse", "HEAD")
+    if head is None or head.returncode != 0:
         return None
-    status = run("status", "--porcelain", "--untracked-files=no").stdout
-    diff = run("diff", "HEAD").stdout if status else ""
+    status = run_git(directory, "status", "--porcelain", "--untracked-files=no").stdout
+    diff = run_git(directory, "diff", "HEAD").stdout if status else ""
     return GitState(head.stdout.strip(), status, diff)
+
+
+def untracked_sheet_hints(directory: str, tables: list[str], sheets: list[str]) -> list[str]:
+    """Hints for the files tables that the run record misses: ignored by git while a sample sheet
+    is tracked, or allowed but not committed; nothing outside a repository."""
+    inside = run_git(directory, "rev-parse", "--is-inside-work-tree")
+    if inside is None or inside.returncode != 0:
+        return []
+
+    def tracked(path: str) -> bool:
+        return run_git(directory, "ls-files", "--error-unmatch", "--", path).returncode == 0
+
+    sheet_tracked = any(tracked(sheet) for sheet in sheets)
+    hints = []
+    for table in tables:
+        if tracked(table):
+            continue
+        name = os.path.relpath(table, directory)
+        if run_git(directory, "check-ignore", "-q", "--", table).returncode == 0:
+            if sheet_tracked:
+                lines = f"`!/{name}`"
+                if os.sep in name:
+                    lines = f"`!/{name.split(os.sep)[0]}/` and {lines}"
+                hints.append(
+                    f"{name} is ignored by git while the sample sheet is tracked; add {lines} to "
+                    ".gitignore and commit it, so that the run record covers the files of the "
+                    "libraries"
+                )
+        else:
+            hints.append(f"{name} is not committed; commit it with the configuration")
+    return hints
 
 
 def git_record_path(snakemake_log: Path) -> Path:

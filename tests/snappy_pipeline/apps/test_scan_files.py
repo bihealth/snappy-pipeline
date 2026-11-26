@@ -1,6 +1,9 @@
 # -*- coding: utf-8 -*-
 """Tests for ``snappy scan-files``, which writes the files tables of ``external_data`` tasks."""
 
+import shutil
+
+import pytest
 from click.testing import CliRunner
 
 from snappy_pipeline.apps.snappy_cli import main
@@ -44,6 +47,8 @@ BAM_ARGS = [
     "--pattern",
     r"bai=.+\.bam\.bai",
 ]
+
+needs_git = pytest.mark.skipif(shutil.which("git") is None, reason="git is not installed")
 
 
 def _touch(root, *paths):
@@ -199,3 +204,26 @@ def test_a_file_that_two_libraries_claim_is_a_problem(tmp_path):
         f"reads: P002-N1-DNA1-WGS1: {tmp_path}/raw/S1_A_L1.R1.fastq.gz belongs to library "
         "'P001-N1-DNA1-WGS1' as well" in result.output
     )
+
+
+@needs_git
+def test_scan_files_points_out_a_table_that_the_repository_misses(tmp_path, git):
+    _project(tmp_path)
+    git(tmp_path, "init", "-q")
+    (tmp_path / ".gitignore").write_text("/*\n!/.gitignore\n!/config.yaml\n")
+    git(tmp_path, "add", ".gitignore", "config.yaml")
+    git(tmp_path, "commit", "-q", "-m", "init")
+    # The sheet is untracked as well: the user keeps the sheets out, no hint
+    assert "reads.tsv is" not in _scan(tmp_path).output
+    with (tmp_path / ".gitignore").open("a") as f:
+        f.write("!/sheet.tsv\n")
+    git(tmp_path, "add", "sheet.tsv")
+    assert (
+        "reads.tsv is ignored by git while the sample sheet is tracked; add `!/reads.tsv` to "
+        ".gitignore and commit it, so that the run record covers the files of the libraries"
+    ) in _scan(tmp_path).output
+    with (tmp_path / ".gitignore").open("a") as f:
+        f.write("!/reads.tsv\n")
+    assert "reads.tsv is not committed; commit it with the configuration" in _scan(tmp_path).output
+    git(tmp_path, "add", "reads.tsv")
+    assert "reads.tsv is" not in _scan(tmp_path).output

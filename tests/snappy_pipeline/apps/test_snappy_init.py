@@ -135,9 +135,9 @@ def test_init_keeps_an_existing_sample_sheet(tmp_path):
 
 
 @needs_git
-def test_init_tracks_the_sample_sheet_only_on_request(tmp_path, git):
+def test_init_tracks_the_sheets_only_on_request(tmp_path, git):
     project = tmp_path / "project"
-    result = CliRunner().invoke(snappy_cli.main, ["init", str(project), "--track-sheet"])
+    result = CliRunner().invoke(snappy_cli.main, ["init", str(project), "--track-sheets"])
     assert result.exit_code == 0, result.output
     assert git(project, "ls-files").split() == [
         ".gitignore",
@@ -145,7 +145,8 @@ def test_init_tracks_the_sample_sheet_only_on_request(tmp_path, git):
         "config.yaml",
         "samplesheet.tsv",
     ]
-    assert "!/samplesheet.tsv\n" in (project / ".gitignore").read_text()
+    # The files table is allowed before scan-files writes it
+    assert "!/samplesheet.tsv\n!/reads.tsv\n" in (project / ".gitignore").read_text()
 
 
 @needs_git
