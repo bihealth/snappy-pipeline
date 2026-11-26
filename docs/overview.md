@@ -391,7 +391,7 @@ Each known column belongs to a level, and all rows of one donor, sample or extra
 | `father`, `mother` | donor   | The `donor_name` of a parent with a row in the sheets, with or without libraries                             |
 | `sex`              | donor   | `male`, `female`, `unknown`                                                                                  |
 | `is_affected`      | donor   | `true`, `false`; empty for unknown                                                                           |
-| `is_index`         | donor   | `true` for the index donor of a family of several donors; a single donor is its own index                    |
+| `is_index`         | donor   | `true` for the index donor of a family; needed where several donors of the family have a normal DNA library  |
 | `hpo_terms`        | donor   | `HP:0000001,HP:0000002`                                                                                      |
 | `sample_name`      | sample  | The full name of the sample (`P001-N1`); DNA and RNA libraries of one sample share it                        |
 | `is_tumor`         | sample  | `true` for a tumor sample; the library's role is then `tumor`, else `normal`                                 |
@@ -409,8 +409,10 @@ Each known column belongs to a level, and all rows of one donor, sample or extra
 | `is_background`    | library | `true` for a library of a reference cohort that is no task's result                                          |
 
 A donor without libraries, such as a parent who completes a pedigree, has a row with the donor columns only.
+Any pedigree fits: a parent is optional, so half-siblings and consanguinity work, and relatives without data, such as the grandparents that connect two cousins, get donor-only rows that complete the paths between the sequenced donors.
+The PED files name the donors with a normal DNA library only, so a relation that runs through a donor without one is not in the PED.
 Relapses and further tumors are more rows with `is_tumor: true` and their own `sample_name`; a column such as `timepoint` tells them apart in `library_selection`.
-Where a donor has several libraries of one role and extraction type (a normal WES and a normal WGS, two tumors), exactly one is marked `is_primary`; where a family has several donors, exactly one is marked `is_index`.
+Where a donor has several libraries of one role and extraction type (a normal WES and a normal WGS, two tumors), exactly one is marked `is_primary`; where several donors of a family have a normal DNA library, exactly one is marked `is_index`.
 A germline cohort and the tumors of a hereditary cancer family fit one sheet: the family columns describe the relatives, `is_tumor` the tumor samples.
 
 Cells that are synonyms of a value are read as the value (`F`, `woman` or `XX` as `female`; `yes`, `Y` or `1` as `true`; `exome` as `WES`; `illumina` as `Illumina`), and `snappy sheet check` lists them; `snappy sheet check --fix` writes the values into the sheet.

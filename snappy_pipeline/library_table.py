@@ -133,14 +133,22 @@ def _donors(sheets: Sheets) -> dict[str, Row]:
 
 
 def _is_index(donor_name: str, sheets: Sheets) -> bool:
-    """Whether the donor is the index of its family: marked ``is_index``, or alone in it."""
+    """Whether the donor is the index of its family: marked ``is_index``, or the only donor of the
+    family with a normal DNA library."""
     donors = _donors(sheets)
     donor = donors[donor_name]
     if donor.values.is_index is not None:
         return donor.values.is_index
     family = _family_of(donor)
-    members = [d for d in donors.values() if _family_of(d) == family]
-    return len(members) == 1
+    germline = {
+        r.values.donor_name
+        for r in sheets.libraries
+        if r.values.role == "normal" and r.values.extraction_type == "dna"
+    }
+    members = [
+        d for d in donors.values() if _family_of(d) == family and d.values.donor_name in germline
+    ]
+    return members == [donor]
 
 
 def _primary_dna_library(donor_name: str, sheets: Sheets) -> str:

@@ -544,7 +544,7 @@ Outside the e2e pipelines, results change on purpose where main was wrong or ign
 
 The family column of the PED files is the pedigree's name, the sheet's `family_id`.
 The trio PED of a child who is not the index names the child's family.
-A pedigree whose index has no DNA library is processed like any other (main dropped its members).
+The index of a family has a normal DNA library, and where several donors have one, the sheet marks the index with `is_index`; a family whose index had none fails the sheet check (main dropped its members silently).
 
 A joint germline call takes one DNA library per pedigree member, so a donor's RNA libraries and further DNA libraries stay out of it.
 On a cancer sheet, it takes the normal, or the primary tumor of a donor without a normal.

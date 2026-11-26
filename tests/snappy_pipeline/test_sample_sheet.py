@@ -73,10 +73,10 @@ def test_germline_sheet_with_comments_blank_lines_and_a_donor_without_libraries(
 
 def test_mixed_sheet_and_extra_columns(tmp_path):
     text = (
-        "family_id\tdonor_name\tsex\tis_tumor\tlibrary_name\tlibrary_type\ttimepoint\n"
-        "F1\tP1\tmale\tfalse\tP1-N1-DNA1-WGS1\tWGS\t\n"
-        "F1\tP1\tmale\ttrue\tP1-T1-DNA1-WGS1\tWGS\tprimary\n"
-        "F1\tP2\tfemale\tfalse\tP2-N1-DNA1-WGS1\tWGS\t\n"
+        "family_id\tdonor_name\tsex\tis_index\tis_tumor\tlibrary_name\tlibrary_type\ttimepoint\n"
+        "F1\tP1\tmale\ttrue\tfalse\tP1-N1-DNA1-WGS1\tWGS\t\n"
+        "F1\tP1\tmale\ttrue\ttrue\tP1-T1-DNA1-WGS1\tWGS\tprimary\n"
+        "F1\tP2\tfemale\t\tfalse\tP2-N1-DNA1-WGS1\tWGS\t\n"
     )
     sheets = read_sheets([_write(tmp_path, "﻿" + text)])
     rows = [row.values for row in sheets.rows]
@@ -208,11 +208,11 @@ def _germline(*rows):
     "rows, problems",
     [
         (
-            ["F\tP1\t\t\tmale\t\t\tL1\tWES\tD1", "F\tP2\t\t\tmale\t\t\tL1\tWES\tD2"],
+            ["F\tP1\t\t\tmale\ttrue\t\tL1\tWES\tD1", "F\tP2\t\t\tmale\t\t\tL1\tWES\tD2"],
             ["3: library_name: 'L1' is also on line 2"],
         ),
         (
-            ["F\tP1\t\t\tmale\t\t\tL1\tWES\tD1", "F\tP2\t\t\tmale\t\t\tL2\tWES\tD1"],
+            ["F\tP1\t\t\tmale\ttrue\t\tL1\tWES\tD1", "F\tP2\t\t\tmale\t\t\tL2\tWES\tD1"],
             ["3: folder_name: 'D1' is also on line 2"],
         ),
         (
@@ -233,7 +233,7 @@ def _germline(*rows):
         ),
         (["F\tP1\tP1\t\tmale\t\t\tL1\tWES\tD1"], ["2: father: a donor is not its own parent"]),
         (
-            ["F\tP1\tP2\t\tmale\t\t\tL1\tWES\tD1", "F\tP2\t\t\tfemale\t\t\tL2\tWES\tD2"],
+            ["F\tP1\tP2\t\tmale\ttrue\t\tL1\tWES\tD1", "F\tP2\t\t\tfemale\t\t\tL2\tWES\tD2"],
             ["2: father: 'P2' is female (line 3)"],
         ),
         (
@@ -242,15 +242,21 @@ def _germline(*rows):
         ),
         (
             [
-                "F\tP1\tP3\t\tmale\t\t\tL1\tWES\tD1",
+                "F\tP1\tP3\t\tmale\ttrue\t\tL1\tWES\tD1",
                 "F\tP2\t\tP3\tmale\t\t\tL2\tWES\tD2",
                 "F\tP3\t\t\tunknown\t\t\tL3\tWES\tD3",
             ],
             ["4: donor_name: 'P3' is a father and a mother"],
         ),
         (
-            ["F\tP1\tP2\t\tmale\t\t\tL1\tWES\tD1", "F\tP2\tP1\t\tmale\t\t\tL2\tWES\tD2"],
+            ["F\tP1\tP2\t\tmale\ttrue\t\tL1\tWES\tD1", "F\tP2\tP1\t\tmale\t\t\tL2\tWES\tD2"],
             ["2: father: the parents of 'P1' form a cycle"],
+        ),
+        (
+            ["F\tP1\t\t\tmale\t\t\tL1\tWES\tD1", "F\tP2\t\t\tmale\t\t\tL2\tWES\tD2"],
+            [
+                "2: is_index: family 'F' has 2 donors with a normal DNA library and no index; mark one is_index"
+            ],
         ),
         (
             ["F\tP1\t\t\tmale\ttrue\t\tL1\tWES\tD1", "F\tP2\t\t\tmale\ttrue\t\tL2\tWES\tD2"],
@@ -258,7 +264,7 @@ def _germline(*rows):
         ),
         (
             ["F\tP1\t\t\tmale\ttrue\t\t\t\t", "F\tP2\t\t\tmale\t\t\tL2\tWES\tD2"],
-            ["2: is_index: the index of a family has a library"],
+            ["2: is_index: the index of a family has a normal DNA library"],
         ),
         (
             ["F\tP1\t\t\tmale\t\t\tL1\tWES\tD1", "F\tP1\t\t\tmale\t\t\tL2\tWGS\tD2"],

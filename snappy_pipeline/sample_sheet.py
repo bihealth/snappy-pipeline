@@ -678,29 +678,54 @@ def _check_parents(rows) -> list[Problem]:
 
 
 def _check_index(rows) -> list[Problem]:
-    """At most one index per family; an index has a library."""
+    """One index per family where several donors have a normal DNA library; the index has one."""
     problems = []
-    donors = _donors(rows)
-    by_family: dict[str, list[Row]] = {}
-    for row in donors.values():
+    germline = {
+        row.values.donor_name
+        for row in rows
+        if row.values.is_library
+        and row.values.role == "normal"
+        and row.values.extraction_type == "dna"
+    }
+    members: dict[str, list[Row]] = {}
+    indexes: dict[str, list[Row]] = {}
+    for row in _donors(rows).values():
+        family = row.values.family_id or row.values.donor_name
+        if row.values.donor_name in germline:
+            members.setdefault(family, []).append(row)
         if row.values.is_index:
-            by_family.setdefault(row.values.family_id or row.values.donor_name, []).append(row)
-            if not any(
-                r.values.is_library for r in rows if r.values.donor_name == row.values.donor_name
-            ):
+            indexes.setdefault(family, []).append(row)
+            if row.values.donor_name not in germline:
                 problems.append(
-                    Problem(row.path, row.line, "is_index", "the index of a family has a library")
+                    Problem(
+                        row.path,
+                        row.line,
+                        "is_index",
+                        "the index of a family has a normal DNA library",
+                    )
                 )
-    for family, indexes in by_family.items():
-        if len(indexes) > 1:
-            row = indexes[-1]
+    for family, marked in indexes.items():
+        if len(marked) > 1:
+            row = marked[-1]
             problems.append(
                 Problem(
                     row.path,
                     row.line,
                     "is_index",
-                    f"family {family!r} has {len(indexes)} index donors: "
-                    + ", ".join(r.values.donor_name for r in indexes),
+                    f"family {family!r} has {len(marked)} index donors: "
+                    + ", ".join(r.values.donor_name for r in marked),
+                )
+            )
+    for family, rows_ in members.items():
+        if len(rows_) > 1 and family not in indexes:
+            row = rows_[0]
+            problems.append(
+                Problem(
+                    row.path,
+                    row.line,
+                    "is_index",
+                    f"family {family!r} has {len(rows_)} donors with a normal DNA library and no "
+                    "index; mark one is_index",
                 )
             )
     return problems
