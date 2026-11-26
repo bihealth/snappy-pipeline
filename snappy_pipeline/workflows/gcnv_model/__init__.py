@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 """GATK gCNV model
 
-The step builds a model for GATK4 gCNV in cohort mode from the aligned germline reads of the whole cohort, including background data sets.
+The step builds a model for GATK4 gCNV in cohort mode from the aligned germline reads of the whole cohort, including background libraries.
 The model has two parts: the contig ploidy model (``ploidy-model``) and the CNV calls model (``cnv_calls-model``) of each shard of the genome.
 The ``gcnv`` tool of :ref:`step_sv_calling_targeted` and :ref:`step_sv_calling_wgs` runs gCNV in case mode with this model.
 These tasks name the model task in ``depends_on.gcnv_model``.
@@ -16,7 +16,7 @@ The field ``intervals`` selects how the genome is binned:
 - ``targeted`` bins the target regions of each library kit, for exomes and panels.
   ``depends_on.kits`` names an ``external_data`` task with ``kits``.
   The step builds one model per kit from the kit's ``targets``.
-  A targeted library (``WES`` or ``Panel_seq``) belongs to the model of the kit named like its ``libraryKit``.
+  A targeted library (``WES`` or ``Panel_seq``) belongs to the model of the kit named like its ``library_kit``.
   Other libraries are left out.
   A kit missing from the kits task is an error.
   ``snappy run`` warns about kits with fewer than 10 libraries.

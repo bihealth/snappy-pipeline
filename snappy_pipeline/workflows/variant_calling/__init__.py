@@ -84,7 +84,7 @@ The ``tool`` field selects the caller.
         The scenario holds one tumor with its matched normal (``tumor_normal_mode``, as for ``mutect2``).
         It is the default scenario of dna-seq-varlociraptor.
         Its events are ``somatic_tumor_low``, ``somatic_tumor_medium`` and ``somatic_tumor_high`` (tumor allele frequency below 0.1, from 0.1 to 0.3, from 0.3), ``somatic_normal``, ``germline_het`` and ``germline_hom``.
-        The tumor purity comes from the sample sheet column ``purity``, a custom field from 0 to 1.
+        The tumor purity comes from the sample sheet column ``purity``, from 0 to 1.
         The scenario models it as the contamination of the tumor by the normal.
         A tumor without a purity counts as pure, with a warning.
         A tumor without a matched normal keeps the normal in the scenario as an unobserved sample named ``normal``, so the events stay the same.
@@ -95,7 +95,7 @@ The ``tool`` field selects the caller.
         This allows a joint scenario such as the tumor/normal/relapse one of the varlociraptor scenario catalog.
 
     In both presets, an FFPE library gets varlociraptor's model of the artifacts of an FFPE fragment (``fragment_end_bias``).
-    The sample sheet custom field ``isFfpe`` (``Y`` or ``N``) marks FFPE libraries.
+    The sample sheet column ``is_ffpe`` marks FFPE libraries.
     The samples of the scenario are the library names, and so are the samples of the VCF.
     The VCF carries ``GT`` from ``varlociraptor genotype``.
     The calls are all candidates with the posterior probability of each event (``INFO/PROB_<EVENT>``), not a filtered call set.
@@ -414,6 +414,10 @@ def _builtin(value: Any) -> Any:
     return value
 
 
+#: The germline callers call the normal DNA libraries
+GERMLINE_REQUIREMENT = "role == 'normal' and extraction_type == 'dna'"
+
+
 class VariantCallingStepPart(BaseStepPart):
     """Base class of the germline callers, which call the libraries of an entity jointly: the
     pedigree members of its related group with ``group_by: related``, else the library."""
@@ -451,13 +455,13 @@ class VariantCallingStepPart(BaseStepPart):
         return df[df["library_name"].isin(self.members(library_name))]
 
     def _ped(self, library_name: str, rows) -> str | list:
-        """The PED file of the entity's related group; none for cancer libraries"""
-        if rows["kind"].eq("cancer").all():
+        """The PED file of the entity's family; none for libraries without one (cancer)"""
+        if rows["family_id"].isna().all():
             return []
-        if self.parent.effective_group_by == "related":
+        if self.parent.effective_group_by != "library":
             group = library_name
         else:
-            group = rows.iloc[0]["related_group"]
+            group = rows.iloc[0]["family_id"]
         return f"work/write_pedigree.{group}/out/{group}.ped"
 
 
@@ -872,7 +876,7 @@ class ScatteredCallerStepPart(ScatterGather, BaseStepPart):
 
     def members(self, library_name: str) -> list[str]:
         """Return the libraries called together for the entity ``library_name``: with ``group_by: related`` the pedigree members of its related group (one DNA library per donor, the index first), else the library and its matched normal, if it has one."""
-        if self.parent.effective_group_by == "related":
+        if self.parent.effective_group_by != "library":
             return self.parent.member_libraries(library_name)
         normal = self.parent.matched_normal(library_name)
         return [library_name, normal] if normal else [library_name]
@@ -1006,11 +1010,11 @@ class VarlociraptorStepPart(ScatteredCallerStepPart):
         cfg = self.config.varlociraptor
         tumor = self.parent.primary_library(library_name)
         if cfg.scenario == ScenarioKind.germline:
-            if self.parent.effective_group_by == "related":
+            if self.parent.effective_group_by != "library":
                 return super().members(library_name)
             return [tumor]
         members = [tumor]
-        if self.parent.effective_group_by == "related":
+        if self.parent.effective_group_by != "library":
             members += self.other_tumors(library_name)
         if cfg.tumor_normal_mode != TumorNormalMode.TUMOR_ONLY:
             if normal := self.parent.matched_normal(tumor):
@@ -1093,7 +1097,7 @@ class VarlociraptorStepPart(ScatteredCallerStepPart):
         """The other tumor libraries of the donor of the entity ``library_name`` that the task takes"""
         libraries = self.parent.libraries
         tumor = self.parent.primary_library(library_name)
-        same_donor = libraries["related_group"] == self.parent.library_row(tumor)["related_group"]
+        same_donor = libraries["donor_name"] == self.parent.library_row(tumor)["donor_name"]
         other = libraries["library_name"] != tumor
         return libraries[same_donor & other]["library_name"].tolist()
 
@@ -1114,7 +1118,7 @@ class VarlociraptorStepPart(ScatteredCallerStepPart):
         A sequenced parent outside the task keeps its library name, so that the preset rejects it."""
         members = self.members(library_name)
         samples = [self.sample(name) for name in members]
-        if self.parent.effective_group_by != "related":
+        if self.parent.effective_group_by == "library":
             return samples
         donors = self.parent.pedigree_donors(library_name, include_background=True)
         if donors.empty:
@@ -1253,7 +1257,7 @@ class ReportStepPart(BaseStepPart):
 
     def _result_wildcards(self, entity: str) -> dict[str, list[str]]:
         result = super()._result_wildcards(entity)
-        if self.report_per_donor and self.parent.effective_group_by == "related":
+        if self.report_per_donor and self.parent.effective_group_by != "library":
             result["donor_library_name"] = self.parent.called_libraries(entity)
         return result
 
@@ -1426,15 +1430,18 @@ class VariantCallingWorkflow(BaseStep):
     def task_library_requirement(cls, config):
         """mutect2 and the somatic scenario of varlociraptor call tumor DNA libraries, which
         need a matched normal or none; ``tumor_normal_mode: paired`` leaves out the tumors
-        without one."""
+        without one. The germline callers call the normal DNA libraries; freebayes finds the
+        candidates of every DNA library."""
         if config.tool == Tool.mutect2:
             mode = config.mutect2.tumor_normal_mode
         elif config.tool == Tool.varlociraptor:
             if config.varlociraptor.scenario != ScenarioKind.somatic:
-                return None
+                return GERMLINE_REQUIREMENT
             mode = config.varlociraptor.tumor_normal_mode
+        elif config.tool == Tool.freebayes:
+            return None  # candidates of every DNA library, tumors included
         else:
-            return None
+            return GERMLINE_REQUIREMENT
         if mode == TumorNormalMode.PAIRED:
             return MATCHED_NORMAL_REQUIREMENT
         return "role == 'tumor' and extraction_type == 'dna'"
@@ -1541,7 +1548,7 @@ class VariantCallingWorkflow(BaseStep):
         """The candidates task writes its calls per entity of this task, and the library names
         are sample names that a scenario accepts."""
         candidates = self.resolve_dependency("candidates").task_name
-        upstream_group_by = self.project.group_by[candidates]
+        upstream_group_by = self.upstream_group_by(candidates)
         if upstream_group_by != self.effective_group_by:
             raise ConfigError(
                 f"the task calls with group_by: {self.effective_group_by}, but its candidates "

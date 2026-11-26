@@ -15,10 +15,12 @@ TABLE = pd.DataFrame(
     {
         "library_name": ["P1-T1-DNA1", "P1-N1-DNA1", "P1-T1-RNA1", "F1-N1-DNA1"],
         "extraction_type": ["dna", "dna", "rna", "dna"],
-        "kind": ["cancer", "cancer", "cancer", "germline"],
-        "role": ["tumor", "normal", "tumor", "index"],
+        "role": ["tumor", "normal", "tumor", "normal"],
         "donor_name": ["P1", "P1", "P1", "F1"],
-        "data_set": ["first"] * 4,
+        "family_id": [None, None, None, "F1"],
+        "is_index": [True, True, True, True],
+        "is_primary": [True, True, True, True],
+        "sex": ["unknown"] * 4,
     }
 )
 
@@ -58,8 +60,8 @@ def step():
 @pytest.mark.parametrize(
     "task, expected",
     [
-        # The default of each sheet kind, within the extraction types that OptiType supports
-        ("optitype", ["P1-T1-DNA1", "F1-N1-DNA1"]),
+        # The default, the DNA libraries, within the extraction types that OptiType supports
+        ("optitype", ["P1-T1-DNA1", "P1-N1-DNA1", "F1-N1-DNA1"]),
         ("optitype_dna", ["P1-T1-DNA1", "P1-N1-DNA1", "F1-N1-DNA1"]),
         ("arcashla", ["P1-T1-RNA1"]),
         ("mutect2", ["P1-T1-DNA1"]),

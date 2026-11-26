@@ -68,7 +68,7 @@ The Snakefile defines the rules of the selected tool only.
 ## Reading FASTQ files
 
 `depends_on.reads` names the FASTQ source.
-It is `data_sets`, an `external_data` task or a task that writes FASTQ files such as `adapter_trimming`.
+It is an `external_data` task or a task that writes FASTQ files such as `adapter_trimming`.
 `BaseStep.read_groups(library_name)` finds the files of a library and returns them as read groups, ordered by the path of the left file.
 `BaseStep.reads_input(library_name)` returns the rule inputs that provide them.
 

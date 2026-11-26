@@ -5,7 +5,6 @@ import re
 import shutil
 
 import pytest
-from biomedsheets import io_tsv
 from click.testing import CliRunner
 from snakemake.common.configfile import load_configfile
 
@@ -106,36 +105,23 @@ def test_init_without_git(tmp_path):
     assert not (project / ".git").exists() and not (project / ".gitignore").exists()
 
 
-SHEET_READERS = {
-    "generic": io_tsv.read_generic_tsv_sheet,
-    "germline": io_tsv.read_germline_tsv_sheet,
-    "cancer": io_tsv.read_cancer_tsv_sheet,
-}
-
-
-@pytest.mark.parametrize("sheet_type", ["generic", "germline", "cancer"])
-def test_init_creates_a_sample_sheet_that_the_config_names(tmp_path, sheet_type):
+def test_init_creates_a_sample_sheet_that_the_config_names(tmp_path):
     project = tmp_path / "project"
     result = CliRunner().invoke(
-        snappy_cli.main,
-        ["init", str(project), "--no-git", "--sheet-type", sheet_type, "--external-id", "42"],
+        snappy_cli.main, ["init", str(project), "--no-git", "--external-id", "42"]
     )
     assert result.exit_code == 0, result.output
-    # An empty sheet of the format, with the project as title
-    with open(project / "samplesheet.tsv") as f:
-        sheet = SHEET_READERS[sheet_type](f, "samplesheet.tsv")
-    assert sheet.bio_entities == {} and sheet.json_data["title"] == "project"
-    # The batch is a string field of the library, with a column in the data header
-    assert sheet.json_data["extraInfoDefs"]["ngsLibrary"]["batchNo"]["type"] == "string"
-    header = (project / "samplesheet.tsv").read_text().partition("[Data]\n")[2].splitlines()[0]
-    assert "\tfolderName\tbatchNo\t" in header
-    # The configuration loads and names the sheet with its type
+    # The header of an empty sheet: the core columns and the commonly used ones
+    header = (project / "samplesheet.tsv").read_text().splitlines()
+    assert header == [
+        "donor_name\tfamily_id\tfather\tmother\tsex\tis_affected\tis_index\tsample_name"
+        "\tis_tumor\tlibrary_name\tlibrary_type\tlibrary_kit\tfolder_name"
+    ]
+    # The configuration loads and names the sheet
     config = load_configfile(str(project / "config.yaml"))
     loaded = load_project(config, str(project))
     assert (loaded.model.project.name, loaded.model.project.external_id) == ("project", "42")
-    data_set = loaded.model.data_sets["first_batch"]
-    assert data_set.type == snappy_cli.SHEET_TYPES[sheet_type]
-    assert data_set.file == str(project / "samplesheet.tsv")
+    assert loaded.model.sample_sheets == [str(project / "samplesheet.tsv")]
     assert "- external id: 42" in (project / "README.md").read_text()
 
 
@@ -169,7 +155,6 @@ def test_init_asks_for_what_no_option_gives(tmp_path, git, answers):
         "My project",  # name
         "sodar-uuid",  # external id
         "A trio",  # description
-        "germline",  # sheet type
         "minimal",  # configuration style
         True,  # track the sheet
         "git@example.org:lab/project.git",  # remote
@@ -190,13 +175,13 @@ def test_init_asks_for_what_no_option_gives(tmp_path, git, answers):
 
     assert result.exit_code == 0, result.output
     assert answers.pending == []
-    assert answers.asked[3:5] == ["Sample sheet type", "Configuration style"]
-    assert answers.asked[8:12] == ["Add tasks now?", "Step", "Task name", "Tool"]
-    assert [q.split(":")[0] for q in answers.asked[12:15]] == ["reads", "index", "reference"]
-    assert answers.asked[15:17] == ["Step of the task", "Task name"]
+    assert answers.asked[3] == "Configuration style"
+    assert answers.asked[7:11] == ["Add tasks now?", "Step", "Task name", "Tool"]
+    assert [q.split(":")[0] for q in answers.asked[11:14]] == ["reads", "index", "reference"]
+    assert answers.asked[14:16] == ["Step of the task", "Task name"]
     text = (project / "config.yaml").read_text()
     assert 'name: "My project"' in text and 'external_id: "sodar-uuid"' in text
-    assert 'description: "A trio"' in text and "type: germline_variants" in text
+    assert 'description: "A trio"' in text and "sample_sheets:" in text
     # The genome task was added while the mapping task was asked for, so it comes first
     assert text.index("- name: genome\n") < text.index("- name: mapping\n")
     assert "type: raw\n" in text and "- dna\n" in text and "- reference\n" in text

@@ -35,7 +35,7 @@ class ExternalData(SnappyStepModel):
     kits: dict[str, dict[str, ConfigPath]] = {}
     """Files per enrichment kit, by kit name and output key, e.g.
     ``{MedExome: {targets: /refs/MedExome.targets.bed}}``. A targeted library uses the files of
-    the kit named exactly like its ``libraryKit`` in the sample sheet. Every kit has the same
+    the kit named exactly like its ``library_kit`` in the sample sheet. Every kit has the same
     keys."""
 
     library_files: list[ConfigPath] = []

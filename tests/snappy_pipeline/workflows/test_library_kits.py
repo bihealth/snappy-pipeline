@@ -47,7 +47,7 @@ def step(monkeypatch, mocker, tmp_path):
     }
     config = {
         "project": {"name": "test"},
-        "data_sets": {},
+        "sample_sheets": [],
         "tasks": [
             {
                 "step": "external_data",

@@ -896,7 +896,7 @@ class AdapterTrimmingDependsOn(SnappyModel):
         str,
         DataSignature(DataType.RAW),
     ]
-    """FASTQ source: ``data_sets``, an ``external_data`` task that produces ``raw``, or an ``adapter_trimming`` task."""
+    """FASTQ source: an ``external_data`` task that produces ``raw``, or an ``adapter_trimming`` task."""
 
 
 class ExpectedTrimmedRawFastq(BaseModel):

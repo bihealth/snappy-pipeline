@@ -2,10 +2,10 @@
  {
   "benchmark": null,
   "input": [
-   "tasks/variant_calling_freebayes_germline/work/FAM_case001subregion/out/FAM_case001subregion.vcf.gz",
-   "tasks/variant_calling_freebayes_germline/work/FAM_case001subregion/out/FAM_case001subregion.vcf.gz.tbi",
-   "tasks/variant_calling_freebayes_germline/work/FAM_case001subregion/out/FAM_case001subregion.vcf.gz.md5",
-   "tasks/variant_calling_freebayes_germline/work/FAM_case001subregion/out/FAM_case001subregion.vcf.gz.tbi.md5",
+   "tasks/variant_calling_freebayes_germline/work/case001subregion/out/case001subregion.vcf.gz",
+   "tasks/variant_calling_freebayes_germline/work/case001subregion/out/case001subregion.vcf.gz.tbi",
+   "tasks/variant_calling_freebayes_germline/work/case001subregion/out/case001subregion.vcf.gz.md5",
+   "tasks/variant_calling_freebayes_germline/work/case001subregion/out/case001subregion.vcf.gz.tbi.md5",
    "tasks/variant_calling_freebayes_germline/output/.manifest.tsv"
   ],
   "log": [],
@@ -257,10 +257,10 @@
  {
   "benchmark": null,
   "input": [
-   "tasks/variant_calling_freebayes_germline/work/FAM_case001subregion/out/FAM_case001subregion.vcf.gz",
-   "tasks/variant_calling_freebayes_germline/work/FAM_case001subregion/out/FAM_case001subregion.vcf.gz.tbi",
-   "tasks/variant_calling_freebayes_germline/work/FAM_case001subregion/out/FAM_case001subregion.vcf.gz.md5",
-   "tasks/variant_calling_freebayes_germline/work/FAM_case001subregion/out/FAM_case001subregion.vcf.gz.tbi.md5"
+   "tasks/variant_calling_freebayes_germline/work/case001subregion/out/case001subregion.vcf.gz",
+   "tasks/variant_calling_freebayes_germline/work/case001subregion/out/case001subregion.vcf.gz.tbi",
+   "tasks/variant_calling_freebayes_germline/work/case001subregion/out/case001subregion.vcf.gz.md5",
+   "tasks/variant_calling_freebayes_germline/work/case001subregion/out/case001subregion.vcf.gz.tbi.md5"
   ],
   "local": true,
   "log": [],
@@ -278,21 +278,21 @@
   "wrapper": null
  },
  {
-  "benchmark": "tasks/variant_calling_freebayes_germline/benchmarks/FAM_case001subregion/FAM_case001subregion.gather.tsv",
+  "benchmark": "tasks/variant_calling_freebayes_germline/benchmarks/case001subregion/case001subregion.gather.tsv",
   "input": [
-   "tasks/variant_calling_freebayes_germline/work/FAM_case001subregion/out/FAM_case001subregion/calls/1-of-2.bcf",
-   "tasks/variant_calling_freebayes_germline/work/FAM_case001subregion/out/FAM_case001subregion/calls/2-of-2.bcf",
-   "tasks/variant_calling_freebayes_germline/work/FAM_case001subregion/out/FAM_case001subregion/calls/1-of-2.bcf.csi",
-   "tasks/variant_calling_freebayes_germline/work/FAM_case001subregion/out/FAM_case001subregion/calls/2-of-2.bcf.csi"
+   "tasks/variant_calling_freebayes_germline/work/case001subregion/out/case001subregion/calls/1-of-2.bcf",
+   "tasks/variant_calling_freebayes_germline/work/case001subregion/out/case001subregion/calls/2-of-2.bcf",
+   "tasks/variant_calling_freebayes_germline/work/case001subregion/out/case001subregion/calls/1-of-2.bcf.csi",
+   "tasks/variant_calling_freebayes_germline/work/case001subregion/out/case001subregion/calls/2-of-2.bcf.csi"
   ],
   "log": [
-   "tasks/variant_calling_freebayes_germline/work/FAM_case001subregion/log/FAM_case001subregion.gather.log"
+   "tasks/variant_calling_freebayes_germline/work/case001subregion/log/case001subregion.gather.log"
   ],
   "output": [
-   "tasks/variant_calling_freebayes_germline/work/FAM_case001subregion/out/FAM_case001subregion.vcf.gz",
-   "tasks/variant_calling_freebayes_germline/work/FAM_case001subregion/out/FAM_case001subregion.vcf.gz.tbi",
-   "tasks/variant_calling_freebayes_germline/work/FAM_case001subregion/out/FAM_case001subregion.vcf.gz.md5",
-   "tasks/variant_calling_freebayes_germline/work/FAM_case001subregion/out/FAM_case001subregion.vcf.gz.tbi.md5"
+   "tasks/variant_calling_freebayes_germline/work/case001subregion/out/case001subregion.vcf.gz",
+   "tasks/variant_calling_freebayes_germline/work/case001subregion/out/case001subregion.vcf.gz.tbi",
+   "tasks/variant_calling_freebayes_germline/work/case001subregion/out/case001subregion.vcf.gz.md5",
+   "tasks/variant_calling_freebayes_germline/work/case001subregion/out/case001subregion.vcf.gz.tbi.md5"
   ],
   "params": {
    "args": {
@@ -310,12 +310,12 @@
   "temp": [],
   "threads": 1,
   "wildcards": {
-   "library_name": "FAM_case001subregion"
+   "library_name": "case001subregion"
   },
   "wrapper": "file://<repo>/snappy_wrappers/wrappers/bcftools/concat"
  },
  {
-  "benchmark": "tasks/variant_calling_freebayes_germline/benchmarks/FAM_case001subregion/FAM_case001subregion.run.1-of-2.tsv",
+  "benchmark": "tasks/variant_calling_freebayes_germline/benchmarks/case001subregion/case001subregion.run.1-of-2.tsv",
   "input": [
    "<repo>/.tests/test-workflow/resources/refs/subregion.fa",
    "<repo>/.tests/test-workflow/resources/refs/subregion.fa.fai",
@@ -329,11 +329,11 @@
    "tasks/variant_calling_freebayes_germline/work/scatter/1-of-2.region.bed"
   ],
   "log": [
-   "tasks/variant_calling_freebayes_germline/work/FAM_case001subregion/log/FAM_case001subregion.run.1-of-2.log"
+   "tasks/variant_calling_freebayes_germline/work/case001subregion/log/case001subregion.run.1-of-2.log"
   ],
   "output": [
-   "tasks/variant_calling_freebayes_germline/work/FAM_case001subregion/out/FAM_case001subregion/calls/1-of-2.bcf",
-   "tasks/variant_calling_freebayes_germline/work/FAM_case001subregion/out/FAM_case001subregion/calls/1-of-2.bcf.csi"
+   "tasks/variant_calling_freebayes_germline/work/case001subregion/out/case001subregion/calls/1-of-2.bcf",
+   "tasks/variant_calling_freebayes_germline/work/case001subregion/out/case001subregion/calls/1-of-2.bcf.csi"
   ],
   "params": {
    "args": {
@@ -353,18 +353,18 @@
   },
   "rule": "variant_calling_freebayes_germline_variant_calling_freebayes_run",
   "temp": [
-   "tasks/variant_calling_freebayes_germline/work/FAM_case001subregion/out/FAM_case001subregion/calls/1-of-2.bcf",
-   "tasks/variant_calling_freebayes_germline/work/FAM_case001subregion/out/FAM_case001subregion/calls/1-of-2.bcf.csi"
+   "tasks/variant_calling_freebayes_germline/work/case001subregion/out/case001subregion/calls/1-of-2.bcf",
+   "tasks/variant_calling_freebayes_germline/work/case001subregion/out/case001subregion/calls/1-of-2.bcf.csi"
   ],
   "threads": 1,
   "wildcards": {
-   "library_name": "FAM_case001subregion",
+   "library_name": "case001subregion",
    "scatteritem": "1-of-2"
   },
   "wrapper": "file://<repo>/snappy_wrappers/wrappers/freebayes"
  },
  {
-  "benchmark": "tasks/variant_calling_freebayes_germline/benchmarks/FAM_case001subregion/FAM_case001subregion.run.2-of-2.tsv",
+  "benchmark": "tasks/variant_calling_freebayes_germline/benchmarks/case001subregion/case001subregion.run.2-of-2.tsv",
   "input": [
    "<repo>/.tests/test-workflow/resources/refs/subregion.fa",
    "<repo>/.tests/test-workflow/resources/refs/subregion.fa.fai",
@@ -378,11 +378,11 @@
    "tasks/variant_calling_freebayes_germline/work/scatter/2-of-2.region.bed"
   ],
   "log": [
-   "tasks/variant_calling_freebayes_germline/work/FAM_case001subregion/log/FAM_case001subregion.run.2-of-2.log"
+   "tasks/variant_calling_freebayes_germline/work/case001subregion/log/case001subregion.run.2-of-2.log"
   ],
   "output": [
-   "tasks/variant_calling_freebayes_germline/work/FAM_case001subregion/out/FAM_case001subregion/calls/2-of-2.bcf",
-   "tasks/variant_calling_freebayes_germline/work/FAM_case001subregion/out/FAM_case001subregion/calls/2-of-2.bcf.csi"
+   "tasks/variant_calling_freebayes_germline/work/case001subregion/out/case001subregion/calls/2-of-2.bcf",
+   "tasks/variant_calling_freebayes_germline/work/case001subregion/out/case001subregion/calls/2-of-2.bcf.csi"
   ],
   "params": {
    "args": {
@@ -402,12 +402,12 @@
   },
   "rule": "variant_calling_freebayes_germline_variant_calling_freebayes_run",
   "temp": [
-   "tasks/variant_calling_freebayes_germline/work/FAM_case001subregion/out/FAM_case001subregion/calls/2-of-2.bcf",
-   "tasks/variant_calling_freebayes_germline/work/FAM_case001subregion/out/FAM_case001subregion/calls/2-of-2.bcf.csi"
+   "tasks/variant_calling_freebayes_germline/work/case001subregion/out/case001subregion/calls/2-of-2.bcf",
+   "tasks/variant_calling_freebayes_germline/work/case001subregion/out/case001subregion/calls/2-of-2.bcf.csi"
   ],
   "threads": 1,
   "wildcards": {
-   "library_name": "FAM_case001subregion",
+   "library_name": "case001subregion",
    "scatteritem": "2-of-2"
   },
   "wrapper": "file://<repo>/snappy_wrappers/wrappers/freebayes"

@@ -82,7 +82,7 @@ A project uses these pieces:
 - The `snappy_pipeline` Python package, installed once.
   It provides the `snappy` command and the code of all steps.
 - `config.yaml` in the project directory.
-  Its `tasks` list defines the tasks, and `data_sets` points to the sample sheets and the FASTQ files.
+  Its `tasks` list defines the tasks, and `sample_sheets` names the sample sheets.
   The `project` section is required and holds the name, a description and the `external_id`.
   `external_id` identifies the project in a data management system that tracks where the raw data lives, for example as the SODAR project UUID.
 - The sample sheets, which describe the libraries and the experimental design.
@@ -96,7 +96,7 @@ digraph {
     rankdir=LR; bgcolor="transparent"; nodesep=0.2; ranksep=0.5;
     node [shape=box, style="rounded,filled", fillcolor="#ffffff", color="#c3c2b7", fontname="Helvetica", fontsize=9, fontcolor="#0b0b0b"];
     edge [color="#898781", arrowsize=0.6, fontname="Helvetica", fontsize=8, fontcolor="#52514e"];
-    config [label="config.yaml\nproject, data_sets, tasks"];
+    config [label="config.yaml\nproject, sample_sheets, tasks"];
     sheets [label="sample sheets\nlibraries, pedigrees, tumor-normal pairs"];
     raw [label="raw data\nFASTQ files below the search paths"];
     refs [label="reference data\nexternal_data, reference_download, reference_index tasks"];
@@ -123,7 +123,7 @@ A `depends_on` key has no default task name.
 A task declares what it `produces`: a data type with tags, such as alignments of DNA.
 A consumer checks this when the project loads, so a mapping task with `tool: star` cannot feed a DNA variant caller.
 
-In this small somatic project, mapping reads the FASTQ files of the `data_sets`, and calling reads the alignments:
+In this small somatic project, mapping reads the FASTQ files of the `reads` task, and calling reads the alignments:
 
 ```yaml
 tasks:
@@ -290,7 +290,7 @@ The top-level `pathvars` section names roots for paths, used as `<name>` in any 
 ```yaml
 pathvars:
   refs: /path/to/refs/GRCh38
-data_sets: {}
+sample_sheets: []
 tasks:
   - name: genome
     step: external_data
@@ -333,10 +333,7 @@ A row for a library that no sheet has is an error as well.
 Two libraries that share a folder are an error of the scan.
 
 ```yaml
-data_sets:
-  my_batch:
-    file: samplesheet.tsv
-    type: matched_cancer
+sample_sheets: [samplesheet.tsv]
 
 tasks:
   - name: reads
@@ -370,68 +367,85 @@ Such a project needs no FASTQ files.
 
 ## Sample sheets
 
-Sample sheets are TSV files in the [BioMed Sample Sheet](https://github.com/bihealth/biomedsheets) format.
-The `type` of the data set selects how the sheet is read: `matched_cancer`, `germline_variants` or `generic`.
-
-A `matched_cancer` sheet has one normal and one tumor sample per patient:
+A sample sheet is a plain TSV file with one header line and one row per library, read and checked when the project loads.
+`sample_sheets` in `config.yaml` lists the sheets, by default `samplesheet.tsv` next to it; a project without libraries sets `sample_sheets: []`.
+Several sheets, such as a cohort kept outside the project, are read together, and library names are unique across them.
+Columns are matched by name in any order, every column works as is in a `library_selection` query, lines starting with `#` are comments, and a missing value is an empty cell (`.` is an error).
+`snappy sheet check` reports every problem of every sheet at once as `path:line: column: message`.
 
 ```tsv
-[Metadata]
-schema          cancer_matched
-schema_version  v1
-
-[Data]
-patientName  sampleName  isTumor  libraryType  folderName
-P001         N1          N        WES          P001-N1-DNA1-WES1
-P001         T1          Y        WES          P001-T1-DNA1-WES1
-P002         N1          N        WES          P002-N1-DNA1-WES1
-P002         T1          Y        WES          P002-T1-DNA1-WES1
+donor_name  sex     sample_name  is_tumor  library_name       library_type  library_kit
+P001        female  P001-N1      false     P001-N1-DNA1-WES1  WES           Twist_Exome_2
+P001        female  P001-T1      true      P001-T1-DNA1-WES1  WES           Twist_Exome_2
+P002        male    P002-N1      false     P002-N1-DNA1-WES1  WES           Twist_Exome_2
 ```
 
-In a `germline_variants` or `generic` sheet, a row may leave `libraryType` empty.
-Such a row describes a person without sequencing data, such as a parent who completes a pedigree.
-A sheet in which no row has a `libraryType` has no libraries, and snappy stops with an error.
+Three columns are the core, present in every library row: `donor_name`, `library_name` and `library_type` (`WES`, `WGS`, `Panel_seq`, `mRNA_seq` or `total_RNA_seq`, which gives the extraction type).
+The other known columns are typed and checked at load, and a step requires the ones it reads from the libraries it takes; anything else is an optional column kept as a string.
+Each known column belongs to a level, and all rows of one donor, sample or extract agree on the columns of that level.
+
+| Column             | Level   | Values                                                                                                       |
+| ------------------ | ------- | ------------------------------------------------------------------------------------------------------------ |
+| `donor_name`       | donor   | A name (`A-Za-z0-9_.-`)                                                                                      |
+| `family_id`        | donor   | The pedigree of the donor; needed by `group_by: family`                                                      |
+| `father`, `mother` | donor   | The `donor_name` of a parent with a row in the sheets, with or without libraries                             |
+| `sex`              | donor   | `male`, `female`, `unknown`                                                                                  |
+| `is_affected`      | donor   | `true`, `false`; empty for unknown                                                                           |
+| `is_index`         | donor   | `true` for the index donor of a family of several donors; a single donor is its own index                    |
+| `hpo_terms`        | donor   | `HP:0000001,HP:0000002`                                                                                      |
+| `sample_name`      | sample  | The full name of the sample (`P001-N1`); DNA and RNA libraries of one sample share it                        |
+| `is_tumor`         | sample  | `true` for a tumor sample; the library's role is then `tumor`, else `normal`                                 |
+| `purity`           | sample  | The tumor purity, 0 to 1                                                                                     |
+| `is_ffpe`          | sample  | `true` for an FFPE sample                                                                                    |
+| `extract_name`     | extract | The extract (`P001-N1-DNA1`), only for the ISA-Tab mapping                                                   |
+| `library_name`     | library | A name, unique across the sheets, written as is: it names the files of the library                           |
+| `library_type`     | library | `WES`, `WGS`, `Panel_seq`, `mRNA_seq`, `total_RNA_seq`                                                       |
+| `library_kit`      | library | The enrichment kit of a `WES` or `Panel_seq` library, as the kits task names it; the chemistry of long reads |
+| `folder_name`      | library | The folder of the library's files, for `snappy scan-files`; default: the library's name                      |
+| `seq_platform`     | library | `Illumina`, `PacBio`, `ONT`, `other`; `PacBio` and `ONT` libraries are long reads                            |
+| `read_structure`   | library | The fgumi read structures of a UMI library, such as `8M+T 8M+T`                                              |
+| `batch_no`         | library | The sequencing batch, a string                                                                               |
+| `is_primary`       | library | `true` for the primary library where a donor has several of one role and extraction type                     |
+| `is_background`    | library | `true` for a library of a reference cohort that is no task's result                                          |
+
+A donor without libraries, such as a parent who completes a pedigree, has a row with the donor columns only.
+Relapses and further tumors are more rows with `is_tumor: true` and their own `sample_name`; a column such as `timepoint` tells them apart in `library_selection`.
+Where a donor has several libraries of one role and extraction type (a normal WES and a normal WGS, two tumors), exactly one is marked `is_primary`; where a family has several donors, exactly one is marked `is_index`.
+A germline cohort and the tumors of a hereditary cancer family fit one sheet: the family columns describe the relatives, `is_tumor` the tumor samples.
+
+Cells that are synonyms of a value are read as the value (`F`, `woman` or `XX` as `female`; `yes`, `Y` or `1` as `true`; `exome` as `WES`; `illumina` as `Illumina`), and `snappy sheet check` lists them; `snappy sheet check --fix` writes the values into the sheet.
+The PED codes `1` and `2` of `is_affected` are rejected as ambiguous.
+
+The library table that the steps read has every sheet column and the derived ones: `extraction_type` (`dna` or `rna`), `role` (`tumor` or `normal`), `father_name` and `mother_name` (the parent's primary normal DNA library, `0` for none) and `disease_state` (the PED code of `is_affected`).
 
 ### Library selection
 
-Each step takes only libraries it can process, such as RNA libraries for expression quantification or tumor DNA libraries for somatic calling.
-The somatic steps take only libraries of cancer sample sheets.
+Each step takes only libraries it can process, such as RNA libraries for expression quantification or tumor DNA libraries with a matched normal for somatic calling.
 
 Without `library_selection`, a task takes the step's default:
 
-- in general, the tumor DNA libraries of cancer sample sheets and the DNA libraries of germline sample sheets.
-- another set where the step's page names one.
-  For example, mapping takes all libraries, the RNA steps take all RNA libraries, and a panel of normals takes all normal DNA libraries.
+- the set that the step's page names, where it names one.
+  For example, mapping takes all libraries, the RNA steps take all RNA libraries, the germline callers the normal DNA libraries, and a panel of normals all normal DNA libraries;
+- else the libraries of the task behind its first `depends_on` key that names a task, so that a filtration takes the libraries of the calls it reads, and an annotation after somatic calling the tumors;
+- else the DNA libraries.
 
-`library_selection` replaces that default with a pandas `DataFrame.query()` expression, for example `data_set == 'batch2'`, `donor_name != 'P003'` or `batch_no == 'run-2024-A'`.
-The custom fields of the sheet are columns too, in snake case, with the values of the sheet: a `batchNo` field declared as `string` keeps batch ids, and `umi_mapping` reads the read structures of a UMI library from `readStructure`.
+`library_selection` replaces that default with a pandas `DataFrame.query()` expression, for example `batch_no == 'run-2024-A'`, `donor_name != 'P003'`, `role == 'normal'` or `timepoint == 'primary'`.
 A task never takes libraries that its step cannot process.
 
 ### Group by
 
-`group_by` sets what one output covers: `library` writes one output per library, `related` one per group of related libraries, where the step supports it.
-Related libraries are the members of a pedigree on germline sample sheets and the libraries of one donor on cancer sample sheets (the library table's column `related_group`).
-
-The group is named after the pedigree or donor, and so are the results of `group_by: related` tasks:
-
-- the sheet's family id (the data set's `pedigree_field`, else the `familyId` custom field),
-- else the index donor, with `FAM_` on germline sheets, `PAT_` on cancer sheets and no prefix on generic sheets.
+`group_by` sets what one output covers, where the step supports it: `library` writes one output per library, `family` one per family (`family_id`, which every library of the task then needs), `donor` one per donor, and `related` is `family` when the task's libraries have a family and `donor` when none has.
+The group is named after the family or donor, and so are the results of such tasks.
 
 Without `group_by`, a task takes its step's default, else what its upstream tasks declare, else `library`.
-Germline variant calling defaults to `related` and calls each pedigree jointly, so the tasks after it also write one result per pedigree.
-Steps that read one VCF per pedigree (VarFish export, peddy, IGV sessions, pedigree phasing) check when the project loads that their upstream task has `group_by: related`.
+Germline variant calling defaults to `related` and calls each family jointly, so the tasks after it also write one result per family.
+Steps that read one VCF per family (VarFish export, peddy, IGV sessions, pedigree phasing) check when the project loads that their upstream task writes per group.
 
-### Background data sets
+### Background libraries
 
-A data set with `is_background: true` holds libraries that are no task's results, such as a reference cohort.
+A library with `is_background: true`, such as one of a reference cohort, is no task's result.
 Mapping and panels of normals process these libraries, and the SV and gCNV callers add them as cohort members or model samples.
-`background_selection` narrows them per task, for example to `data_set == 'cohort_1000g'`.
-
-Several data sets may have libraries of the same name.
-A task names its files by library, so it can take only one library of a name.
-A task and its upstream tasks must take that library from the same data set.
-If a task would take both, it fails and names the libraries.
-Select one data set with `library_selection`, for example `data_set == 'batch1'`, or use one task per data set.
+`background_selection` narrows them per task, for example to `batch_no == 'cohort_1000g'`.
 
 ## Files of a task
 

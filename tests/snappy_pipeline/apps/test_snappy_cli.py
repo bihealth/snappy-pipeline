@@ -116,11 +116,7 @@ def test_complete_task_names(tmp_path, mocker):
 CHECK_FILES_CONFIG = """
 project:
   name: check
-data_sets:
-  first:
-    file: sheet.tsv
-    type: germline_variants
-    naming_scheme: only_secondary_id
+sample_sheets: [sheet.tsv]
 tasks:
   - name: genome
     step: external_data
@@ -146,9 +142,8 @@ tasks:
 """
 
 CHECK_FILES_SHEET = """
-[Data]
-patientName\tfatherName\tmotherName\tsex\tisAffected\tlibraryType\tfolderName\thpoTerms
-P001\t.\t.\tF\tY\tWGS\tP001\t.
+donor_name\tsex\tlibrary_name\tlibrary_type\tfolder_name
+P001\tfemale\tP001-N1-DNA1-WGS1\tWGS\tP001
 """
 
 
@@ -487,13 +482,13 @@ def test_init_writes_the_static_sections_before_the_tasks(tmp_path):
     assert result.exit_code == 0, result.output
     lines = (project / "config.yaml").read_text().splitlines()
     # The tasks end the file, so that an added task never lands before a section comment
-    data_sets, tasks = lines.index("data_sets:"), lines.index("tasks:")
-    assert data_sets < tasks < lines.index("  - name: genome") < lines.index("  - name: mapping")
+    sheets, tasks = lines.index("sample_sheets:"), lines.index("tasks:")
+    assert sheets < tasks < lines.index("  - name: genome") < lines.index("  - name: mapping")
     assert not any(line.startswith("#") for line in lines[tasks:])
     config = snappy_cli.load_configfile(str(project / "config.yaml"))
     # The reads task of the template comes first
     assert [task["name"] for task in config["tasks"]] == ["reads", "genome", "mapping"]
-    assert list(config["data_sets"]) == ["first_batch"]
+    assert config["sample_sheets"] == ["samplesheet.tsv"]
 
 
 def test_init_minimal_points_to_the_docs_instead_of_explaining(tmp_path):
@@ -508,5 +503,5 @@ def test_init_minimal_points_to_the_docs_instead_of_explaining(tmp_path):
     # The comments are the header, which names the docs; the task has only its REQUIRED tags
     comments = [line for line in lines if line.lstrip().startswith("#")]
     assert comments == lines[: len(comments)] and "snappy-pipeline.readthedocs.io" in text
-    assert "data_sets:" in lines and "  - name: mapping" in lines
+    assert "sample_sheets:" in lines and "  - name: mapping" in lines
     assert "# REQUIRED" in text and "Options:" not in text

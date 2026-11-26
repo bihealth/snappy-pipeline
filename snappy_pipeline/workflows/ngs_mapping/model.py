@@ -63,7 +63,7 @@ class NgsMappingDependsOn(SnappyModel):
         str,
         DataSignature(DataType.RAW),
     ]
-    """FASTQ source: ``data_sets``, an ``external_data`` task or an ``adapter_trimming`` task"""
+    """FASTQ source: an ``external_data`` task or an ``adapter_trimming`` task"""
 
     index: Annotated[
         str,

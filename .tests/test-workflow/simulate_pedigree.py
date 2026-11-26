@@ -112,41 +112,30 @@ def kit_bed() -> str:
 
 
 def sample_sheet() -> str:
-    """The germline sample sheet; the libraries are named by the ``only_secondary_id`` scheme."""
+    """The germline sample sheet: one row per member, idx the index of the family PED1."""
+    sex = {"M": "male", "F": "female"}
+    affected = {"Y": "true", "N": "false", "U": ""}
     lines = [
-        "[Metadata]",
-        "schema\tgermline_variants",
-        "schema_version\tv1",
-        "title\tsimulated_pedigree",
-        "description\tThree generations with planted dominant, recessive and de novo variants",
-        "",
-        "[Custom Fields]",
-        "key\tannotatedEntity\tdocs\ttype\tminimum\tmaximum\tunit\tchoices\tpattern",
-        "familyId\tbioEntity\tfamily\tstring\t0\t0\t0\t0\t0",
-        "extractionType\tbioSample\textraction type\tstring\t0\t0\t0\t0\t0",
-        "libraryKit\tngsLibrary\texome enrichment kit\tstring\t0\t0\t0\t0\t0",
-        "",
-        "[Data]",
-        "familyId\tpatientName\tfatherName\tmotherName\tsex\tisAffected\textractionType\tlibraryType"
-        "\tfolderName\tlibraryKit\thpoTerms",
+        "donor_name\tfamily_id\tfather\tmother\tsex\tis_affected\tis_index\tsample_name"
+        "\tlibrary_name\tlibrary_type\tlibrary_kit\tfolder_name"
     ]
     for m in MEMBERS:
-        library = LIBRARY.format(m.name) if m.sequenced else "."
-        lib_type, kit = ("WES", KIT) if m.sequenced else (".", ".")
+        library = LIBRARY.format(m.name) if m.sequenced else ""
         lines.append(
             "\t".join(
                 [
-                    "PED1",
                     m.name,
-                    m.father,
-                    m.mother,
-                    m.sex,
-                    m.affected,
-                    "DNA",
-                    lib_type,
+                    "PED1",
+                    m.father if m.father != "0" else "",
+                    m.mother if m.mother != "0" else "",
+                    sex[m.sex],
+                    affected[m.affected],
+                    "true" if m.name == "idx" else "",
+                    f"{m.name}-N1" if m.sequenced else "",
                     library,
-                    kit,
-                    ".",
+                    "WES" if m.sequenced else "",
+                    KIT if m.sequenced else "",
+                    library,
                 ]
             )
         )

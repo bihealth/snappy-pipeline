@@ -83,7 +83,6 @@ class SomaticGeneFusionCallingDependsOn(SnappyModel):
     ]
     """
     FASTQ source: an ``external_data`` task, an ``adapter_trimming`` task,
-    or ``data_sets`` to search the data sets' search paths.
     """
 
     reference: Annotated[Reference, RequiredBy(Tool.arriba)] = ""

@@ -109,7 +109,7 @@ Libraries with unique molecular identifiers (UMIs) are mapped by `umi_mapping` w
 The task extracts the UMIs, aligns the reads with bwa-mem3, groups them by UMI and position, calls one consensus read per molecule, and realigns and filters the consensus reads.
 Its result files are BAM files like those of a mapping task, so the variant callers and the other consumers read them through `depends_on.alignments` as usual.
 `consensus: duplex` serves libraries with UMIs on both reads, whose two strands form one duplex consensus read; `consensus: simplex` serves libraries with one UMI per molecule.
-The read structures of the FASTQ files come from the sample sheet's custom field `readStructure`, for example `8M+T 8M+T` for 8 bp UMIs at the start of both reads.
+The read structures of the FASTQ files come from the sample sheet's column `read_structure`, for example `8M+T 8M+T` for 8 bp UMIs at the start of both reads.
 A kit with a fixed set of UMIs gets a `correct` section and an `external_data` task with the UMIs in `depends_on.umis`.
 
 ```yaml

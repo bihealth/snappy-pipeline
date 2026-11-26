@@ -219,14 +219,20 @@ def _task_row(item: dict) -> dict[str, Any]:
 README_FILENAME = "README.md"
 GITIGNORE_FILENAME = ".gitignore"
 SHEET_FILENAME = "samplesheet.tsv"
-#: The sample sheet formats of ``snappy init --sheet-type`` and the data set type of each
-SHEET_TYPES = {"generic": "generic", "germline": "germline_variants", "cancer": "matched_cancer"}
-#: The sheet types as prompt choices: value, title, description
-SHEET_TYPE_CHOICES = [
-    ("generic", "generic", "Libraries without relations between donors"),
-    ("germline", "germline", "Pedigrees: index, parents and siblings, with sex and affection"),
-    ("cancer", "cancer", "The tumor and normal libraries of each donor"),
-]
+#: The columns of the sample sheet that ``snappy init`` writes, besides the core columns: the
+#: pedigree of a germline project, the tumors of a cancer project, and the files
+SHEET_COLUMNS = (
+    "family_id",
+    "father",
+    "mother",
+    "sex",
+    "is_affected",
+    "is_index",
+    "sample_name",
+    "is_tumor",
+    "library_kit",
+    "folder_name",
+)
 
 #: Configuration file name
 CONFIG_FILENAME = CONFIG_FILE
@@ -396,13 +402,6 @@ def main():
     help="List of tasks to create automatically, formatted as [name=]step_type",
 )
 @click.option(
-    "--sheet-type",
-    type=click.Choice(SHEET_TYPES),
-    default="generic",
-    show_default=True,
-    help="The biomedsheets format of the sample sheet samplesheet.tsv, which is created if it does not exist and named in config.yaml",
-)
-@click.option(
     "--track-sheet/--no-track-sheet",
     default=False,
     help="Track samplesheet.tsv in git. Only if it holds no personal data, or the remote is approved for such data (such as the internal GitLab).",
@@ -432,7 +431,6 @@ def init(
     external_id,
     description,
     tasks,
-    sheet_type,
     track_sheet,
     config_mode,
     git,
@@ -462,8 +460,6 @@ def init(
             external_id = ask_text("External id of the project, such as the SODAR project UUID")
         if asked("description"):
             description = ask_text("Description")
-        if asked("sheet_type"):
-            sheet_type = ask_select("Sample sheet type", SHEET_TYPE_CHOICES, default=sheet_type)
         if asked("config_mode"):
             config_mode = ask_select(
                 "Configuration style", CONFIG_MODE_CHOICES, default=config_mode
@@ -518,7 +514,6 @@ def init(
         "external_id_yaml": json.dumps(external_id, ensure_ascii=False),
         "description_yaml": json.dumps(description, ensure_ascii=False),
         "sheet_file": SHEET_FILENAME,
-        "sheet_type": SHEET_TYPES[sheet_type],
     }
 
     # Create config file in subdirectory based on template; the minimal one has a short header
@@ -551,13 +546,11 @@ def init(
     if os.path.exists(sheet_path):
         log("Keeping the existing sample sheet {path}", {"path": sheet_path}, level=LVL_INFO)
     else:
-        create_from_tpl(
-            src_path=os.path.join(tpls, f"samplesheet_{sheet_type}.tsv"),
-            dest_path=sheet_path,
-            format_args=format_args,
-            message="Creating the {sheet_type} sample sheet {path}",
-            message_args={"sheet_type": sheet_type, "path": sheet_path},
-        )
+        from ..sample_sheet import header
+
+        with open(sheet_path, "w") as f:
+            f.write(header(SHEET_COLUMNS))
+        log("Creating the sample sheet {path}", {"path": sheet_path}, level=LVL_INFO)
 
     # Add the tasks; one that fails (a duplicate name) fails init once the others are added
     failed = 0
@@ -1080,8 +1073,7 @@ def check_files(directory, as_json, plain):
     The files are those in tool sections, the external_data paths, the files tables and the
     files they list, the sample sheets and search paths, the .fai and .dict of a genome and the
     index of a VCF or of the mappability BED file. The reads are checked for every library of the
-    tasks that read FASTQ files, below the search paths of its data set or external_data task or
-    in the files tables. Snakemake checks the inputs of the jobs it runs
+    tasks that read FASTQ files, in the files tables of their external_data task. Snakemake checks the inputs of the jobs it runs
     anyway; this command checks all of them, for example after moving a project to another
     machine. Each row has the kind (file or reads), the task, the file or the library, and the
     problem. It exits with 1 if a file is missing.
@@ -1306,28 +1298,9 @@ def _snkmt_console_cmd(db_path: str) -> list[str]:
     required=True,
     help="Name of the project for output (machine-readable).",
 )
-@click.option(
-    "--project-title",
-    default=".",
-    help="Title of the project (human-readable).",
-)
-@click.option(
-    "--project-description",
-    default=".",
-    help="Description of the project (human-readable).",
-)
 @click.option("--library-types", help="Library type(s) to use, comma-separated")
-def pull_sheet(
-    output,
-    api_key,
-    sodar_host,
-    project_uuid,
-    project_name,
-    project_title,
-    project_description,
-    library_types,
-):
-    """Pull biomedsheet sample sheet from SODAR API."""
+def pull_sheet(output, api_key, sodar_host, project_uuid, project_name, library_types):
+    """Pull the sample sheet of a SODAR project through its API, as a plain TSV sheet."""
     from .snappy_pull_sheet import run as run_pull_sheet
 
     run_pull_sheet(
@@ -1337,8 +1310,6 @@ def pull_sheet(
             sodar_host=sodar_host,
             project_uuid=project_uuid,
             project_name=project_name,
-            project_title=project_title,
-            project_description=project_description,
             library_types=library_types.split(",") if library_types else [],
         )
     )

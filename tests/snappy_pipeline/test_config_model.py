@@ -19,7 +19,7 @@ from snappy_pipeline.models import (
     ToggleModel,
     default_config_yaml_string,
 )
-from snappy_pipeline.workflow_model import ConfigModel, DataSet
+from snappy_pipeline.workflow_model import ConfigModel
 from snappy_pipeline.workflow_registry import WORKFLOW_REGISTRY
 from snappy_pipeline.workflows.gene_expression_quantification.model import (
     GeneExpressionQuantification,
@@ -30,7 +30,7 @@ def _minimal_config(**overrides):
     config = {
         "project": {"name": "minimal"},
         "tasks": [{"step": "ngs_mapping", "name": "mapping", "config": {"tool": "bwa"}}],
-        "data_sets": {},
+        "sample_sheets": [],
     }
     config.update(overrides)
     return config
@@ -256,7 +256,7 @@ def test_default_config_writes_the_answers_without_tags():
     assert "\n  reads: reads\n" in text and re.search(r"\n  index:\s+# REQUIRED", text)
 
 
-def test_pedigree_field_needs_a_sheet_with_pedigrees():
-    DataSet(file="sheet.tsv", type="germline_variants", pedigree_field="familyId")
-    with pytest.raises(pydantic.ValidationError, match="matched_cancer sheet has no pedigrees"):
-        DataSet(file="sheet.tsv", type="matched_cancer", pedigree_field="familyId")
+def test_sample_sheets_default_to_the_sheet_next_to_the_config():
+    config = {"project": {"name": "x"}, "tasks": []}
+    assert ConfigModel.model_validate(config).sample_sheets == ["samplesheet.tsv"]
+    assert ConfigModel.model_validate(config | {"sample_sheets": []}).sample_sheets == []

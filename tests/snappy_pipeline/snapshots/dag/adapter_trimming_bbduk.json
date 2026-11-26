@@ -1,5 +1,150 @@
 [
  {
+  "benchmark": "tasks/adapter_trimming_bbduk/benchmarks/case001subregion-N1-DNA1-WES1/case001subregion-N1-DNA1-WES1.tsv",
+  "directory": [
+   "tasks/adapter_trimming_bbduk/work/case001subregion-N1-DNA1-WES1/out",
+   "tasks/adapter_trimming_bbduk/work/case001subregion-N1-DNA1-WES1/rejected",
+   "tasks/adapter_trimming_bbduk/work/case001subregion-N1-DNA1-WES1/report"
+  ],
+  "input": [
+   "<project>/raw/case001subregion-N1-DNA1-WES1/case001subregion-N1-DNA1-WES1.R1.fastq.gz",
+   "<project>/raw/case001subregion-N1-DNA1-WES1/case001subregion-N1-DNA1-WES1.R2.fastq.gz",
+   "<repo>/tests/scripts/generate_task_configs.py"
+  ],
+  "log": [
+   "tasks/adapter_trimming_bbduk/work/case001subregion-N1-DNA1-WES1/log/case001subregion-N1-DNA1-WES1.log"
+  ],
+  "output": [
+   "tasks/adapter_trimming_bbduk/work/case001subregion-N1-DNA1-WES1/out",
+   "tasks/adapter_trimming_bbduk/work/case001subregion-N1-DNA1-WES1/report",
+   "tasks/adapter_trimming_bbduk/work/case001subregion-N1-DNA1-WES1/rejected"
+  ],
+  "params": {
+   "args": {
+    "code": "<hash>",
+    "config": {
+     "barcodefilter": "f",
+     "builtin_references": [],
+     "cardinality": false,
+     "cardinalityout": false,
+     "chastityfilter": false,
+     "copyundefined": false,
+     "ecco": false,
+     "editdistance": 0,
+     "editdistance2": 0,
+     "entropy": -1.0,
+     "entropyk": 5,
+     "entropymark": false,
+     "entropymask": "f",
+     "entropytrim": "f",
+     "entropywindow": 50,
+     "extra_arguments": [],
+     "filterpolyg": 8,
+     "findbestmatch": false,
+     "forbidn": false,
+     "forcetrimleft": 0,
+     "forcetrimmod": 5,
+     "forcetrimright": 0,
+     "forcetrimright2": 0,
+     "gcbins": "auto",
+     "gcpairs": true,
+     "hammingdistance": 1,
+     "hammingdistance2": 0,
+     "histbefore": true,
+     "idbins": 100,
+     "interleaved": "auto",
+     "k": 21,
+     "kmask": "",
+     "ksplit": false,
+     "ktrim": "r",
+     "loglogbuckets": 2048,
+     "loglogk": 31,
+     "maqb": 0,
+     "maskfullycovered": false,
+     "maskmiddle": true,
+     "maxgc": 1.0,
+     "maxhistlen": 6000,
+     "maxns": -1,
+     "mcb": 0,
+     "minavgquality": 0,
+     "minbasefrequency": 0.0,
+     "minbasequality": 0,
+     "mincovfraction": 0.0,
+     "mingc": 0.0,
+     "mininsert": 40,
+     "mink": 11,
+     "minkmerfraction": 0.0,
+     "minkmerhits": 1,
+     "minlength": 35,
+     "minoverlap": 14,
+     "mlf": 0,
+     "num_threads": 8,
+     "nzo": true,
+     "ordered": false,
+     "ottm": false,
+     "qhdist": 0,
+     "qhdist2": 0,
+     "qin": "auto",
+     "qout": "auto",
+     "qtrim": "rl",
+     "rcomp": true,
+     "refnames": false,
+     "removeifeitherbad": true,
+     "rename": false,
+     "restrictleft": 0,
+     "restrictright": 0,
+     "skipr1": false,
+     "skipr2": false,
+     "statscolumns": 3,
+     "strictoverlap": true,
+     "swift": false,
+     "tbo": false,
+     "tossjunk": false,
+     "tp": 0,
+     "tpe": false,
+     "trd": false,
+     "trimfailures": false,
+     "trimpolya": 0,
+     "trimpolyg": 0,
+     "trimpolygleft": 0,
+     "trimpolygright": 8,
+     "trimq": 25.0,
+     "xmax": -1,
+     "xmin": -1,
+     "ymax": -1,
+     "ymin": -1
+    },
+    "extra_arguments": [],
+    "output_left": [
+     {
+      "filename": "case001subregion-N1-DNA1-WES1.R1.fastq.gz",
+      "relative_path": "."
+     }
+    ],
+    "output_right": [
+     {
+      "filename": "case001subregion-N1-DNA1-WES1.R2.fastq.gz",
+      "relative_path": "."
+     }
+    ]
+   }
+  },
+  "resources": {
+   "mem": "24 GB",
+   "mem_mb": 24000,
+   "mem_mib": 22889,
+   "partition": "medium",
+   "runtime": 720
+  },
+  "rule": "adapter_trimming_bbduk_adapter_trimming_bbduk_run",
+  "temp": [],
+  "threads": 1,
+  "wildcards": {
+   "library_name": "case001subregion-N1-DNA1-WES1"
+  },
+  "wrapper": "file://<repo>/snappy_wrappers/wrappers/bbduk/run"
+ },
+ {
   "benchmark": "tasks/adapter_trimming_bbduk/benchmarks/case001subregion-T1-DNA1-WES1/case001subregion-T1-DNA1-WES1.tsv",
   "directory": [
    "tasks/adapter_trimming_bbduk/work/case001subregion-T1-DNA1-WES1/out",
@@ -147,7 +292,9 @@
  {
   "benchmark": null,
   "input": [
+   "tasks/adapter_trimming_bbduk/work/case001subregion-N1-DNA1-WES1/out",
    "tasks/adapter_trimming_bbduk/work/case001subregion-T1-DNA1-WES1/out",
+   "tasks/adapter_trimming_bbduk/work/case001subregion-N1-DNA1-WES1/report",
    "tasks/adapter_trimming_bbduk/work/case001subregion-T1-DNA1-WES1/report"
   ],
   "local": true,
@@ -168,7 +315,9 @@
  {
   "benchmark": null,
   "input": [
+   "tasks/adapter_trimming_bbduk/work/case001subregion-N1-DNA1-WES1/out",
    "tasks/adapter_trimming_bbduk/work/case001subregion-T1-DNA1-WES1/out",
+   "tasks/adapter_trimming_bbduk/work/case001subregion-N1-DNA1-WES1/report",
    "tasks/adapter_trimming_bbduk/work/case001subregion-T1-DNA1-WES1/report",
    "tasks/adapter_trimming_bbduk/output/.manifest.tsv"
   ],

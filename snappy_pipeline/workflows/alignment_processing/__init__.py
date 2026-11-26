@@ -11,7 +11,7 @@ Downstream tasks read the BAM files of the last task in the chain through the ke
     It ignores reads marked as duplicates and the known variant sites of ``depends_on.common_variants``, for example ``small_exac_common_3.vcf`` of the GATK resource bundle.
     ``ApplyBQSR`` writes the BAM file with the recalibrated base qualities.
 
-Unless ``library_selection`` narrows them, the task processes the DNA libraries of its upstream task, including those of background data sets.
+Unless ``library_selection`` narrows them, the task processes the DNA libraries of its upstream task, including those of background libraries.
 Its output carries the tags of its input plus the tag of the tool, ``recalibrated`` for ``gatk4_bqsr``.
 With ``delete_intermediates: [bam]``, the BAM file of the task is temporary (see :ref:`usage`).
 Use it when a later task of the chain processes the BAM file further.

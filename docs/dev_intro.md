@@ -44,7 +44,7 @@ Useful references:
 
 ### From `config.yaml` to rules
 
-The project directory holds a `config.yaml` with a list of `tasks` and the `data_sets`, the sample sheets.
+The project directory holds a `config.yaml` with a list of `tasks` and the `sample_sheets`.
 Every task names a `step` and has a `config` for it.
 `depends_on` inside a task's `config` links tasks: it names the task that provides each input.
 
@@ -65,7 +65,7 @@ digraph config_to_rules {
     bgcolor="transparent"; fontname="Helvetica";
     node [shape=box, style="rounded,filled", fillcolor="#ffffff", color="#c3c2b7", fontname="Helvetica", fontsize=9, fontcolor="#0b0b0b", margin="0.08,0.03"];
     edge [arrowsize=0.5, penwidth=1.0, color="#898781", fontname="Helvetica", fontsize=7, fontcolor="#52514e"];
-    config [label=<<B>config.yaml</B><BR ALIGN="LEFT"/><FONT POINT-SIZE="7" COLOR="#52514e">tasks and data_sets</FONT><BR ALIGN="LEFT"/>>];
+    config [label=<<B>config.yaml</B><BR ALIGN="LEFT"/><FONT POINT-SIZE="7" COLOR="#52514e">tasks and sample_sheets</FONT><BR ALIGN="LEFT"/>>];
     subgraph cluster_snakefile {
         label=<<FONT POINT-SIZE="7" COLOR="#898781">snappy_pipeline/Snakefile</FONT>>; color="#e1e0d9"; style="rounded"; labelloc=t;
         load [label=<<B>load_project()</B><BR ALIGN="LEFT"/><FONT POINT-SIZE="7" COLOR="#52514e">validates the config, resolves depends_on,</FONT><BR ALIGN="LEFT"/><FONT POINT-SIZE="7" COLOR="#52514e">checks the data contracts</FONT><BR ALIGN="LEFT"/>>];

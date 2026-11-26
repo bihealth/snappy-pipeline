@@ -33,13 +33,13 @@ from snappy_pipeline.models import (
 from snappy_pipeline.wrapper_code import code_of, package_root
 from snappy_pipeline.utils import listify
 from snappy_pipeline.library_table import (
+    GROUP_COLUMNS,
     TARGETED_LIBRARY_TYPES,
-    _check_groups,
     _query_libraries,
     build_donor_dataframe,
     build_library_dataframe,
-    colliding_libraries_message,
     entity_libraries,
+    resolve_related,
     resolve_relationships,
     select_libraries,
 )
@@ -67,7 +67,7 @@ Attempt: typing.TypeAlias = int | None
 #: ``library_requirement`` of the steps and tools that compare each tumor with its matched
 #: normal (the ``matched_normal_lib`` relationship); ``BaseStep.library_warnings`` names the
 #: libraries they leave out
-MATCHED_NORMAL_REQUIREMENT = "kind == 'cancer' and matched_normal_lib != ''"
+MATCHED_NORMAL_REQUIREMENT = "role == 'tumor' and matched_normal_lib != ''"
 
 
 #: The ``default_relationships`` of the steps that compare each tumor with its matched normal: the
@@ -369,7 +369,7 @@ class WrapperRule:
 
 
 class WritePedigreeStepPart(BaseStepPart):
-    """Write the PED file of a pedigree, whose family column is the pedigree's name (its ``related_group``).
+    """Write the PED file of a pedigree, whose family column is the pedigree's name (its ``family_id``).
 
     The rows come from the sample sheets through the params, so that a changed sex, parent or
     affected status rewrites the PED and reruns its readers.
@@ -382,7 +382,7 @@ class WritePedigreeStepPart(BaseStepPart):
     actions = ("run",)
 
     #: The wildcard that names the pedigree in the output path
-    entity_wildcard = "related_group"
+    entity_wildcard = "related_group"  # the wildcard of the group's paths, named historically
 
     #: The column that names the individuals and their parents: their DNA libraries, the
     #: sample names of the VCFs
@@ -401,7 +401,7 @@ class WritePedigreeStepPart(BaseStepPart):
         return f"work/write_pedigree.{{{self.entity_wildcard}}}/out/{{{self.entity_wildcard}}}.ped"
 
     def _get_params_run(self, wildcards) -> dict[str, Any]:
-        """The PED rows as biomedsheets wrote them: the family, the individual, its father and mother, sex (1 male, 2 female, 0 unknown) and affected status (2 affected, 1 unaffected, 0 unknown)"""
+        """The PED rows: the family, the individual, its father and mother, sex (1 male, 2 female, 0 unknown) and affected status (2 affected, 1 unaffected, 0 unknown)"""
         entity = getattr(wildcards, self.entity_wildcard)
         sexes = {"male": "1", "female": "2"}
         rows = [
@@ -418,13 +418,13 @@ class WritePedigreeStepPart(BaseStepPart):
         return {"pedigree": rows}
 
     def _members(self, entity: str):
-        """Return the primary DNA library rows of the pedigree ``entity``; none in projects with cancer sample sheets only."""
+        """Return the primary DNA library rows of the pedigree ``entity``; none for a group without a family (a cancer donor)."""
         members = self.parent.pedigree_members(entity)
         df = self.parent.build_library_dataframe()
-        return members.iloc[0:0] if df.empty or df["kind"].eq("cancer").all() else members
+        return members.iloc[0:0] if df.empty or members["family_id"].isna().all() else members
 
     def _family(self, entity: str) -> str:
-        """The family column of the PED: the pedigree's name, ``FAM_`` and the index donor on a germline sheet without a family id"""
+        """The family column of the PED: the pedigree's name, the sheet's ``family_id``"""
         return entity
 
     def _individual(self, library_name: str) -> str:
@@ -538,10 +538,10 @@ class BaseStep:
     #: Config-level ``relationships`` override these.
     default_relationships: dict[str, RelationshipDefinition] = {}
 
-    #: Whether the step produces results for the libraries of background data sets, too
+    #: Whether the step produces results for the libraries of background libraries, too
     background_results: bool = False
 
-    #: Whether the step uses the libraries of background data sets otherwise, such as cohort
+    #: Whether the step uses the libraries of background libraries otherwise, such as cohort
     #: members of joint calling or the samples of a model; only such steps and those with
     #: ``background_results`` accept ``background_selection``
     uses_background: bool = False
@@ -664,8 +664,6 @@ class BaseStep:
         self.sub_steps: dict[str, BaseStepPart] = {}
         self._library_dataframes = {}
         self._primary_dna_libraries = {}
-        #: The data sets with their sample sheets, loaded once per run and shared by all tasks
-        self.data_set_infos = project.data_set_infos
 
         if self.tool_parts:
             self.register_sub_step_classes(
@@ -759,7 +757,7 @@ class BaseStep:
     def build_library_dataframe(self, include_background: bool = False):
         """Return the unified library dataframe for this workflow, with its relationships.
 
-        ``include_background`` adds the libraries of background data sets (``is_background``).
+        ``include_background`` adds the libraries of background libraries (``is_background``).
         The table without relationships is built once per run and shared by all tasks; each
         task adds its relationships once. Callers must not modify the result in place.
         """
@@ -785,7 +783,7 @@ class BaseStep:
         tables = self.project.library_tables
         if include_background not in tables:
             tables[include_background] = build_library_dataframe(
-                self.data_set_infos, include_background=include_background
+                self.project.sheets, include_background=include_background
             )
         return tables[include_background]
 
@@ -814,21 +812,40 @@ class BaseStep:
             getattr(config, "library_selection", None),
             cls.task_library_default(config),
             cls.task_library_requirement(config),
+            self.upstream_libraries(task_name),
         )
+
+    def upstream_libraries(self, task_name: str) -> set[str] | None:
+        """The libraries of the task behind the first ``depends_on`` key of ``task_name`` that
+        names a task (not ``external_data``), in the order of the keys: the default of a task
+        without ``library_selection`` and step default, as a filtration takes the libraries of
+        the calls it reads. ``None`` without such a task."""
+        dependencies = getattr(self.project, "dependencies", {})
+        for value in dependencies.get(task_name, {}).values():
+            names = [
+                name
+                for name in (value if isinstance(value, tuple) else (value,))
+                if self.project.task(name).step != "external_data"
+            ]
+            if names:
+                return {lib for name in names for lib in self.task_libraries(name)["library_name"]}
+        return None
 
     @cached_property
     def effective_group_by(self) -> str:
-        """Return ``"library"`` or ``"related"``: the task's ``group_by``, else its step's
-        :meth:`default_group_by`, else the one its upstream tasks declare (so a filtration
-        after joint calling writes per group of related libraries), else ``"library"``."""
-        return self.project.group_by[self.task_name]
+        """Return ``"library"``, ``"donor"`` or ``"family"``: the task's ``group_by``, else its
+        step's :meth:`default_group_by`, else the one its upstream tasks declare (so a filtration
+        after joint calling writes per family), else ``"library"``; ``related`` is resolved by the
+        task's libraries (:func:`resolve_related`)."""
+        return resolve_related(self.libraries, self.project.group_by[self.task_name])
 
     @cached_property
     def libraries(self):
         """Return the rows of the libraries that the task takes: the library table, with the
-        background data sets if the step produces results for them (``background_results``),
-        restricted to the step's ``library_requirement`` and selected by ``library_selection`` or
-        else by the step's ``library_default`` (:func:`select_libraries`)."""
+        background libraries if the step produces results for them (``background_results``),
+        restricted to the step's ``library_requirement`` and selected by ``library_selection``,
+        else by the step's ``library_default``, else the libraries of the task it reads
+        (:func:`select_libraries`, :meth:`upstream_libraries`)."""
         df = self.build_library_dataframe(include_background=self.background_results)
         selection = getattr(self.config, "library_selection", None)
         return select_libraries(
@@ -836,6 +853,7 @@ class BaseStep:
             selection,
             self.task_library_default(self.config),
             self.task_library_requirement(self.config),
+            self.upstream_libraries(self.task_name),
         )
 
     @cached_property
@@ -845,11 +863,11 @@ class BaseStep:
 
     @cached_property
     def output_entities(self) -> list[str]:
-        """Output entity names for this workflow: one per group of related libraries with ``group_by == "related"``, otherwise each of the task's libraries."""
+        """Output entity names for this workflow: one per family or donor with ``group_by`` at that level, otherwise each of the task's libraries."""
         return list(self._entity_libraries)
 
     def primary_library(self, entity: str) -> str:
-        """Return the primary library of an entity of this task: the library itself with ``group_by: library``, else the ``is_primary`` member of the related group (the pedigree index, the primary tumor) or its first one.
+        """Return the primary library of an entity of this task: the library itself with ``group_by: library``, else the primary normal DNA library of the group's index donor, else its first primary library.
         Raises ``ValueError`` for a name that is no entity, such as a library behind a task that writes one result per related group."""
         if entity not in self._entity_libraries:
             raise ValueError(
@@ -859,10 +877,10 @@ class BaseStep:
         return self._entity_libraries[entity]
 
     def member_libraries(self, entity: str) -> list[str]:
-        """Return the libraries that an entity of this task stands for in a joint result: with ``group_by: related`` the pedigree members of its related group (one DNA library per donor, the index first), else the library itself.
+        """Return the libraries that an entity of this task stands for in a joint result: with ``group_by: family`` or ``donor`` the pedigree members of its group (one normal DNA library per donor, the index first), else the library itself.
         A group without pedigree members, such as a cancer donor without a normal, stands for its primary library (the primary tumor).
         Raises ``ValueError`` for a name that is no entity."""
-        if self.effective_group_by != "related":
+        if self.effective_group_by == "library":
             return [entity]
         members = self.pedigree_members(entity)["library_name"].tolist()
         if not members:
@@ -870,30 +888,34 @@ class BaseStep:
         index = self.pedigree_index(entity)
         return [index, *(name for name in members if name != index)] if index else members
 
+    def upstream_group_by(self, task_name: str) -> str:
+        """Return ``"library"``, ``"donor"`` or ``"family"``: the level at which the task
+        ``task_name`` writes its results, with ``related`` resolved by that task's libraries."""
+        return resolve_related(self.task_libraries(task_name), self.project.group_by[task_name])
+
     def upstream_entity(self, field: str, library_name: str) -> str:
-        """Return the entity under which the task of ``depends_on.<field>`` writes the result of ``library_name``: its related group when that task writes one result per related group, else the library itself."""
+        """Return the entity under which the task of ``depends_on.<field>`` writes the result of ``library_name``: its family or donor when that task writes one result per group, else the library itself."""
         (upstream,) = self.upstream_task_names(field)
-        if self.project.group_by[upstream] != "related":
+        level = self.upstream_group_by(upstream)
+        if level == "library":
             return library_name
-        return self.library_row(library_name)["related_group"]
+        return self.library_row(library_name)[GROUP_COLUMNS[level]]
 
     def primary_dna_libraries(self, include_background: bool = False):
         """Return the library dataframe rows of the primary DNA library of each donor.
 
-        This is the germline view of the sample sheets: a donor's first DNA library that is not
-        from a tumor sample. The column ``pedigree`` is the name of the donor's pedigree, its
-        ``related_group``. On a cancer sample sheet, each donor is a pedigree of its own. A donor's
-        RNA libraries and further DNA libraries are in the group, but no pedigree members. The
-        task's ``library_selection`` applies first, so it narrows the pedigrees and their members.
+        This is the germline view of the sample sheets: a donor's primary DNA library that is
+        not from a tumor sample. The column ``pedigree`` is the name of the donor's pedigree: its
+        ``family_id``, else the donor alone. A donor's RNA libraries and further DNA libraries are
+        in the group, but no pedigree members. The task's ``library_selection`` applies first, so
+        it narrows the pedigrees and their members.
         """
         if include_background not in self._primary_dna_libraries:
             df = self.build_library_dataframe(include_background=include_background)
             if selection := getattr(self.config, "library_selection", None):
                 df = _query_libraries(df, selection)
-            _check_groups(df)
-            dna = df[(df["extraction_type"] == "dna") & (df["role"] != "tumor")]
-            dna = dna.drop_duplicates(["related_group", "donor_name"])
-            dna = dna.assign(pedigree=dna["related_group"])
+            dna = df[(df["extraction_type"] == "dna") & (df["role"] != "tumor") & df["is_primary"]]
+            dna = dna.assign(pedigree=dna["family_id"].fillna(dna["donor_name"]))
             self._primary_dna_libraries[include_background] = dna
         return self._primary_dna_libraries[include_background]
 
@@ -925,9 +947,9 @@ class BaseStep:
         return pedigree.iloc[0]
 
     def pedigree_index(self, pedigree: str, include_background: bool = False) -> str | None:
-        """Return the index library of ``pedigree``: its ``is_primary`` primary DNA library (the index, a cancer donor's normal), ``None`` when the index has no DNA library."""
+        """Return the index library of ``pedigree``: the primary DNA library of its index donor (``is_index``), ``None`` when the index has none."""
         members = self.pedigree_members(pedigree, include_background)
-        index = members[members["is_primary"]]
+        index = members[members["is_index"]]
         return None if index.empty else index.iloc[0]["library_name"]
 
     def pedigree_donors(self, pedigree: str, include_background: bool = False):
@@ -937,7 +959,7 @@ class BaseStep:
         tables = self.project.donor_tables
         if include_background not in tables:
             tables[include_background] = build_donor_dataframe(
-                self.data_set_infos, include_background=include_background
+                self.project.sheets, include_background=include_background
             )
         donors = tables[include_background]
         return donors[donors["pedigree"] == pedigree]
@@ -952,7 +974,7 @@ class BaseStep:
     @cached_property
     def library_kits(self) -> dict[str, str]:
         """Return library name -> enrichment kit (``library_kit``) of the targeted libraries
-        (``WES``, ``Panel_seq``) that have one. Other libraries use ``libraryKit`` for other
+        (``WES``, ``Panel_seq``) that have one. Other libraries use ``library_kit`` for other
         things, such as the long-read chemistry that minimap2 reads."""
         kits = {}
         for name in self._library_rows:
@@ -1016,38 +1038,18 @@ class BaseStep:
         return kits[0]
 
     @cached_property
-    def _library_rows(self) -> dict[str, list[dict[str, typing.Any]]]:
-        """Return library name -> its rows in all data sets, background included."""
-        rows: dict[str, list[dict[str, typing.Any]]] = {}
-        for row in self.build_library_dataframe(include_background=True).to_dict("records"):
-            rows.setdefault(row["library_name"], []).append(row)
-        return rows
-
-    @cached_property
-    def _selected_libraries(self) -> set[tuple[str, str]]:
-        """Return (data set, library name) of the libraries that ``library_selection`` keeps."""
+    def _library_rows(self) -> dict[str, dict[str, typing.Any]]:
+        """Return library name -> its row, background libraries included."""
         df = self.build_library_dataframe(include_background=True)
-        if selection := getattr(self.config, "library_selection", None):
-            df = df.query(selection)  # apply_library_selection would reject colliding names
-        return set(zip(df["data_set"], df["library_name"]))
+        return {row["library_name"]: row for row in df.to_dict("records")}
 
     def library_row(self, library_name: str) -> dict[str, typing.Any]:
-        """Return the row of ``library_name``: its data set, folder, kit and the other sample
-        sheet columns. If several data sets have a library of that name, the task's
-        ``library_selection`` must keep exactly one of them; otherwise this raises
-        ``ConfigError`` with the fix."""
-        rows = self._library_rows.get(library_name)
-        if not rows:
+        """Return the row of ``library_name``: its folder, kit and the other sample sheet
+        columns, with the task's relationship columns."""
+        row = self._library_rows.get(library_name)
+        if row is None:
             raise ConfigError(f"library {library_name!r} is not among the task's libraries")
-        if len(rows) > 1:
-            kept = [
-                row for row in rows if (row["data_set"], library_name) in self._selected_libraries
-            ]
-            if len(kept) != 1:
-                colliding = {library_name: [row["data_set"] for row in kept or rows]}
-                raise ConfigError(colliding_libraries_message(colliding))
-            rows = kept
-        return rows[0]
+        return row
 
     def matched(self, library_name: str, relationship: str) -> str:
         """The library that a relationship (``matched_normal_lib``, ``matched_rna_lib``) gives for
@@ -1086,8 +1088,8 @@ class BaseStep:
         taken = set(self.libraries["library_name"])
         if requirement == MATCHED_NORMAL_REQUIREMENT:
             default = self.task_library_default(self.config)
-            cancer = select_libraries(df, selection, default, "kind == 'cancer'")
-            if unpaired := sorted(set(cancer["library_name"]) - taken):
+            tumors = select_libraries(df, selection, default, "role == 'tumor'")
+            if unpaired := sorted(set(tumors["library_name"]) - taken):
                 warnings.append(
                     f"Task {self.task_name!r} leaves out the libraries without a matched normal: "
                     + ", ".join(unpaired)
@@ -1171,9 +1173,8 @@ class BaseStep:
 
     def _check_upstream_library(self, upstream: str, library_name: str) -> None:
         """Raise ``ConfigError`` if the upstream task writes no result for ``library_name``: a
-        related group that it does not write (it writes per library, or its libraries leave the
-        group out), or a library that it takes from another data set than this task (files are
-        found by library name, so the upstream file would be of the other library)."""
+        group that it does not write (it writes per library, or its libraries leave the group
+        out)."""
         from snappy_pipeline.orchestration import _TASK_INSTANCES
 
         # Only between tasks of the running project; with --frozen, upstream tasks are not loaded
@@ -1184,28 +1185,16 @@ class BaseStep:
             # A related group, not a library
             if library_name in instance.output_entities:
                 return
-            if instance.effective_group_by != "related":
+            if instance.effective_group_by == "library":
                 raise ConfigError(
                     f"task {upstream!r} writes one result per library, but {library_name!r} is a "
-                    f"related group; set group_by: library on task {self.task_name!r}, or "
-                    f"group_by: related on {upstream!r}"
+                    f"group; set group_by: library on task {self.task_name!r}, or "
+                    f"group_by: {self.effective_group_by} on {upstream!r}"
                 )
             raise ConfigError(
-                f"task {upstream!r} writes no result for the related group {library_name!r}: its "
+                f"task {upstream!r} writes no result for the group {library_name!r}: its "
                 f"libraries leave the group out; align library_selection of {self.task_name!r} "
                 f"and {upstream!r}"
-            )
-        if library_name not in instance._library_rows:
-            return
-        own, theirs = (
-            self.library_row(library_name)["data_set"],
-            instance.library_row(library_name)["data_set"],
-        )
-        if own != theirs:
-            raise ConfigError(
-                f"library {library_name!r} comes from data set {own!r}, but the upstream task "
-                f"{upstream!r} takes the library of that name from {theirs!r}. Select the "
-                "libraries of the same data set in both tasks with library_selection."
             )
 
     def get_upstream_paths(

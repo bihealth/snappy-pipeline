@@ -5,7 +5,7 @@ The step runs a QC tool on the reads or the alignments of each library.
 The ``tool`` field selects the tool:
 
 - ``fastqc``: runs FastQC on the FASTQ files of DNA and RNA libraries.
-  It reads ``depends_on.reads``, which names ``data_sets``, an ``external_data`` task, or an ``adapter_trimming`` task (:ref:`step_adapter_trimming`).
+  It reads ``depends_on.reads``, which names an ``external_data`` task or an ``adapter_trimming`` task (:ref:`step_adapter_trimming`).
 - ``picard``: runs the Picard programs listed in ``picard.programs`` on the BAM files of DNA libraries.
   It reads ``depends_on.alignments``, for example an :ref:`step_ngs_mapping` task.
 - ``ngs_chew``: writes a fingerprint of each DNA library from the BAM files of ``depends_on.alignments``, with `ngs-chew <https://github.com/bihealth/ngs-chew>`_.
@@ -82,23 +82,18 @@ Enrichment kits
 
 ``alfred`` and Picard's ``CollectHsMetrics`` read the region files of each library's enrichment kit.
 The files come from an ``external_data`` task in ``kits`` mode, named in ``depends_on.kits``.
-A library uses the kit named exactly like its ``libraryKit`` in the sample sheet:
+A library uses the kit named exactly like its ``library_kit`` in the sample sheet:
 
 ::
 
-    [Custom Fields]
-    key     annotatedEntity docs    type    minimum maximum unit    choices pattern
-    libraryKit      ngsLibrary      exome enrichment kit    string  0       0       0       0       0
-
-    [Data]
-    patientName     sampleName      isTumor extractionType  libraryType     folderName      libraryKit
-    case001 N1      N       DNA     WES     case001-N1-DNA1-WES1    V5_noUTR
-    case002 N1      N       DNA     WES     case002-N1-DNA1-WES1    V5_UTR
+    donor_name  sample_name  is_tumor  library_name          library_type  library_kit
+    case001     case001-N1   false     case001-N1-DNA1-WES1  WES           V5_noUTR
+    case002     case002-N1   false     case002-N1-DNA1-WES1  WES           V5_UTR
     [...]
 
 Only targeted libraries (library type ``WES`` or ``Panel_seq``) have a kit.
 ``alfred`` skips all other libraries.
-A ``libraryKit`` that the kits task lacks is an error.
+A ``library_kit`` that the kits task lacks is an error.
 
 .. code-block:: yaml
 
@@ -438,7 +433,9 @@ class NgsChewSummaryStepPart(QcSummaryStepPart):
                 {
                     "library": library,
                     "donor": row["donor_name"],
-                    "pedigree": row["related_group"],
+                    "pedigree": row["family_id"]
+                    if isinstance(row["family_id"], str)
+                    else row["donor_name"],
                     "sex": row["sex"],
                 }
             )

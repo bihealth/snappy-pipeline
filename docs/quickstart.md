@@ -28,7 +28,7 @@ See {ref}`installation` for details.
 ## Create the project
 
 `snappy init` creates the project directory with `config.yaml`, `README.md` and an empty sample sheet `samplesheet.tsv`.
-`config.yaml` names this sheet as the data set `first_batch`, with its FASTQ files below `raw/`:
+`config.yaml` names this sheet in `sample_sheets` and a `reads` task for its FASTQ files below `raw/`:
 
 ```shell
 snappy init my_project
@@ -66,7 +66,7 @@ Keep the project in git for the history of its configuration.
 ## Configure the tasks
 
 Besides `project`, `config.yaml` has two main sections.
-`data_sets` names the sample sheets.
+`sample_sheets` names the sample sheets, by default `samplesheet.tsv` next to `config.yaml`.
 `tasks` lists the tasks, each with a `step`, a unique `name` and a `config`.
 
 A task names the tasks it reads from in `config.depends_on`.
@@ -82,10 +82,7 @@ The `reads` task below lists the FASTQ files of each library in `reads.tsv`, whi
 project:
   name: my_project
 
-data_sets:
-  my_batch:
-    file: samplesheet.tsv
-    type: matched_cancer
+sample_sheets: [samplesheet.tsv]
 
 tasks:
   - name: reads
@@ -134,12 +131,12 @@ digraph {
     rankdir=LR; bgcolor="transparent"; nodesep=0.2; ranksep=0.5;
     node [shape=box, style="rounded,filled", fillcolor="#ffffff", color="#c3c2b7", fontname="Helvetica", fontsize=9, fontcolor="#0b0b0b"];
     edge [color="#898781", arrowsize=0.6, fontname="Helvetica", fontsize=8, fontcolor="#52514e"];
-    data_sets [label="data_sets\nFASTQ files of the sheet", style="rounded,dashed"];
+    reads [label="reads\nexternal_data, FASTQ files"];
     genome [label="genome\nexternal_data"];
     bwa_index [label="bwa_index\nexternal_data"];
     mapping [label="mapping\nngs_mapping, bwa"];
     calling [label="calling\nvariant_calling, mutect2"];
-    data_sets -> mapping [label="reads"];
+    reads -> mapping [label="reads"];
     genome -> mapping [label="reference"];
     bwa_index -> mapping [label="index"];
     mapping -> calling [label="alignments"];
@@ -155,21 +152,19 @@ The mapping task must then name the genome of that index in `depends_on.referenc
 
 ## Add the sample sheet and the reads
 
-The sample sheet is a TSV file in the [BioMed Sample Sheet](https://github.com/bihealth/biomedsheets) format.
-This one is a `matched_cancer` sheet:
+The sample sheet is a plain TSV file with one row per library; `snappy init` writes its header.
+The core columns are `donor_name`, `library_name` and `library_type`; the others describe the donor (`sex`, `family_id`, `father`, `mother`), the sample (`is_tumor`, `purity`) and the library (`library_kit`, `folder_name`), see {ref}`the overview <overview>`.
+This one has the normal and the tumor of one patient:
 
 ```tsv
-[Metadata]
-schema          cancer_matched
-schema_version  v1
-
-[Data]
-patientName  sampleName  isTumor  libraryType  folderName
-P001         N1          N        WES          P001-N1-DNA1-WES1
-P001         T1          Y        WES          P001-T1-DNA1-WES1
+donor_name  sex     sample_name  is_tumor  library_name       library_type  library_kit
+P001        female  P001-N1      false     P001-N1-DNA1-WES1  WES           Twist_Exome_2
+P001        female  P001-T1      true      P001-T1-DNA1-WES1  WES           Twist_Exome_2
 ```
 
-The reads of a library are below `raw`, in a folder named like its `folderName` or named after it (`P001-N1-DNA1-WES1_S1_L001_R1_001.fastq.gz`), flat or in batch folders; the common namings of sequencing facilities and SRA are known.
+`snappy sheet check samplesheet.tsv` lists what the sheet holds, or every problem with its line and column.
+
+The reads of a library are below `raw`, in a folder named like its `folder_name` (else its name) or named after it (`P001-N1-DNA1-WES1_S1_L001_R1_001.fastq.gz`), flat or in batch folders; the common namings of sequencing facilities and SRA are known.
 `snappy scan-files` searches once and writes `reads.tsv`, one row per read group, which the tasks read from then on.
 Other namings take `--pattern key=regex` for the path below the folder or the file name, whose `(?P<readgroup>...)` group pairs the `left` and `right` file of a read group, and another directory takes `--search-path`; the table records the command.
 Run it again after adding libraries; `snappy run` stops for a library without rows and names the command.

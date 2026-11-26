@@ -154,7 +154,7 @@ def scan_files(
     """Write the files tables; return the messages for what was written and the problems
     (libraries without files, two libraries sharing a folder, mates missing or doubled). A
     table is written in any case, with the libraries that have files."""
-    df = build_library_dataframe(project.data_set_infos, include_background=True)
+    df = build_library_dataframe(project.sheets, include_background=True)
     folders = {}
     for row in df.itertuples(index=False):
         folder = getattr(row, "folder_name", None)

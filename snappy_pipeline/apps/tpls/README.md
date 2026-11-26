@@ -23,7 +23,7 @@ You can find out more about the used software packages here:
 
 - [Snappy Pipeline](https://github.com/bihealth/snappy-pipeline) --
   The Snakemake-based pipeline system used by CUBI
-- [BioMed Sample Sheets](https://github.com/bihealth/biomedsheets) --
+- Sample sheets (`snappy sheet check`) --
   The data model and file formats used for feeding sample meta data and the
   experiment description into the pipeline
 - [CUBI Toolkit](https://github.com/bihealth/cubi-tk) --

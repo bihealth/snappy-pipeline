@@ -2,10 +2,10 @@
  {
   "benchmark": null,
   "input": [
-   "tasks/variant_calling_gatk3_hc/work/FAM_case001subregion/out/FAM_case001subregion.vcf.gz",
-   "tasks/variant_calling_gatk3_hc/work/FAM_case001subregion/out/FAM_case001subregion.vcf.gz.tbi",
-   "tasks/variant_calling_gatk3_hc/work/FAM_case001subregion/out/FAM_case001subregion.vcf.gz.md5",
-   "tasks/variant_calling_gatk3_hc/work/FAM_case001subregion/out/FAM_case001subregion.vcf.gz.tbi.md5",
+   "tasks/variant_calling_gatk3_hc/work/case001subregion/out/case001subregion.vcf.gz",
+   "tasks/variant_calling_gatk3_hc/work/case001subregion/out/case001subregion.vcf.gz.tbi",
+   "tasks/variant_calling_gatk3_hc/work/case001subregion/out/case001subregion.vcf.gz.md5",
+   "tasks/variant_calling_gatk3_hc/work/case001subregion/out/case001subregion.vcf.gz.tbi.md5",
    "tasks/variant_calling_gatk3_hc/output/.manifest.tsv"
   ],
   "log": [],
@@ -257,10 +257,10 @@
  {
   "benchmark": null,
   "input": [
-   "tasks/variant_calling_gatk3_hc/work/FAM_case001subregion/out/FAM_case001subregion.vcf.gz",
-   "tasks/variant_calling_gatk3_hc/work/FAM_case001subregion/out/FAM_case001subregion.vcf.gz.tbi",
-   "tasks/variant_calling_gatk3_hc/work/FAM_case001subregion/out/FAM_case001subregion.vcf.gz.md5",
-   "tasks/variant_calling_gatk3_hc/work/FAM_case001subregion/out/FAM_case001subregion.vcf.gz.tbi.md5"
+   "tasks/variant_calling_gatk3_hc/work/case001subregion/out/case001subregion.vcf.gz",
+   "tasks/variant_calling_gatk3_hc/work/case001subregion/out/case001subregion.vcf.gz.tbi",
+   "tasks/variant_calling_gatk3_hc/work/case001subregion/out/case001subregion.vcf.gz.md5",
+   "tasks/variant_calling_gatk3_hc/work/case001subregion/out/case001subregion.vcf.gz.tbi.md5"
   ],
   "local": true,
   "log": [],
@@ -278,9 +278,9 @@
   "wrapper": null
  },
  {
-  "benchmark": "tasks/variant_calling_gatk3_hc/benchmarks/FAM_case001subregion/FAM_case001subregion.run.tsv",
+  "benchmark": "tasks/variant_calling_gatk3_hc/benchmarks/case001subregion/case001subregion.run.tsv",
   "input": [
-   "tasks/variant_calling_gatk3_hc/work/write_pedigree.FAM_case001subregion/out/FAM_case001subregion.ped",
+   "tasks/variant_calling_gatk3_hc/work/write_pedigree.case001subregion/out/case001subregion.ped",
    "tasks/ngs_mapping_bwa/work/case001subregion-N1-DNA1-WES1/out/case001subregion-N1-DNA1-WES1.bam",
    "tasks/ngs_mapping_bwa/work/case001subregionFather-N1-DNA1-WES1/out/case001subregionFather-N1-DNA1-WES1.bam",
    "tasks/ngs_mapping_bwa/work/case001subregionMother-N1-DNA1-WES1/out/case001subregionMother-N1-DNA1-WES1.bam",
@@ -291,13 +291,13 @@
    "<repo>/.tests/test-workflow/resources/refs/dbsnp.vcf.gz.tbi"
   ],
   "log": [
-   "tasks/variant_calling_gatk3_hc/work/FAM_case001subregion/log/FAM_case001subregion.run.log"
+   "tasks/variant_calling_gatk3_hc/work/case001subregion/log/case001subregion.run.log"
   ],
   "output": [
-   "tasks/variant_calling_gatk3_hc/work/FAM_case001subregion/out/FAM_case001subregion.vcf.gz",
-   "tasks/variant_calling_gatk3_hc/work/FAM_case001subregion/out/FAM_case001subregion.vcf.gz.tbi",
-   "tasks/variant_calling_gatk3_hc/work/FAM_case001subregion/out/FAM_case001subregion.vcf.gz.md5",
-   "tasks/variant_calling_gatk3_hc/work/FAM_case001subregion/out/FAM_case001subregion.vcf.gz.tbi.md5"
+   "tasks/variant_calling_gatk3_hc/work/case001subregion/out/case001subregion.vcf.gz",
+   "tasks/variant_calling_gatk3_hc/work/case001subregion/out/case001subregion.vcf.gz.tbi",
+   "tasks/variant_calling_gatk3_hc/work/case001subregion/out/case001subregion.vcf.gz.md5",
+   "tasks/variant_calling_gatk3_hc/work/case001subregion/out/case001subregion.vcf.gz.tbi.md5"
   ],
   "params": {
    "args": {
@@ -328,7 +328,7 @@
   "temp": [],
   "threads": 1,
   "wildcards": {
-   "library_name": "FAM_case001subregion"
+   "library_name": "case001subregion"
   },
   "wrapper": "file://<repo>/snappy_wrappers/wrappers/gatk3_hc"
  },
@@ -342,13 +342,13 @@
   "local": true,
   "log": [],
   "output": [
-   "tasks/variant_calling_gatk3_hc/work/write_pedigree.FAM_case001subregion/out/FAM_case001subregion.ped"
+   "tasks/variant_calling_gatk3_hc/work/write_pedigree.case001subregion/out/case001subregion.ped"
   ],
   "params": {
    "args": {
     "pedigree": [
      [
-      "FAM_case001subregion",
+      "case001subregion",
       "case001subregion-N1-DNA1-WES1",
       "case001subregionFather-N1-DNA1-WES1",
       "case001subregionMother-N1-DNA1-WES1",
@@ -356,7 +356,7 @@
       "2"
      ],
      [
-      "FAM_case001subregion",
+      "case001subregion",
       "case001subregionFather-N1-DNA1-WES1",
       "0",
       "0",
@@ -364,7 +364,7 @@
       "1"
      ],
      [
-      "FAM_case001subregion",
+      "case001subregion",
       "case001subregionMother-N1-DNA1-WES1",
       "0",
       "0",
@@ -379,7 +379,7 @@
   "temp": [],
   "threads": 1,
   "wildcards": {
-   "related_group": "FAM_case001subregion"
+   "related_group": "case001subregion"
   },
   "wrapper": null
  }

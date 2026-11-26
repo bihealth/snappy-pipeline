@@ -76,7 +76,7 @@ class TumorMutationalBurdenCalculationWorkflow(BaseStep):
     name = "tumor_mutational_burden"
     produces = [DataSignature(DataType.TABULAR, frozenset({"tmb"}))]
     config_model_class = TumorMutationalBurdenConfigModel
-    library_requirement = "kind == 'cancer'"
+    library_requirement = "role == 'tumor'"
 
     @classmethod
     def get_output_paths(cls, config, signature=None, **kwargs) -> dict[str, str]:

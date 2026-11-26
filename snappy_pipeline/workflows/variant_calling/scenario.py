@@ -25,8 +25,8 @@ AFFECTED, UNAFFECTED = 2, 1
 
 
 def is_ffpe(value: Any) -> bool:
-    """Whether a sample sheet value of ``isFfpe`` (``Y``/``N``, ``true``/``false``) marks an FFPE
-    library; biomedsheets keeps custom field strings, so the words are read here."""
+    """Whether a sample sheet value of ``is_ffpe`` (``true``/``false``, or the older ``Y``/``N``) marks an FFPE
+    library; the sheet column is a boolean, the words are read for older tables."""
     return str(value).strip().lower() in ("y", "yes", "true", "1")
 
 

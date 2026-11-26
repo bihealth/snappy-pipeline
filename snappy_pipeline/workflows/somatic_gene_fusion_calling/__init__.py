@@ -4,7 +4,7 @@
 The step detects gene fusions in cancer RNA-seq data.
 A task takes all RNA libraries unless it sets ``library_selection``.
 Each tool starts at the raw RNA-seq reads and predicts the fusions itself.
-The reads come from ``depends_on.reads``: ``data_sets``, an ``external_data`` task or an ``adapter_trimming`` task.
+The reads come from ``depends_on.reads``: an ``external_data`` task or an ``adapter_trimming`` task.
 
 The ``tool`` field selects the caller:
 
@@ -161,7 +161,7 @@ class SomaticGeneFusionCallingWorkflow(BaseStep):
     produces = [DataSignature(DataType.VARIANTS, frozenset({"somatic", "fusion", "rna"}))]
     config_model_class = SomaticGeneFusionCallingConfigModel
     tool_parts = {Tool.star_fusion: StarFusionStepPart, Tool.arriba: ArribaStepPart}
-    library_requirement = "kind == 'cancer' and extraction_type == 'rna'"
+    library_requirement = "role == 'tumor' and extraction_type == 'rna'"
     library_default = ""
 
     @classmethod

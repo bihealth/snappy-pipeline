@@ -11,20 +11,15 @@ from snappy_pipeline.sheet_summary import missing_library_files
 from snappy_pipeline.workflows.external_data import ExternalDataWorkflow
 
 SHEET = """\
-[Data]
-patientName\tfatherName\tmotherName\tsex\tisAffected\tlibraryType\tfolderName\thpoTerms
-P001\t.\t.\tF\tY\tWGS\tP001\t.
-P002\t.\t.\tM\tN\tWGS\tP002\t.
+donor_name\tsex\tlibrary_name\tlibrary_type\tfolder_name
+P001\tfemale\tP001-N1-DNA1-WGS1\tWGS\tP001
+P002\tmale\tP002-N1-DNA1-WGS1\tWGS\tP002
 """
 
 CONFIG = """\
 project:
   name: tables
-data_sets:
-  first:
-    file: sheet.tsv
-    type: germline_variants
-    naming_scheme: only_secondary_id
+sample_sheets: [sheet.tsv]
 tasks:
   - name: genome
     step: external_data
@@ -150,7 +145,9 @@ def test_files_per_library_from_a_table(tmp_path):
             "library_files": [str(tmp_path / "bams.tsv")],
         }
     )
-    project = load_project({"project": {"name": "x"}, "data_sets": {}, "tasks": []}, str(tmp_path))
+    project = load_project(
+        {"project": {"name": "x"}, "sample_sheets": [], "tasks": []}, str(tmp_path)
+    )
     assert ExternalDataWorkflow.output_keys(config) == {"bam", "bai"}
     assert ExternalDataWorkflow.get_output_paths(config, library_name="P001", project=project) == {
         "bam": f"{tmp_path}/P001.bam",

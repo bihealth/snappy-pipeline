@@ -262,7 +262,8 @@ class WriteTrioPedigreeStepPart(WritePedigreeStepPart):
         return libraries.set_index("library_name", drop=False).loc[names]
 
     def _family(self, entity: str) -> str:
-        return self.parent.library_row(entity)["related_group"]
+        row = self.parent.library_row(entity)
+        return row["family_id"] if isinstance(row["family_id"], str) else row["donor_name"]
 
 
 class VariantPhasingWorkflow(BaseStep):
@@ -286,7 +287,7 @@ class VariantPhasingWorkflow(BaseStep):
 
     helper_parts = (WriteTrioPedigreeStepPart,)
 
-    #: The pedigrees include the members of background data sets
+    #: The pedigrees include the members of background libraries
     uses_background = True
 
     @classmethod

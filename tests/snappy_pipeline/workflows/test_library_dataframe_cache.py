@@ -23,11 +23,12 @@ def _library_dataframe():
         {
             "library_name": ["index-DNA1", "father-DNA1", "single-DNA1"],
             "extraction_type": ["dna", "dna", "dna"],
-            "kind": ["germline", "germline", "germline"],
-            "role": ["index", "father", "index"],
-            "is_primary": [True, False, True],
-            "related_group": ["family1", "family1", "family2"],
+            "role": ["normal", "normal", "normal"],
+            "is_primary": [True, True, True],
+            "is_index": [True, False, True],
+            "family_id": ["family1", "family1", "family2"],
             "donor_name": ["index", "father", "single"],
+            "sex": ["female", "male", "male"],
         }
     )
 
@@ -36,9 +37,7 @@ def _make_step():
     # Bypass ``BaseStep.__init__``, which needs a full project; set only what the
     # dataframe-based properties read.
     step = object.__new__(_DummyStep)
-    step.data_set_infos = []
-    step.sheets = []
-    step.project = SimpleNamespace(library_tables={}, group_by={"dummy": "related"})
+    step.project = SimpleNamespace(library_tables={}, group_by={"dummy": "related"}, sheets=None)
     step.config = SimpleNamespace(library_selection=None, group_by="related", relationships=None)
     step.task_name = "dummy"
     step._library_dataframes = {}
@@ -76,7 +75,7 @@ def test_tasks_share_the_library_table_of_the_run(mocker):
     second.config = SimpleNamespace(
         library_selection=None,
         group_by=None,
-        relationships={"index_lib": {"via": "related_group", "target": "role == 'index'"}},
+        relationships={"index_lib": {"via": "family_id", "target": "is_index"}},
     )
 
     assert "index_lib" not in first.build_library_dataframe().columns
@@ -93,11 +92,12 @@ def test_library_selection_narrows_the_pedigrees(mocker):
         {
             "library_name": ["index-DNA1", "father-DNA1"],
             "extraction_type": ["dna", "dna"],
-            "kind": ["germline", "germline"],
-            "role": ["index", "father"],
-            "is_primary": [True, False],
-            "related_group": ["FAM_index", "FAM_index"],
+            "role": ["normal", "normal"],
+            "is_primary": [True, True],
+            "is_index": [True, False],
+            "family_id": ["FAM_index", "FAM_index"],
             "donor_name": ["index", "father"],
+            "sex": ["female", "male"],
         }
     )
     mocker.patch.object(abstract, "build_library_dataframe", return_value=df)
@@ -107,7 +107,7 @@ def test_library_selection_narrows_the_pedigrees(mocker):
     assert step.pedigree_index("FAM_index") == "index-DNA1"
 
     step = _make_step()
-    step.config.library_selection = "role != 'father'"
+    step.config.library_selection = "is_index"
     assert step.pedigrees() == {"FAM_index": ["index-DNA1"]}
 
 
@@ -117,11 +117,12 @@ def test_a_pedigree_whose_index_has_no_dna_library_has_no_index(mocker):
         {
             "library_name": ["index-RNA1", "father-DNA1", "mother-DNA1"],
             "extraction_type": ["rna", "dna", "dna"],
-            "kind": ["germline", "germline", "germline"],
-            "role": ["index", "father", "mother"],
-            "is_primary": [False, False, False],
-            "related_group": ["FAM_index", "FAM_index", "FAM_index"],
+            "role": ["normal", "normal", "normal"],
+            "is_primary": [True, True, True],
+            "is_index": [True, False, False],
+            "family_id": ["FAM_index", "FAM_index", "FAM_index"],
             "donor_name": ["index", "father", "mother"],
+            "sex": ["female", "male", "female"],
         }
     )
     mocker.patch.object(abstract, "build_library_dataframe", return_value=df)
@@ -136,25 +137,32 @@ def test_a_joint_call_takes_one_dna_library_per_donor_the_index_first(mocker):
         {
             "library_name": ["father-DNA1", "index-DNA1", "index-DNA2", "index-RNA1", "P1-T1-DNA1"],
             "extraction_type": ["dna", "dna", "dna", "rna", "dna"],
-            "kind": ["germline"] * 4 + ["cancer"],
-            "role": ["father", "index", "index", "index", "tumor"],
-            "is_primary": [False, True, False, False, True],
-            "related_group": ["FAM_index"] * 4 + ["PAT_P1"],
+            "role": ["normal", "normal", "normal", "normal", "tumor"],
+            "is_primary": [True, True, False, True, True],
+            "is_index": [False, True, True, True, True],
+            "family_id": ["FAM_index"] * 4 + [None],
             "donor_name": ["father", "index", "index", "index", "P1"],
+            "sex": ["male", "female", "female", "female", "unknown"],
         }
     )
     mocker.patch.object(abstract, "build_library_dataframe", return_value=df)
     step = _make_step()
+    step.config.group_by, step.project.group_by = "family", {"dummy": "family"}
+    step.config.library_selection = "family_id == 'FAM_index'"
     assert step.pedigrees() == {"FAM_index": ["father-DNA1", "index-DNA1"]}
     assert step.member_libraries("FAM_index") == ["index-DNA1", "father-DNA1"]
     # A cancer donor without a normal stands for its primary tumor
-    assert step.member_libraries("PAT_P1") == ["P1-T1-DNA1"]
+    step = _make_step()
+    step.config.group_by, step.project.group_by = "donor", {"dummy": "donor"}
+    step.config.library_selection = "donor_name == 'P1'"
+    assert step.member_libraries("P1") == ["P1-T1-DNA1"]
     with pytest.raises(ValueError, match="'P1-T1-DNA1' is no entity of task 'dummy'"):
         step.member_libraries("P1-T1-DNA1")
 
 
-def test_group_by_comes_from_the_task_then_its_step_then_upstream():
+def test_group_by_comes_from_the_task_then_its_step_then_upstream(mocker):
     """``load_project`` resolves the level of every task once; the steps read ``Project.group_by``."""
+    mocker.patch.object(abstract, "build_library_dataframe", return_value=_library_dataframe())
     configs = {
         "mapping": SimpleNamespace(group_by=None, tool="bwa"),
         "calling": SimpleNamespace(group_by=None, tool="gatk4_hc_joint"),
@@ -186,9 +194,9 @@ def test_group_by_comes_from_the_task_then_its_step_then_upstream():
         "combine": "library",  # per tumor, not the germline calls' grouping
         "phasing": "library",  # the tumor tools phase per tumor
     }
-    step = object.__new__(_DummyStep)
-    step.project, step.task_name = SimpleNamespace(group_by=group_by), "annotation"
-    assert step.effective_group_by == "related"
+    step = _make_step()
+    step.project.group_by, step.task_name = group_by, "annotation"
+    assert step.effective_group_by == "family"  # related, resolved by the libraries' family ids
 
 
 def test_background_selection_narrows_only_the_background_libraries():

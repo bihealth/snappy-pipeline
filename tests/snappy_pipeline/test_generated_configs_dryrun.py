@@ -237,19 +237,13 @@ def _write_closure_project(
     # Construct closure config
     closure_config = {
         "project": config["project"],
+        "sample_sheets": [str(_task_sample_sheet(task_name))],
         "tasks": tasks_subset,
-        "data_sets": config.get("data_sets", {}),
     }
 
     # The files tables of the external_data tasks list dummy files below tmp_path/raw
     raw_dir = tmp_path / "raw"
     raw_dir.mkdir(parents=True, exist_ok=True)
-    if "data_sets" in closure_config:
-        for ds_name, ds_config in closure_config["data_sets"].items():
-            if isinstance(ds_config, dict):
-                ds_config["file"] = str(_task_sample_sheet(task_name))
-                if task_name in GERMLINE_TASKS:
-                    ds_config["type"] = "germline_variants"
     for task in closure_config["tasks"]:
         if task["step"] == "external_data" and "library_files" in task["config"]:
             reads = task["config"]["produces"]["type"] == "raw"
@@ -582,8 +576,7 @@ def test_somatic_trio_calls_the_relapse_against_the_primary_tumor(
     }
 
     def add_tasks(config):
-        for data_set in config["data_sets"].values():
-            data_set["file"] = str(_fixture_dir() / "samplesheet_somatic_trio.tsv")
+        config["sample_sheets"] = [str(_fixture_dir() / "samplesheet_somatic_trio.tsv")]
         calling = next(t for t in config["tasks"] if t["name"] == "variant_calling_mutect2")
         for name, settings in tasks.items():
             config["tasks"].append(

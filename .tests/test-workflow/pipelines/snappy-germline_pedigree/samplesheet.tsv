@@ -1,22 +1,9 @@
-[Metadata]
-schema	germline_variants
-schema_version	v1
-title	simulated_pedigree
-description	Three generations with planted dominant, recessive and de novo variants
-
-[Custom Fields]
-key	annotatedEntity	docs	type	minimum	maximum	unit	choices	pattern
-familyId	bioEntity	family	string	0	0	0	0	0
-extractionType	bioSample	extraction type	string	0	0	0	0	0
-libraryKit	ngsLibrary	exome enrichment kit	string	0	0	0	0	0
-
-[Data]
-familyId	patientName	fatherName	motherName	sex	isAffected	extractionType	libraryType	folderName	libraryKit	hpoTerms
-PED1	pgf	0	0	M	Y	DNA	WES	pgf-N1-DNA1-WES1	SimExome	.
-PED1	pgm	0	0	F	N	DNA	.	.	.	.
-PED1	fa	pgf	pgm	M	Y	DNA	WES	fa-N1-DNA1-WES1	SimExome	.
-PED1	mgm	0	0	F	N	DNA	WES	mgm-N1-DNA1-WES1	SimExome	.
-PED1	mo	0	mgm	F	U	DNA	WES	mo-N1-DNA1-WES1	SimExome	.
-PED1	idx	fa	mo	F	Y	DNA	WES	idx-N1-DNA1-WES1	SimExome	.
-PED1	sib1	fa	mo	M	N	DNA	WES	sib1-N1-DNA1-WES1	SimExome	.
-PED1	sib2	fa	mo	M	U	DNA	.	.	.	.
+donor_name	family_id	father	mother	sex	is_affected	is_index	sample_name	library_name	library_type	library_kit	folder_name
+pgf	PED1			male	true		pgf-N1	pgf-N1-DNA1-WES1	WES	SimExome	pgf-N1-DNA1-WES1
+pgm	PED1			female	false						
+fa	PED1	pgf	pgm	male	true		fa-N1	fa-N1-DNA1-WES1	WES	SimExome	fa-N1-DNA1-WES1
+mgm	PED1			female	false		mgm-N1	mgm-N1-DNA1-WES1	WES	SimExome	mgm-N1-DNA1-WES1
+mo	PED1		mgm	female			mo-N1	mo-N1-DNA1-WES1	WES	SimExome	mo-N1-DNA1-WES1
+idx	PED1	fa	mo	female	true	true	idx-N1	idx-N1-DNA1-WES1	WES	SimExome	idx-N1-DNA1-WES1
+sib1	PED1	fa	mo	male	false		sib1-N1	sib1-N1-DNA1-WES1	WES	SimExome	sib1-N1-DNA1-WES1
+sib2	PED1	fa	mo	male							

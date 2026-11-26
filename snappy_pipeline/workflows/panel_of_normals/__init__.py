@@ -13,7 +13,7 @@ The ``tool`` field selects the model:
 
 The task gives one result from all its normal libraries, not one per library.
 The normal libraries are all DNA libraries of normal samples in the sample sheets, unless ``library_selection`` narrows them.
-This includes the libraries of background data sets.
+This includes the libraries of background libraries.
 For ``mutect2`` and ``purecn``, ``path_normals_list`` names a file of library names, one per line, which replace this selection.
 The listed libraries are used even if the sample sheet does not flag them as normal.
 
@@ -142,7 +142,7 @@ class PanelOfNormalsStepPart(BaseStepPart):
         return self.parent.common_kit("kits", self.normal_libraries)
 
     def _get_normal_libraries(self):
-        """Yield the names of the task's normal DNA libraries, including background data sets."""
+        """Yield the names of the task's normal DNA libraries, including background libraries."""
         yield from self.parent.libraries["library_name"]
 
 
@@ -674,7 +674,7 @@ class PanelOfNormalsWorkflow(BaseStep):
         Tool.purecn: PureCnStepPart,
     }
 
-    #: The panel is built from normal DNA libraries, of the background data sets too; all of
+    #: The panel is built from normal DNA libraries, of the background libraries too; all of
     #: them unless ``library_selection`` narrows them
     library_requirement = "role == 'normal' and extraction_type == 'dna'"
 

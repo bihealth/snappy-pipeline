@@ -2,10 +2,10 @@
  {
   "benchmark": null,
   "input": [
-   "tasks/sv_calling_wgs_manta/work/PAT_case001subregion/out/PAT_case001subregion.vcf.gz",
-   "tasks/sv_calling_wgs_manta/work/PAT_case001subregion/out/PAT_case001subregion.vcf.gz.tbi",
-   "tasks/sv_calling_wgs_manta/work/PAT_case001subregion/out/PAT_case001subregion.vcf.gz.md5",
-   "tasks/sv_calling_wgs_manta/work/PAT_case001subregion/out/PAT_case001subregion.vcf.gz.tbi.md5",
+   "tasks/sv_calling_wgs_manta/work/case001subregion/out/case001subregion.vcf.gz",
+   "tasks/sv_calling_wgs_manta/work/case001subregion/out/case001subregion.vcf.gz.tbi",
+   "tasks/sv_calling_wgs_manta/work/case001subregion/out/case001subregion.vcf.gz.md5",
+   "tasks/sv_calling_wgs_manta/work/case001subregion/out/case001subregion.vcf.gz.tbi.md5",
    "tasks/sv_calling_wgs_manta/output/.manifest.tsv"
   ],
   "log": [],
@@ -123,10 +123,10 @@
  {
   "benchmark": null,
   "input": [
-   "tasks/sv_calling_wgs_manta/work/PAT_case001subregion/out/PAT_case001subregion.vcf.gz",
-   "tasks/sv_calling_wgs_manta/work/PAT_case001subregion/out/PAT_case001subregion.vcf.gz.tbi",
-   "tasks/sv_calling_wgs_manta/work/PAT_case001subregion/out/PAT_case001subregion.vcf.gz.md5",
-   "tasks/sv_calling_wgs_manta/work/PAT_case001subregion/out/PAT_case001subregion.vcf.gz.tbi.md5"
+   "tasks/sv_calling_wgs_manta/work/case001subregion/out/case001subregion.vcf.gz",
+   "tasks/sv_calling_wgs_manta/work/case001subregion/out/case001subregion.vcf.gz.tbi",
+   "tasks/sv_calling_wgs_manta/work/case001subregion/out/case001subregion.vcf.gz.md5",
+   "tasks/sv_calling_wgs_manta/work/case001subregion/out/case001subregion.vcf.gz.tbi.md5"
   ],
   "local": true,
   "log": [],
@@ -144,7 +144,7 @@
   "wrapper": null
  },
  {
-  "benchmark": "tasks/sv_calling_wgs_manta/benchmarks/PAT_case001subregion/PAT_case001subregion.run.tsv",
+  "benchmark": "tasks/sv_calling_wgs_manta/benchmarks/case001subregion/case001subregion.run.tsv",
   "input": [
    "tasks/ngs_mapping_bwa/work/case001subregion-N1-DNA1-WES1/out/case001subregion-N1-DNA1-WES1.bam",
    "<repo>/.tests/test-workflow/resources/refs/subregion.fa",
@@ -152,13 +152,13 @@
    "<repo>/.tests/test-workflow/resources/refs/subregion.dict"
   ],
   "log": [
-   "tasks/sv_calling_wgs_manta/work/PAT_case001subregion/log/PAT_case001subregion.run.log"
+   "tasks/sv_calling_wgs_manta/work/case001subregion/log/case001subregion.run.log"
   ],
   "output": [
-   "tasks/sv_calling_wgs_manta/work/PAT_case001subregion/out/PAT_case001subregion.vcf.gz",
-   "tasks/sv_calling_wgs_manta/work/PAT_case001subregion/out/PAT_case001subregion.vcf.gz.tbi",
-   "tasks/sv_calling_wgs_manta/work/PAT_case001subregion/out/PAT_case001subregion.vcf.gz.md5",
-   "tasks/sv_calling_wgs_manta/work/PAT_case001subregion/out/PAT_case001subregion.vcf.gz.tbi.md5"
+   "tasks/sv_calling_wgs_manta/work/case001subregion/out/case001subregion.vcf.gz",
+   "tasks/sv_calling_wgs_manta/work/case001subregion/out/case001subregion.vcf.gz.tbi",
+   "tasks/sv_calling_wgs_manta/work/case001subregion/out/case001subregion.vcf.gz.md5",
+   "tasks/sv_calling_wgs_manta/work/case001subregion/out/case001subregion.vcf.gz.tbi.md5"
   ],
   "params": {
    "args": {
@@ -177,7 +177,7 @@
   "temp": [],
   "threads": 1,
   "wildcards": {
-   "library_name": "PAT_case001subregion"
+   "library_name": "case001subregion"
   },
   "wrapper": "file://<repo>/snappy_wrappers/wrappers/manta/germline_wgs"
  }

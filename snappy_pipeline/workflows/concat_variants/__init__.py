@@ -104,7 +104,7 @@ class ConcatVariantsWorkflow(BaseStep):
         grouping of this task."""
         group_by = self.effective_group_by
         for task in self.upstream_task_names("variants"):
-            declared = self.project.group_by[task]
+            declared = self.upstream_group_by(task)
             if declared != group_by:
                 raise ConfigError(
                     f"the task concatenates with group_by: {group_by}, but its input task "

@@ -76,7 +76,7 @@ def _config(*tasks):
             for step, name, config in (GENOME, BWA_INDEX, READS, *tasks, VEP_CACHE)
         ],
         "project": {"name": "test"},
-        "data_sets": {},
+        "sample_sheets": [],
     }
 
 
@@ -298,7 +298,7 @@ def test_errors_of_the_top_level_configuration_name_the_file():
             {
                 "tasks": [{"name": "mapping", "config": {}}],
                 "project": {"name": "test"},
-                "data_sets": {},
+                "sample_sheets": [],
             },
             WORK_DIR,
         )
@@ -495,7 +495,7 @@ def test_create_task_instances_builds_each_task_once(monkeypatch):
 def _project(**dependencies):
     """Return a project with the given task -> {field: upstream} dependencies."""
     tasks = [{"step": "dummy", "name": name, "config": {}} for name in dependencies]
-    model = ConfigModel(project={"name": "test"}, tasks=tasks, data_sets={})
+    model = ConfigModel(project={"name": "test"}, tasks=tasks, sample_sheets=[])
     return Project(
         config={},
         model=model,
@@ -608,14 +608,14 @@ def test_config_paths_are_resolved_against_the_project_directory_with_pathvars()
     named = _external("named", "regions", [], files={"bed": "<refs>/b.bed"})
     default = _external("default", "regions", [], files={"bed": "<resources>/c.bed"})
     config = _config(relative, named, default) | {"pathvars": {"refs": "/data/refs"}}
-    config["data_sets"] = {"first": {"file": "sheets/sheet.tsv"}}
+    config["sample_sheets"] = ["sheets/sheet.tsv"]
     project = load_project(config, WORK_DIR)
 
     assert project.task_configs["relative"].files == {"bed": f"{WORK_DIR}/beds/a.bed"}
     assert project.task_configs["named"].files == {"bed": "/data/refs/b.bed"}
     # Snakemake's default pathvars apply, too
     assert project.task_configs["default"].files == {"bed": f"{WORK_DIR}/resources/c.bed"}
-    assert project.model.data_sets["first"].file == f"{WORK_DIR}/sheets/sheet.tsv"
+    assert project.model.sample_sheets == [f"{WORK_DIR}/sheets/sheet.tsv"]
     assert project.task_configs["reads"].library_files == [f"{WORK_DIR}/reads.tsv"]
     assert project.file_paths["relative"] == (f"{WORK_DIR}/beds/a.bed",)
 
@@ -646,7 +646,7 @@ def test_missing_files_lists_paths_and_genome_sidecars(tmp_path):
     config = {
         "tasks": [{"step": s, "name": n, "config": c} for s, n, c in tasks],
         "project": {"name": "test"},
-        "data_sets": {},
+        "sample_sheets": [],
     }
     project = load_project(config, str(tmp_path))
 
@@ -671,7 +671,7 @@ def test_missing_files_lists_the_index_of_a_vcf(tmp_path):
     config = {
         "tasks": [{"step": s, "name": n, "config": c} for s, n, c in tasks],
         "project": {"name": "test"},
-        "data_sets": {},
+        "sample_sheets": [],
     }
     project = load_project(config, str(tmp_path))
 
@@ -700,7 +700,7 @@ def test_missing_files_lists_the_index_of_a_mappability_track(tmp_path):
     config = {
         "tasks": [{"step": s, "name": n, "config": c} for s, n, c in tasks],
         "project": {"name": "test"},
-        "data_sets": {},
+        "sample_sheets": [],
     }
     project = load_project(config, str(tmp_path))
 

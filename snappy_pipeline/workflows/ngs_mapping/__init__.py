@@ -14,10 +14,10 @@ The ``tool`` field selects the aligner:
   Its result files also include gene counts and the strandedness decision.
 
 The task maps all libraries of its sample sheets unless ``library_selection`` narrows them.
-This includes the libraries of background data sets.
+This includes the libraries of background libraries.
 A task with a DNA tool maps the DNA libraries, a task with ``star`` the RNA libraries.
 
-Reads come from ``depends_on.reads``, which names ``data_sets``, an ``external_data`` task, or an ``adapter_trimming`` task (:ref:`step_adapter_trimming`).
+Reads come from ``depends_on.reads``, which names an ``external_data`` task or an ``adapter_trimming`` task (:ref:`step_adapter_trimming`).
 The mapper index comes from ``depends_on.index``, for example an ``external_data`` task or a ``reference_index`` task (:ref:`step_reference_index`).
 A ``reference_index`` task must build it from the genome in ``depends_on.reference``.
 
@@ -45,7 +45,7 @@ Its ``SM`` is the library name, and its ``PL`` is the mapper's ``platform``.
 The three BWA mappers mask duplicates (``mask_duplicates``) across all read groups of a library.
 
 By default, every read group needs a ``right`` file when the table has that column.
-With ``mixed_se_pe: true`` in the data set or the ``external_data`` task, ``right`` may match nothing.
+With ``mixed_se_pe: true`` on the ``external_data`` task, ``right`` may match nothing.
 Each library is then either single-end or paired-end, and libraries may differ.
 
 Notes

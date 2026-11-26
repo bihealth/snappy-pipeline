@@ -1,4 +1,4 @@
-"""Pull biomedsheet sample sheet from SODAR API."""
+"""Pull the sample sheet of a SODAR project through its API, as a plain TSV sheet."""
 
 import sys
 
@@ -10,34 +10,23 @@ URL_TPL = "https://%(sodar_host)s/samplesheets/api/remote/get/%(project_uuid)s/%
 #: Seconds to wait for the SODAR server to connect and to send data.
 TIMEOUT = 60
 
-#: Template for the to-be-generated file.
-HEADER_TPL = (
-    "[Metadata]",
-    "schema\tgermline_variants",
-    "schema_version\tv1",
-    "title\t%(project_title)s",
-    "description\t%(project_description)s",
-    "",
-    "[Custom Fields]",
-    "key\tannotatedEntity\tdocs\ttype\tminimum\tmaximum\tunit\tchoices\tpattern",
-    "batchNo\tbioEntity\tBatch\tstring\t.\t.\t.\t.\t.",
-    "familyId\tbioEntity\tFamily\tstring\t.\t.\t.\t.\t.",
-    "projectUuid\tbioEntity\tProject UUID\tstring\t.\t.\t.\t.\t.",
-    "projectName\tbioEntity\tProject Name\tstring\t.\t.\t.\t.\t.",
-    "libraryKit\tngsLibrary\tEnrichment kit\tstring\t.\t.\t.\t.\t.",
-    "",
-    "[Data]",
-    (
-        "familyId\tpatientName\tfatherName\tmotherName\tsex\tisAffected\tlibraryType\tfolderName"
-        "\tbatchNo\thpoTerms\tprojectName\tprojectUuid\tseqPlatform\tlibraryKit"
-    ),
+#: The columns of the written sheet
+HEADER = (
+    "family_id\tdonor_name\tfather\tmother\tsex\tis_affected\tsample_name\tlibrary_name"
+    "\tlibrary_type\tfolder_name\tbatch_no\tseq_platform\tlibrary_kit\tproject_name\tproject_uuid"
 )
 
-#: Mapping from ISA-tab sex to sample sheet sex.
-MAPPING_SEX = {"female": "F", "male": "M", "unknown": "U", None: "."}
+#: Mapping from ISA-tab sex to the sheet's sex.
+MAPPING_SEX = {"female": "female", "male": "male", "unknown": "unknown", None: ""}
 
-#: Mapping from disease status to sample sheet status.
-MAPPING_STATUS = {"affected": "Y", "carrier": "Y", "unaffected": "N", "unknown": ".", None: "."}
+#: Mapping from disease status to the sheet's affected status.
+MAPPING_STATUS = {
+    "affected": "true",
+    "carrier": "true",
+    "unaffected": "false",
+    "unknown": "",
+    None: "",
+}
 
 
 def strip(x):
@@ -133,11 +122,11 @@ def run(args):  # noqa: C901
             offset += colspan
 
     # Generate the resulting sample sheet.
-    print("\n".join(HEADER_TPL) % vars(args), file=args.output)
+    print(HEADER, file=args.output)
     for source, info in study_map.items():
         if source not in assay_map:
             print("INFO: source %s does not have an assay." % source, file=sys.stderr)
-            dict_lib = {"Name": "-.1", "Folder Name": ".", "Batch": "."}  # HAAACKY
+            dict_lib = {}  # a donor without a library
             proc_lib = {}
         else:
             for outer_key in ("Extract Name", "Library Name"):
@@ -153,40 +142,39 @@ def run(args):  # noqa: C901
         # FIXME: remove hack
         # HACK: ignore if looks like artifact
         if "Folder Name" in dict_lib:
-            library_type = dict_lib["Name"].split("-")[-1][:-1]  # hack to get library type
+            library_name = dict_lib["Name"]
+            library_type = library_name.split("-")[-1][:-1]  # hack to get library type
             folder = dict_lib["Folder Name"]
         else:
-            library_type = "."
-            folder = "."
+            library_name = library_type = folder = ""
         # TODO: find better way of accessing sequencing process
-        seq_platform = "Illumina"
+        seq_platform = "Illumina" if library_name else ""
         for the_dict in assay_map.get(source, {}).values():
             if the_dict.get("Platform") == "PACBIO_SMRT":
                 seq_platform = "PacBio"
-        library_kit = proc_lib.get("Library Kit") or "."
-        if args.library_types and library_type != "." and library_type not in args.library_types:
+        library_kit = proc_lib.get("Library Kit") or ""
+        if args.library_types and library_type and library_type not in args.library_types:
             print(
                 "Skipping %s not in library types %s" % (dict_source["Name"], args.library_types),
                 file=sys.stderr,
             )
             continue
         # ENDOF HACK
-        # The batch of SODAR verbatim: an id, not a number; "." without a batch column
-        batch = dict_source.get("Batch") or "."
+        parents = [dict_source.get(key) or "" for key in ("Father", "Mother")]
         row = [
             dict_source["Family"],
             dict_source["Name"],
-            dict_source["Father"],
-            dict_source["Mother"],
-            MAPPING_SEX[dict_source["Sex"].lower()],
-            MAPPING_STATUS[dict_source["Disease Status"].lower()],
+            *("" if parent == "0" else parent for parent in parents),
+            MAPPING_SEX.get((dict_source.get("Sex") or "").lower(), "unknown"),
+            MAPPING_STATUS.get((dict_source.get("Disease Status") or "").lower(), ""),
+            info["Sample"].get("Name", "") if library_name else "",
+            library_name,
             library_type,
             folder,
-            batch,
-            ".",
-            args.project_name,
-            args.project_uuid,
+            dict_source.get("Batch") or "",  # the batch of SODAR verbatim: an id, not a number
             seq_platform,
             library_kit,
+            args.project_name,
+            args.project_uuid,
         ]
         print("\t".join(row), file=args.output)

@@ -1,16 +1,4 @@
-[Metadata]
-schema	cancer_matched
-schema_version	v1
-title	Test Cancer Dataset with RNA-seq
-description	Public cancer dataset with RNA-seq samples only
-
-[Custom Fields]
-key	annotatedEntity	docs	type	minimum	maximum	unit	choices	pattern
-extractionType	bioSample	extraction type	string	0	0	0	0	0
-libraryKit	ngsLibrary	exome enrichment kit	string	0	0	0	0	0
-
-[Data]
-patientName	sampleName	isTumor	extractionType	libraryType	folderName	libraryKit
-case001subregion	N1	N	DNA	WES	case001subregion-N1-DNA1-WES1	MedExome
-case001subregion	T1	Y	DNA	WES	case001subregion-T1-DNA1-WES1	MedExome
-case001subregion	T1	Y	RNA	mRNA_seq	case001subregion-T1-RNA1-mRNA_seq1	None
+donor_name	sample_name	is_tumor	library_name	library_type	library_kit	folder_name
+case001subregion	case001subregion-N1	false	case001subregion-N1-DNA1-WES1	WES	MedExome	case001subregion-N1-DNA1-WES1
+case001subregion	case001subregion-T1	true	case001subregion-T1-DNA1-WES1	WES	MedExome	case001subregion-T1-DNA1-WES1
+case001subregion	case001subregion-T1	true	case001subregion-T1-RNA1-mRNA_seq1	mRNA_seq		case001subregion-T1-RNA1-mRNA_seq1

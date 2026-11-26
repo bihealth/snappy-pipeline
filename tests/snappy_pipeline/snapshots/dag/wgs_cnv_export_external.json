@@ -2,12 +2,12 @@
  {
   "benchmark": null,
   "input": [
-   "tasks/wgs_cnv_export_external/work/varfish_annotated.PAT_case001subregion/out/varfish_annotated.PAT_case001subregion.gts.tsv.gz",
-   "tasks/wgs_cnv_export_external/work/varfish_annotated.PAT_case001subregion/out/varfish_annotated.PAT_case001subregion.gts.tsv.gz.md5",
-   "tasks/wgs_cnv_export_external/work/varfish_annotated.PAT_case001subregion/out/varfish_annotated.PAT_case001subregion.feature-effects.tsv.gz",
-   "tasks/wgs_cnv_export_external/work/varfish_annotated.PAT_case001subregion/out/varfish_annotated.PAT_case001subregion.feature-effects.tsv.gz.md5",
-   "tasks/wgs_cnv_export_external/work/varfish_annotated.PAT_case001subregion/out/varfish_annotated.PAT_case001subregion.db-infos.tsv.gz",
-   "tasks/wgs_cnv_export_external/work/varfish_annotated.PAT_case001subregion/out/varfish_annotated.PAT_case001subregion.db-infos.tsv.gz.md5",
+   "tasks/wgs_cnv_export_external/work/varfish_annotated.case001subregion/out/varfish_annotated.case001subregion.gts.tsv.gz",
+   "tasks/wgs_cnv_export_external/work/varfish_annotated.case001subregion/out/varfish_annotated.case001subregion.gts.tsv.gz.md5",
+   "tasks/wgs_cnv_export_external/work/varfish_annotated.case001subregion/out/varfish_annotated.case001subregion.feature-effects.tsv.gz",
+   "tasks/wgs_cnv_export_external/work/varfish_annotated.case001subregion/out/varfish_annotated.case001subregion.feature-effects.tsv.gz.md5",
+   "tasks/wgs_cnv_export_external/work/varfish_annotated.case001subregion/out/varfish_annotated.case001subregion.db-infos.tsv.gz",
+   "tasks/wgs_cnv_export_external/work/varfish_annotated.case001subregion/out/varfish_annotated.case001subregion.db-infos.tsv.gz.md5",
    "tasks/wgs_cnv_export_external/output/.manifest.tsv"
   ],
   "log": [],
@@ -23,12 +23,12 @@
  {
   "benchmark": null,
   "input": [
-   "tasks/wgs_cnv_export_external/work/varfish_annotated.PAT_case001subregion/out/varfish_annotated.PAT_case001subregion.gts.tsv.gz",
-   "tasks/wgs_cnv_export_external/work/varfish_annotated.PAT_case001subregion/out/varfish_annotated.PAT_case001subregion.gts.tsv.gz.md5",
-   "tasks/wgs_cnv_export_external/work/varfish_annotated.PAT_case001subregion/out/varfish_annotated.PAT_case001subregion.feature-effects.tsv.gz",
-   "tasks/wgs_cnv_export_external/work/varfish_annotated.PAT_case001subregion/out/varfish_annotated.PAT_case001subregion.feature-effects.tsv.gz.md5",
-   "tasks/wgs_cnv_export_external/work/varfish_annotated.PAT_case001subregion/out/varfish_annotated.PAT_case001subregion.db-infos.tsv.gz",
-   "tasks/wgs_cnv_export_external/work/varfish_annotated.PAT_case001subregion/out/varfish_annotated.PAT_case001subregion.db-infos.tsv.gz.md5"
+   "tasks/wgs_cnv_export_external/work/varfish_annotated.case001subregion/out/varfish_annotated.case001subregion.gts.tsv.gz",
+   "tasks/wgs_cnv_export_external/work/varfish_annotated.case001subregion/out/varfish_annotated.case001subregion.gts.tsv.gz.md5",
+   "tasks/wgs_cnv_export_external/work/varfish_annotated.case001subregion/out/varfish_annotated.case001subregion.feature-effects.tsv.gz",
+   "tasks/wgs_cnv_export_external/work/varfish_annotated.case001subregion/out/varfish_annotated.case001subregion.feature-effects.tsv.gz.md5",
+   "tasks/wgs_cnv_export_external/work/varfish_annotated.case001subregion/out/varfish_annotated.case001subregion.db-infos.tsv.gz",
+   "tasks/wgs_cnv_export_external/work/varfish_annotated.case001subregion/out/varfish_annotated.case001subregion.db-infos.tsv.gz.md5"
   ],
   "local": true,
   "log": [],
@@ -46,28 +46,28 @@
   "wrapper": null
  },
  {
-  "benchmark": "tasks/wgs_cnv_export_external/benchmarks/varfish_annotated.PAT_case001subregion/varfish_annotated.PAT_case001subregion.tsv",
+  "benchmark": "tasks/wgs_cnv_export_external/benchmarks/varfish_annotated.case001subregion/varfish_annotated.case001subregion.tsv",
   "input": [
-   "tasks/wgs_cnv_export_external/work/write_pedigree.PAT_case001subregion/out/PAT_case001subregion.ped",
+   "tasks/wgs_cnv_export_external/work/write_pedigree.case001subregion/out/case001subregion.ped",
    "<repo>/.tests/test-workflow/resources/refs/subregion.fa",
    "<repo>/.tests/test-workflow/resources/refs/subregion.fa.fai",
    "<repo>/.tests/test-workflow/resources/refs/subregion.dict",
    "<repo>/tests/scripts/generate_task_configs.py",
    "<repo>/tests/scripts/generate_task_configs.py",
    "<repo>/tests/scripts/generate_task_configs.py",
-   "tasks/wgs_cnv_export_external/work/PAT_case001subregion/out/PAT_case001subregion.vcf.gz",
-   "tasks/wgs_cnv_export_external/work/PAT_case001subregion/out/PAT_case001subregion.vcf.gz.tbi"
+   "tasks/wgs_cnv_export_external/work/case001subregion/out/case001subregion.vcf.gz",
+   "tasks/wgs_cnv_export_external/work/case001subregion/out/case001subregion.vcf.gz.tbi"
   ],
   "log": [
-   "tasks/wgs_cnv_export_external/work/varfish_annotated.PAT_case001subregion/log/varfish_annotated.PAT_case001subregion.log"
+   "tasks/wgs_cnv_export_external/work/varfish_annotated.case001subregion/log/varfish_annotated.case001subregion.log"
   ],
   "output": [
-   "tasks/wgs_cnv_export_external/work/varfish_annotated.PAT_case001subregion/out/varfish_annotated.PAT_case001subregion.gts.tsv.gz",
-   "tasks/wgs_cnv_export_external/work/varfish_annotated.PAT_case001subregion/out/varfish_annotated.PAT_case001subregion.gts.tsv.gz.md5",
-   "tasks/wgs_cnv_export_external/work/varfish_annotated.PAT_case001subregion/out/varfish_annotated.PAT_case001subregion.feature-effects.tsv.gz",
-   "tasks/wgs_cnv_export_external/work/varfish_annotated.PAT_case001subregion/out/varfish_annotated.PAT_case001subregion.feature-effects.tsv.gz.md5",
-   "tasks/wgs_cnv_export_external/work/varfish_annotated.PAT_case001subregion/out/varfish_annotated.PAT_case001subregion.db-infos.tsv.gz",
-   "tasks/wgs_cnv_export_external/work/varfish_annotated.PAT_case001subregion/out/varfish_annotated.PAT_case001subregion.db-infos.tsv.gz.md5"
+   "tasks/wgs_cnv_export_external/work/varfish_annotated.case001subregion/out/varfish_annotated.case001subregion.gts.tsv.gz",
+   "tasks/wgs_cnv_export_external/work/varfish_annotated.case001subregion/out/varfish_annotated.case001subregion.gts.tsv.gz.md5",
+   "tasks/wgs_cnv_export_external/work/varfish_annotated.case001subregion/out/varfish_annotated.case001subregion.feature-effects.tsv.gz",
+   "tasks/wgs_cnv_export_external/work/varfish_annotated.case001subregion/out/varfish_annotated.case001subregion.feature-effects.tsv.gz.md5",
+   "tasks/wgs_cnv_export_external/work/varfish_annotated.case001subregion/out/varfish_annotated.case001subregion.db-infos.tsv.gz",
+   "tasks/wgs_cnv_export_external/work/varfish_annotated.case001subregion/out/varfish_annotated.case001subregion.db-infos.tsv.gz.md5"
   ],
   "params": {
    "args": {
@@ -105,21 +105,21 @@
   "temp": [],
   "threads": 1,
   "wildcards": {
-   "related_group": "PAT_case001subregion"
+   "related_group": "case001subregion"
   },
   "wrapper": "file://<repo>/snappy_wrappers/wrappers/varfish_annotator/annotate_svs"
  },
  {
-  "benchmark": "tasks/wgs_cnv_export_external/benchmarks/PAT_case001subregion/PAT_case001subregion.merge_vcf.tsv",
+  "benchmark": "tasks/wgs_cnv_export_external/benchmarks/case001subregion/case001subregion.merge_vcf.tsv",
   "input": [
    "<project>/raw/case001subregion-N1-DNA1-WES1/case001subregion-N1-DNA1-WES1.vcf.gz"
   ],
   "log": [
-   "tasks/wgs_cnv_export_external/work/PAT_case001subregion/log/PAT_case001subregion.merge_vcf.log"
+   "tasks/wgs_cnv_export_external/work/case001subregion/log/case001subregion.merge_vcf.log"
   ],
   "output": [
-   "tasks/wgs_cnv_export_external/work/PAT_case001subregion/out/PAT_case001subregion.vcf.gz",
-   "tasks/wgs_cnv_export_external/work/PAT_case001subregion/out/PAT_case001subregion.vcf.gz.tbi"
+   "tasks/wgs_cnv_export_external/work/case001subregion/out/case001subregion.vcf.gz",
+   "tasks/wgs_cnv_export_external/work/case001subregion/out/case001subregion.vcf.gz.tbi"
   ],
   "params": {
    "args": {
@@ -140,12 +140,12 @@
   },
   "rule": "wgs_cnv_export_external_wgs_cnv_export_external_varfish_annotator_external_merge_vcf",
   "temp": [
-   "tasks/wgs_cnv_export_external/work/PAT_case001subregion/out/PAT_case001subregion.vcf.gz",
-   "tasks/wgs_cnv_export_external/work/PAT_case001subregion/out/PAT_case001subregion.vcf.gz.tbi"
+   "tasks/wgs_cnv_export_external/work/case001subregion/out/case001subregion.vcf.gz",
+   "tasks/wgs_cnv_export_external/work/case001subregion/out/case001subregion.vcf.gz.tbi"
   ],
   "threads": 1,
   "wildcards": {
-   "related_group": "PAT_case001subregion"
+   "related_group": "case001subregion"
   },
   "wrapper": "file://<repo>/snappy_wrappers/wrappers/bcftools/merge_vcf"
  },
@@ -155,7 +155,7 @@
   "local": true,
   "log": [],
   "output": [
-   "tasks/wgs_cnv_export_external/work/write_pedigree.PAT_case001subregion/out/PAT_case001subregion.ped"
+   "tasks/wgs_cnv_export_external/work/write_pedigree.case001subregion/out/case001subregion.ped"
   ],
   "params": {
    "args": {
@@ -167,7 +167,7 @@
   "temp": [],
   "threads": 1,
   "wildcards": {
-   "related_group": "PAT_case001subregion"
+   "related_group": "case001subregion"
   },
   "wrapper": null
  }

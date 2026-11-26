@@ -11,7 +11,7 @@ The ``tool`` field selects the caller:
   The calls use its model per library kit and its intervals.
 - ``melt`` calls mobile element insertions, with the genes of the task in ``depends_on.gene_regions``.
 
-The task gives one result per pedigree, named after the pedigree (its ``related_group``).
+The task gives one result per pedigree, named after the pedigree (its ``family_id``).
 A tool's ``skip_libraries`` skips the whole pedigree of each listed library.
 
 Outputs

@@ -35,8 +35,7 @@ The written block is that of the chosen tool: its section and the `depends_on` k
 Besides `config.yaml`, `snappy init`:
 
 - puts the project into the directory given, else into the current directory if that is named like the project, else into a new directory named after the project.
-- writes an empty sample sheet (`--sheet-type generic|germline|cancer`) that `config.yaml` names.
-  Its custom fields are `extractionType`, `libraryKit`, the cancer sheet's `purity`, `batchNo`, the sequencing batch of a library as a string, which the library summary of a run shows and `library_selection` reads as `batch_no`, and `readStructure`, the fgumi read structures of a UMI library, which `umi_mapping` reads.
+- writes the header of an empty sample sheet `samplesheet.tsv`, which `config.yaml` names: the core columns and the ones a germline or cancer project usually fills (`family_id`, `father`, `mother`, `sex`, `is_affected`, `is_index`, `sample_name`, `is_tumor`, `library_kit`, `folder_name`); delete the columns the project does not need, add others (see the sample sheets section of the overview).
 - records the project name, external id and description.
 - makes the project a git repository that tracks only `.gitignore`, `config.yaml` and `README.md`.
   `--track-sheet` adds the sheet, `--remote <url>` adds the remote `origin` without pushing, and `--no-git` skips the repository.
@@ -46,7 +45,7 @@ Besides `config.yaml`, `snappy init`:
 `--config-mode` sets the style of the generated task configuration.
 `minimal`, the default, writes only the required fields, without descriptions.
 `commented` writes every field with its description and comments out the optional ones, and `full` writes every field active.
-`config.yaml` lists `pathvars`, `data_sets` and `resources` before `tasks`, so that added tasks end the file.
+`config.yaml` lists `pathvars`, `sample_sheets` and `resources` before `tasks`, so that added tasks end the file.
 With `minimal`, the header of `config.yaml` points to the docs instead of explaining the sections.
 
 ## snappy run

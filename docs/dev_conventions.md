@@ -22,8 +22,8 @@ Validation fails with a clear message instead of choosing for the user.
   It becomes a YAML comment in the configuration that `snappy task add` writes.
   There, `default_config_yaml_string` wraps it and turns the double backticks into single ones.
   It also becomes a cell of the inputs table of the step's docs page (`test_field_descriptions_are_plain_text`).
-- In the docs and in the test pipelines, a whole `config.yaml` lists `pathvars`, `data_sets` and `resources` before `tasks`, like `snappy init` writes it.
-  A task added later then ends the file (`test_data_sets_precede_the_tasks`).
+- In the docs and in the test pipelines, a whole `config.yaml` lists `pathvars`, `sample_sheets` and `resources` before `tasks`, like `snappy init` writes it.
+  A task added later then ends the file (`test_sample_sheets_precede_the_tasks`).
 
 ## Step part API
 
@@ -165,28 +165,25 @@ Override these only where the derivation does not fit.
 
 ### Libraries, donors and pedigrees
 
-Step parts read the sample sheets only through the library DataFrame of the workflow object, never through the biomedsheets objects.
-`build_library_dataframe()` returns one row per library.
-A row holds the library's role, donor, group of related libraries (`related_group`), parents, sex and the extra sample sheet columns.
-`include_background=True` adds the libraries of background data sets.
-The project loads each sample sheet once (`Project.data_set_infos`).
+Step parts read the sample sheets only through the library DataFrame of the workflow object, never through the sheet rows.
+The sheets are read and checked once per run (`Project.sheets`, `snappy_pipeline/sample_sheet.py`): a pydantic row model with the known columns, each with its level (donor, sample, extract, library) and ISA-Tab header, and checks across rows.
+`build_library_dataframe()` returns one row per library: every sheet column, plus `extraction_type`, `role` (`tumor` or `normal`), `father_name` and `mother_name` (the parent's primary normal DNA library), `disease_state`, and `is_primary` and `is_index` resolved (marked, or alone).
+`include_background=True` adds the libraries with `is_background`.
 The table without relationships is built once per run and shared by all tasks (`BaseStep.library_table()`, `Project.library_tables`).
 Each task adds its `relationships` to it.
 
-For germline and generic sheets, the table lists all libraries with the pedigree columns of the biomedsheets germline view.
-That view joins the pedigrees by the data set's `pedigree_field`, if set.
-`library_row(name)` returns the row of one library.
-If several data sets have a library of that name, `library_selection` picks the row.
-Read per-library facts (data set, folder, kit) through it, not by indexing the dataframe by name.
+`library_row(name)` returns the row of one library; library names are unique across the sheets.
+Read per-library facts (folder, kit) through it, not by indexing the dataframe by name.
+A step declares the columns it needs beyond the core (`sex`, `sample_name`, `library_kit`, `read_structure`) and checks them for the libraries it takes at setup, with every library named.
 
 `libraries` is the one selection of the libraries a task takes:
 
-1. the library table, with background data sets if the step sets `background_results`,
+1. the library table, with the background libraries if the step sets `background_results`,
 2. restricted to the step's `library_requirement`,
 3. filtered by `library_selection`, or else by the step's `library_default`.
-   A `library_default` of `None` takes the default of each library's sheet kind (cancer: tumor DNA, germline: DNA), and `""` takes all libraries.
+   A `library_default` of `None` takes the DNA libraries (`DEFAULT_SELECTION`), and `""` takes all libraries.
 
-`library_requirement` is what a step can process at all (RNA for expression quantification, `kind == 'cancer'` for the somatic steps).
+`library_requirement` is what a step can process at all (RNA for expression quantification, `role == 'tumor'` for the somatic steps, `role == 'normal'` for the germline callers).
 It always applies.
 `library_selection` is the user's choice within it, such as a batch or dropped samples.
 `library_default` replaces it when the task sets none.
@@ -203,15 +200,15 @@ A task's `background_selection` narrows them (`build_library_dataframe(include_b
 `task_libraries(task_name)` gives the libraries of another task, computed from its config.
 So a step can match the files of an upstream task even under `--frozen`, which creates no workflow objects for upstream tasks.
 `output_entities` gives the entities a task writes, from `libraries` and `effective_group_by`.
-`effective_group_by` is the task's `group_by`, else the step's `default_group_by(config)`, else what upstream tasks declare, else `library`.
-`primary_library(entity)` gives the library that stands for an entity: itself, or the `is_primary` member of its related group.
+`effective_group_by` is the task's `group_by`, else the step's `default_group_by(config)`, else what upstream tasks declare, else `library`; `related` is resolved by the task's libraries to `family` or `donor` (`resolve_related`).
+`primary_library(entity)` gives the library that stands for an entity: itself, or the primary normal DNA library of its group's index donor.
 `member_libraries(entity)` gives the libraries that an entity stands for in a joint result.
 These are the pedigree members, one DNA library per donor, and only an explicit `library_selection` restricts them.
 A step never treats an entity as a library.
 
 `primary_dna_libraries()`, `pedigrees()`, `pedigree_members()`, `pedigree_of(library)`, `pedigree_index(pedigree)` and `children_with_both_parents()` give the germline view: one DNA library per donor, grouped by pedigree.
 `pedigree_donors()` gives the donor table of a pedigree (`build_donor_dataframe()`), for steps that model unsequenced relatives.
-The donor table has every donor of the germline sheets, sequenced or not.
+The donor table has every donor of the sheets, sequenced or not.
 A row holds the donor's parents as donor names, its sex and its DNA library.
 
 ## Wrappers
@@ -671,7 +668,7 @@ Add a field type with its own tag for a new kind of regions, so that a consumer 
 It names an `external_data` task with `kits`, which gives the `targets` and `baits` BED files of each enrichment kit.
 A targeted library (`WES`, `Panel_seq`) uses the kit named exactly like its `library_kit`.
 Other libraries have no kit (`BaseStep.library_kits`).
-Long-read libraries, for example, use `libraryKit` for their chemistry.
+Long-read libraries, for example, use `library_kit` for their chemistry.
 `library_kit_paths(field, library_name)` returns the files of a library's kit.
 
 A step calls `check_library_kits(field, library_names)` when it is set up.
@@ -713,7 +710,7 @@ So a check that can run at setup runs in the constructor.
 
 ## Paths
 
-- Only truly variable values are wildcards: libraries, samples, tumor and normal, related groups (`related_group`: a pedigree or donor, named after it).
+- Only truly variable values are wildcards: libraries, samples, tumor and normal, groups (`related_group`: a family or donor, named after it).
 - The tool is part of the task configuration and never appears in a path.
   It is neither a directory prefix (`work/cnvkit.{library_name}/`) nor part of a file name.
 - Files are named `{entity}.{suffix}`, with a dot after the wildcard, for example `{tumor_library}.gene_log2.txt`.

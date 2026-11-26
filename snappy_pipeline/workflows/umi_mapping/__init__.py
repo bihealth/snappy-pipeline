@@ -16,10 +16,10 @@ The section ``fgumi.duplex`` or ``fgumi.simplex`` holds the settings of the call
 Both run with the defaults of fgumi's best practices (the caller keeps every molecule with ``min_reads`` 1 and masks bases below quality 20; the filter requires 3 raw reads for simplex and 3, 2, 2 for duplex, masks bases below quality 40 and drops reads with a raw-read error rate above 0.025 or more than 20 percent of masked bases).
 Recommended settings by application, from fgumi's best practices: high sensitivity with simplex, ``filter_min_reads: 2``, ``max_base_error_rate: 0.2`` and ``max_no_call_fraction: 0.3``; high specificity with duplex, ``filter_min_reads: [10, 5, 3]`` and ``max_no_call_fraction: 0.1``; liquid biopsy with duplex, ``filter_min_reads: [3, 2, 2]`` and ``max_base_error_rate: 0.05``.
 
-The task maps all DNA short-read libraries of its sample sheets unless ``library_selection`` narrows them, including those of background data sets.
+The task maps all DNA short-read libraries of its sample sheets unless ``library_selection`` narrows them, including those of background libraries.
 Every library needs a read structure (see below).
 
-Reads come from ``depends_on.reads``, which names ``data_sets``, an ``external_data`` task, or an ``adapter_trimming`` task (:ref:`step_adapter_trimming`).
+Reads come from ``depends_on.reads``, which names an ``external_data`` task or an ``adapter_trimming`` task (:ref:`step_adapter_trimming`).
 The bwa-mem3 index comes from ``depends_on.index``, a ``reference_index`` task with ``tool: bwa_mem3`` (:ref:`step_reference_index`) built from the genome in ``depends_on.reference``, or an ``external_data`` task.
 With a ``correct`` section, ``depends_on.umis`` names an ``external_data`` task with the kit's fixed UMIs (``produces: {type: tabular, tags: [umis]}``, ``files: {umis: <one UMI per line>}``), and ``fgumi correct`` corrects the extracted UMIs against them.
 
@@ -47,7 +47,7 @@ An ``external_data`` task lists the FASTQ files of each library in its files tab
 Each read group gets its own ``@RG`` in the grouped BAM file, with the name that the ``readgroup`` group captured as ``ID`` and ``PU``, the library name as ``SM`` and ``LB``, and ``platform`` as ``PL``.
 The consensus reads of a library form one read group with the same ``SM``.
 
-The custom field ``readStructure`` of the sample sheet gives the fgumi read structures of the FASTQ files of a read group, space separated, for example ``8M+T 8M+T`` for 8 bp UMIs at the start of both reads, or ``8M+T +T`` for a UMI on read 1 only.
+The column ``read_structure`` of the sample sheet gives the fgumi read structures of the FASTQ files of a read group, space separated, for example ``8M+T 8M+T`` for 8 bp UMIs at the start of both reads, or ``8M+T +T`` for a UMI on read 1 only.
 A read structure is a list of segments, each a length (or ``+`` for the rest of the read) and an operator: ``T`` template, ``M`` UMI, ``S`` skip, ``B`` sample barcode, ``C`` cell barcode.
 With ``consensus: duplex``, every read needs an ``M`` segment.
 Libraries with another read structure or kit go into a task of their own through ``library_selection``.
@@ -134,7 +134,7 @@ def parse_read_structures(library_name: str, value) -> list[str]:
     one per FASTQ file of a read group; a missing or malformed value raises ``ConfigError``."""
     if value is None or pd.isna(value) or str(value).strip() in ("", "."):
         raise ConfigError(
-            f"library {library_name!r} has no readStructure in its sample sheet; "
+            f"library {library_name!r} has no read_structure in its sample sheet; "
             "umi_mapping needs one, for example 8M+T 8M+T"
         )
     structures = str(value).split()
@@ -225,7 +225,7 @@ class FgumiStepPart(BaseStepPart):
             raise ConfigError(
                 f"library {library!r} has {len(structures)} read structures "
                 f"({' '.join(structures)}) but {mates} FASTQ files per read group; "
-                "give one read structure per file in the sheet's readStructure field"
+                "give one read structure per file in the sheet's read_structure column"
             )
         fgumi = self.config.fgumi
         return {
@@ -396,11 +396,11 @@ class UmiMappingWorkflow(BaseStep):
 
     def read_structures(self, library_name: str) -> list[str]:
         """The fgumi read structures of the FASTQ files of a read group of ``library_name``, from
-        the sheet's ``readStructure`` field."""
+        the sheet's ``read_structure`` column."""
         row = self.library_row(library_name)
         if "read_structure" not in row:
             raise ConfigError(
-                f"the sample sheet of library {library_name!r} has no readStructure field; "
+                f"the sample sheet of library {library_name!r} has no read_structure value; "
                 "umi_mapping needs one, for example 8M+T 8M+T"
             )
         return parse_read_structures(library_name, row["read_structure"])

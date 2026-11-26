@@ -692,13 +692,13 @@ def build_all_tasks(base_config: dict[str, Any], base_config_path: Path) -> list
     return tasks
 
 
-def normalize_data_set_paths(config: dict[str, Any], base_config_path: Path) -> None:
-    """Make the sample sheet paths of the data sets absolute, relative to the base config."""
+def normalize_sheet_paths(config: dict[str, Any], base_config_path: Path) -> None:
+    """Make the sample sheet paths absolute, relative to the base config."""
     base_dir = base_config_path.parent
-    for data_set in config.get("data_sets", {}).values():
-        sheet_file = data_set.get("file")
-        if isinstance(sheet_file, str) and sheet_file and not Path(sheet_file).is_absolute():
-            data_set["file"] = str((base_dir / sheet_file).resolve())
+    config["sample_sheets"] = [
+        str((base_dir / sheet).resolve()) if not Path(sheet).is_absolute() else sheet
+        for sheet in config.get("sample_sheets", [])
+    ]
 
 
 def build_config(
@@ -706,10 +706,10 @@ def build_config(
 ) -> dict[str, Any]:
     config = {
         "project": copy.deepcopy(base_config["project"]),
-        "data_sets": copy.deepcopy(base_config.get("data_sets", {})),
+        "sample_sheets": list(base_config.get("sample_sheets", [])),
         "tasks": tasks,
     }
-    normalize_data_set_paths(config, base_config_path)
+    normalize_sheet_paths(config, base_config_path)
     return config
 
 
@@ -719,7 +719,7 @@ def main() -> int:
         "--base-config",
         type=Path,
         default=Path("tests/snappy_pipeline/fixtures/base_config.yaml"),
-        help="Path to an existing config.yaml used as source for the genome task and data_sets.",
+        help="Path to an existing config.yaml used as source for the genome task and sample_sheets.",
     )
     parser.add_argument(
         "--out-dir",

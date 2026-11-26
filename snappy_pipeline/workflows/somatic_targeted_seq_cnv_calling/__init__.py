@@ -344,7 +344,7 @@ class SomaticTargetedSeqCnvCallingWorkflow(BaseStep):
         Tool.purecn: PureCNStepPart,
     }
 
-    library_requirement = "kind == 'cancer'"
+    library_requirement = "role == 'tumor'"
     default_relationships = MATCHED_NORMAL_RELATIONSHIP
 
     @classmethod

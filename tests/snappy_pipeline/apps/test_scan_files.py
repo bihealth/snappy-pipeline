@@ -7,20 +7,15 @@ from snappy_pipeline.apps.snappy_cli import main
 from snappy_pipeline.reads import ReadDiscovery, read_files_tables
 
 SHEET = """\
-[Data]
-patientName\tfatherName\tmotherName\tsex\tisAffected\tlibraryType\tfolderName\thpoTerms
-P001\t.\t.\tF\tY\tWGS\t%(folder1)s\t.
-P002\t.\t.\tM\tN\tWGS\tP002\t.
+donor_name\tsex\tlibrary_name\tlibrary_type\tfolder_name
+P001\tfemale\tP001-N1-DNA1-WGS1\tWGS\t%(folder1)s
+P002\tmale\tP002-N1-DNA1-WGS1\tWGS\t%(folder2)s
 """
 
 CONFIG = """\
 project:
   name: scan
-data_sets:
-  first:
-    file: sheet.tsv
-    type: germline_variants
-    naming_scheme: only_secondary_id
+sample_sheets: [sheet.tsv]
 tasks:
   - name: reads
     step: external_data
@@ -57,9 +52,9 @@ def _touch(root, *paths):
         (root / path).touch()
 
 
-def _project(tmp_path, folder1="P001"):
+def _project(tmp_path, folder1="P001", folder2="P002"):
     (tmp_path / "config.yaml").write_text(CONFIG)
-    (tmp_path / "sheet.tsv").write_text(SHEET % {"folder1": folder1})
+    (tmp_path / "sheet.tsv").write_text(SHEET % {"folder1": folder1, "folder2": folder2})
     _touch(
         tmp_path,
         "raw/P001/L2.R1.fastq.gz",
@@ -151,12 +146,13 @@ def test_scan_files_reports_libraries_without_files_and_writes_the_rest(tmp_path
 
 
 def test_scan_files_rejects_two_libraries_in_one_folder(tmp_path):
-    _project(tmp_path, folder1="P002")
+    # The first library's folder is the second library's name, whose folder defaults to it
+    _project(tmp_path, folder1="P002-N1-DNA1-WGS1", folder2="")
     result = _scan(tmp_path, "--task", "reads")
     assert result.exit_code == 1
     assert (
-        "reads: the libraries P001-N1-DNA1-WGS1, P002-N1-DNA1-WGS1 share the folder 'P002'"
-        in result.output
+        "reads: the libraries P001-N1-DNA1-WGS1, P002-N1-DNA1-WGS1 share the folder "
+        "'P002-N1-DNA1-WGS1'" in result.output
     )
     assert (tmp_path / "reads.tsv").read_text().endswith("library\treadgroup\tleft\tright\n")
 
@@ -170,7 +166,7 @@ def test_scan_files_names_tasks_without_tables(tmp_path):
 
 def test_the_defaults_cover_flat_layouts_and_the_common_namings(tmp_path):
     (tmp_path / "config.yaml").write_text(CONFIG)
-    (tmp_path / "sheet.tsv").write_text(SHEET % {"folder1": "P001"})
+    (tmp_path / "sheet.tsv").write_text(SHEET % {"folder1": "P001", "folder2": "P002"})
     _touch(
         tmp_path,
         "raw/P001_S3_L001_R1_001.fastq.gz",  # bcl2fastq, flat below raw
@@ -194,10 +190,8 @@ def test_the_defaults_cover_flat_layouts_and_the_common_namings(tmp_path):
 
 
 def test_a_file_that_two_libraries_claim_is_a_problem(tmp_path):
-    (tmp_path / "config.yaml").write_text(CONFIG)
     # The second library's folder name starts like the first one's, so S1_A_... files fit both
-    sheet = (SHEET % {"folder1": "S1"}).replace("WGS\tP002\t.", "WGS\tS1_A\t.")
-    (tmp_path / "sheet.tsv").write_text(sheet)
+    _project(tmp_path, folder1="S1", folder2="S1_A")
     _touch(tmp_path, "raw/S1_A_L1.R1.fastq.gz", "raw/S1_A_L1.R2.fastq.gz")
     result = _scan(tmp_path, "--task", "reads")
     assert result.exit_code == 1

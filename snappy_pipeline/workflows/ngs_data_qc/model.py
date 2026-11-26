@@ -101,7 +101,7 @@ class NgsDataQcDependsOn(SnappyModel):
     """Alignments of DNA libraries"""
 
     reads: Annotated[str, DataSignature(DataType.RAW), RequiredBy(Tool.fastqc)] = ""
-    """FASTQ source: ``data_sets``, an ``external_data`` task or an ``adapter_trimming`` task"""
+    """FASTQ source: an ``external_data`` task or an ``adapter_trimming`` task"""
 
     reference: Annotated[Reference, RequiredBy(Tool.picard, Tool.ngs_chew, Tool.alfred)] = ""
 
@@ -116,7 +116,7 @@ class NgsDataQcDependsOn(SnappyModel):
 
 
 class NgsDataQc(SnappyStepModel):
-    """Override data set configuration search paths for FASTQ files"""
+    """Quality control of reads and alignments"""
 
     depends_on: NgsDataQcDependsOn = Field(default_factory=NgsDataQcDependsOn)
 

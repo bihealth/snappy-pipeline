@@ -61,7 +61,7 @@ class MeltStepPart(SvCallingGetResultFilesMixin, BaseStepPart):
 
     default_resource_usage = ResourceUsage(threads=1, runtime="1d", mem="16GB")
 
-    #: MELT calls only the pedigrees of foreground data sets
+    #: MELT calls only the pedigrees of the foreground libraries
     pedigrees_include_background = False
 
     @dictify

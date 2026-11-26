@@ -123,7 +123,7 @@ class DatavzrdStepPart(BaseStepPart):
         after the donor, with its parents, sex and affected status, and for a sequenced one
         its part of a per-member event name (``denovo_<member>``), so the plot marks the member
         of such an event; empty for an entity that is no pedigree."""
-        if self.parent.effective_group_by != "related":
+        if self.parent.effective_group_by == "library":
             return []
         donors = self.parent.pedigree_donors(entity, include_background=True)
         if donors.empty:

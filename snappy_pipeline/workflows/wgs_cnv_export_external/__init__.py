@@ -5,7 +5,7 @@ The step annotates externally generated CNV VCF files with ``varfish-annotator-c
 The VCFs come from an ``external_data`` task.
 The step has no ``tool`` field.
 
-The task gives one result per pedigree, named after the pedigree (its ``related_group``).
+The task gives one result per pedigree, named after the pedigree (its ``family_id``).
 With ``merge_vcf_flag``, the step first merges the VCFs of a pedigree that are still separate.
 ``varfish_server_compatibility`` builds output for VarFish Server v1.2 and early versions of v2.
 
@@ -20,7 +20,7 @@ The task links the following result files below ``tasks/<task>/output/`` as syml
 - ``varfish_annotated.{related_group}/out/varfish_annotated.{related_group}.feature-effects.tsv.gz``
 - ``varfish_annotated.{related_group}/out/varfish_annotated.{related_group}.db-infos.tsv.gz``
 
-Here ``related_group`` is the name of the pedigree, whose index library holds the external files.
+Here the group is the name of the pedigree, whose index library holds the external files.
 Downstream tasks read the keys ``gts`` and ``db_infos``.
 """
 
@@ -158,7 +158,7 @@ class WgsCnvExportExternalWorkflow(BaseStep):
     produces = [DataSignature(DataType.EXPORTS, frozenset({"external"}))]
     config_model_class = WgsCnvExportExternalConfigModel
 
-    #: The pedigrees include the members of background data sets
+    #: The pedigrees include the members of background libraries
     uses_background = True
 
     @classmethod

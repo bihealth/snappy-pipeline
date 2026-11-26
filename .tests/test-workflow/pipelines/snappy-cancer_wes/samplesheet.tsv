@@ -1,16 +1,3 @@
-[Metadata]
-schema	cancer_matched
-schema_version	v1
-title	TRCB
-description	Public cancer dataset https://www.nature.com/articles/sdata201610
-
-[Custom Fields]
-key	annotatedEntity	docs	type	minimum	maximum	unit	choices	pattern
-extractionType	testSample	extraction type	string	0	0	0	0	0
-libraryKit	ngsLibrary	exome enrichment kit	string	0	0	0	0	0
-purity	bioSample	tumor purity	number	0	1	0	0	0
-
-[Data]
-patientName	sampleName	isTumor	extractionType	libraryType	folderName	libraryKit	purity
-case001subregion	N1	N	DNA	WES	case001subregion-N1-DNA1-WES1	MedExome	.
-case001subregion	T1	Y	DNA	WES	case001subregion-T1-DNA1-WES1	MedExome	0.8
+donor_name	sample_name	is_tumor	purity	library_name	library_type	library_kit	folder_name
+case001subregion	case001subregion-N1	false		case001subregion-N1-DNA1-WES1	WES	MedExome	case001subregion-N1-DNA1-WES1
+case001subregion	case001subregion-T1	true	0.8	case001subregion-T1-DNA1-WES1	WES	MedExome	case001subregion-T1-DNA1-WES1

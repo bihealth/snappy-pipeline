@@ -29,7 +29,6 @@ dependencies = [
     # Nice, round-trip enabled YAML parsing
     "ruamel.yaml >=0.19.1,<0.20",
     # Sample sheet parsing
-    "biomedsheets >=1.0.1,<2",
     # Snakemake is used for providing the actual wrapper calling functionality; its development
     # version, for the software deployment plugins (software: directive, post-deploy scripts).
     # A commit of upstream main with the merged fixes snakemake#4357 (snakemake.params and

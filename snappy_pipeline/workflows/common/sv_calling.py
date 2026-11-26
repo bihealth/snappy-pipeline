@@ -14,7 +14,7 @@ VCF_OUTPUTS = vcf_outputs("work/{library_name}/out/{library_name}")
 class SvCallingGetResultFilesMixin:
     """Mixin that provides ``get_result_files()`` for SV calling steps"""
 
-    #: Whether the pedigrees of background data sets get result files
+    #: Whether the pedigrees of background libraries get result files
     pedigrees_include_background = True
 
     def check_pedigree(self, pedigree: str, library_names: list[str]) -> None:
@@ -56,7 +56,7 @@ class SvCallingWorkflow(BaseStep):
     produces = [DataSignature(DataType.VARIANTS, frozenset({"germline", "sv"}))]
     helper_parts = (WritePedigreeStepPart,)
 
-    #: The pedigrees of background data sets are called, too
+    #: The pedigrees of background libraries are called, too
     uses_background = True
 
     #: Whether the libraries are exomes and panels, whose target regions the callers take into

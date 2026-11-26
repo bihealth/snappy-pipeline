@@ -91,37 +91,29 @@ The expression runs against a DataFrame with one row per NGS library.
 
 ### Columns
 
-The columns that are **always available**:
+The columns of the sample sheets, plus the derived ones:
 
-| Column            | Description                                                                                    |
-| ----------------- | ---------------------------------------------------------------------------------------------- |
-| `library_name`    | NGS library identifier                                                                         |
-| `extraction_type` | "dna", "rna", ... (always lowercased)                                                          |
-| `kind`            | "cancer" or "germline"                                                                         |
-| `role`            | "tumor" / "normal" / "index" / "father" / "mother" / "affected" / "unaffected" / "unknown"     |
-| `is_primary`      | True for the primary tumor (cancer) or the DNA library of the pedigree index (germline)        |
-| `sex`             | "male", "female", or "unknown"                                                                 |
-| `donor_name`      | Patient or family identifier                                                                   |
-| `sample_name`     | Bio-sample name                                                                                |
-| `related_group`   | The name of the library's pedigree (germline) or donor (cancer), which names the group's files |
-| `tissue_type`     | "tumor", "normal", or "unknown"                                                                |
-| `disease_state`   | The PED phenotype: 2 = affected, 1 = unaffected, 0 = unknown                                   |
-| `father_name`     | Parent library name (or "0")                                                                   |
-| `mother_name`     | Parent library name (or "0")                                                                   |
-| `data_set`        | Name of the library's data set in the config                                                   |
-| `is_background`   | True for libraries of background data sets                                                     |
+| Column            | Description                                                                     |
+| ----------------- | ------------------------------------------------------------------------------- |
+| `library_name`    | The library, as the sheet names it                                              |
+| `donor_name`      | The donor                                                                       |
+| `sample_name`     | The sample, where the sheet has it                                              |
+| `extraction_type` | `dna` or `rna`, from `library_type`                                             |
+| `role`            | `tumor` for a library of a tumor sample (`is_tumor`), else `normal`             |
+| `is_primary`      | The primary library among a donor's libraries of one role and extraction type   |
+| `is_index`        | The index donor of its family                                                   |
+| `sex`             | `male`, `female` or `unknown`                                                   |
+| `family_id`       | The pedigree, where the sheet has it                                            |
+| `disease_state`   | The PED phenotype of `is_affected`: 2 affected, 1 unaffected, 0 unknown         |
+| `father_name`     | The father's primary normal DNA library, or `0`                                 |
+| `mother_name`     | The mother's primary normal DNA library, or `0`                                 |
+| `is_background`   | `true` for a library of a reference cohort                                      |
 
-Further sample sheet columns are added in snake_case, for example `libraryKit` as `library_kit` and `libraryType` as `library_type`.
+Every other sheet column is there under its own name, such as `library_type`, `library_kit`, `purity` or `batch_no`; see the sample sheets section of the overview.
 
 Columns that are **optionally available** come from relationships.
 Each `RelationshipDefinition` in the step's `default_relationships` or in the task's `relationships` adds a column.
 The task's `relationships` override the step's defaults of the same name.
-
-```{note}
-The DataFrame is built from biomedsheets shortcut objects.
-We plan to drop biomedsheets as a dependency in a future release.
-The DataFrame and the selection by query will stay.
-```
 
 ### Which libraries a task takes
 
@@ -129,32 +121,27 @@ A task's libraries come from three layers:
 
 - What its step can process at all.
   This layer always applies.
-  Examples are RNA libraries for expression quantification and fusion calling, tumor DNA libraries for mutect2 and normal DNA libraries for a panel of normals.
-  The somatic steps take only libraries of cancer sample sheets.
-- Without `library_selection`, the step's default.
-  It is `role == 'tumor' and extraction_type == 'dna'` on cancer sample sheets and `extraction_type == 'dna'` on germline sample sheets.
-  Some steps declare their own default: mapping and `ngs_data_qc` take all libraries, the RNA steps all RNA libraries, and a panel of normals all normal DNA libraries.
-- `library_selection` replaces that default, for example to select a batch (`data_set == 'batch2'`) or to drop samples.
+  Examples are RNA libraries for expression quantification and fusion calling, tumor DNA libraries for mutect2, normal DNA libraries for the germline callers and for a panel of normals.
+- Without `library_selection`, the step's default: the set its page names (mapping and `ngs_data_qc` take all libraries, the RNA steps all RNA libraries, the germline callers the normal DNA libraries, a panel of normals all normal DNA libraries), else the libraries of the task behind its first `depends_on` key that names a task, else `extraction_type == 'dna'`.
+  The per-kind defaults of the data sets (tumor DNA on cancer sheets) are gone; a candidates task for somatic calls selects the tumors itself (`library_selection: "role == 'tumor'"`).
+- `library_selection` replaces that default, for example to select a batch (`batch_no == 'run2'`) or to drop samples.
   It never goes beyond what the step can process.
-
-Several data sets may have libraries of the same name.
-A task that would take two of them fails and suggests a `library_selection` such as `data_set == 'batch1'`.
 
 ### Background libraries
 
-A reference cohort, for example, goes into a data set with `is_background: true`.
-The libraries of such data sets are no task's results.
+A library of a reference cohort has `is_background: true` in the sample sheet.
+Such libraries are no task's results.
 Mapping and panels of normals process them, and the SV and gCNV callers add them as cohort members or model samples.
-`background_selection` narrows them per task with a query such as `data_set == 'cohort_1000g'`.
+`background_selection` narrows them per task with a query such as `batch_no == 'cohort_1000g'`.
 
 ## Group-by for aggregation level
 
 Some steps (variant calling, annotation, filtration) can write one output per library or one per group of related libraries:
 
-- `group_by: related`: one output per group of related libraries.
-  For a germline trio, this is one joint VCF for the whole family, named after the pedigree.
-  The pedigree's name is the sheet's family id (the data set's `pedigree_field`, else `familyId`), else `FAM_` and the index donor.
-  On a cancer sample sheet, the libraries of one donor are related, which gives one joint VCF per donor (tumor and normal together).
+- `group_by: family`: one output per family (`family_id`), named after it.
+  For a germline trio, this is one joint VCF for the whole family.
+- `group_by: donor`: one output per donor (`donor_name`), which gives one joint VCF per donor (tumor and normal together).
+- `group_by: related`: `family` when the task's libraries have a `family_id`, `donor` when none has.
 - `group_by: library`: one output per library.
 - Unset: the step's default, else the setting that upstream tasks declare, else `library`.
   Germline variant calling defaults to `related` and calls each pedigree jointly.
@@ -324,9 +311,8 @@ A single `snappy` command with subcommands replaces the old entry-point scripts.
 | `snappy-refresh-step`  | none: the executor comes from a Snakemake profile                    |
 | `snappy-slurm-status`  | none: the SLURM executor plugin of Snakemake keeps track of the jobs |
 
-`snappy pull-sheet` writes the batch of SODAR verbatim into the `batchNo` custom field, which it declares as a `string`.
+`snappy pull-sheet` writes the batch of SODAR verbatim into the `batch_no` column, a string.
 Main declared it an `integer` and wrote the first number of the batch, or 1 without a batch column.
-A sheet that declares `batchNo` as an `integer` still cannot hold batch ids such as `run-2024-A`: biomedsheets rejects them.
 
 ### `snappy run` options
 
@@ -552,8 +538,7 @@ Outside the e2e pipelines, results change on purpose where main was wrong or ign
 
 ### Pedigrees and joint germline calls
 
-The family column of the PED files is the pedigree's name.
-On a sheet with a family id (`pedigree_field`, else `familyId`), that id replaces `FAM_` and the index donor.
+The family column of the PED files is the pedigree's name, the sheet's `family_id`.
 The trio PED of a child who is not the index names the child's family.
 A pedigree whose index has no DNA library is processed like any other (main dropped its members).
 
@@ -590,7 +575,11 @@ To migrate an existing project, go through these notes.
    For example, a VEP task now needs a cache task in `depends_on.database`.
 
 7. snappy no longer looks for sample sheets in the parent directory of the project.
-   `data_sets` names only the sheets (`file`, `type`, `is_background`); the paths of `config.yaml` are relative to the project directory, absolute, or below a `pathvars` root.
+   `sample_sheets` lists them (default: `samplesheet.tsv` next to `config.yaml`); the paths of `config.yaml` are relative to the project directory, absolute, or below a `pathvars` root.
+   The biomedsheets format is gone: a sheet is a plain TSV with one header line and one row per library, which `snappy sheet check` checks (see the sample sheets section of the overview).
+   Convert an old sheet by hand or with a script: `patientName` is `donor_name`; `sampleName` is `sample_name`, as the full name (`P001-N1`); `isTumor` is `is_tumor` (`true`/`false`); `fatherName` and `motherName` are `father` and `mother`, the donor names, empty instead of `0`; `sex` is `male`/`female`/`unknown`; `isAffected` is `is_affected` (`true`/`false`); `familyId` is `family_id`; `libraryType` is `library_type`; `folderName` is `folder_name`; `libraryKit` is `library_kit`; `hpoTerms` is `hpo_terms`; the other custom fields are columns of the same name in snake case; `extractionType` is dropped; the library names are written out as biomedsheets generated them (`P001-N1-DNA1-WES1`), so the files keep their names.
+   Mark the index donor of each family with `is_index` (biomedsheets took the first affected sequenced donor by name) and, where a donor has several libraries of one role and extraction type, the primary one with `is_primary`.
+   The data set `type`, `naming_scheme`, `pedigree_field` and `is_background` are gone; `is_background` is a sheet column.
 
 8. snappy searches no directories at run time.
    An `external_data` task lists the FASTQ files of each library in a files table (`library_files: [reads.tsv]`, the columns `library`, `readgroup`, `left`, `right`), and the tasks name it in `depends_on.reads` instead of `data_sets`.
@@ -693,7 +682,7 @@ To migrate an existing project, go through these notes.
     `ngs_mapping` no longer takes `depends_on.kits`.
     The report is `{library}/out/{library}.target_coverage.json.gz` instead of `{library}/report/alfred_qc/{library}.alfred.json.gz`.
     `varfish_export` reads it through `depends_on.qc` and writes its BAM QC only when that field is set.
-    Pedigree members from background data sets have no target coverage there, because `ngs_data_qc` checks no background libraries.
+    Pedigree members from the background libraries have no target coverage there, because `ngs_data_qc` checks no background libraries.
     Main's mapping task did.
 
 ### Project section and result names
@@ -702,14 +691,8 @@ To migrate an existing project, go through these notes.
     It holds the project's `name` and optionally a `description` and an `external_id`.
     `external_id` is the project's ID in a data management system, such as the SODAR project UUID, which tracks where the raw data lives.
 
-24. The results of `group_by: related` tasks are named after the related group instead of the index library or the primary tumor.
+24. The results of `group_by: family`, `donor` and `related` tasks are named after the group instead of the index library or the primary tumor, without a prefix: `work/<family_id>/` or `work/<donor_name>/`.
     This affects joint germline calls, SV calls, their annotation, filtration and checks, and the exports.
-    The names are:
-
-    - on germline sheets, `work/FAM_<index donor>/`, or the sheet's family id (the data set's `pedigree_field`, else the `familyId` custom field);
-    - on cancer sheets, `work/PAT_<donor>/`;
-    - on generic sheets, the bare index donor.
-
     The `write_pedigree.<group>` PED carries the same name in its family column.
     Rerun these tasks, or rename their `work/` directories and files.
 
@@ -863,10 +846,7 @@ On a test sheet with a tumor RNA library, its dry-run builds 84 jobs with either
 project:
   name: neoepitope
 
-data_sets:
-  cancer:
-    file: sheet.tsv
-    type: matched_cancer
+sample_sheets: [sheet.tsv]
 
 tasks:
   # The FASTQ files of the libraries, listed by snappy scan-files

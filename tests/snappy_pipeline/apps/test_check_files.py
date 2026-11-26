@@ -13,7 +13,7 @@ project:
   name: check
 pathvars:
   refs: refs
-data_sets: {}
+sample_sheets: []
 tasks:
   - name: genome
     step: external_data

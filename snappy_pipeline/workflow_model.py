@@ -1,47 +1,8 @@
-import enum
 from typing import Any
 
-from pydantic import ConfigDict, Field, model_validator
+from pydantic import ConfigDict, Field
 
 from snappy_pipeline.models import ConfigPath, SnappyModel
-
-
-class DataSetType(enum.StrEnum):
-    MATCHED_CANCER = "matched_cancer"
-    GERMLINE_VARIANTS = "germline_variants"
-    GENERIC = "generic"
-
-
-class NamingScheme(enum.StrEnum):
-    ONLY_SECONDARY_ID = "only_secondary_id"
-    SECONDARY_ID_PK = "secondary_id_pk"
-
-
-class DataSet(SnappyModel):
-    """A sample sheet. The files of its libraries come from ``external_data`` tasks, whose files
-    tables ``snappy scan-files`` writes from the sheet's ``folderName`` of each library."""
-
-    file: ConfigPath
-    """The sample sheet"""
-
-    type: DataSetType = DataSetType.MATCHED_CANCER
-    naming_scheme: NamingScheme = NamingScheme.SECONDARY_ID_PK
-    is_background: bool = False
-    """Libraries that are no task's results, such as a reference cohort; mapping, panels of
-    normals and the SV and gCNV callers use them, narrowed by a task's ``background_selection``"""
-    sodar_uuid: str | None = None
-    sodar_title: str | None = None
-    pedigree_field: str | None = None
-    """The custom field of a germline or generic sheet that groups its donors into pedigrees and names them.
-    Unset: the parent columns group them, and the ``familyId`` field, else the index donor (``FAM_`` on germline sheets), names them."""
-
-    @model_validator(mode="after")
-    def _pedigree_field_needs_pedigrees(self):
-        if self.pedigree_field and self.type == DataSetType.MATCHED_CANCER:
-            raise ValueError(
-                "pedigree_field groups the donors of a germline or generic sheet; a matched_cancer sheet has no pedigrees"
-            )
-        return self
 
 
 class TaskModel(SnappyModel):
@@ -88,8 +49,8 @@ class ConfigModel(SnappyModel):
     pathvars: dict[str, str] = {}
     """Named roots for paths, used as ``<name>`` in any path of the configuration, with the
     defaults and semantics of Snakemake's ``pathvars``"""
-    data_sets: dict[str, DataSet] = {}
-    """The sample sheets by name; a project without libraries, such as one that only builds
-    reference data, has none"""
+    sample_sheets: list[ConfigPath] = Field(default=["samplesheet.tsv"], validate_default=True)
+    """The sample sheets (``snappy_pipeline.sample_sheet``), read together; ``[]`` for a project
+    without libraries, such as one that only builds reference data"""
     resources: Resources = Resources()
     tasks: list[TaskModel]

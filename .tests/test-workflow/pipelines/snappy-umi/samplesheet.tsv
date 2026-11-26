@@ -1,15 +1,2 @@
-[Metadata]
-schema	cancer_matched
-schema_version	v1
-title	simulated_umi
-description	A simulated duplex UMI library with planted variants
-
-[Custom Fields]
-key	annotatedEntity	docs	type	minimum	maximum	unit	choices	pattern
-extractionType	testSample	extraction type	string	0	0	0	0	0
-libraryKit	ngsLibrary	exome enrichment kit	string	0	0	0	0	0
-readStructure	ngsLibrary	fgumi read structures of the FASTQ files of a read group	string	0	0	0	0	0
-
-[Data]
-patientName	sampleName	isTumor	extractionType	libraryType	folderName	libraryKit	readStructure
-umi001	T1	Y	DNA	WES	umi001-T1-DNA1-WES1	SimExome	8M+T 8M+T
+donor_name	sample_name	is_tumor	library_name	library_type	library_kit	folder_name	read_structure
+umi001	umi001-T1	true	umi001-T1-DNA1-WES1	WES	SimExome	umi001-T1-DNA1-WES1	8M+T 8M+T

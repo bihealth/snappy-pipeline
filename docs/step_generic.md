@@ -41,7 +41,7 @@ Unknown keys are an error.
     Without it, the task takes the step's default, see the step's page and {ref}`overview`.
 
 `background_selection`
-: Narrows the libraries of background data sets with a pandas `DataFrame.query()` expression, such as `data_set == 'cohort_1000g'`.
+: Narrows the background libraries (`is_background` in the sample sheet) with a pandas `DataFrame.query()` expression, such as `batch_no == 'cohort_1000g'`.
     Only the steps that use these libraries accept it: mapping, panels of normals and the SV and gCNV callers.
     Without it, the task takes all background libraries.
 

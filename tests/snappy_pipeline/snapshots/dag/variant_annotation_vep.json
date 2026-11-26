@@ -2,10 +2,10 @@
  {
   "benchmark": null,
   "input": [
-   "tasks/variant_annotation_vep/work/PAT_case001subregion/out/PAT_case001subregion.vcf.gz",
-   "tasks/variant_annotation_vep/work/PAT_case001subregion/out/PAT_case001subregion.vcf.gz.tbi",
-   "tasks/variant_annotation_vep/work/PAT_case001subregion/out/PAT_case001subregion.vcf.gz.md5",
-   "tasks/variant_annotation_vep/work/PAT_case001subregion/out/PAT_case001subregion.vcf.gz.tbi.md5",
+   "tasks/variant_annotation_vep/work/case001subregion/out/case001subregion.vcf.gz",
+   "tasks/variant_annotation_vep/work/case001subregion/out/case001subregion.vcf.gz.tbi",
+   "tasks/variant_annotation_vep/work/case001subregion/out/case001subregion.vcf.gz.md5",
+   "tasks/variant_annotation_vep/work/case001subregion/out/case001subregion.vcf.gz.tbi.md5",
    "tasks/variant_annotation_vep/output/.manifest.tsv"
   ],
   "log": [],
@@ -123,10 +123,10 @@
  {
   "benchmark": null,
   "input": [
-   "tasks/variant_annotation_vep/work/PAT_case001subregion/out/PAT_case001subregion.vcf.gz",
-   "tasks/variant_annotation_vep/work/PAT_case001subregion/out/PAT_case001subregion.vcf.gz.tbi",
-   "tasks/variant_annotation_vep/work/PAT_case001subregion/out/PAT_case001subregion.vcf.gz.md5",
-   "tasks/variant_annotation_vep/work/PAT_case001subregion/out/PAT_case001subregion.vcf.gz.tbi.md5"
+   "tasks/variant_annotation_vep/work/case001subregion/out/case001subregion.vcf.gz",
+   "tasks/variant_annotation_vep/work/case001subregion/out/case001subregion.vcf.gz.tbi",
+   "tasks/variant_annotation_vep/work/case001subregion/out/case001subregion.vcf.gz.md5",
+   "tasks/variant_annotation_vep/work/case001subregion/out/case001subregion.vcf.gz.tbi.md5"
   ],
   "local": true,
   "log": [],
@@ -144,24 +144,24 @@
   "wrapper": null
  },
  {
-  "benchmark": "tasks/variant_annotation_vep/benchmarks/PAT_case001subregion/PAT_case001subregion.tsv",
+  "benchmark": "tasks/variant_annotation_vep/benchmarks/case001subregion/case001subregion.tsv",
   "input": [
-   "tasks/variant_calling_gatk4_hc_gvcf/work/PAT_case001subregion/out/PAT_case001subregion.vcf.gz",
-   "tasks/variant_calling_gatk4_hc_gvcf/work/PAT_case001subregion/out/PAT_case001subregion.vcf.gz.tbi",
+   "tasks/variant_calling_gatk4_hc_gvcf/work/case001subregion/out/case001subregion.vcf.gz",
+   "tasks/variant_calling_gatk4_hc_gvcf/work/case001subregion/out/case001subregion.vcf.gz.tbi",
    "<repo>/.tests/test-workflow/resources/refs/subregion.fa",
    "<repo>/.tests/test-workflow/resources/refs/subregion.fa.fai",
    "<repo>/.tests/test-workflow/resources/refs/subregion.dict",
    "<repo>/tests/scripts/generate_task_configs.py"
   ],
   "log": [
-   "tasks/variant_annotation_vep/work/PAT_case001subregion/log/PAT_case001subregion.log"
+   "tasks/variant_annotation_vep/work/case001subregion/log/case001subregion.log"
   ],
   "output": [
-   "tasks/variant_annotation_vep/work/PAT_case001subregion/out/PAT_case001subregion.vcf.gz",
-   "tasks/variant_annotation_vep/work/PAT_case001subregion/out/PAT_case001subregion.vcf.gz.tbi",
-   "tasks/variant_annotation_vep/work/PAT_case001subregion/out/PAT_case001subregion.vcf.gz.md5",
-   "tasks/variant_annotation_vep/work/PAT_case001subregion/out/PAT_case001subregion.vcf.gz.tbi.md5",
-   "tasks/variant_annotation_vep/work/PAT_case001subregion/report/PAT_case001subregion.summary.html"
+   "tasks/variant_annotation_vep/work/case001subregion/out/case001subregion.vcf.gz",
+   "tasks/variant_annotation_vep/work/case001subregion/out/case001subregion.vcf.gz.tbi",
+   "tasks/variant_annotation_vep/work/case001subregion/out/case001subregion.vcf.gz.md5",
+   "tasks/variant_annotation_vep/work/case001subregion/out/case001subregion.vcf.gz.tbi.md5",
+   "tasks/variant_annotation_vep/work/case001subregion/report/case001subregion.summary.html"
   ],
   "params": {
    "args": {
@@ -194,7 +194,7 @@
    }
   },
   "report": [
-   "tasks/variant_annotation_vep/work/PAT_case001subregion/report/PAT_case001subregion.summary.html"
+   "tasks/variant_annotation_vep/work/case001subregion/report/case001subregion.summary.html"
   ],
   "resources": {
    "mem": "16 GB",
@@ -207,12 +207,12 @@
   "temp": [],
   "threads": 1,
   "wildcards": {
-   "library_name": "PAT_case001subregion"
+   "library_name": "case001subregion"
   },
   "wrapper": "file://<repo>/snappy_wrappers/wrappers/vep/run"
  },
  {
-  "benchmark": "tasks/variant_calling_gatk4_hc_gvcf/benchmarks/PAT_case001subregion/PAT_case001subregion.combine_gvcfs.tsv",
+  "benchmark": "tasks/variant_calling_gatk4_hc_gvcf/benchmarks/case001subregion/case001subregion.combine_gvcfs.tsv",
   "input": [
    "<repo>/.tests/test-workflow/resources/refs/subregion.fa",
    "<repo>/.tests/test-workflow/resources/refs/subregion.fa.fai",
@@ -221,11 +221,11 @@
    "tasks/variant_calling_gatk4_hc_gvcf/work/case001subregion-N1-DNA1-WES1/out/case001subregion-N1-DNA1-WES1.discover.g.vcf.gz.tbi"
   ],
   "log": [
-   "tasks/variant_calling_gatk4_hc_gvcf/work/PAT_case001subregion/log/PAT_case001subregion.combine_gvcfs.log"
+   "tasks/variant_calling_gatk4_hc_gvcf/work/case001subregion/log/case001subregion.combine_gvcfs.log"
   ],
   "output": [
-   "tasks/variant_calling_gatk4_hc_gvcf/work/PAT_case001subregion/out/PAT_case001subregion.combine_gvcfs.g.vcf.gz",
-   "tasks/variant_calling_gatk4_hc_gvcf/work/PAT_case001subregion/out/PAT_case001subregion.combine_gvcfs.g.vcf.gz.tbi"
+   "tasks/variant_calling_gatk4_hc_gvcf/work/case001subregion/out/case001subregion.combine_gvcfs.g.vcf.gz",
+   "tasks/variant_calling_gatk4_hc_gvcf/work/case001subregion/out/case001subregion.combine_gvcfs.g.vcf.gz.tbi"
   ],
   "params": {
    "args": {
@@ -260,7 +260,7 @@
   "temp": [],
   "threads": 1,
   "wildcards": {
-   "library_name": "PAT_case001subregion"
+   "library_name": "case001subregion"
   },
   "wrapper": "file://<repo>/snappy_wrappers/wrappers/gatk4_hc/combine_gvcfs"
  },
@@ -323,26 +323,26 @@
   "wrapper": "file://<repo>/snappy_wrappers/wrappers/gatk4_hc/discover"
  },
  {
-  "benchmark": "tasks/variant_calling_gatk4_hc_gvcf/benchmarks/PAT_case001subregion/PAT_case001subregion.genotype.tsv",
+  "benchmark": "tasks/variant_calling_gatk4_hc_gvcf/benchmarks/case001subregion/case001subregion.genotype.tsv",
   "input": [
    "<repo>/.tests/test-workflow/resources/refs/subregion.fa",
    "<repo>/.tests/test-workflow/resources/refs/subregion.fa.fai",
    "<repo>/.tests/test-workflow/resources/refs/subregion.dict",
-   "tasks/variant_calling_gatk4_hc_gvcf/work/PAT_case001subregion/out/PAT_case001subregion.combine_gvcfs.g.vcf.gz",
-   "tasks/variant_calling_gatk4_hc_gvcf/work/PAT_case001subregion/out/PAT_case001subregion.combine_gvcfs.g.vcf.gz.tbi"
+   "tasks/variant_calling_gatk4_hc_gvcf/work/case001subregion/out/case001subregion.combine_gvcfs.g.vcf.gz",
+   "tasks/variant_calling_gatk4_hc_gvcf/work/case001subregion/out/case001subregion.combine_gvcfs.g.vcf.gz.tbi"
   ],
   "log": [
-   "tasks/variant_calling_gatk4_hc_gvcf/work/PAT_case001subregion/log/PAT_case001subregion.genotype.log"
+   "tasks/variant_calling_gatk4_hc_gvcf/work/case001subregion/log/case001subregion.genotype.log"
   ],
   "output": [
-   "tasks/variant_calling_gatk4_hc_gvcf/work/PAT_case001subregion/out/PAT_case001subregion.g.vcf.gz",
-   "tasks/variant_calling_gatk4_hc_gvcf/work/PAT_case001subregion/out/PAT_case001subregion.g.vcf.gz.tbi",
-   "tasks/variant_calling_gatk4_hc_gvcf/work/PAT_case001subregion/out/PAT_case001subregion.g.vcf.gz.md5",
-   "tasks/variant_calling_gatk4_hc_gvcf/work/PAT_case001subregion/out/PAT_case001subregion.g.vcf.gz.tbi.md5",
-   "tasks/variant_calling_gatk4_hc_gvcf/work/PAT_case001subregion/out/PAT_case001subregion.vcf.gz",
-   "tasks/variant_calling_gatk4_hc_gvcf/work/PAT_case001subregion/out/PAT_case001subregion.vcf.gz.tbi",
-   "tasks/variant_calling_gatk4_hc_gvcf/work/PAT_case001subregion/out/PAT_case001subregion.vcf.gz.md5",
-   "tasks/variant_calling_gatk4_hc_gvcf/work/PAT_case001subregion/out/PAT_case001subregion.vcf.gz.tbi.md5"
+   "tasks/variant_calling_gatk4_hc_gvcf/work/case001subregion/out/case001subregion.g.vcf.gz",
+   "tasks/variant_calling_gatk4_hc_gvcf/work/case001subregion/out/case001subregion.g.vcf.gz.tbi",
+   "tasks/variant_calling_gatk4_hc_gvcf/work/case001subregion/out/case001subregion.g.vcf.gz.md5",
+   "tasks/variant_calling_gatk4_hc_gvcf/work/case001subregion/out/case001subregion.g.vcf.gz.tbi.md5",
+   "tasks/variant_calling_gatk4_hc_gvcf/work/case001subregion/out/case001subregion.vcf.gz",
+   "tasks/variant_calling_gatk4_hc_gvcf/work/case001subregion/out/case001subregion.vcf.gz.tbi",
+   "tasks/variant_calling_gatk4_hc_gvcf/work/case001subregion/out/case001subregion.vcf.gz.md5",
+   "tasks/variant_calling_gatk4_hc_gvcf/work/case001subregion/out/case001subregion.vcf.gz.tbi.md5"
   ],
   "params": {
    "args": {
@@ -376,7 +376,7 @@
   "temp": [],
   "threads": 1,
   "wildcards": {
-   "library_name": "PAT_case001subregion"
+   "library_name": "case001subregion"
   },
   "wrapper": "file://<repo>/snappy_wrappers/wrappers/gatk4_hc/genotype"
  }

@@ -26,7 +26,7 @@ After installation the `snappy` command is available via `pixi run snappy ...` o
 snappy init my_project
 cd my_project
 snappy task add mapping=ngs_mapping calling=variant_calling
-# edit config.yaml (tasks, data_sets) and samplesheet.tsv
+# edit config.yaml (tasks) and samplesheet.tsv
 snappy scan-files   # list the FASTQ files of the libraries in reads.tsv
 snappy run -- --dry-run --cores 1
 snappy run -- --cores 8

@@ -5,7 +5,7 @@ The step annotates externally generated (g)VCF files with ``varfish-annotator-cl
 The VCFs and the optional BAM files come from ``external_data`` tasks.
 The step has no ``tool`` field.
 
-The task gives one result per pedigree, named after the pedigree (its ``related_group``).
+The task gives one result per pedigree, named after the pedigree (its ``family_id``).
 With ``merge_vcf_flag``, the step first merges the VCFs of a pedigree that are still separate.
 With ``gvcf_option`` (the default), the inputs are genomic VCFs, which the task converts to VCFs before the annotation; without it, the task merges the VCFs.
 With ``bam_available_flag``, the step also writes a BAM QC table from the BAM files in ``depends_on.alignments``.
@@ -25,7 +25,7 @@ The task links the following result files below ``tasks/<task>/output/`` as syml
 - ``varfish_annotated.{related_group}/out/varfish_annotated.{related_group}.db-infos.tsv.gz``
 - ``varfish_annotated.{related_group}/out/varfish_annotated.{related_group}.bam-qc.tsv.gz``, only with ``bam_available_flag``.
 
-Here ``related_group`` is the name of the pedigree, whose index library holds the external files.
+Here the group is the name of the pedigree, whose index library holds the external files.
 Downstream tasks read the keys ``gts`` and ``db_infos``.
 """
 
@@ -280,7 +280,7 @@ class VariantExportExternalWorkflow(BaseStep):
     produces = [DataSignature(DataType.EXPORTS, frozenset({"external"}))]
     config_model_class = VariantExportExternalConfigModel
 
-    #: The pedigrees include the members of background data sets
+    #: The pedigrees include the members of background libraries
     uses_background = True
 
     @classmethod

@@ -77,7 +77,7 @@ class Project:
     #: Task name -> the level the task writes its results at, ``library`` or ``related``
     #: (see :func:`resolve_group_by`)
     group_by: Mapping[str, str] = dataclass_field(default_factory=dict)
-    #: Task name (``data_sets`` for the data sets) -> the paths in its configuration, resolved.
+    #: Task name (``sample_sheets`` for the sheets) -> the paths in its configuration, resolved.
     file_paths: Mapping[str, tuple[str, ...]] = dataclass_field(default_factory=dict)
     #: ``include_background`` -> the library table without relationships, built once per run
     #: and shared by all tasks (``BaseStep.library_table``)
@@ -91,27 +91,18 @@ class Project:
     _files_tables: dict[tuple[str, ...], FilesTable] = dataclass_field(
         default_factory=dict, compare=False, repr=False
     )
-    #: The data sets with their sample sheets, loaded on first use (:attr:`data_set_infos`)
-    _data_sets: list[Any] = dataclass_field(default_factory=list, compare=False, repr=False)
+    #: The sample sheets, read on first use (:attr:`sheets`)
+    _sheets: Any = dataclass_field(default=None, compare=False, repr=False)
 
     @property
-    def data_set_infos(self) -> list[Any]:
-        """The data sets of the configuration with their loaded sample sheets, once per run"""
-        from snappy_pipeline.library_table import DataSetInfo
+    def sheets(self):
+        """The sample sheets of the configuration, read and checked together once per run
+        (:func:`snappy_pipeline.sample_sheet.read_sheets`)"""
+        from snappy_pipeline.sample_sheet import read_sheets
 
-        if not self._data_sets and self.model.data_sets:
-            self._data_sets.extend(
-                DataSetInfo(
-                    name,
-                    data_set.file,
-                    data_set.type,
-                    data_set.is_background,
-                    data_set.naming_scheme,
-                    data_set.pedigree_field,
-                )
-                for name, data_set in self.model.data_sets.items()
-            )
-        return self._data_sets
+        if self._sheets is None:
+            object.__setattr__(self, "_sheets", read_sheets(self.model.sample_sheets))
+        return self._sheets
 
     def files_table(self, config: Any) -> FilesTable:
         """Return the files of the libraries that the files tables of the ``external_data`` task
@@ -155,7 +146,7 @@ def load_project(config: Mapping[str, Any], project_dir: str) -> Project:
         return {"project_dir": project_dir, "pathvars": pathvars, "paths": paths}
 
     try:
-        model = ConfigModel.model_validate(config, context=context("data_sets"))
+        model = ConfigModel.model_validate(config, context=context("sample_sheets"))
     except ValidationError as e:
         raise ConfigError(f"{CONFIG_FILE} is invalid:\n{_format_validation_error(e)}") from None
 
@@ -289,12 +280,19 @@ def _check_filter_ids(project: Project) -> None:
         writers[task.name] = inherited | dict.fromkeys(ids[task.name], task.name)
 
 
+def _level_satisfies(level: str, required: str) -> bool:
+    """Whether results written per ``level`` serve a reader that needs them per ``required``:
+    ``related`` stands for ``donor`` and ``family`` alike."""
+    return level == required or (required == "related" and level in ("donor", "family"))
+
+
 def resolve_group_by(
     tasks: tuple[TaskModel, ...],
     task_configs: Mapping[str, SnappyStepModel],
     dependencies: Mapping[str, Mapping[str, str | tuple[str, ...]]],
 ) -> dict[str, str]:
-    """Return task name -> ``library`` or ``related``: the level a task writes its results at.
+    """Return task name -> ``library``, ``related``, ``donor`` or ``family``: the level a task
+    writes its results at (``related`` is the family or the donor, by the task's libraries).
 
     A task declares its own ``group_by``, else its step's :meth:`default_group_by`, else what its
     upstream tasks declare (the first in ``depends_on`` order that declares one, transitively), so
@@ -329,16 +327,18 @@ def _check_granularity(project: Project) -> None:
                 for upstream in value if isinstance(value, tuple) else (value,):
                     level = project.group_by[upstream]
                     if required is not None:
-                        if required.level is not None and level != required.level:
+                        if required.level is not None and not _level_satisfies(
+                            level, required.level
+                        ):
                             raise ConfigError(
                                 f"depends_on.{field} needs results with group_by: {required.level}, "
                                 f"but task {upstream!r} writes them with group_by: {level}"
                             )
-                    elif level == "related" and project.group_by[task.name] != "related":
+                    elif level != "library" and project.group_by[task.name] == "library":
                         raise ConfigError(
                             f"task {upstream!r} writes one result per related group, but "
-                            f"depends_on.{field} reads it per {project.group_by[task.name]}; set "
-                            "group_by: related on this task"
+                            f"depends_on.{field} reads it per library; set group_by: {level} on "
+                            "this task"
                         )
 
 
@@ -348,7 +348,7 @@ def _exists(path: str) -> bool:
 
 
 def missing_files(project: Project) -> dict[str, list[str]]:
-    """Return task name (``data_sets`` for the data sets) -> the files of its configuration that do
+    """Return task name (``sample_sheets`` for the sheets) -> the files of its configuration that do
     not exist: its ``ConfigPath`` values and the sidecars that the jobs reading an
     ``external_data`` task declare as inputs (the ``.fai`` and ``.dict`` of a genome, the index of
     a VCF or of an indexed BED file)."""

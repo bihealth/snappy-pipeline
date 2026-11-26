@@ -17,7 +17,7 @@ An empty cell is no value, and relative paths are relative to the table's direct
 The first line of the table records that command, so a bare ``snappy scan-files`` rescans the same way after the sheets gained libraries.
 A library without rows is an error when the project loads, and so is a row for a library that no sheet has.
 With ``kits``, it provides files per enrichment kit, by kit name and output key.
-A targeted library (``WES``, ``Panel_seq``) uses the kit named exactly like its ``libraryKit`` in the sample sheet.
+A targeted library (``WES``, ``Panel_seq``) uses the kit named exactly like its ``library_kit`` in the sample sheet.
 If a library's kit is missing, its consumer fails when the project loads.
 Kit names may contain letters, digits, ``_``, ``.`` and ``-``.
 Every kit has the same keys.

@@ -1,5 +1,107 @@
 [
  {
+  "benchmark": "tasks/adapter_trimming_fastp/benchmarks/case001subregion-N1-DNA1-WES1/case001subregion-N1-DNA1-WES1.tsv",
+  "directory": [
+   "tasks/adapter_trimming_fastp/work/case001subregion-N1-DNA1-WES1/out",
+   "tasks/adapter_trimming_fastp/work/case001subregion-N1-DNA1-WES1/rejected",
+   "tasks/adapter_trimming_fastp/work/case001subregion-N1-DNA1-WES1/report"
+  ],
+  "input": [
+   "<project>/raw/case001subregion-N1-DNA1-WES1/case001subregion-N1-DNA1-WES1.R1.fastq.gz",
+   "<project>/raw/case001subregion-N1-DNA1-WES1/case001subregion-N1-DNA1-WES1.R2.fastq.gz"
+  ],
+  "log": [
+   "tasks/adapter_trimming_fastp/work/case001subregion-N1-DNA1-WES1/log/case001subregion-N1-DNA1-WES1.log"
+  ],
+  "output": [
+   "tasks/adapter_trimming_fastp/work/case001subregion-N1-DNA1-WES1/out",
+   "tasks/adapter_trimming_fastp/work/case001subregion-N1-DNA1-WES1/report",
+   "tasks/adapter_trimming_fastp/work/case001subregion-N1-DNA1-WES1/rejected"
+  ],
+  "params": {
+   "args": {
+    "code": "<hash>",
+    "config": {
+     "average_qual": 0,
+     "complexity_threshold": 30,
+     "correction": false,
+     "cut_front": false,
+     "cut_front_mean_quality": 20,
+     "cut_front_window_size": 4,
+     "cut_right": false,
+     "cut_right_mean_quality": 20,
+     "cut_right_window_size": 4,
+     "cut_tail": false,
+     "cut_tail_mean_quality": 20,
+     "cut_tail_window_size": 4,
+     "dedup": false,
+     "disable_length_filtering": false,
+     "disable_quality_filtering": false,
+     "dont_eval_duplication": true,
+     "dup_calc_accuracy": 0,
+     "extra_arguments": [],
+     "filter_by_index_threshold": 0,
+     "length_limit": 0,
+     "length_required": 15,
+     "low_complexity_filter": false,
+     "max_len1": 0,
+     "max_len2": 0,
+     "n_base_limit": 5,
+     "num_threads": 4,
+     "overlap_diff_limit": 5,
+     "overlap_diff_percent_limit": 20,
+     "overlap_len_require": 30,
+     "overrepresentation_analysis": false,
+     "poly_g_min_len": 8,
+     "poly_x_min_len": 10,
+     "qualified_quality_phred": 15,
+     "trim_front1": 0,
+     "trim_front2": 0,
+     "trim_poly_g": true,
+     "trim_poly_x": false,
+     "trim_tail1": 0,
+     "trim_tail2": 0,
+     "umi": false,
+     "umi_len": 0,
+     "umi_loc": "",
+     "umi_prefix": "",
+     "umi_skip": 0,
+     "unqualified_percent_limit": 40
+    },
+    "extra_arguments": [],
+    "output_left": [
+     {
+      "filename": "case001subregion-N1-DNA1-WES1.R1.fastq.gz",
+      "relative_path": "."
+     }
+    ],
+    "output_right": [
+     {
+      "filename": "case001subregion-N1-DNA1-WES1.R2.fastq.gz",
+      "relative_path": "."
+     }
+    ]
+   }
+  },
+  "report": [
+   "tasks/adapter_trimming_fastp/work/case001subregion-N1-DNA1-WES1/report"
+  ],
+  "resources": {
+   "mem": "24 GB",
+   "mem_mb": 24000,
+   "mem_mib": 22889,
+   "partition": "medium",
+   "runtime": 720
+  },
+  "rule": "adapter_trimming_fastp_adapter_trimming_fastp_run",
+  "temp": [],
+  "threads": 1,
+  "wildcards": {
+   "library_name": "case001subregion-N1-DNA1-WES1"
+  },
+  "wrapper": "file://<repo>/snappy_wrappers/wrappers/fastp/run"
+ },
+ {
   "benchmark": "tasks/adapter_trimming_fastp/benchmarks/case001subregion-T1-DNA1-WES1/case001subregion-T1-DNA1-WES1.tsv",
   "directory": [
    "tasks/adapter_trimming_fastp/work/case001subregion-T1-DNA1-WES1/out",
@@ -104,7 +206,9 @@
  {
   "benchmark": null,
   "input": [
+   "tasks/adapter_trimming_fastp/work/case001subregion-N1-DNA1-WES1/out",
    "tasks/adapter_trimming_fastp/work/case001subregion-T1-DNA1-WES1/out",
+   "tasks/adapter_trimming_fastp/work/case001subregion-N1-DNA1-WES1/report",
    "tasks/adapter_trimming_fastp/work/case001subregion-T1-DNA1-WES1/report"
   ],
   "local": true,
@@ -125,7 +229,9 @@
  {
   "benchmark": null,
   "input": [
+   "tasks/adapter_trimming_fastp/work/case001subregion-N1-DNA1-WES1/out",
    "tasks/adapter_trimming_fastp/work/case001subregion-T1-DNA1-WES1/out",
+   "tasks/adapter_trimming_fastp/work/case001subregion-N1-DNA1-WES1/report",
    "tasks/adapter_trimming_fastp/work/case001subregion-T1-DNA1-WES1/report",
    "tasks/adapter_trimming_fastp/output/.manifest.tsv"
   ],

@@ -59,7 +59,7 @@ def test_docs_have_task_examples():
     assert sum("tasks:" in block.values[0] for block in BLOCKS) > 3
 
 
-def test_data_sets_precede_the_tasks():
+def test_sample_sheets_precede_the_tasks():
     """Whole-file examples and the test pipelines follow the order of ``snappy init``: the static
     sections before ``tasks``, so that an added task ends the file."""
     texts = [block.values[0] for block in BLOCKS]
@@ -69,9 +69,9 @@ def test_data_sets_precede_the_tasks():
     checked = 0
     for text in texts:
         tasks = re.search(r"^\s*tasks:", text, re.MULTILINE)
-        data_sets = re.search(r"^\s*data_sets:", text, re.MULTILINE)
-        if tasks and data_sets:
-            assert data_sets.start() < tasks.start(), text
+        sheets = re.search(r"^\s*sample_sheets:", text, re.MULTILINE)
+        if tasks and sheets:
+            assert sheets.start() < tasks.start(), text
             checked += 1
     assert checked > 3
 
@@ -81,7 +81,7 @@ def test_yaml_example_is_valid(block, tmp_path):
     """Every YAML example parses; one with a ``tasks`` key is a complete config."""
     config = YAML(typ="safe").load(block)
     if isinstance(config, dict) and "tasks" in config:
-        load_project({"project": {"name": "example"}, "data_sets": {}, **config}, str(tmp_path))
+        load_project({"project": {"name": "example"}, "sample_sheets": [], **config}, str(tmp_path))
 
 
 @pytest.mark.parametrize("step", sorted(set(WORKFLOW_REGISTRY) - ON_HOLD_STEPS))

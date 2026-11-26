@@ -10,10 +10,8 @@ project:
   external_id: %(external_id_yaml)s
   description: %(description_yaml)s
 
-data_sets:
-  first_batch:
-    file: %(sheet_file)s
-    type: %(sheet_type)s
+sample_sheets:
+  - %(sheet_file)s
 
 tasks:
   - name: reads

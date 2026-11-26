@@ -1,7 +1,7 @@
 """Export of germline variants for VarFish
 
 The step writes the tables that ``varfish-cli`` imports into VarFish.
-It writes one set per pedigree, named after the pedigree (its ``related_group``).
+It writes one set per pedigree, named after the pedigree (its ``family_id``).
 A set holds the pedigree file and the small variants annotated with Mehari (``mehari annotate seqvars``, then ``mehari postprocess varfish-seqvars`` for the table).
 With ``depends_on.structural_variants``, set to an :ref:`step_sv_calling_targeted` or :ref:`step_sv_calling_wgs` task, it also holds the structural variants (``mehari annotate strucvars``).
 With ``depends_on.qc``, it also holds the BAM quality control table from the ``samtools`` reports of ``ngs_mapping`` and the target coverage of alfred.
@@ -235,7 +235,7 @@ class VarfishExportWorkflow(BaseStep):
     produces = [DataSignature(DataType.EXPORTS, frozenset({"varfish"}))]
     config_model_class = VarfishExportConfigModel
 
-    #: The pedigrees include the members of background data sets
+    #: The pedigrees include the members of background libraries
     uses_background = True
 
     @classmethod

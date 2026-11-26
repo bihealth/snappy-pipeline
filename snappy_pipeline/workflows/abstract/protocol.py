@@ -5,8 +5,6 @@ from typing import Annotated
 
 from pydantic import BaseModel
 
-#: Reserved ``depends_on.reads`` value: search FASTQs in the data sets' search paths.
-
 
 class DataType(StrEnum):
     RAW = "raw"

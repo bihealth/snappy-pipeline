@@ -2,10 +2,10 @@
  {
   "benchmark": null,
   "input": [
-   "tasks/sv_calling_wgs_delly2/work/PAT_case001subregion/out/PAT_case001subregion.vcf.gz",
-   "tasks/sv_calling_wgs_delly2/work/PAT_case001subregion/out/PAT_case001subregion.vcf.gz.tbi",
-   "tasks/sv_calling_wgs_delly2/work/PAT_case001subregion/out/PAT_case001subregion.vcf.gz.md5",
-   "tasks/sv_calling_wgs_delly2/work/PAT_case001subregion/out/PAT_case001subregion.vcf.gz.tbi.md5",
+   "tasks/sv_calling_wgs_delly2/work/case001subregion/out/case001subregion.vcf.gz",
+   "tasks/sv_calling_wgs_delly2/work/case001subregion/out/case001subregion.vcf.gz.tbi",
+   "tasks/sv_calling_wgs_delly2/work/case001subregion/out/case001subregion.vcf.gz.md5",
+   "tasks/sv_calling_wgs_delly2/work/case001subregion/out/case001subregion.vcf.gz.tbi.md5",
    "tasks/sv_calling_wgs_delly2/output/.manifest.tsv"
   ],
   "log": [],
@@ -123,10 +123,10 @@
  {
   "benchmark": null,
   "input": [
-   "tasks/sv_calling_wgs_delly2/work/PAT_case001subregion/out/PAT_case001subregion.vcf.gz",
-   "tasks/sv_calling_wgs_delly2/work/PAT_case001subregion/out/PAT_case001subregion.vcf.gz.tbi",
-   "tasks/sv_calling_wgs_delly2/work/PAT_case001subregion/out/PAT_case001subregion.vcf.gz.md5",
-   "tasks/sv_calling_wgs_delly2/work/PAT_case001subregion/out/PAT_case001subregion.vcf.gz.tbi.md5"
+   "tasks/sv_calling_wgs_delly2/work/case001subregion/out/case001subregion.vcf.gz",
+   "tasks/sv_calling_wgs_delly2/work/case001subregion/out/case001subregion.vcf.gz.tbi",
+   "tasks/sv_calling_wgs_delly2/work/case001subregion/out/case001subregion.vcf.gz.md5",
+   "tasks/sv_calling_wgs_delly2/work/case001subregion/out/case001subregion.vcf.gz.tbi.md5"
   ],
   "local": true,
   "log": [],
@@ -199,8 +199,8 @@
    "<repo>/.tests/test-workflow/resources/refs/subregion.fa.fai",
    "<repo>/.tests/test-workflow/resources/refs/subregion.dict",
    "<repo>/.tests/test-workflow/resources/refs/subregion.fa",
-   "tasks/sv_calling_wgs_delly2/work/PAT_case001subregion/out/PAT_case001subregion.merge_calls.bcf",
-   "tasks/sv_calling_wgs_delly2/work/PAT_case001subregion/out/PAT_case001subregion.merge_calls.bcf.csi"
+   "tasks/sv_calling_wgs_delly2/work/case001subregion/out/case001subregion.merge_calls.bcf",
+   "tasks/sv_calling_wgs_delly2/work/case001subregion/out/case001subregion.merge_calls.bcf.csi"
   ],
   "log": [
    "tasks/sv_calling_wgs_delly2/work/case001subregion-N1-DNA1-WES1/log/case001subregion-N1-DNA1-WES1.genotype.log"
@@ -239,17 +239,17 @@
   "wrapper": "file://<repo>/snappy_wrappers/wrappers/delly2/germline/genotype"
  },
  {
-  "benchmark": "tasks/sv_calling_wgs_delly2/benchmarks/PAT_case001subregion/PAT_case001subregion.merge_calls.tsv",
+  "benchmark": "tasks/sv_calling_wgs_delly2/benchmarks/case001subregion/case001subregion.merge_calls.tsv",
   "input": [
    "tasks/sv_calling_wgs_delly2/work/case001subregion-N1-DNA1-WES1/out/case001subregion-N1-DNA1-WES1.call.bcf",
    "tasks/sv_calling_wgs_delly2/work/case001subregion-N1-DNA1-WES1/out/case001subregion-N1-DNA1-WES1.call.bcf.csi"
   ],
   "log": [
-   "tasks/sv_calling_wgs_delly2/work/PAT_case001subregion/log/PAT_case001subregion.merge_calls.log"
+   "tasks/sv_calling_wgs_delly2/work/case001subregion/log/case001subregion.merge_calls.log"
   ],
   "output": [
-   "tasks/sv_calling_wgs_delly2/work/PAT_case001subregion/out/PAT_case001subregion.merge_calls.bcf",
-   "tasks/sv_calling_wgs_delly2/work/PAT_case001subregion/out/PAT_case001subregion.merge_calls.bcf.csi"
+   "tasks/sv_calling_wgs_delly2/work/case001subregion/out/case001subregion.merge_calls.bcf",
+   "tasks/sv_calling_wgs_delly2/work/case001subregion/out/case001subregion.merge_calls.bcf.csi"
   ],
   "params": {
    "args": {
@@ -265,29 +265,29 @@
   },
   "rule": "sv_calling_wgs_delly2_sv_calling_wgs_delly2_merge_calls",
   "temp": [
-   "tasks/sv_calling_wgs_delly2/work/PAT_case001subregion/out/PAT_case001subregion.merge_calls.bcf",
-   "tasks/sv_calling_wgs_delly2/work/PAT_case001subregion/out/PAT_case001subregion.merge_calls.bcf.csi"
+   "tasks/sv_calling_wgs_delly2/work/case001subregion/out/case001subregion.merge_calls.bcf",
+   "tasks/sv_calling_wgs_delly2/work/case001subregion/out/case001subregion.merge_calls.bcf.csi"
   ],
   "threads": 1,
   "wildcards": {
-   "library_name": "PAT_case001subregion"
+   "library_name": "case001subregion"
   },
   "wrapper": "file://<repo>/snappy_wrappers/wrappers/delly2/germline/merge_calls"
  },
  {
-  "benchmark": "tasks/sv_calling_wgs_delly2/benchmarks/PAT_case001subregion/PAT_case001subregion.merge_genotypes.tsv",
+  "benchmark": "tasks/sv_calling_wgs_delly2/benchmarks/case001subregion/case001subregion.merge_genotypes.tsv",
   "input": [
    "tasks/sv_calling_wgs_delly2/work/case001subregion-N1-DNA1-WES1/out/case001subregion-N1-DNA1-WES1.genotype.bcf",
    "tasks/sv_calling_wgs_delly2/work/case001subregion-N1-DNA1-WES1/out/case001subregion-N1-DNA1-WES1.genotype.bcf.csi"
   ],
   "log": [
-   "tasks/sv_calling_wgs_delly2/work/PAT_case001subregion/log/PAT_case001subregion.merge_genotypes.log"
+   "tasks/sv_calling_wgs_delly2/work/case001subregion/log/case001subregion.merge_genotypes.log"
   ],
   "output": [
-   "tasks/sv_calling_wgs_delly2/work/PAT_case001subregion/out/PAT_case001subregion.vcf.gz",
-   "tasks/sv_calling_wgs_delly2/work/PAT_case001subregion/out/PAT_case001subregion.vcf.gz.tbi",
-   "tasks/sv_calling_wgs_delly2/work/PAT_case001subregion/out/PAT_case001subregion.vcf.gz.md5",
-   "tasks/sv_calling_wgs_delly2/work/PAT_case001subregion/out/PAT_case001subregion.vcf.gz.tbi.md5"
+   "tasks/sv_calling_wgs_delly2/work/case001subregion/out/case001subregion.vcf.gz",
+   "tasks/sv_calling_wgs_delly2/work/case001subregion/out/case001subregion.vcf.gz.tbi",
+   "tasks/sv_calling_wgs_delly2/work/case001subregion/out/case001subregion.vcf.gz.md5",
+   "tasks/sv_calling_wgs_delly2/work/case001subregion/out/case001subregion.vcf.gz.tbi.md5"
   ],
   "params": {
    "args": {
@@ -305,7 +305,7 @@
   "temp": [],
   "threads": 1,
   "wildcards": {
-   "library_name": "PAT_case001subregion"
+   "library_name": "case001subregion"
   },
   "wrapper": "file://<repo>/snappy_wrappers/wrappers/delly2/germline/merge_genotypes"
  }

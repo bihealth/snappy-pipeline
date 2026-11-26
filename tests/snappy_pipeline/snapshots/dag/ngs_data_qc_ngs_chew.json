@@ -176,13 +176,13 @@
      {
       "donor": "case001subregion",
       "library": "case001subregion-N1-DNA1-WES1",
-      "pedigree": "PAT_case001subregion",
+      "pedigree": "case001subregion",
       "sex": "unknown"
      },
      {
       "donor": "case001subregion",
       "library": "case001subregion-T1-DNA1-WES1",
-      "pedigree": "PAT_case001subregion",
+      "pedigree": "case001subregion",
       "sex": "unknown"
      }
     ],

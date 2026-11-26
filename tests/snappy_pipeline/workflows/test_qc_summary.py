@@ -116,13 +116,13 @@ def test_the_fingerprint_checks_pass_the_sheet_facts_as_options():
             {
                 "library_name": "idx-N1-DNA1-WES1",
                 "donor_name": "idx",
-                "related_group": "FAM_idx",
+                "family_id": "FAM_idx",
                 "sex": "male",
             },
             {
                 "library_name": "mo-N1-DNA1-WES1",
                 "donor_name": "mo",
-                "related_group": "FAM_idx",
+                "family_id": "FAM_idx",
                 "sex": "female",
             },
         ]

@@ -88,11 +88,11 @@ class HlaTypingDependsOn(SnappyModel):
     """Alignments of RNA libraries"""
 
     reads: Annotated[str, DataSignature(DataType.RAW), RequiredBy(Tool.optitype)] = ""
-    """FASTQ source: ``data_sets``, an ``external_data`` task or an ``adapter_trimming`` task"""
+    """FASTQ source: an ``external_data`` task or an ``adapter_trimming`` task"""
 
 
 class HlaTyping(SnappyStepModel):
-    """Override data set configuration search paths for FASTQ files"""
+    """Quality control of reads and alignments"""
 
     depends_on: HlaTypingDependsOn = Field(default_factory=HlaTypingDependsOn)
 

@@ -5,7 +5,7 @@ The step determines the HLA type of each library from its reads.
 The ``tool`` field selects the typer:
 
 - ``optitype``: types DNA and RNA libraries from the FASTQ files.
-  It reads ``depends_on.reads``, which names ``data_sets``, an ``external_data`` task, or an ``adapter_trimming`` task (:ref:`step_adapter_trimming`).
+  It reads ``depends_on.reads``, which names an ``external_data`` task or an ``adapter_trimming`` task (:ref:`step_adapter_trimming`).
 - ``arcashla``: types RNA-seq libraries from the BAM files of ``depends_on.alignments``, for example an :ref:`step_ngs_mapping` task with ``tool: star``.
   A task takes all RNA libraries unless it sets ``library_selection``.
   A library is single-end if no read of its BAM file is paired.

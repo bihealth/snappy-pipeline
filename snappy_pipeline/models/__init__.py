@@ -150,8 +150,8 @@ class RelationshipDefinition(SnappyModel):
 
         # Find the index/proband library for any library of the same family
         index_lib:
-          via: related_group
-          target: "role == 'index'"
+          via: family_id
+          target: "is_index and role == 'normal' and extraction_type == 'dna'"
           column: index_lib
 
         # Find all tumor libraries in the same donor (one-to-many)
@@ -302,18 +302,19 @@ class SnappyStepModel(SnappyModel, object):
 
     library_selection: str | None = None
     """A pandas ``DataFrame.query()`` expression over the library table that chooses the
-    libraries this task processes, such as ``data_set == 'batch2'`` or ``library_type == 'WES'``;
+    libraries this task processes, such as ``batch_no == 'run2'`` or ``library_type == 'WES'``;
     a task never takes libraries that its step cannot process. Unset: the step's default (the
-    tumor DNA libraries of cancer sheets and the DNA libraries of germline sheets, unless the
-    step's docs page names another one). The columns are those of the library table (see the
-    sample sheets section of the docs): ``library_name``, ``data_set``, ``kind``, ``role``,
-    ``extraction_type``, ``library_type``, ``library_kit``, ``donor_name``, ``sex``,
-    ``related_group`` and the custom fields of the sheet."""
+    DNA libraries, unless the step's docs page names another one). The columns are those of the
+    sample sheets (see the sample sheets section of the docs): ``library_name``, ``donor_name``,
+    ``sample_name``, ``library_type``, ``library_kit``, ``sex``, ``is_tumor``, ``family_id`` and
+    every other column, plus the derived ``role`` (``tumor`` or ``normal``) and
+    ``extraction_type`` (``dna`` or ``rna``)."""
 
     background_selection: str | None = None
-    """For steps that use the libraries of background data sets (mapping, panels of normals, the
-    SV and gCNV callers): a pandas ``DataFrame.query()`` expression that narrows them, such as
-    ``data_set == 'cohort_1000g'``. Unset: all background libraries."""
+    """For steps that use the background libraries (``is_background`` in the sample sheet:
+    mapping, panels of normals, the SV and gCNV callers): a pandas ``DataFrame.query()``
+    expression that narrows them, such as ``batch_no == 'cohort_1000g'``. Unset: all background
+    libraries."""
 
     delete_intermediates: list[Intermediate] = []
     """What the task deletes once its readers are done: ``intermediates``, the per-sample
@@ -332,12 +333,11 @@ class SnappyStepModel(SnappyModel, object):
     independent ones into one job. Their requests add up, so the members should share a
     partition."""
 
-    group_by: Literal["library", "related"] | None = None
-    """``library``: one output per library; ``related``: one output per group of related
-    libraries (``related_group``), the members of a pedigree on germline sample sheets and the
-    libraries of a donor on cancer sample sheets, named after the group: the sample sheet's family
-    id (the data set's ``pedigree_field``, else ``familyId``), else the index donor with ``FAM_``
-    (germline sheets), ``PAT_`` (cancer sheets) or no prefix (generic sheets).
+    group_by: Literal["library", "related", "donor", "family"] | None = None
+    """``library``: one output per library; ``family``: one per family (``family_id`` of the
+    sample sheet, which every library of the task then needs), named after the family;
+    ``donor``: one per donor (``donor_name``); ``related``: ``family`` when the task's libraries
+    have a ``family_id``, ``donor`` when none has (both: name the level).
     Unset: the step's default (related for joint germline calling), else the granularity that
     upstream tasks declare, else ``library``."""
 

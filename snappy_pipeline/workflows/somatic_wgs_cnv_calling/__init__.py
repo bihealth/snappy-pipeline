@@ -376,7 +376,7 @@ class SomaticWgsCnvCallingWorkflow(BaseStep):
         Tool.control_freec: ControlFreecSomaticWgsStepPart,
     }
 
-    library_requirement = "kind == 'cancer'"
+    library_requirement = "role == 'tumor'"
     default_relationships = MATCHED_NORMAL_RELATIONSHIP
 
     @classmethod

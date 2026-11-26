@@ -79,6 +79,9 @@ def test_an_input_with_another_grouping_is_rejected(monkeypatch):
         ConcatVariantsWorkflow, "effective_group_by", property(lambda self: "related")
     )
     monkeypatch.setattr(
+        ConcatVariantsWorkflow, "upstream_group_by", lambda self, task: self.project.group_by[task]
+    )
+    monkeypatch.setattr(
         ConcatVariantsWorkflow, "upstream_task_names", lambda self, field: ["fdr", "sv_fdr"]
     )
 

@@ -105,7 +105,7 @@ class SomaticVariantSignaturesWorkflow(BaseStep):
 
     produces = [DataSignature(DataType.TABULAR, frozenset({"signatures"}))]
     config_model_class = SomaticVariantSignaturesConfigModel
-    library_requirement = "kind == 'cancer'"
+    library_requirement = "role == 'tumor'"
 
     @classmethod
     def get_output_paths(cls, config, signature=None, **kwargs) -> dict[str, str]:

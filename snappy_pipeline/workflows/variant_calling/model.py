@@ -382,7 +382,7 @@ class VariantCalling(SnappyStepModel):
                 raise ValueError(f"{name}: not available with tool: varlociraptor")
         if (
             self.varlociraptor.scenario == ScenarioKind.somatic
-            and self.group_by == "related"
+            and self.group_by in ("related", "donor", "family")
             and not self.varlociraptor.template
         ):
             raise ValueError(

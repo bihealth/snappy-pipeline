@@ -76,7 +76,7 @@ def test_pull_sheet_keeps_the_api_key_out_of_the_output(monkeypatch, status_code
     assert "SECRET" not in result.output
     if status_code == 200:
         assert result.exit_code == 0, result.output
-        assert result.stdout.startswith("[Metadata]\n") and "title\t.\n" in result.stdout
+        assert result.stdout.startswith(snappy_pull_sheet.HEADER + "\n")
     else:
         assert result.exit_code == 1
         assert result.exception.code == "Fetching the sample sheet failed: HTTPError 403"
@@ -94,8 +94,8 @@ def test_pull_sheet_writes_the_batch_of_sodar_verbatim_as_a_string(monkeypatch, 
     result = CliRunner().invoke(snappy_cli.main, ARGS)
 
     assert result.exit_code == 0, result.output
-    assert "\nbatchNo\tbioEntity\tBatch\tstring\t" in result.stdout
-    batch = "run-2024-A" if with_batch else "."
+    assert result.stdout.startswith(snappy_pull_sheet.HEADER + "\n")
+    batch = "run-2024-A" if with_batch else ""
     assert result.stdout.splitlines()[-1] == "\t".join(
-        ["FAM1", "P1", "0", "0", "M", "Y", ".", ".", batch, ".", "project", "uuid", "Illumina", "."]
+        ["FAM1", "P1", "", "", "male", "true", "", "", "", "", batch, "", "", "project", "uuid"]
     )

@@ -1,11 +1,7 @@
 project:
   name: all-workflows
 
-data_sets:
-  trbc:
-    file: samplesheet.tsv
-    type: matched_cancer
-    naming_scheme: only_secondary_id
+sample_sheets: [samplesheet.tsv]
 
 tasks:
   - name: genome

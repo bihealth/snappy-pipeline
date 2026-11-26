@@ -1,11 +1,7 @@
 project:
   name: snappy-cancer_wes
 
-data_sets:
-  trbc:
-    file: samplesheet.tsv
-    type: matched_cancer
-    naming_scheme: only_secondary_id
+sample_sheets: [samplesheet.tsv]
 
 tasks:
   - name: genome
@@ -150,6 +146,7 @@ tasks:
         alignments: mapping
         reference: genome
         kits: kits
+      library_selection: "role == 'tumor'"  # candidates of the tumors, for the somatic calls
       tool: freebayes
       freebayes:
         num_jobs: 2

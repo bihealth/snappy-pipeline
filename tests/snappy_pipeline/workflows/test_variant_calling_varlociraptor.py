@@ -34,7 +34,8 @@ def _row(name, sex="unknown", father="0", mother="0", **extra):
         "father_name": father,
         "mother_name": mother,
         "matched_normal_lib": "",
-        "related_group": name.split("-")[0],
+        "donor_name": name.split("-")[0],
+        "family_id": "trio" if name.split("-")[0] in ("child", "father", "mother") else None,
         **extra,
     }
 
@@ -53,11 +54,11 @@ ROWS = {
 }
 TRIO = [ROWS["child-DNA1"], ROWS["father-DNA1"], ROWS["mother-DNA1"]]
 #: The tumor libraries a somatic task takes: one per donor, or with the relapse of P1
-TUMORS = pd.DataFrame({"library_name": ["P1-T1-DNA1", "P2-T1-DNA1"], "related_group": ["P1", "P2"]})
+TUMORS = pd.DataFrame({"library_name": ["P1-T1-DNA1", "P2-T1-DNA1"], "donor_name": ["P1", "P2"]})
 WITH_RELAPSE = pd.DataFrame(
     {
         "library_name": ["P1-T1-DNA1", "P1-T2-DNA1", "P2-T1-DNA1"],
-        "related_group": ["P1", "P1", "P2"],
+        "donor_name": ["P1", "P1", "P2"],
     }
 )
 
@@ -76,15 +77,15 @@ def test_the_germline_preset_of_a_trio_has_mendelian_inheritance_and_a_denovo_ev
     assert scenario["samples"]["mother-DNA1"] == {"sex": "female"}
     # The de novo event is per child, named after the donor (here the library) in lower case
     assert scenario["expressions"] == {
-        "denovo_child_dna1_pattern": "child-DNA1:]0.0,1.0] & mother-DNA1:0.0 & father-DNA1:0.0"
+        "denovo_child_pattern": "child-DNA1:]0.0,1.0] & mother-DNA1:0.0 & father-DNA1:0.0"
     }
     assert scenario["events"] == {
-        "denovo_child_dna1": "$denovo_child_dna1_pattern",
+        "denovo_child": "$denovo_child_pattern",
         "recessive": False,
         "dominant": False,
         "present": (
             "(child-DNA1:]0.0,1.0] | father-DNA1:]0.0,1.0] | mother-DNA1:]0.0,1.0])"
-            " & !$denovo_child_dna1_pattern"
+            " & !$denovo_child_pattern"
         ),
     }
 
@@ -97,7 +98,7 @@ def test_the_affected_status_adds_disjoint_recessive_and_dominant_events():
 
     scenario = germline_scenario([child, sibling, father, mother], SPECIES)
 
-    denovo = "!$denovo_child_dna1_pattern & !$denovo_sibling_dna1_pattern"
+    denovo = "!$denovo_child_pattern & !$denovo_sibling_pattern"
     assert scenario["expressions"]["recessive_pattern"] == (
         "child-DNA1:1.0 & sibling-DNA1:1.0 & !father-DNA1:1.0"
     )
@@ -141,12 +142,10 @@ def test_the_germline_preset_of_a_quad_has_a_disjoint_denovo_event_per_child():
     assert scenario["expressions"]["denovo_sib_2_pattern"] == (
         "sibling-DNA1:]0.0,1.0] & mother-DNA1:0.0 & father-DNA1:0.0"
     )
-    assert scenario["events"]["denovo_child_dna1"] == "$denovo_child_dna1_pattern"
-    assert scenario["events"]["denovo_sib_2"] == (
-        "$denovo_sib_2_pattern & !$denovo_child_dna1_pattern"
-    )
+    assert scenario["events"]["denovo_child"] == "$denovo_child_pattern"
+    assert scenario["events"]["denovo_sib_2"] == ("$denovo_sib_2_pattern & !$denovo_child_pattern")
     assert scenario["events"]["present"].endswith(
-        "& !$denovo_child_dna1_pattern & !$denovo_sib_2_pattern"
+        "& !$denovo_child_pattern & !$denovo_sib_2_pattern"
     )
 
 
@@ -190,8 +189,8 @@ def test_the_germline_preset_models_several_generations():
     ]
     # One de novo event per child: the mother (from the grandparents) and the child
     assert [e for e in scenario["events"] if e.startswith("denovo_")] == [
-        "denovo_child_dna1",
-        "denovo_mother_dna1",
+        "denovo_child",
+        "denovo_mother",
     ]
 
 
@@ -494,7 +493,9 @@ def test_varlociraptor_produces_the_calls_of_its_scenario_tagged_with_the_tool()
 def test_the_scenario_sets_the_grouping_and_the_libraries_taken():
     assert VariantCallingWorkflow.default_group_by(_config(scenario="germline")) == "related"
     assert VariantCallingWorkflow.default_group_by(_config(scenario="somatic")) is None
-    assert VariantCallingWorkflow.task_library_requirement(_config(scenario="germline")) is None
+    assert VariantCallingWorkflow.task_library_requirement(_config(scenario="germline")) == (
+        "role == 'normal' and extraction_type == 'dna'"
+    )
     assert (
         VariantCallingWorkflow.task_library_requirement(_config(scenario="somatic"))
         == "role == 'tumor' and extraction_type == 'dna'"

@@ -57,7 +57,7 @@ GATK [recommends](https://gatk.broadinstitute.org/hc/en-us/articles/360035890631
 Smaller panels are common.
 For projects with too few normals, the same bundle has a panel of normals from GATK.
 
-By default, the panel is built from all normal DNA libraries of the sample sheets, those of background data sets included.
+By default, the panel is built from all normal DNA libraries of the sample sheets, the background libraries included.
 Two options change what goes into it:
 
 `path_normals_list`

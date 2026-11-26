@@ -1,6 +1,8 @@
 project:
   name: snappy-ref-download-index
 
+sample_sheets: []
+
 tasks:
   - step: reference_download
     name: download_chrmt

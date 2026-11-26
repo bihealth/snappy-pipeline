@@ -3,11 +3,7 @@ project:
 
 # A simulated three-generation pedigree with planted dominant, recessive and de novo variants;
 # ../../simulate_pedigree.py writes raw/ and truth.tsv, check_events.py checks the posteriors
-data_sets:
-  pedigree:
-    file: samplesheet.tsv
-    type: germline_variants
-    naming_scheme: only_secondary_id
+sample_sheets: [samplesheet.tsv]
 
 tasks:
   - name: genome
