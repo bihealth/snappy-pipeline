@@ -67,7 +67,7 @@ By default, `snappy run` builds every task and links its result files into `outp
 : Also log debug messages, such as the Snakemake command line.
 
 On a terminal, `snappy run` offers to commit uncommitted changes to the tracked files of the project, such as `config.yaml`, and asks for the commit message.
-Declined, without a terminal or in a dry-run, the run starts anyway: it records the commit and the diff and warns (see [Log archive](#log-archive)).
+Declined, without a terminal or in a dry-run, the run starts anyway: it records the commit and the diff and warns (see {ref}`Log archive <usage_log_archive>`).
 
 Everything after `--` goes to Snakemake:
 
@@ -293,6 +293,8 @@ For these views, it reads the BAMs of `depends_on.alignments` and the genome of 
 A structural variant spans to its `END`; one longer than `igv.max_span` (default 10 000 bp) gets a view of each breakpoint instead, so one large deletion cannot fill the page.
 `igv.max_size_mb` limits the size of the page, which drops the lowest-ranked calls until the page fits.
 The `igv` column of the table links a selected call to the page and every call to a running IGV desktop (`localhost:60151`).
+
+(usage_log_archive)=
 
 ## Log archive
 
