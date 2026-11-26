@@ -98,7 +98,7 @@ digraph {
     edge [color="#898781", arrowsize=0.6, fontname="Helvetica", fontsize=8, fontcolor="#52514e"];
     config [label="config.yaml\nproject, sample_sheets, tasks"];
     sheets [label="sample sheets\nlibraries, pedigrees, tumor-normal pairs"];
-    raw [label="raw data\nFASTQ files below the search paths"];
+    raw [label="FASTQ files\nlisted in the files tables of a reads task"];
     refs [label="reference data\nexternal_data, reference_download, reference_index tasks"];
     run [label="snappy run", style="rounded,filled", fillcolor="#e1e0d9"];
     work [label="tasks/<task>/work/\nall files of a task; other tasks read here"];
@@ -130,13 +130,13 @@ tasks:
   - name: genome
     step: external_data
     config:
-      produces: {type: raw, tags: [reference, dna]}
+      produces: {type: sequences, tags: [reference, dna]}
       files: {fasta: /path/to/genome.fa}
 
   - name: reads
     step: external_data
     config:
-      produces: {type: raw, tags: [fastq]}
+      produces: {type: reads}
       library_files: [reads.tsv]
 
   - name: bwa_index
@@ -295,7 +295,7 @@ tasks:
   - name: genome
     step: external_data
     config:
-      produces: {type: raw, tags: [reference, dna]}
+      produces: {type: sequences, tags: [reference, dna]}
       files: {fasta: <refs>/genome.fa}
 ```
 
@@ -311,7 +311,7 @@ This includes the `.fai` and `.dict` of a genome and the index of a VCF or of th
 
 Every task that reads FASTQ files names its source in `depends_on.reads`:
 
-- An `external_data` task that produces `raw` data, with the FASTQ files of the libraries.
+- An `external_data` task that produces `reads`, with the FASTQ files of the libraries.
 - An `adapter_trimming` task, for its trimmed files.
 
 An `external_data` task lists the files of each library in files tables, `library_files`.
@@ -339,13 +339,13 @@ tasks:
   - name: reads
     step: external_data
     config:
-      produces: {type: raw, tags: [fastq]}
+      produces: {type: reads}
       library_files: [reads.tsv]
 
   - name: genome
     step: external_data
     config:
-      produces: {type: raw, tags: [reference, dna]}
+      produces: {type: sequences, tags: [reference, dna]}
       files: {fasta: /refs/GRCh38.fa}
 
   - name: bwa_index

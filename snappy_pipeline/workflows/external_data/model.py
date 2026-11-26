@@ -40,7 +40,7 @@ class ExternalData(SnappyStepModel):
 
     library_files: list[ConfigPath] = []
     """Files tables with the files of each library: TSV files with one row per read group
-    (``type: raw``: the columns ``library``, ``readgroup``, ``left`` and, for paired-end data,
+    (``type: reads``: the columns ``library``, ``readgroup``, ``left`` and, for paired-end data,
     ``right``) or one row per library (``library`` and the output keys, such as ``bam`` and
     ``bai``). An empty cell is no value; relative paths are relative to the table's directory.
     ``snappy scan-files`` writes the first table."""
@@ -56,7 +56,7 @@ class ExternalData(SnappyStepModel):
                 "Set one of files (project-wide data), library_files (files tables per library) "
                 "or kits (per-kit data)"
             )
-        if self.mixed_se_pe and not self.patterns_find_reads():
+        if self.mixed_se_pe and not self.provides_reads():
             raise ValueError("mixed_se_pe is only for reads")
         if bad := sorted(name for name in self.kits if not KIT_NAME.fullmatch(name)):
             raise ValueError(f"Kit names may only contain A-Z, a-z, 0-9, '_', '.' and '-': {bad}")
@@ -64,6 +64,6 @@ class ExternalData(SnappyStepModel):
             raise ValueError("Every kit must have the same keys")
         return self
 
-    def patterns_find_reads(self) -> bool:
+    def provides_reads(self) -> bool:
         """Whether the files are reads (rows per read group), or one file per key and library."""
-        return self.produces.type == DataType.RAW
+        return self.produces.type == DataType.READS

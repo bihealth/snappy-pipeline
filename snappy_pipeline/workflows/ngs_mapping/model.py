@@ -61,7 +61,7 @@ class Tool(StrEnum):
 class NgsMappingDependsOn(SnappyModel):
     reads: Annotated[
         str,
-        DataSignature(DataType.RAW),
+        DataSignature(DataType.READS),
     ]
     """FASTQ source: an ``external_data`` task or an ``adapter_trimming`` task"""
 

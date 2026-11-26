@@ -222,7 +222,7 @@ MELT_FILES = {"jar_file": PLACEHOLDER, "me_refs_path": PLACEHOLDER}
 TASK_CONFIG: dict[tuple[str, str | None], dict[str, Any]] = {
     ("adapter_trimming", "bbduk"): {"bbduk": {"adapter_sequences": [PLACEHOLDER]}},
     ("external_data", None): {
-        "produces": {"type": "raw"},
+        "produces": {"type": "reads"},
         "library_files": [Fixture("reads_table")],
     },
     ("gene_expression_quantification", "dupradar"): {"dupradar": {}},
@@ -365,12 +365,12 @@ EXTRA_TASKS: list[dict[str, Any]] = [
         "step": "external_data",
         "name": "reads",
         "config": {
-            "produces": {"type": "raw", "tags": ["fastq"]},
+            "produces": {"type": "reads"},
             "library_files": [Fixture("reads_table")],
         },
     },
-    _external_file("genome", "raw", ["reference", "dna"], "fasta"),
-    _external_file("features", "raw", ["features", "rnaseqc"], "gtf"),
+    _external_file("genome", "sequences", ["reference", "dna"], "fasta"),
+    _external_file("features", "features", ["rnaseqc"], "gtf"),
     _external_file("dbsnp", "variants", ["dbsnp"], "vcf", VCF),
     _external_file("exons", "regions", ["exons"], "bed", PLACEHOLDER),
     _external_file("regions", "regions", ["microsatellites"], "bed"),
@@ -409,7 +409,7 @@ EXTRA_TASKS: list[dict[str, Any]] = [
     _external_vcfs("external_cnv", ["germline", "cnv"]),
     _external_vcfs("external_sv", ["germline", "sv"]),
     # The inputs of neoepitope prediction that other closures do not need
-    _external_file("proteome", "raw", ["proteome"], "fasta", PLACEHOLDER),
+    _external_file("proteome", "sequences", ["proteome"], "fasta", PLACEHOLDER),
     # FDR control of the germline varlociraptor calls per pedigree, and its calls report with IGV
     # views of the top calls, which read the BAMs and the genome
     {

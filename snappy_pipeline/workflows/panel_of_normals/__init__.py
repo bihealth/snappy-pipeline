@@ -41,7 +41,7 @@ Downstream tasks read these keys through their ``depends_on.panel_of_normals``:
 
 A task with ``tool: access`` gives the key ``access``.
 A ``cnvkit`` task reads it through ``depends_on.access``.
-That field can also name an ``external_data`` task that produces ``{type: raw, tags: [access]}`` with the key ``access``.
+That field can also name an ``external_data`` task that produces ``{type: regions, tags: [access]}`` with the key ``bed``.
 
 The CNVkit authors recommend checking the metrics and sex reports before a panel is used.
 The sex report predicts the donor sex from the coverage of the chromosomes X and Y.
@@ -393,7 +393,7 @@ class CnvkitStepPart(PanelOfNormalsStepPart):
             **self.parent.reference_inputs(),
         }
         if self.config.depends_on.access:
-            input_files["access"] = self.parent.get_upstream_paths("access").access
+            input_files["access"] = self.parent.get_upstream_paths("access").bed
         if self.config.cnvkit.path_annotation:
             input_files["annotate"] = self.config.cnvkit.path_annotation
         return input_files
@@ -410,7 +410,7 @@ class CnvkitStepPart(PanelOfNormalsStepPart):
             return {}
         result = {"target": self.output_paths["target"]}
         if self.config.depends_on.access:
-            result["access"] = self.parent.get_upstream_paths("access").access
+            result["access"] = self.parent.get_upstream_paths("access").bed
         return result
 
     def _get_output_files_antitarget(self):
@@ -505,7 +505,7 @@ class AccessStepPart(PanelOfNormalsStepPart):
     result_keys = ("access", "access_md5")
     default_resource_usage = ResourceUsage(threads=2, runtime="2h", mem="8GB")
     log_templates = {"run": "work/panel_of_normals/log/panel_of_normals.accessible"}
-    output_paths = {"access": PANEL + ".accessible.bed"}
+    output_paths = {"bed": PANEL + ".accessible.bed"}
 
     @dictify
     def _get_input_files_run(self, wildcards):
@@ -514,7 +514,7 @@ class AccessStepPart(PanelOfNormalsStepPart):
             yield "exclude", self.config.access.exclude
 
     def _get_output_files_run(self):
-        return with_md5("access", self.output_paths["access"])
+        return with_md5("access", self.output_paths["bed"])
 
     def _get_params_run(self, wildcards):
         return {"min_gap_size": self.config.access.min_gap_size}
@@ -685,7 +685,7 @@ class PanelOfNormalsWorkflow(BaseStep):
     def task_produces(cls, config, upstream):
         """The panel of normals of the task's tool; the access regions for ``tool: access``."""
         if config.tool == Tool.access:
-            return (DataSignature(DataType.RAW, frozenset({"access"})),)
+            return (DataSignature(DataType.REGIONS, frozenset({"access"})),)
         return (DataSignature(DataType.MODELS, frozenset({"pon", str(config.tool)})),)
 
     @classmethod

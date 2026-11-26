@@ -100,7 +100,7 @@ class NgsDataQcDependsOn(SnappyModel):
     alignments: Annotated[DnaAlignments, RequiredBy(Tool.picard, Tool.ngs_chew, Tool.alfred)] = ""
     """Alignments of DNA libraries"""
 
-    reads: Annotated[str, DataSignature(DataType.RAW), RequiredBy(Tool.fastqc)] = ""
+    reads: Annotated[str, DataSignature(DataType.READS), RequiredBy(Tool.fastqc)] = ""
     """FASTQ source: an ``external_data`` task or an ``adapter_trimming`` task"""
 
     reference: Annotated[Reference, RequiredBy(Tool.picard, Tool.ngs_chew, Tool.alfred)] = ""

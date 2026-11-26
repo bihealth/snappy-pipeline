@@ -38,12 +38,12 @@ The example maps RNA reads with STAR, infers the strandedness, and counts with f
       - name: genome
         step: external_data
         config:
-          produces: {type: raw, tags: [reference, dna]}
+          produces: {type: sequences, tags: [reference, dna]}
           files: {fasta: resources/genome.fa}
       - name: annotation
         step: external_data
         config:
-          produces: {type: raw, tags: [features]}
+          produces: {type: features}
           files: {gtf: resources/genes.gtf}
       - name: exons
         step: external_data
@@ -58,7 +58,7 @@ The example maps RNA reads with STAR, infers the strandedness, and counts with f
       - name: reads
         step: external_data
         config:
-          produces: {type: raw, tags: [fastq]}
+          produces: {type: reads}
           library_files: [reads.tsv]
       - name: mapping
         step: ngs_mapping
@@ -139,7 +139,7 @@ EXPRESSION_SIGNATURE = DataSignature(DataType.EXPRESSION, frozenset({"rna"}))
 #: Signature of the QC tools (dupradar, duplication, rnaseqc, stats)
 RNA_QC_SIGNATURE = DataSignature(DataType.QC, frozenset({"rna"}))
 #: The GTF that ``rnaseqc`` reads from ``depends_on.features``, prepared for RNA-SeQC
-RNASEQC_FEATURES_SIGNATURE = DataSignature(DataType.RAW, frozenset({"features", "rnaseqc"}))
+RNASEQC_FEATURES_SIGNATURE = DataSignature(DataType.FEATURES, frozenset({"rnaseqc"}))
 
 #: The output files of each library, below ``work/{library_name}/out/``
 OUT_PATH = "work/{library_name}/out/{library_name}"

@@ -39,7 +39,7 @@ def test_table_and_graph_name_every_step(contracts):
     for contract in contracts:
         assert f":ref:`{contract.name} <step_{contract.name}>`" in table
         assert f'"{contract.name}" [' in graph
-    assert "- ``reference``: ``raw [dna, reference]``" in table
+    assert "- ``reference``: ``sequences [dna, reference]``" in table
     assert "- ``dbsnp``: ``variants [dbsnp]`` (optional)" in table
 
 

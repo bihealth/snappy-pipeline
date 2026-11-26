@@ -98,7 +98,7 @@ class GeneExpressionQuantificationDependsOn(SnappyModel):
     ] = ""
     """Alignments of RNA libraries, from an ``ngs_mapping`` task"""
 
-    reads: Annotated[str, DataSignature(DataType.RAW), RequiredBy(Tool.salmon)] = ""
+    reads: Annotated[str, DataSignature(DataType.READS), RequiredBy(Tool.salmon)] = ""
     """FASTQ source: an ``external_data`` task or an ``adapter_trimming`` task"""
 
     strandedness: Annotated[

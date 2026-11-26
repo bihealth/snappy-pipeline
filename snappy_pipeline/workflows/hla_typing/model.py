@@ -87,7 +87,7 @@ class HlaTypingDependsOn(SnappyModel):
     ] = ""
     """Alignments of RNA libraries"""
 
-    reads: Annotated[str, DataSignature(DataType.RAW), RequiredBy(Tool.optitype)] = ""
+    reads: Annotated[str, DataSignature(DataType.READS), RequiredBy(Tool.optitype)] = ""
     """FASTQ source: an ``external_data`` task or an ``adapter_trimming`` task"""
 
 

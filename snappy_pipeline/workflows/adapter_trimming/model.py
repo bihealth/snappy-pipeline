@@ -894,7 +894,7 @@ class Bbduk(ToolModel):
 class AdapterTrimmingDependsOn(SnappyModel):
     reads: Annotated[
         str,
-        DataSignature(DataType.RAW),
+        DataSignature(DataType.READS),
     ]
     """FASTQ source: an ``external_data`` task that produces ``raw``, or an ``adapter_trimming`` task."""
 

@@ -73,13 +73,13 @@ tasks:
   - name: genome
     step: external_data
     config:
-      produces: {type: raw, tags: [reference, dna]}
+      produces: {type: sequences, tags: [reference, dna]}
       files: {fasta: /path/to/genome.fa}
 
   - name: reads
     step: external_data
     config:
-      produces: {type: raw, tags: [fastq]}
+      produces: {type: reads}
       library_files: [reads.tsv]
 
   - name: gnomad
@@ -141,7 +141,7 @@ A task with `tool: access` creates it from the reference and from BED files of r
 It writes the access file to `tasks/<access task>/work/panel_of_normals/out/panel_of_normals.accessible.bed`.
 
 The `cnvkit` task names the access task in `depends_on.access`.
-An `external_data` task with `produces: {type: raw, tags: [access]}` and `files: {access: <BED file>}` can take its place.
+An `external_data` task with `produces: {type: regions, tags: [access]}` and `files: {bed: <BED file>}` can take its place.
 The access file is optional.
 Without it, exome mode does not restrict the antitarget regions.
 Whole genome mode creates an access file with default settings instead.

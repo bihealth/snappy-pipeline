@@ -58,7 +58,7 @@ class Star(ToolModel):
 class ReferenceIndexDependsOn(SnappyModel):
     reference: Annotated[
         str,
-        DataSignature(DataType.RAW, frozenset({"reference", ("dna", "rna")})),
+        DataSignature(DataType.SEQUENCES, frozenset({"reference", ("dna", "rna")})),
         ExpectedPathSchema(ExpectedReferenceDownloadFiles),
     ]
     """Reference FASTA: a ``reference_download`` task, or an ``external_data`` task with the key ``fasta``."""

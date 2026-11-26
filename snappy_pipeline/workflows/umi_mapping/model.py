@@ -24,7 +24,7 @@ class Consensus(StrEnum):
 
 
 class UmiMappingDependsOn(SnappyModel):
-    reads: Annotated[str, DataSignature(DataType.RAW)]
+    reads: Annotated[str, DataSignature(DataType.READS)]
     """FASTQ source: an ``external_data`` task or an ``adapter_trimming`` task"""
 
     index: Annotated[

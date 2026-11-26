@@ -175,7 +175,7 @@ Mutect2 with the resources of the GATK resource bundle, one ``external_data`` ta
       - name: genome
         step: external_data
         config:
-          produces: {type: raw, tags: [reference, dna]}
+          produces: {type: sequences, tags: [reference, dna]}
           files: {fasta: /refs/GRCh38/Homo_sapiens_assembly38.fasta}
       - name: bwa_index
         step: external_data
@@ -185,7 +185,7 @@ Mutect2 with the resources of the GATK resource bundle, one ``external_data`` ta
       - name: reads
         step: external_data
         config:
-          produces: {type: raw, tags: [fastq]}
+          produces: {type: reads}
           library_files: [reads.tsv]
       - name: mapping
         step: ngs_mapping
@@ -230,7 +230,7 @@ The annotation and the other consumers read the result of the FDR control:
       - name: genome
         step: external_data
         config:
-          produces: {type: raw, tags: [reference, dna]}
+          produces: {type: sequences, tags: [reference, dna]}
           files: {fasta: /refs/GRCh38/Homo_sapiens_assembly38.fasta}
       - name: bwa_index
         step: external_data
@@ -246,7 +246,7 @@ The annotation and the other consumers read the result of the FDR control:
       - name: reads
         step: external_data
         config:
-          produces: {type: raw, tags: [fastq]}
+          produces: {type: reads}
           library_files: [reads.tsv]
       - name: mapping
         step: ngs_mapping

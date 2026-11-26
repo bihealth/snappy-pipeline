@@ -246,7 +246,7 @@ def _write_closure_project(
     raw_dir.mkdir(parents=True, exist_ok=True)
     for task in closure_config["tasks"]:
         if task["step"] == "external_data" and "library_files" in task["config"]:
-            reads = task["config"]["produces"]["type"] == "raw"
+            reads = task["config"]["produces"]["type"] == "reads"
             task["config"]["library_files"] = [
                 str(tmp_path / ("reads.tsv" if reads else "vcfs.tsv"))
             ]
@@ -518,7 +518,7 @@ def test_mapping_reads_from_an_external_data_task(
         "step": "external_data",
         "name": "external_reads",
         "config": {
-            "produces": {"type": "raw"},
+            "produces": {"type": "reads"},
             "library_files": [str(tmp_path / "reads.tsv")],
         },
     }

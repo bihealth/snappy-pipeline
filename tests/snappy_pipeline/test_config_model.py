@@ -242,12 +242,15 @@ def test_default_config_of_a_tool_leaves_out_what_the_tool_does_not_read():
 
 def test_default_config_writes_the_answers_without_tags():
     external = WORKFLOW_REGISTRY["external_data"].config_model_class
-    answers = {"produces": {"type": "raw", "tags": ["dna", "reference"]}, "files": {"fasta": None}}
+    answers = {
+        "produces": {"type": "sequences", "tags": ["dna", "reference"]},
+        "files": {"fasta": None},
+    }
 
     text = default_config_yaml_string(external, "minimal", answers=answers)
 
     # An answered key has no tag; an answered None is a key to fill in
-    assert text.startswith("produces:\n  type: raw\n  tags:\n    - dna\n    - reference\n")
+    assert text.startswith("produces:\n  type: sequences\n  tags:\n    - dna\n    - reference\n")
     assert re.search(r"\nfiles:\n  fasta:\s+# REQUIRED\n", text)
     mapping = WORKFLOW_REGISTRY["ngs_mapping"].config_model_class
     text = default_config_yaml_string(

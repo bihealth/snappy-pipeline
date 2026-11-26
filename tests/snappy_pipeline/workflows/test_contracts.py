@@ -168,7 +168,7 @@ def _mapping_step(*tasks, reads="reads"):
 
 
 def _external_reads(name, path):
-    config = {"produces": {"type": "raw"}, "library_files": [f"{path}/reads.tsv"]}
+    config = {"produces": {"type": "reads"}, "library_files": [f"{path}/reads.tsv"]}
     return ("external_data", name, config)
 
 

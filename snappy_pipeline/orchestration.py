@@ -111,7 +111,7 @@ class Project:
         if key not in self._files_tables:
             try:
                 self._files_tables[key] = read_files_tables(
-                    key, config.patterns_find_reads(), config.mixed_se_pe, self.pathvars
+                    key, config.provides_reads(), config.mixed_se_pe, self.pathvars
                 )
             except ValueError as e:
                 raise ConfigError(str(e)) from None

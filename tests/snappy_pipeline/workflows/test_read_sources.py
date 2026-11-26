@@ -11,7 +11,7 @@ from snappy_pipeline.reads import read_files_tables
 from snappy_pipeline.workflows.abstract import BaseStep
 from snappy_pipeline.workflows.external_data.model import ExternalData
 
-RAW = {"type": "raw", "tags": []}
+READS = {"type": "reads"}
 
 
 def _step(source, tasks):
@@ -33,7 +33,7 @@ def test_external_reads_may_mix_single_and_paired_end(tmp_path):
     table.write_text(
         "library\treadgroup\tleft\tright\nL1\ta\ta_R1.fq.gz\t\nL2\tb\tb_R1.fq.gz\tb_R2.fq.gz\n"
     )
-    config = {"library_files": [str(table)], "produces": RAW}
+    config = {"library_files": [str(table)], "produces": READS}
     with pytest.raises(ValueError, match="set mixed_se_pe"):
         _step("raw", {"raw": ExternalData(**config)}).read_groups("L1")
 

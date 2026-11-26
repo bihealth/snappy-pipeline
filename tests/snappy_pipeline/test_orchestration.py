@@ -30,13 +30,13 @@ GENOME = (
     "external_data",
     "genome",
     {
-        "produces": {"type": "raw", "tags": ["reference", "dna"]},
+        "produces": {"type": "sequences", "tags": ["reference", "dna"]},
         "files": {"fasta": "/refs/genome.fa"},
     },
 )
 
 
-GENES = ("external_data", "genes", {"produces": {"type": "raw", "tags": ["features"]}})
+GENES = ("external_data", "genes", {"produces": {"type": "features"}})
 GENES[2]["files"] = {"gtf": "/refs/genes.gtf"}
 DBSNP = ("external_data", "dbsnp", {"produces": {"type": "variants", "tags": ["dbsnp"]}})
 DBSNP[2]["files"] = {"vcf": "/refs/dbsnp.vcf.gz"}
@@ -65,7 +65,7 @@ KITS = (
 READS = (
     "external_data",
     "reads",
-    {"produces": {"type": "raw", "tags": ["fastq"]}, "library_files": ["reads.tsv"]},
+    {"produces": {"type": "reads"}, "library_files": ["reads.tsv"]},
 )
 
 
@@ -221,7 +221,7 @@ def _genome(name, fasta):
     return (
         "external_data",
         name,
-        {"produces": {"type": "raw", "tags": ["reference", "dna"]}, "files": files},
+        {"produces": {"type": "sequences", "tags": ["reference", "dna"]}, "files": files},
     )
 
 
@@ -467,7 +467,7 @@ def test_regions_filter_reads_any_bed_file_of_regions():
 )
 def test_external_data_config_errors(config, error):
     with pytest.raises(ConfigError, match=error):
-        load_project(_config(_external("ext", "raw", [], **config)), WORK_DIR)
+        load_project(_config(_external("ext", "reads", [], **config)), WORK_DIR)
 
 
 # create_task_instances ---------------------------------------------------------------------------
@@ -633,7 +633,7 @@ def test_missing_files_lists_paths_and_genome_sidecars(tmp_path):
     genome = (
         "external_data",
         "genome",
-        {"produces": {"type": "raw", "tags": ["reference", "dna"]}},
+        {"produces": {"type": "sequences", "tags": ["reference", "dna"]}},
     )
     genome[2]["files"] = {"fasta": "genome.fa"}
     bwa_index = (
@@ -661,7 +661,7 @@ def test_missing_files_lists_the_index_of_a_vcf(tmp_path):
         (tmp_path / name).touch()
     (tmp_path / "reads.tsv").write_text("library\treadgroup\tleft\n")
     tasks = (
-        _external("genome", "raw", ["reference", "dna"], files={"fasta": "genome.fa"}),
+        _external("genome", "sequences", ["reference", "dna"], files={"fasta": "genome.fa"}),
         _external("bwa_index", "index", ["bwa", "dna"], files={"index": "index"}),
         _external("dbsnp", "variants", ["dbsnp"], files={"vcf": "dbsnp.vcf.gz"}),
         READS,
@@ -685,7 +685,7 @@ def test_missing_files_lists_the_index_of_a_mappability_track(tmp_path):
     kits = {"Kit": {"targets": "kit.bed", "baits": "kit.bed"}}
     depends_on = {"alignments": "mapping", "reference": "genome", "kits": "kits"}
     tasks = (
-        _external("genome", "raw", ["reference", "dna"], files={"fasta": "genome.fa"}),
+        _external("genome", "sequences", ["reference", "dna"], files={"fasta": "genome.fa"}),
         _external("bwa_index", "index", ["bwa", "dna"], files={"index": "index"}),
         _external("kits", "regions", ["kits"], kits=kits),
         _external("mappable", "regions", ["mappable"], files={"bed": "map.bed"}),

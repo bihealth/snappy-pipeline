@@ -82,14 +82,12 @@ def _project(tmp_path, table_libraries=("a", "b")):
         dependencies={},
         task_configs={
             "raw": SimpleNamespace(
-                library_files=[str(tmp_path / "r.tsv")], patterns_find_reads=lambda: True
+                library_files=[str(tmp_path / "r.tsv")], provides_reads=lambda: True
             ),
             "tables": SimpleNamespace(
-                library_files=[str(tmp_path / "t.tsv")], patterns_find_reads=lambda: False
+                library_files=[str(tmp_path / "t.tsv")], provides_reads=lambda: False
             ),
-            "missing": SimpleNamespace(
-                library_files=["/none/m.tsv"], patterns_find_reads=lambda: True
-            ),
+            "missing": SimpleNamespace(library_files=["/none/m.tsv"], provides_reads=lambda: True),
         },
         files_table=lambda config: SimpleNamespace(
             files=lambda library: {"bam": "a.bam"} if library == "a" else {},

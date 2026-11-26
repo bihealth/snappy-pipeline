@@ -20,7 +20,7 @@ Inputs
 - ``depends_on.alignments`` and ``depends_on.features`` (pVACsplice): STAR alignments of the matched RNA library and the gene annotation.
   The strandedness decision of the RNA library must be stranded.
 - ``depends_on.reference``: the genome.
-- ``depends_on.proteome`` (optional): a reference proteome FASTA from an ``external_data`` task (``{type: raw, tags: [proteome]}``, key ``fasta``) for the proteome similarity check of the epitopes.
+- ``depends_on.proteome`` (optional): a reference proteome FASTA from an ``external_data`` task (``{type: sequences, tags: [proteome]}``, key ``fasta``) for the proteome similarity check of the epitopes.
 
 pVACseq options and their inputs:
 

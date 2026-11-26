@@ -7,7 +7,14 @@ from pydantic import BaseModel
 
 
 class DataType(StrEnum):
-    RAW = "raw"
+    """The data types of the ``depends_on`` contracts.
+    The type is the file contract of a dependency, the keys a consumer reads: ``reads`` are FASTQ read groups, ``sequences`` a ``fasta``, ``features`` a ``gtf``, ``regions`` a ``bed``, ``alignments`` ``bam`` and ``bai``, ``variants`` ``vcf`` and ``vcf_tbi``.
+    The tags say what the content is (``dna``, ``reference``, ``trimmed``, ``filtered``).
+    """
+
+    READS = "reads"
+    SEQUENCES = "sequences"
+    FEATURES = "features"
     REGIONS = "regions"
     DATABASE = "database"
     INDEX = "index"
@@ -237,12 +244,10 @@ DnaAlignments = Annotated[
 #: ``depends_on`` field types for the reference data that many steps read
 Reference = Annotated[
     str,
-    DataSignature(DataType.RAW, frozenset({"reference", "dna"})),
+    DataSignature(DataType.SEQUENCES, frozenset({"reference", "dna"})),
     ExpectedPathSchema(ExpectedReference),
 ]
-Features = Annotated[
-    str, DataSignature(DataType.RAW, frozenset({"features"})), ExpectedPathSchema(ExpectedFeatures)
-]
+Features = Annotated[str, DataSignature(DataType.FEATURES), ExpectedPathSchema(ExpectedFeatures)]
 Dbsnp = Annotated[
     str, DataSignature(DataType.VARIANTS, frozenset({"dbsnp"})), ExpectedPathSchema(ExpectedVcf)
 ]

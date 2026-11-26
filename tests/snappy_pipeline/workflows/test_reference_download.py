@@ -7,7 +7,7 @@ from snappy_pipeline.workflows.abstract.protocol import DataSignature, DataType
 from snappy_pipeline.workflows.reference_download import ReferenceDownloadWorkflow
 from snappy_pipeline.workflows.reference_download.model import ReferenceDownload
 
-DNA_REFERENCE = DataSignature(DataType.RAW, frozenset({"reference", "dna"}))
+DNA_REFERENCE = DataSignature(DataType.SEQUENCES, frozenset({"reference", "dna"}))
 
 
 def test_source_is_required():
@@ -20,7 +20,7 @@ def test_the_task_produces_its_source_and_molecule():
 
     produced = ReferenceDownloadWorkflow.task_produces(config, {})
 
-    assert produced == (DataSignature(DataType.RAW, frozenset({"ucsc", "reference", "rna"})),)
+    assert produced == (DataSignature(DataType.SEQUENCES, frozenset({"ucsc", "reference", "rna"})),)
     assert set(produced) <= set(ReferenceDownloadWorkflow.produces)
 
 

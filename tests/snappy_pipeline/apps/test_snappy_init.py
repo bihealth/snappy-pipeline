@@ -184,7 +184,7 @@ def test_init_asks_for_what_no_option_gives(tmp_path, git, answers):
     assert 'description: "A trio"' in text and "sample_sheets:" in text
     # The genome task was added while the mapping task was asked for, so it comes first
     assert text.index("- name: genome\n") < text.index("- name: mapping\n")
-    assert "type: raw\n" in text and "- dna\n" in text and "- reference\n" in text
+    assert "type: sequences\n" in text and "- dna\n" in text and "- reference\n" in text
     assert re.search(r"\n      files:\n        fasta:\s+# REQUIRED\n", text)  # to fill in
     assert "tool: bwa_mem3\n" in text and "reads: reads\n" in text
     assert "reference: genome\n" in text

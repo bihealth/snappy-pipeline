@@ -79,7 +79,7 @@ class ExpectedStarFusionDatabase(SnappyModel):
 class SomaticGeneFusionCallingDependsOn(SnappyModel):
     reads: Annotated[
         str,
-        DataSignature(DataType.RAW),
+        DataSignature(DataType.READS),
     ]
     """
     FASTQ source: an ``external_data`` task, an ``adapter_trimming`` task,

@@ -125,7 +125,7 @@ def scan_of(project: Project, task_name: str, search_paths=(), patterns=()) -> S
     """The scan of a task: the arguments given, else the one its table records, else the defaults
     for reads; ``None`` for other data without arguments or a recorded scan."""
     config = project.task_configs[task_name]
-    reads = config.patterns_find_reads()
+    reads = config.provides_reads()
     recorded = recorded_scan(config.library_files[0])
     if search_paths or patterns:
         given = tuple(os.path.join(project.project_dir, p) for p in search_paths)
@@ -177,7 +177,7 @@ def scan_files(
                     "--pattern key=regex for its files"
                 )
             continue  # other data without a recorded scan is not rescanned
-        reads = config.patterns_find_reads()
+        reads = config.provides_reads()
         keys = list(dict.fromkeys(key for pattern in scan.patterns for key in pattern))
         rows: list[list[str]] = []
         claimed: dict[str, str] = {}

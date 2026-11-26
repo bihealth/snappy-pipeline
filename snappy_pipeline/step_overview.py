@@ -26,7 +26,7 @@ RESOURCE_STEPS = frozenset({"external_data", "reference_download", "reference_in
 
 #: One hue per data type that flows between steps, in a fixed order
 TYPE_COLORS = {
-    DataType.RAW: "#2a78d6",
+    DataType.READS: "#2a78d6",
     DataType.ALIGNMENTS: "#eb6834",
     DataType.VARIANTS: "#1baf7a",
     DataType.EXPRESSION: "#eda100",
@@ -157,8 +157,8 @@ def dot(contracts: list[StepContract]) -> str:
         + " }"
     )
     # The FASTQ files of the libraries come from an external_data task's files tables
-    edges[("external_data", DataType.RAW)] = (False, True)
-    hubs.add(DataType.RAW)
+    edges[("external_data", DataType.READS)] = (False, True)
+    hubs.add(DataType.READS)
     for data_type in sorted(hubs):
         color = TYPE_COLORS[data_type]
         ink = INK if data_type == DataType.EXPRESSION else "#ffffff"

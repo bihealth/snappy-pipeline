@@ -18,7 +18,7 @@ tasks:
   - name: genome
     step: external_data
     config:
-      produces: {type: raw, tags: [reference, dna]}
+      produces: {type: sequences, tags: [reference, dna]}
       files: {fasta: <refs>/genome.fa}
 """
 

@@ -12,6 +12,7 @@ from snappy_pipeline.workflows.abstract.protocol import (
     DataType,
     DnaAlignments,
     ExpectedPathSchema,
+    ExpectedRegions,
     GermlineResource,
     Kits,
     Reference,
@@ -22,12 +23,6 @@ class ExpectedGenomicsDb(BaseModel):
     """Consumer-driven contract: the GenomicsDB of a mutect2 panel of normals task."""
 
     genomicsdb: str
-
-
-class ExpectedAccess(BaseModel):
-    """Consumer-driven contract: the accessible regions (BED)."""
-
-    access: str
 
 
 class Tool(enum.StrEnum):
@@ -136,13 +131,13 @@ class PanelOfNormalsDependsOn(SnappyModel):
 
     access: Annotated[
         str,
-        DataSignature(DataType.RAW, frozenset({"access"})),
-        ExpectedPathSchema(ExpectedAccess),
+        DataSignature(DataType.REGIONS, frozenset({"access"})),
+        ExpectedPathSchema(ExpectedRegions),
         ReadBy(Tool.cnvkit),
     ] = ""
     """
     The accessible regions: a ``panel_of_normals`` task with ``tool: access``, or an
-    ``external_data`` task that produces ``{type: raw, tags: [access]}`` with the key ``access``
+    ``external_data`` task that produces ``{type: regions, tags: [access]}`` with the key ``bed``
     """
 
     reference: Reference

@@ -10,7 +10,7 @@ Consumers read the files where they are.
 The task has one of three modes.
 With ``files``, it provides project-wide files by output key, such as a reference genome.
 A key may name a list of files, such as several transcript databases of mehari.
-With ``library_files``, it provides the files of each library from files tables: TSV files with one row per read group (``type: raw``: ``library``, ``readgroup``, ``left`` and ``right``) or one row per library (``library`` and the output keys).
+With ``library_files``, it provides the files of each library from files tables: TSV files with one row per read group (``type: reads``: ``library``, ``readgroup``, ``left`` and ``right``) or one row per library (``library`` and the output keys).
 An empty cell is no value, and relative paths are relative to the table's directory.
 ``mixed_se_pe: true`` accepts read groups without a ``right`` file.
 ``snappy scan-files`` writes the first table from the libraries of the sample sheets: the files of a library are below a folder named like its ``folderName`` in the sheet, else like the library, at any depth below a search path (``--search-path``, default ``raw``), or are named after it (``<name>_...``); the patterns (``--pattern key=regex``) are regular expressions for the path below that folder or the file name, by output key, and the ``(?P<readgroup>...)`` group of a read pattern pairs the mates (default: the common namings ``_R1_001.fastq.gz``, ``.R1.fastq.gz``, ``_R1.fastq.gz`` and ``_1.fastq.gz``, also as ``.fq.gz``).
@@ -43,7 +43,7 @@ The reads of the libraries, a reference and a bwa index as input of ``ngs_mappin
       - step: external_data
         name: genome
         config:
-          produces: {type: raw, tags: [reference, dna]}
+          produces: {type: sequences, tags: [reference, dna]}
           files: {fasta: /refs/GRCh38/GRCh38.fa}
 
       - step: external_data
@@ -55,7 +55,7 @@ The reads of the libraries, a reference and a bwa index as input of ``ngs_mappin
       - step: external_data
         name: reads
         config:
-          produces: {type: raw, tags: [fastq]}
+          produces: {type: reads}
           library_files: [reads.tsv]
 
       - step: ngs_mapping
@@ -94,7 +94,7 @@ The regions of two exome kits, read by the coverage QC of ``ngs_data_qc``:
       - step: external_data
         name: genome
         config:
-          produces: {type: raw, tags: [reference, dna]}
+          produces: {type: sequences, tags: [reference, dna]}
           files: {fasta: /refs/GRCh38/GRCh38.fa}
 
       - step: external_data
@@ -118,7 +118,7 @@ The regions of two exome kits, read by the coverage QC of ``ngs_data_qc``:
       - name: reads
         step: external_data
         config:
-          produces: {type: raw, tags: [fastq]}
+          produces: {type: reads}
           library_files: [reads.tsv]
       - step: ngs_mapping
         name: mapping
@@ -168,7 +168,7 @@ def no_rows_message(config: ExternalData, library_name: str, task_name: str = ""
     """The error for a library without rows in the files tables of ``config``, with the way to add
     them."""
     tables = ", ".join(config.library_files)
-    if config.patterns_find_reads():
+    if config.provides_reads():
         fix = "run `snappy scan-files` to add them"
     else:
         task = f" --task {task_name}" if task_name else ""
@@ -180,7 +180,7 @@ class ExternalDataWorkflow(BaseStep):
     """Provides existing files to other tasks; has no rules of its own."""
 
     name = "external_data"
-    produces = [DataSignature(DataType.RAW)]
+    produces = []
     config_model_class = ExternalData
 
     #: The files tables are read once per run, by the project
@@ -200,7 +200,7 @@ class ExternalDataWorkflow(BaseStep):
         if config.kits:
             return set(next(iter(config.kits.values())))
         try:
-            return files_table_keys(config.library_files, config.patterns_find_reads())
+            return files_table_keys(config.library_files, config.provides_reads())
         except ValueError as e:
             raise ConfigError(str(e)) from None
 

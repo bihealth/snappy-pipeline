@@ -520,6 +520,9 @@ digraph contract {
 
 ### Signatures
 
+A `DataSignature` is a data type and tags.
+The type is the file contract of a dependency, the keys a consumer reads: `reads` are FASTQ read groups, `sequences` a `fasta`, `features` a `gtf`, `regions` a `bed`, `alignments` `bam` and `bai`, `variants` `vcf` and `vcf_tbi`; `index`, `database`, `models`, `expression`, `tabular`, `exports` and `qc` have tool-specific keys.
+The tags say what the content is: the molecule (`dna`, `rna`), the role (`reference`, `exons`, `access`) or the state (`trimmed`, `filtered`).
 A step lists what its tasks produce in `produces`.
 If that depends on the task's config or its inputs, the step overrides the classmethod `task_produces(config, upstream)`.
 For example, `ngs_mapping` produces `alignments [rna]` for STAR, and `variant_filtration` adds `filtered` to the tags of its input.

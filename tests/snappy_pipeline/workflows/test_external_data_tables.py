@@ -24,7 +24,7 @@ tasks:
   - name: genome
     step: external_data
     config:
-      produces: {type: raw, tags: [reference, dna]}
+      produces: {type: sequences, tags: [reference, dna]}
       files: {fasta: refs/genome.fa}
   - name: bwa_index
     step: external_data
@@ -34,7 +34,7 @@ tasks:
   - name: reads
     step: external_data
     config:
-      produces: {type: raw, tags: [fastq]}
+      produces: {type: reads}
       library_files: [reads.tsv]
   - name: mapping
     step: ngs_mapping
@@ -177,5 +177,5 @@ def test_files_per_library_from_a_table(tmp_path):
 def test_model_errors(config, error):
     with pytest.raises(ValueError, match=error):
         ExternalDataWorkflow.config_model_class.model_validate(
-            {"produces": {"type": "raw"}} | config
+            {"produces": {"type": "reads"}} | config
         )

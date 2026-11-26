@@ -21,7 +21,7 @@ Below ``tasks/<task>/output/``:
 - ``reference_download/out/reference.fa`` with its index ``reference.fa.fai`` and sequence dictionary ``reference.dict``, each with an ``.md5`` file
 
 Downstream tasks read the FASTA file through the key ``fasta`` of their ``reference`` field, and find the ``.fai`` and ``.dict`` next to it.
-The task produces data of type ``raw`` with the tags ``reference``, its source and the ``molecule`` of the source section (``dna``, ``rna`` or ``protein``).
+The task produces data of type ``sequences`` with the tags ``reference``, its source and the ``molecule`` of the source section (``dna``, ``rna`` or ``protein``).
 
 Examples
 --------
@@ -119,15 +119,15 @@ class ReferenceDownloadWorkflow(BaseStep):
     name = "reference_download"
 
     produces = [
-        DataSignature(DataType.RAW, frozenset({"ensembl", "reference", "dna"})),
-        DataSignature(DataType.RAW, frozenset({"ensembl", "reference", "rna"})),
-        DataSignature(DataType.RAW, frozenset({"ensembl", "reference", "protein"})),
-        DataSignature(DataType.RAW, frozenset({"refseq", "reference", "dna"})),
-        DataSignature(DataType.RAW, frozenset({"refseq", "reference", "rna"})),
-        DataSignature(DataType.RAW, frozenset({"refseq", "reference", "protein"})),
-        DataSignature(DataType.RAW, frozenset({"ucsc", "reference", "dna"})),
-        DataSignature(DataType.RAW, frozenset({"ucsc", "reference", "rna"})),
-        DataSignature(DataType.RAW, frozenset({"ucsc", "reference", "protein"})),
+        DataSignature(DataType.SEQUENCES, frozenset({"ensembl", "reference", "dna"})),
+        DataSignature(DataType.SEQUENCES, frozenset({"ensembl", "reference", "rna"})),
+        DataSignature(DataType.SEQUENCES, frozenset({"ensembl", "reference", "protein"})),
+        DataSignature(DataType.SEQUENCES, frozenset({"refseq", "reference", "dna"})),
+        DataSignature(DataType.SEQUENCES, frozenset({"refseq", "reference", "rna"})),
+        DataSignature(DataType.SEQUENCES, frozenset({"refseq", "reference", "protein"})),
+        DataSignature(DataType.SEQUENCES, frozenset({"ucsc", "reference", "dna"})),
+        DataSignature(DataType.SEQUENCES, frozenset({"ucsc", "reference", "rna"})),
+        DataSignature(DataType.SEQUENCES, frozenset({"ucsc", "reference", "protein"})),
     ]
 
     config_model_class = ReferenceDownloadConfigModel
@@ -137,7 +137,7 @@ class ReferenceDownloadWorkflow(BaseStep):
         molecule = getattr(config, config.source).molecule
         return (
             DataSignature(
-                DataType.RAW, frozenset({str(config.source), "reference", str(molecule)})
+                DataType.SEQUENCES, frozenset({str(config.source), "reference", str(molecule)})
             ),
         )
 

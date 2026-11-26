@@ -260,7 +260,7 @@ class SomaticNeoepitopePredictionDependsOn(SnappyModel):
 
     proteome: Annotated[
         str,
-        DataSignature(DataType.RAW, frozenset({"proteome"})),
+        DataSignature(DataType.SEQUENCES, frozenset({"proteome"})),
         ExpectedPathSchema(ExpectedProteome),
     ] = ""
     """A reference proteome for the similarity check of the epitopes (optional)"""

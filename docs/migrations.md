@@ -167,6 +167,10 @@ A file that only one tool reads can still be a dependency.
 A bwa index has a format that only bwa reads, but it must match the genome that the other tasks use.
 So it is `depends_on.index`, from a task with `produces: {type: index, tags: [bwa, dna]}`.
 
+The type is the file contract (the keys a consumer reads), the tags say what the content is.
+FASTQ read groups are `reads` (an `external_data` task with files tables, or `adapter_trimming`, which tags them `trimmed`), a FASTA is `sequences` (the genome: `{type: sequences, tags: [reference, dna]}`, a proteome: `[proteome]`), a GTF is `features`, and every BED file is `regions`, cnvkit's accessible regions included (`{type: regions, tags: [access]}` with the key `bed`).
+There is no `raw` type.
+
 A **task-local file** belongs to the setup of one tool and does not depend on the reference.
 Examples are a jar or a Python file with vembrane helpers.
 It is a path in the tool section, which the step passes to the rule as an input.
@@ -853,19 +857,19 @@ tasks:
   - name: reads
     step: external_data
     config:
-      produces: {type: raw, tags: [fastq]}
+      produces: {type: reads}
       library_files: [reads.tsv]
 
   # Reference data (static_data_config and the path_* fields on main)
   - name: genome
     step: external_data
     config:
-      produces: {type: raw, tags: [reference, dna]}
+      produces: {type: sequences, tags: [reference, dna]}
       files: {fasta: /path/to/ref.fa}
   - name: genes
     step: external_data
     config:
-      produces: {type: raw, tags: [features]}
+      produces: {type: features}
       files: {gtf: /path/to/gencode.gtf}
   - name: dbsnp
     step: external_data
@@ -905,7 +909,7 @@ tasks:
   - name: proteome
     step: external_data
     config:
-      produces: {type: raw, tags: [proteome]}
+      produces: {type: sequences, tags: [proteome]}
       files: {fasta: /path/to/gencode.fa}
 
   # Mapping and expression

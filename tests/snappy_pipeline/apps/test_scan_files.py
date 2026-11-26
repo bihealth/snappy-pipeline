@@ -20,7 +20,7 @@ tasks:
   - name: reads
     step: external_data
     config:
-      produces: {type: raw, tags: [fastq]}
+      produces: {type: reads}
       library_files: [reads.tsv]
   - name: bams
     step: external_data
@@ -30,7 +30,7 @@ tasks:
   - name: genome
     step: external_data
     config:
-      produces: {type: raw, tags: [reference, dna]}
+      produces: {type: sequences, tags: [reference, dna]}
       files: {fasta: refs/genome.fa}
 """
 

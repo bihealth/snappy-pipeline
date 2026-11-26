@@ -126,7 +126,7 @@ class FastpStepPart(AdapterTrimmingStepPart):
 
 class AdapterTrimmingWorkflow(BaseStep):
     name = "adapter_trimming"
-    produces = [DataSignature(DataType.RAW, frozenset({"trimmed"}))]
+    produces = [DataSignature(DataType.READS, frozenset({"trimmed"}))]
     config_model_class = AdapterTrimmingConfigModel
     tool_parts = {Tool.BBDUK: BbdukStepPart, Tool.FASTP: FastpStepPart}
 
