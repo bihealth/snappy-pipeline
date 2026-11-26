@@ -33,21 +33,22 @@ dependencies = [
     "biomedsheets @ git+https://github.com/bihealth/biomedsheets.git@8a86f4c0b94b2c0bde14a22acf552387958ad688",
     # Snakemake is used for providing the actual wrapper calling functionality; its development
     # version, for the software deployment plugins (software: directive, post-deploy scripts).
-    # Commits of upstream main with the merged fixes snakemake#4357 (snakemake.params and
-    # makedirs in scripts with Python < 3.11), snakemake-interface-common#101 (no enum.StrEnum
-    # on Python < 3.11, as in the gCNV environment) and #102 (--sdm-container-mountpoints); the
-    # container plugin from the head of its open pull request #31 (apptainer runs the pulled
-    # image)
-    "snakemake @ git+https://github.com/snakemake/snakemake.git@619fa242b231f31a17989f513db2f355ea9d8ab7",
-    "snakemake-interface-common @ git+https://github.com/snakemake/snakemake-interface-common.git@8afe08d830a6647b5192e1cdda74f0eca50cf5a2",
+    # A commit of upstream main with the merged fixes snakemake#4357 (snakemake.params and
+    # makedirs in scripts with Python < 3.11) and #4359 (migration of a 9.x metadata.db).
+    # snakemake-interface-common 1.24.1 carries #101 (no enum.StrEnum on Python < 3.11, as in
+    # the gCNV environment) and #102 (--sdm-container-mountpoints), the container plugin 0.7.6
+    # carries #31 (apptainer runs the pulled image).
+    "snakemake @ git+https://github.com/snakemake/snakemake.git@d8528b75c79433cb166713d3c3329513bff208b1",
+    "snakemake-interface-common >=1.24.1,<2",
     "snakemake-software-deployment-plugin-conda >=0.8.4,<0.9",
-    "snakemake-software-deployment-plugin-container @ git+https://github.com/snakemake/snakemake-software-deployment-plugin-container.git@80be55cbaa3168566e3ad5503b8951187633a521",
+    "snakemake-software-deployment-plugin-container >=0.7.6,<0.8",
     "snakemake-executor-plugin-slurm >=2,<3",
-    # snkmt and its logger plugin from the heads of open pull requests, until releases carry them:
-    # snkmt#53 (console polls no longer leak SQLite read locks) and the plugin's #30 (SQLite
-    # pragmas for network file systems, as Snakemake's persistence database sets them)
+    # snkmt from the head of its open pull request #53 (console polls no longer leak SQLite read
+    # locks); its logger plugin from upstream main with the merged #30 (SQLite pragmas for
+    # network file systems, as Snakemake's persistence database sets them), until a release
+    # carries it
     "snkmt @ git+https://github.com/tedil/snkmt.git@3ac54fc376da0c5d6071caf9e53539ba0dbe30e5",
-    "snakemake-logger-plugin-snkmt @ git+https://github.com/tedil/snakemake-logger-plugin-snkmt.git@74013b9a27fe4719ec1130d7b8f2e1e08ba3aa7f",
+    "snakemake-logger-plugin-snkmt @ git+https://github.com/cademirch/snakemake-logger-plugin-snkmt.git@dbb6c802e16d0136e1f38a8374b635c4ecfc555b",
     # Required for plotting
     "matplotlib >=3.8.4",
     # Library for working with VCF files.
