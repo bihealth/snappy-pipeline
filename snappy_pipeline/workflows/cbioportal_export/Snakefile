@@ -49,10 +49,10 @@ rule cbioportal_export_concatenate_maf:
     shell:
         r"""
         cat \
-        <( head -n 1 {input[0]} ) \
-        <( tail -q -n +2 {input}) \
-        | (if [[ -n {params.exclude_flag:q} ]] ; then grep -v {params.exclude_flag:q} ; else cat ; fi) \
-        > {output}
+            <(head -n 1 {input[0]}) \
+            <(tail -q -n +2 {input}) \
+            | (if [[ -n {params.exclude_flag:q} ]]; then grep -v {params.exclude_flag:q}; else cat; fi) \
+                >{output}
         """
 
 

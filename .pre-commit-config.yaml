@@ -1,13 +1,13 @@
 repos:
   - repo: https://github.com/charliermarsh/ruff-pre-commit
     # Ruff version.
-    rev: v0.15.11
+    rev: v0.17.6
     hooks:
       - id: ruff-check
         args: [ --fix ]
       - id: ruff-format
   - repo: https://github.com/snakemake/snakefmt
-    rev: v1.1.0 # https://github.com/snakemake/snakefmt/releases
+    rev: v2.1.0 # https://github.com/snakemake/snakefmt/releases
     hooks:
       - id: snakefmt
         # snakefmt cannot parse `use rule * from <module> as <prefix>*` in the orchestrator;
