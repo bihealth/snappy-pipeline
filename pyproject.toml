@@ -47,6 +47,8 @@ dependencies = [
     # carries it
     "snkmt @ git+https://github.com/tedil/snkmt.git@3ac54fc376da0c5d6071caf9e53539ba0dbe30e5",
     "snakemake-logger-plugin-snkmt @ git+https://github.com/cademirch/snakemake-logger-plugin-snkmt.git@dbb6c802e16d0136e1f38a8374b635c4ecfc555b",
+    # Styled console output with progress bars, the default console logger of snappy run
+    "snakemake-logger-plugin-rich >=0.5.2,<0.6",
     # Library for working with VCF files.
     "vcfpy >=0.14.2,<0.15",
     # Jinja 2 template rendering

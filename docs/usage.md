@@ -83,7 +83,7 @@ snappy run -- --profile slurm                   # all tasks through the executor
 
 `snappy run` always uses the workflow profile of snappy.
 This profile deploys the software with conda, and with apptainer for the tools that run from a container image.
-It also sets the `snkmt` logger, which `snappy watch` reads, and keeps Snakemake's metadata in a database instead of a directory of files.
+It also sets two loggers, `rich` for the console (styled output and progress bars; `snappy run -- --logger snkmt` restores Snakemake's plain output) and `snkmt`, which `snappy watch` reads, and keeps Snakemake's metadata in a database instead of a directory of files.
 
 The executor and its settings come from a Snakemake profile of the system or the user:
 

@@ -2,5 +2,8 @@ software-deployment-method:
   - conda
   - container
 sdm-container-runtime: apptainer
-logger: snkmt
+# The console logger (rich: styled output, progress bars) and the database that snappy watch reads
+logger:
+  - rich
+  - snkmt
 persistence-backend: db
