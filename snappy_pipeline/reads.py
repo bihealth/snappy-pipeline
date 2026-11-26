@@ -3,7 +3,8 @@
 A files table (:class:`FilesTable`) is a TSV with one row per read group of a library (reads:
 ``library``, ``readgroup``, ``left``, ``right``, ...) or one row per library (other data:
 ``library`` and the output keys, such as ``bam`` and ``bai``). Relative paths are relative to the
-table's directory.
+table's directory; lines starting with ``#`` are comments (the first one records the scan that
+wrote the table).
 
 :class:`ReadDiscovery` finds the files below search paths, in a folder named after the library.
 Search patterns are regular expressions that must match the whole path below that folder; their
@@ -285,21 +286,28 @@ def _read_table(path: str, reads: bool, pathvars) -> tuple[tuple[str, ...], list
             lines = list(csv.reader(f, delimiter="\t"))
     except OSError as e:
         raise ValueError(f"Files table {path}: {e.strerror}") from None
-    if not lines or not any(lines[0]):
+    numbered = [
+        (n, cells)
+        for n, cells in enumerate(lines, start=1)
+        if cells and not cells[0].startswith("#")
+    ]
+    if not numbered or not any(numbered[0][1]):
         raise ValueError(f"{path}:1: the files table is empty")
-    header = lines[0]
+    header_line, header = numbered[0]
     fixed = [LIBRARY, READGROUP_COLUMN, "left"] if reads else [LIBRARY]
     if header[: len(fixed)] != fixed:
-        raise ValueError(f"{path}:1: the columns must start with {', '.join(fixed)}")
+        raise ValueError(f"{path}:{header_line}: the columns must start with {', '.join(fixed)}")
     if len(set(header)) != len(header):
-        raise ValueError(f"{path}:1: a column name is repeated")
+        raise ValueError(f"{path}:{header_line}: a column name is repeated")
     keys = tuple(c for c in header if c not in (LIBRARY, READGROUP_COLUMN))
     if not keys:
-        raise ValueError(f"{path}:1: the table needs a file column besides {', '.join(fixed)}")
+        raise ValueError(
+            f"{path}:{header_line}: the table needs a file column besides {', '.join(fixed)}"
+        )
     required = fixed
     rows = []
-    for number, cells in enumerate(lines[1:], start=2):
-        if not cells or (len(cells) == 1 and not cells[0].strip()):
+    for number, cells in numbered[1:]:
+        if len(cells) == 1 and not cells[0].strip():
             continue
         if len(cells) != len(header):
             raise ValueError(f"{path}:{number}: {len(cells)} cells, the header has {len(header)}")

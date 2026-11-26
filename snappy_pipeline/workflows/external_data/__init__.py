@@ -13,7 +13,8 @@ A key may name a list of files, such as several transcript databases of mehari.
 With ``library_files``, it provides the files of each library from files tables: TSV files with one row per read group (``type: raw``: ``library``, ``readgroup``, ``left`` and ``right``) or one row per library (``library`` and the output keys).
 An empty cell is no value, and relative paths are relative to the table's directory.
 ``mixed_se_pe: true`` accepts read groups without a ``right`` file.
-``snappy scan-files`` writes the first table of each task with a ``scan`` section from the libraries of the sample sheets: the files of a library are in a folder named like its ``folderName`` in the sheet, else like the library, at any depth below one of the ``search_paths``; ``search_patterns`` map output keys to regular expressions for the path below that folder, and the ``(?P<readgroup>...)`` group of a read pattern pairs the mates.
+``snappy scan-files`` writes the first table from the libraries of the sample sheets: the files of a library are in a folder named like its ``folderName`` in the sheet, else like the library, at any depth below a search path (``--search-path``, default ``raw``); the patterns (``--pattern key=regex``) are regular expressions for the path below that folder, by output key, and the ``(?P<readgroup>...)`` group of a read pattern pairs the mates (default: ``*.R1.fastq.gz`` and ``*.R2.fastq.gz``).
+The first line of the table records that command, so a bare ``snappy scan-files`` rescans the same way after the sheets gained libraries.
 A library without rows is an error when the project loads, and so is a row for a library that no sheet has.
 With ``kits``, it provides files per enrichment kit, by kit name and output key.
 A targeted library (``WES``, ``Panel_seq``) uses the kit named exactly like its ``libraryKit`` in the sample sheet.
@@ -34,7 +35,7 @@ Examples
 --------
 
 The reads of the libraries, a reference and a bwa index as input of ``ngs_mapping``.
-``snappy scan-files`` writes ``reads.tsv`` from the ``scan`` section:
+``snappy scan-files`` writes ``reads.tsv`` from the folders below ``raw``:
 
 .. code-block:: yaml
 
@@ -56,11 +57,6 @@ The reads of the libraries, a reference and a bwa index as input of ``ngs_mappin
         config:
           produces: {type: raw, tags: [fastq]}
           library_files: [reads.tsv]
-          scan:
-            search_paths: [raw]
-            search_patterns:
-              - left: '(?P<readgroup>.+)\\.R1\\.fastq\\.gz'
-                right: '(?P<readgroup>.+)\\.R2\\.fastq\\.gz'
 
       - step: ngs_mapping
         name: mapping
@@ -76,6 +72,7 @@ The table ``reads.tsv`` lists one read group per line (``right`` is empty for si
 
 .. code-block:: text
 
+    # snappy scan-files --task reads --search-path raw --pattern=left=(?P<readgroup>.+)\\.R1\\.fastq\\.gz --pattern=right=(?P<readgroup>.+)\\.R2\\.fastq\\.gz
     library            readgroup  left                              right
     P001-N1-DNA1-WES1  L001       raw/P001-N1-DNA1-WES1/L001.R1.fastq.gz  raw/P001-N1-DNA1-WES1/L001.R2.fastq.gz
 
@@ -142,7 +139,7 @@ The regions of two exome kits, read by the coverage QC of ``ngs_data_qc``:
           tool: alfred
           alfred: {}
 
-Existing per-library variant calls, listed by ``snappy scan-files`` from ``/data/dragen/<library name>/``:
+Existing per-library variant calls, listed by ``snappy scan-files --task dragen_calls --search-path /data/dragen --pattern 'vcf=.+\\.hard-filtered\\.vcf\\.gz' --pattern 'vcf_tbi=.+\\.hard-filtered\\.vcf\\.gz\\.tbi'`` from ``/data/dragen/<library name>/``:
 
 .. code-block:: yaml
 
@@ -151,10 +148,6 @@ Existing per-library variant calls, listed by ``snappy scan-files`` from ``/data
       config:
         produces: {type: variants, tags: [germline, snv, indel]}
         library_files: [dragen_calls.tsv]   # the columns library, vcf, vcf_tbi
-        scan:
-          search_paths: [/data/dragen]
-          search_patterns:
-            - {vcf: '.+\\.hard-filtered\\.vcf\\.gz', vcf_tbi: '.+\\.hard-filtered\\.vcf\\.gz\\.tbi'}
 """
 
 import os
@@ -171,15 +164,15 @@ def _abspath(path: str | list[str]) -> str | list[str]:
     return os.path.abspath(path) if isinstance(path, str) else [os.path.abspath(p) for p in path]
 
 
-def no_rows_message(config: ExternalData, library_name: str) -> str:
+def no_rows_message(config: ExternalData, library_name: str, task_name: str = "") -> str:
     """The error for a library without rows in the files tables of ``config``, with the way to add
     them."""
     tables = ", ".join(config.library_files)
-    fix = (
-        "run `snappy scan-files` to add them"
-        if config.scan is not None
-        else "add them to the table"
-    )
+    if config.patterns_find_reads():
+        fix = "run `snappy scan-files` to add them"
+    else:
+        task = f" --task {task_name}" if task_name else ""
+        fix = f"add them to the table, or run `snappy scan-files{task} --pattern key=regex ...`"
     return f"The files tables {tables} list no files of library {library_name!r}; {fix}"
 
 
@@ -231,5 +224,6 @@ class ExternalDataWorkflow(BaseStep):
             return {key: os.path.abspath(path) for key, path in config.kits[library_kit].items()}
         files = project.files_table(config).files(library_name)
         if not files:
-            raise ConfigError(no_rows_message(config, library_name))
+            task = next((n for n, c in project.task_configs.items() if c is config), "")
+            raise ConfigError(no_rows_message(config, library_name, task))
         return files

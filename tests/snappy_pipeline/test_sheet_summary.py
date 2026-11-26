@@ -101,9 +101,15 @@ def _project(tmp_path, table_libraries=("a", "b")):
         task=lambda name: SimpleNamespace(step=steps.get(name, "trimming")),
         dependencies={},
         task_configs={
-            "raw": SimpleNamespace(library_files=[str(tmp_path / "r.tsv")], scan=None),
-            "tables": SimpleNamespace(library_files=[str(tmp_path / "t.tsv")], scan=None),
-            "missing": SimpleNamespace(library_files=["/none/m.tsv"], scan=object()),
+            "raw": SimpleNamespace(
+                library_files=[str(tmp_path / "r.tsv")], patterns_find_reads=lambda: True
+            ),
+            "tables": SimpleNamespace(
+                library_files=[str(tmp_path / "t.tsv")], patterns_find_reads=lambda: False
+            ),
+            "missing": SimpleNamespace(
+                library_files=["/none/m.tsv"], patterns_find_reads=lambda: True
+            ),
         },
         files_table=lambda config: SimpleNamespace(
             files=lambda library: {"bam": "a.bam"} if library == "a" else {},
@@ -153,7 +159,8 @@ def test_missing_library_files_checks_files_tables_and_their_unknown_libraries(t
         (
             "calling",
             "b",
-            f"The files tables {table} list no files of library 'b'; add them to the table",
+            f"The files tables {table} list no files of library 'b'; add them to the table, or "
+            "run `snappy scan-files --task tables --pattern key=regex ...`",
         ),
         ("tables", "zzz", "is in a files table but in no sample sheet"),
     ]

@@ -17,8 +17,6 @@ P001\t.\t.\tF\tY\tWGS\tP001\t.
 P002\t.\t.\tM\tN\tWGS\tP002\t.
 """
 
-PATTERNS = "{left: '(?P<readgroup>.+)_R1.fastq.gz', right: '(?P<readgroup>.+)_R2.fastq.gz'}"
-
 CONFIG = """\
 project:
   name: tables
@@ -43,7 +41,6 @@ tasks:
     config:
       produces: {type: raw, tags: [fastq]}
       library_files: [reads.tsv]
-      %(scan)s
   - name: mapping
     step: ngs_mapping
     config:
@@ -52,11 +49,9 @@ tasks:
       bwa: {}
 """
 
-SCAN = "scan: {search_paths: [raw], search_patterns: [%s]}" % PATTERNS
 
-
-def _project(tmp_path, reads, scan="", table=None):
-    (tmp_path / "config.yaml").write_text(CONFIG % {"reads": reads, "scan": scan})
+def _project(tmp_path, reads, table=None):
+    (tmp_path / "config.yaml").write_text(CONFIG % {"reads": reads})
     (tmp_path / "sheet.tsv").write_text(SHEET)
     if table is not None:
         (tmp_path / "reads.tsv").write_text(textwrap.dedent(table))
@@ -95,9 +90,7 @@ def test_a_library_without_rows_is_reported_with_the_way_to_add_it(tmp_path):
         "library\treadgroup\tleft\tright\n"
         "P001-N1-DNA1-WGS1\tL1\traw/P001/L1_R1.fastq.gz\traw/P001/L1_R2.fastq.gz\n"
     )
-    mapping = create_task_instances(None, _project(tmp_path, "reads", scan=SCAN, table=table))[
-        "mapping"
-    ]
+    mapping = create_task_instances(None, _project(tmp_path, "reads", table=table))["mapping"]
     with pytest.raises(
         ConfigError, match="list no files of library 'P002-N1-DNA1-WGS1'; run `snappy scan-files`"
     ):
@@ -113,7 +106,7 @@ def test_a_library_without_rows_is_reported_with_the_way_to_add_it(tmp_path):
 
 
 def test_a_missing_table_loads_and_is_reported_at_setup(tmp_path):
-    project = _project(tmp_path, "reads", scan=SCAN)
+    project = _project(tmp_path, "reads")
     (tmp_path / "raw").mkdir()
     mapping = create_task_instances(None, project)["mapping"]
     with pytest.raises(ConfigError, match="Files table .*reads.tsv: No such file"):
@@ -179,21 +172,8 @@ def test_files_per_library_from_a_table(tmp_path):
     [
         ({"files": {"a": "x"}, "library_files": ["t.tsv"]}, "Set one of files"),
         (
-            {
-                "scan": {
-                    "search_paths": ["raw"],
-                    "search_patterns": [{"left": "(?P<readgroup>.+)"}],
-                },
-                "files": {"a": "x"},
-            },
-            "set library_files",
-        ),
-        (
-            {
-                "library_files": ["t.tsv"],
-                "scan": {"search_paths": ["raw"], "search_patterns": [{"left": "x"}]},
-            },
-            "has no \\(\\?P<readgroup>",
+            {"library_files": ["t.tsv"], "produces": {"type": "variants"}, "mixed_se_pe": True},
+            "only for reads",
         ),
     ],
 )

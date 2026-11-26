@@ -113,7 +113,11 @@ def missing_library_files(instances: Mapping[str, BaseStep]) -> list[tuple[str, 
                 continue
             if tables:
                 if missing := [table for table in tables if not os.path.exists(table)]:
-                    fix = "run `snappy scan-files`" if config.scan is not None else "write it"
+                    fix = (
+                        "run `snappy scan-files`"
+                        if config.patterns_find_reads()
+                        else f"run `snappy scan-files --task {source} --pattern key=regex ...`"
+                    )
                     problems += [
                         (source, table, f"does not exist; {fix}")
                         for table in missing
@@ -130,7 +134,7 @@ def missing_library_files(instances: Mapping[str, BaseStep]) -> list[tuple[str, 
                     if reads:
                         task.read_groups(library, source)
                     elif not task.project.files_table(config).files(library):
-                        problems.append((name, library, no_rows_message(config, library)))
+                        problems.append((name, library, no_rows_message(config, library, source)))
                 except (ValueError, ConfigError) as e:
                     problems.append((name, library, str(e)))
     for source, task in table_tasks.items():

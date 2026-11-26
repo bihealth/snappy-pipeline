@@ -737,7 +737,7 @@ class BaseStep:
         config = self.project.task_configs[source]
         groups = self.project.files_table(config).read_groups(library_name)
         if not groups:
-            raise ConfigError(no_rows_message(config, library_name))
+            raise ConfigError(no_rows_message(config, library_name, source))
         return groups
 
     def reads_input(self, library_name: str) -> list[str]:

@@ -138,11 +138,6 @@ tasks:
     config:
       produces: {type: raw, tags: [fastq]}
       library_files: [reads.tsv]
-      scan:
-        search_paths: [raw]
-        search_patterns:
-          - left: '(?P<readgroup>.+)\.R1\.fastq\.gz'
-            right: '(?P<readgroup>.+)\.R2\.fastq\.gz'
 
   - name: bwa_index
     step: external_data
@@ -181,7 +176,7 @@ Such a task has no rules, and consumers read the files where they are.
 
 With `files: {key: path}`, a task provides project-wide files.
 With `library_files`, it provides the files of each library from files tables: one row per library, the columns `library` and the keys under which consumers read the files (`vcf`, `bam`, ...), or one row per read group for reads.
-`snappy scan-files` writes a table from a `scan` section, as for reads.
+`snappy scan-files --task dragen_calls --search-path /path/to/dragen --pattern 'vcf=.+\.hard-filtered\.vcf\.gz' --pattern 'vcf_tbi=.+\.hard-filtered\.vcf\.gz\.tbi'` writes the table of the example from the folders named like the libraries.
 
 ```yaml
 tasks:
@@ -190,10 +185,6 @@ tasks:
     config:
       produces: {type: variants, tags: [germline, snv, indel]}
       library_files: [dragen_calls.tsv]   # the columns library, vcf, vcf_tbi
-      scan:
-        search_paths: [/path/to/dragen]
-        search_patterns:
-          - { vcf: '.+\.hard-filtered\.vcf\.gz', vcf_tbi: '.+\.hard-filtered\.vcf\.gz\.tbi' }
 ```
 
 ### Dependencies and task-local files
@@ -332,11 +323,10 @@ Every read group needs a right file when the table has a `right` column, unless 
 Steps read the files where they are, so the project holds no copies or links of FASTQ files.
 
 `snappy scan-files` writes the tables.
-The task's `scan` section says where to look: the files of a library are in a folder named like its `folder_name` in the sample sheet, else like the library, at any depth below a `search_paths` entry.
-`search_patterns` are regular expressions for the path below that folder, and each must match the whole path.
-The `(?P<readgroup>...)` group pairs the `left` and `right` file of a read group.
+The files of a library are in a folder named like its `folder_name` in the sample sheet, else like the library, at any depth below a search path, `raw` by default (`--search-path`).
+The patterns are regular expressions for the path below that folder, one per output key (`--pattern key=regex`), and each must match the whole path; by default `*.R1.fastq.gz` and `*.R2.fastq.gz`, whose `(?P<readgroup>...)` group pairs the `left` and `right` file of a read group.
 The command searches once and lists what it found; the table is the record of the run, so keep it in git.
-Run it again when the sheets gain libraries.
+Its first line records the command, so a bare `snappy scan-files` rescans the same way when the sheets gain libraries.
 A library without rows stops `snappy run` and `snappy check-files` with an error that names the libraries and the command; `snappy run --scan` runs the scan first.
 A row for a library that no sheet has is an error as well.
 Two libraries that share a folder are an error of the scan.
@@ -353,11 +343,6 @@ tasks:
     config:
       produces: {type: raw, tags: [fastq]}
       library_files: [reads.tsv]
-      scan:
-        search_paths: [raw]
-        search_patterns:
-          - left: '(?P<readgroup>.+)\.R1\.fastq\.gz'
-            right: '(?P<readgroup>.+)\.R2\.fastq\.gz'
 
   - name: genome
     step: external_data

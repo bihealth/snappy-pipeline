@@ -869,8 +869,7 @@ def offer_commit(directory: str) -> None:
     "--scan",
     is_flag=True,
     default=False,
-    help="First write the files tables of the external_data tasks with a scan section, as "
-    "snappy scan-files does",
+    help="First write the files tables of the external_data tasks, as snappy scan-files does",
 )
 @click.option(
     "--verbose", is_flag=True, help="Log the Snakemake command line and other debug messages"
@@ -885,7 +884,9 @@ def run(ctx, directory, task_name, frozen, scan, verbose):
         raise click.UsageError("--frozen requires --task")
     setup_logging(verbose)
     if scan:
-        ctx.invoke(scan_files_command, directory=directory, task_names=())
+        ctx.invoke(
+            scan_files_command, directory=directory, task_names=(), search_paths=(), patterns=()
+        )
 
     snakemake_args = list(ctx.args)
     if _interactive() and not _dry_run(snakemake_args):
@@ -973,22 +974,41 @@ def logs(directory, snakemake_log):
     type=str,
     multiple=True,
     shell_complete=_complete_task_names,
-    help="Write only the tables of this task; default: every external_data task with a scan",
+    help="Write only the table of this external_data task; default: every task with "
+    "library_files whose table records a scan, and the reads tasks",
 )
-def scan_files_command(directory, task_names):
-    """Write the files tables of the external_data tasks with a scan section.
+@click.option(
+    "--search-path",
+    "search_paths",
+    type=click.Path(),
+    multiple=True,
+    help="Directory below which the folder of each library is; default: the one the table "
+    "records, else raw for reads",
+)
+@click.option(
+    "--pattern",
+    "patterns",
+    type=str,
+    multiple=True,
+    help="key=regex for the path below a library's folder, once per output key (left and right "
+    "for reads, with a (?P<readgroup>...) group); default: the ones the table records, else "
+    "*.R1.fastq.gz and *.R2.fastq.gz for reads",
+)
+def scan_files_command(directory, task_names, search_paths, patterns):
+    """Write the files tables of the external_data tasks from the folders of the libraries.
 
     For every library of the sample sheets, the files are searched in a folder named like the
-    library (the sheet's folder_name, else the library name) below the scan's search_paths, with
-    its search_patterns, and listed in the first table of library_files. Run it once after the
-    sheets gain libraries; snappy run stops for a library without rows and names this command.
-    It exits with 1 if a library has no files or two libraries share a folder; the table is
-    written anyway, with the libraries that have files.
+    library (the sheet's folder_name, else the library name) below the search paths and listed
+    in the first table of the task's library_files; the table's first line records the command,
+    so a bare snappy scan-files rescans the same way. Run it once the sheets gain libraries;
+    snappy run stops for a library without rows and names this command. It exits with 1 if a
+    library has no files or two libraries share a folder; the table is written anyway, with the
+    libraries that have files.
     """
     config_path = _project_config(directory)
     try:
         project = load_project(load_configfile(config_path), os.path.dirname(config_path))
-        written, problems = scan_files(project, task_names)
+        written, problems = scan_files(project, task_names, search_paths, patterns)
     except (ConfigError, ValueError) as e:
         log(str(e), level=LVL_ERROR)
         sys.exit(1)
@@ -999,7 +1019,7 @@ def scan_files_command(directory, task_names):
     if problems:
         sys.exit(1)
     if not written:
-        log("No external_data task has a scan section", level=LVL_ERROR)
+        log("No external_data task has library_files to write", level=LVL_ERROR)
         sys.exit(1)
 
 

@@ -65,11 +65,6 @@ tasks:
     config:
       produces: {type: raw, tags: [fastq]}
       library_files: [reads.tsv]
-      scan:
-        search_paths: [raw]
-        search_patterns:
-          - left: '(?P<readgroup>.+)\.R1\.fastq\.gz'
-            right: '(?P<readgroup>.+)\.R2\.fastq\.gz'
 
   - name: bwa_index
     step: external_data
@@ -130,11 +125,6 @@ tasks:
     config:
       produces: {type: raw, tags: [fastq]}
       library_files: [reads.tsv]
-      scan:
-        search_paths: [raw]
-        search_patterns:
-          - left: '(?P<readgroup>.+)\.R1\.fastq\.gz'
-            right: '(?P<readgroup>.+)\.R2\.fastq\.gz'
 
   - name: umis
     step: external_data
@@ -177,11 +167,6 @@ tasks:
     config:
       produces: {type: raw, tags: [fastq]}
       library_files: [reads.tsv]
-      scan:
-        search_paths: [raw]
-        search_patterns:
-          - left: '(?P<readgroup>.+)\.R1\.fastq\.gz'
-            right: '(?P<readgroup>.+)\.R2\.fastq\.gz'
 
   - name: common_variants
     step: external_data

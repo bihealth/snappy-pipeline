@@ -93,11 +93,6 @@ tasks:
     config:
       produces: {type: raw, tags: [fastq]}
       library_files: [reads.tsv]
-      scan:
-        search_paths: [raw]
-        search_patterns:
-          - left: '(?P<readgroup>.+)\.R1\.fastq\.gz'
-            right: '(?P<readgroup>.+)\.R2\.fastq\.gz'
 
   - name: genome
     step: external_data
@@ -174,10 +169,9 @@ P001         N1          N        WES          P001-N1-DNA1-WES1
 P001         T1          Y        WES          P001-T1-DNA1-WES1
 ```
 
-The reads of a library are in a folder named like its `folderName`, at any depth below a `search_paths` entry of the `scan` section of the `reads` task.
-`search_patterns` are regular expressions for the path below that folder.
-The `(?P<readgroup>...)` group pairs the `left` and `right` file of a read group, usually a lane.
+The reads of a library are in a folder named like its `folderName`, at any depth below `raw`.
 `snappy scan-files` searches the folders once and writes `reads.tsv`, one row per read group, which the tasks read from then on.
+Files named otherwise take `--pattern key=regex` for the path below the folder, whose `(?P<readgroup>...)` group pairs the `left` and `right` file of a read group, and another directory takes `--search-path`; the table records the command.
 Run it again after adding libraries; `snappy run` stops for a library without rows and names the command.
 
 ```text

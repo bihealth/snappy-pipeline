@@ -685,7 +685,7 @@ Steps whose per-library output is optional (the coverage report, a targeted gCNV
 
 `reads` names an `external_data` task with the FASTQ files of the libraries, or a task that writes FASTQs (such as `adapter_trimming`).
 An `external_data` task lists the files of each library in files tables (`library_files`; `FilesTable` in `snappy_pipeline/reads.py`), read once per run through `Project.files_table()`; `BaseStep.read_groups()` takes the read groups of a library from them.
-`snappy scan-files` writes the tables with `ReadDiscovery` from the task's `scan` section (`search_paths`, `search_patterns`); nothing searches directories at run time.
+`snappy scan-files` writes the tables with `ReadDiscovery` (`snappy_pipeline/apps/scan_files.py`): the arguments given, else the command recorded in the table's first line, else `raw` and the R1/R2 patterns for reads; nothing searches directories at run time.
 
 ### `FILTER` IDs
 

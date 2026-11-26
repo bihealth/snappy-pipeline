@@ -137,10 +137,6 @@ tasks:
     config:
       produces: {type: raw, tags: [fastq]}
       library_files: [reads.tsv]
-      scan:
-        search_paths: [raw]
-        search_patterns:
-          - {left: '(?P<readgroup>.+)_R1.fastq.gz', right: '(?P<readgroup>.+)_R2.fastq.gz'}
   - name: mapping
     step: ngs_mapping
     config:
@@ -175,7 +171,15 @@ def test_check_files_lists_missing_files_and_libraries_without_reads(tmp_path):
     (tmp_path / "raw" / "P001").mkdir()
     for mate in ("R1", "R2"):
         (tmp_path / "raw" / "P001" / f"P001_{mate}.fastq.gz").touch()
-    result = CliRunner().invoke(snappy_cli.main, ["scan-files", "--directory", str(tmp_path)])
+    patterns = [
+        "--pattern",
+        "left=(?P<readgroup>.+)_R1.fastq.gz",
+        "--pattern",
+        "right=(?P<readgroup>.+)_R2.fastq.gz",
+    ]
+    result = CliRunner().invoke(
+        snappy_cli.main, ["scan-files", "--directory", str(tmp_path)] + patterns
+    )
     assert result.exit_code == 0, result.output
     result = CliRunner().invoke(snappy_cli.main, ["check-files", "--directory", str(tmp_path)])
     assert result.exit_code == 0, result.output

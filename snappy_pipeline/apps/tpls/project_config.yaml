@@ -25,10 +25,10 @@ project:
 #
 # A data set is a sample sheet (biomedsheets TSV). The FASTQ files of its libraries come from the
 # `reads` task below: `snappy scan-files` lists them in reads.tsv from the folder of each library
-# (named like the sheet's folderName) below the scan's search paths. The search patterns are
-# regular expressions for the path below that folder; their (?P<readgroup>...) group pairs the
-# left and right file of each lane. Another naming needs other patterns, for example
-# {left: '(?P<readgroup>.+)_R1_001\.fastq\.gz', right: '(?P<readgroup>.+)_R2_001\.fastq\.gz'}.
+# (named like the sheet's folderName) below raw/, as <folder>/*.R1.fastq.gz and *.R2.fastq.gz.
+# Another layout takes --search-path and --pattern key=regex, for example
+# --pattern 'left=(?P<readgroup>.+)_R1_001\.fastq\.gz' --pattern 'right=(?P<readgroup>.+)_R2_001\.fastq\.gz';
+# the table records the command, so a bare `snappy scan-files` rescans the same way later.
 
 data_sets:
   first_batch:
@@ -91,7 +91,3 @@ tasks:
     config:
       produces: {type: raw, tags: [fastq]}
       library_files: [reads.tsv]
-      scan:
-        search_paths: [raw]
-        search_patterns:
-          - {left: '(?P<readgroup>.+)\.R1\.fastq\.gz', right: '(?P<readgroup>.+)\.R2\.fastq\.gz'}

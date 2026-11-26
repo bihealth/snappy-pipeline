@@ -121,11 +121,6 @@ tasks:
     config:
       produces: {type: raw, tags: [fastq]}
       library_files: [reads.tsv]
-      scan:
-        search_paths: [raw]
-        search_patterns:
-          - left: '(?P<readgroup>.+)\.R1\.fastq\.gz'
-            right: '(?P<readgroup>.+)\.R2\.fastq\.gz'
 
   - name: gnomad
     step: external_data

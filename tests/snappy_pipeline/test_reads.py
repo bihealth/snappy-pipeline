@@ -158,6 +158,18 @@ def test_reads_table_gives_read_groups_in_left_path_order(tmp_path):
     assert len(files.paths()) == 6
 
 
+def test_reads_table_skips_comment_lines(tmp_path):
+    table = _table(
+        tmp_path / "t.tsv",
+        "# snappy scan-files --task reads",
+        "library\treadgroup\tleft",
+        "P1\tL1\tx",
+    )
+    assert read_files_tables([table], reads=True).libraries == ["P1"]
+    with pytest.raises(ValueError, match=":2: the columns must start with"):
+        read_files_tables([_table(tmp_path / "u.tsv", "# comment", "library\tleft")], reads=True)
+
+
 def test_reads_table_expands_pathvars(tmp_path):
     from snakemake.pathvars import Pathvars
 

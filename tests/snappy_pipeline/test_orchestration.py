@@ -396,10 +396,6 @@ def _external(name, data_type, tags, **config):
     return ("external_data", name, {"produces": {"type": data_type, "tags": tags}, **config})
 
 
-#: A reads pattern with only a left file
-LEFT = {"left": r"(?P<readgroup>.+)_1\.fq\.gz"}
-
-
 def test_external_alignments_feed_variant_calling():
     bams = _external("bams", "alignments", ["dna"], library_files=["/data/bams.tsv"])
     project = load_project(_config(bams, _calling(mapping="bams")), WORK_DIR)
@@ -465,17 +461,6 @@ def test_regions_filter_reads_any_bed_file_of_regions():
         ({}, "Set one of files"),
         ({"files": {"x": "/a"}, "library_files": ["/b/reads.tsv"]}, "Set one of files"),
         ({"files": {"x": "/a"}, "kits": {"k": {"x": "/a"}}}, "Set one of files"),
-        (
-            {"files": {"x": "/a"}, "scan": {"search_paths": ["/b"], "search_patterns": [LEFT]}},
-            "set library_files",
-        ),
-        (
-            {
-                "library_files": ["/b/r.tsv"],
-                "scan": {"search_paths": ["/b"], "search_patterns": [{"left": r".+\.fastq\.gz"}]},
-            },
-            "readgroup",
-        ),
         ({"kits": {"Kit V1": {"targets": "/a"}}}, "Kit names may only contain"),
         ({"kits": {"a": {"targets": "/a"}, "b": {"baits": "/b"}}}, "same keys"),
     ],

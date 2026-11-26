@@ -1,3 +1,4 @@
+# snappy scan-files --task reads --search-path raw '--pattern=left=(?P<readgroup>.+)\.R1\.fastq\.gz' '--pattern=right=(?P<readgroup>.+)\.R2\.fastq\.gz'
 library	readgroup	left	right
 pgf-N1-DNA1-WES1	pgf-N1-DNA1-WES1	raw/pgf-N1-DNA1-WES1/pgf-N1-DNA1-WES1.R1.fastq.gz	raw/pgf-N1-DNA1-WES1/pgf-N1-DNA1-WES1.R2.fastq.gz
 fa-N1-DNA1-WES1	fa-N1-DNA1-WES1	raw/fa-N1-DNA1-WES1/fa-N1-DNA1-WES1.R1.fastq.gz	raw/fa-N1-DNA1-WES1/fa-N1-DNA1-WES1.R2.fastq.gz

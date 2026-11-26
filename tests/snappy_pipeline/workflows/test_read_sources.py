@@ -40,7 +40,7 @@ def test_external_reads_may_mix_single_and_paired_end(tmp_path):
     tasks = {"raw": ExternalData(**config, mixed_se_pe=True)}
     groups = _step("raw", tasks).read_groups("L1")
     assert [(group.left, group.right) for group in groups] == [(str(tmp_path / "a_R1.fq.gz"), None)]
-    with pytest.raises(ConfigError, match="list no files of library 'L3'; add them to the table"):
+    with pytest.raises(ConfigError, match="list no files of library 'L3'; run `snappy scan-files`"):
         _step("raw", tasks).read_groups("L3")
 
 
