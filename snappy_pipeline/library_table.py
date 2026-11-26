@@ -605,8 +605,8 @@ def _check_groups(df) -> None:
         raise ConfigError(
             f"related groups of the same name in several data sets: {names}. A task names the "
             "files of a related group after it, so it can only take one group of a name. A family "
-            "sequenced in batches belongs into one sheet: one data set, whose search_paths list "
-            "the folders of all batches. For unrelated groups, select the libraries of one data "
+            "sequenced in batches belongs into one sheet: one data set, whose libraries the files "
+            "tables list from all batches. For unrelated groups, select the libraries of one data "
             f'set with library_selection, for example library_selection: "data_set == '
             f"'{first_data_set}'\", or use one task per data set."
         )

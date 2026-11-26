@@ -38,15 +38,13 @@ Downstream tasks read the keys ``bam``, ``bai``, ``bamstats``, ``flagstats``, an
 Reads and sample sheet
 ----------------------
 
-A data set or an ``external_data`` task locates the reads below its ``search_paths``, in a folder per library.
-Each entry of ``search_patterns`` holds regular expressions for the path below that folder.
-The keys ``left`` and ``right`` select the mates, and a ``(?P<readgroup>...)`` group pairs the mates of one read group.
+An ``external_data`` task lists the FASTQ files of each library in its files tables (``library_files``), one row per read group with the columns ``library``, ``readgroup``, ``left`` and ``right``; ``snappy scan-files`` writes them from the task's ``scan`` section.
 ``bwa``, ``bwa_mem2`` and ``bwa_mem3`` map each read group with its own ``@RG``.
-Its ``ID`` is the name that the ``readgroup`` group captured, for example ``<library>_L001``.
+Its ``ID`` is the table's ``readgroup``, for example ``<library>_L001``.
 Its ``SM`` is the library name, and its ``PL`` is the mapper's ``platform``.
 The three BWA mappers mask duplicates (``mask_duplicates``) across all read groups of a library.
 
-By default, every pattern must match as many ``left`` as ``right`` files.
+By default, every read group needs a ``right`` file when the table has that column.
 With ``mixed_se_pe: true`` in the data set or the ``external_data`` task, ``right`` may match nothing.
 Each library is then either single-end or paired-end, and libraries may differ.
 

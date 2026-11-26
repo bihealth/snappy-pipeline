@@ -44,7 +44,7 @@ Useful references:
 
 ### From `config.yaml` to rules
 
-The project directory holds a `config.yaml` with a list of `tasks` and the `data_sets`.
+The project directory holds a `config.yaml` with a list of `tasks` and the `data_sets`, the sample sheets.
 Every task names a `step` and has a `config` for it.
 `depends_on` inside a task's `config` links tasks: it names the task that provides each input.
 

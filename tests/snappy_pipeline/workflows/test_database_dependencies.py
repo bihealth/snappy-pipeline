@@ -11,11 +11,11 @@ from snappy_pipeline.workflows.repeat_expansion.model import RepeatExpansion
 from snappy_pipeline.workflows.somatic_gene_fusion_calling.model import SomaticGeneFusionCalling
 from snappy_pipeline.workflows.somatic_wgs_cnv_calling.model import SomaticWgsCnvCalling
 
-FUSION_DEPENDS_ON = {"reads": "data_sets", "reference": "genome", "features": "genes"}
+FUSION_DEPENDS_ON = {"reads": "reads", "reference": "genome", "features": "genes"}
 
 
 def test_salmon_requires_index():
-    depends_on = {"reads": "data_sets", "features": "genes"}
+    depends_on = {"reads": "reads", "features": "genes"}
     with pytest.raises(pydantic.ValidationError, match="tool=salmon needs depends_on.index"):
         GeneExpressionQuantification(tool="salmon", salmon={}, depends_on=depends_on)
     GeneExpressionQuantification(
@@ -36,13 +36,11 @@ def test_star_fusion_requires_database():
     with pytest.raises(
         pydantic.ValidationError, match="tool=star_fusion needs depends_on.database"
     ):
-        SomaticGeneFusionCalling(
-            tool="star_fusion", star_fusion={}, depends_on={"reads": "data_sets"}
-        )
+        SomaticGeneFusionCalling(tool="star_fusion", star_fusion={}, depends_on={"reads": "reads"})
     SomaticGeneFusionCalling(
         tool="star_fusion",
         star_fusion={},
-        depends_on={"reads": "data_sets", "database": "star_fusion_database"},
+        depends_on={"reads": "reads", "database": "star_fusion_database"},
     )
 
 

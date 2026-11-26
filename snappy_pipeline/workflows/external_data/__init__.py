@@ -10,11 +10,11 @@ Consumers read the files where they are.
 The task has one of three modes.
 With ``files``, it provides project-wide files by output key, such as a reference genome.
 A key may name a list of files, such as several transcript databases of mehari.
-With ``search_paths`` and ``search_patterns``, it provides per-library files from a folder named like the library, below one of the search paths.
-Each pattern maps output keys to regular expressions for the path below that folder.
-Reads (``type: raw``) need the key ``left``, the key ``right`` for paired-end data, and a ``(?P<readgroup>...)`` group, which pairs the mates.
+With ``library_files``, it provides the files of each library from files tables: TSV files with one row per read group (``type: raw``: ``library``, ``readgroup``, ``left`` and ``right``) or one row per library (``library`` and the output keys).
+An empty cell is no value, and relative paths are relative to the table's directory.
 ``mixed_se_pe: true`` accepts read groups without a ``right`` file.
-Per-library files are found like the reads of a data set, except that the folder is named like the library, not by the sample sheet.
+``snappy scan-files`` writes the first table of each task with a ``scan`` section from the libraries of the sample sheets: the files of a library are in a folder named like its ``folderName`` in the sheet, else like the library, at any depth below one of the ``search_paths``; ``search_patterns`` map output keys to regular expressions for the path below that folder, and the ``(?P<readgroup>...)`` group of a read pattern pairs the mates.
+A library without rows is an error when the project loads, and so is a row for a library that no sheet has.
 With ``kits``, it provides files per enrichment kit, by kit name and output key.
 A targeted library (``WES``, ``Panel_seq``) uses the kit named exactly like its ``libraryKit`` in the sample sheet.
 If a library's kit is missing, its consumer fails when the project loads.
@@ -33,7 +33,8 @@ Their names are checked against that field when the project loads.
 Examples
 --------
 
-Existing reads, a reference and a bwa index as input of ``ngs_mapping``:
+The reads of the libraries, a reference and a bwa index as input of ``ngs_mapping``.
+``snappy scan-files`` writes ``reads.tsv`` from the ``scan`` section:
 
 .. code-block:: yaml
 
@@ -51,23 +52,42 @@ Existing reads, a reference and a bwa index as input of ``ngs_mapping``:
           files: {index: /refs/GRCh38/bwa/GRCh38}  # the prefix of the .amb, .ann, ... files
 
       - step: external_data
-        name: trimmed_reads
+        name: reads
         config:
-          produces: {type: raw, tags: [trimmed]}
-          search_paths: [/data/earlier_run/trimmed]
-          search_patterns:
-            - left: '(?P<readgroup>.+)_R1\\.fastq\\.gz'
-              right: '(?P<readgroup>.+)_R2\\.fastq\\.gz'
+          produces: {type: raw, tags: [fastq]}
+          library_files: [reads.tsv]
+          scan:
+            search_paths: [raw]
+            search_patterns:
+              - left: '(?P<readgroup>.+)\\.R1\\.fastq\\.gz'
+                right: '(?P<readgroup>.+)\\.R2\\.fastq\\.gz'
 
       - step: ngs_mapping
         name: mapping
         config:
           depends_on:
-            reads: trimmed_reads
+            reads: reads
             index: bwa_index
             reference: genome
           tool: bwa
           bwa: {}
+
+The table ``reads.tsv`` lists one read group per line (``right`` is empty for single-end data):
+
+.. code-block:: text
+
+    library            readgroup  left                              right
+    P001-N1-DNA1-WES1  L001       raw/P001-N1-DNA1-WES1/L001.R1.fastq.gz  raw/P001-N1-DNA1-WES1/L001.R2.fastq.gz
+
+Existing alignments as the start of variant calling, one row per library:
+
+.. code-block:: yaml
+
+    - step: external_data
+      name: alignments
+      config:
+        produces: {type: alignments, tags: [dna]}
+        library_files: [bams.tsv]   # the columns library, bam, bai
 
 The regions of two exome kits, read by the coverage QC of ``ngs_data_qc``:
 
@@ -98,11 +118,16 @@ The regions of two exome kits, read by the coverage QC of ``ngs_data_qc``:
               targets: /refs/GRCh38/kits/Twist_Exome_2.targets.bed
               baits: /refs/GRCh38/kits/Twist_Exome_2.probes.bed
 
+      - name: reads
+        step: external_data
+        config:
+          produces: {type: raw, tags: [fastq]}
+          library_files: [reads.tsv]
       - step: ngs_mapping
         name: mapping
         config:
           depends_on:
-            reads: data_sets
+            reads: reads
             index: bwa_index
             reference: genome
           tool: bwa
@@ -117,7 +142,7 @@ The regions of two exome kits, read by the coverage QC of ``ngs_data_qc``:
           tool: alfred
           alfred: {}
 
-Existing per-library variant calls, found as ``<search path>/<library name>/...``:
+Existing per-library variant calls, listed by ``snappy scan-files`` from ``/data/dragen/<library name>/``:
 
 .. code-block:: yaml
 
@@ -125,14 +150,17 @@ Existing per-library variant calls, found as ``<search path>/<library name>/...`
       name: dragen_calls
       config:
         produces: {type: variants, tags: [germline, snv, indel]}
-        search_paths: [/data/dragen]
-        search_patterns:
-          - {vcf: '.+\\.hard-filtered\\.vcf\\.gz', vcf_tbi: '.+\\.hard-filtered\\.vcf\\.gz\\.tbi'}
+        library_files: [dragen_calls.tsv]   # the columns library, vcf, vcf_tbi
+        scan:
+          search_paths: [/data/dragen]
+          search_patterns:
+            - {vcf: '.+\\.hard-filtered\\.vcf\\.gz', vcf_tbi: '.+\\.hard-filtered\\.vcf\\.gz\\.tbi'}
 """
 
 import os
 
 from snappy_pipeline.base import ConfigError
+from snappy_pipeline.reads import files_table_keys
 from snappy_pipeline.workflows.abstract import BaseStep
 from snappy_pipeline.workflows.abstract.protocol import DataSignature, DataType
 
@@ -143,6 +171,18 @@ def _abspath(path: str | list[str]) -> str | list[str]:
     return os.path.abspath(path) if isinstance(path, str) else [os.path.abspath(p) for p in path]
 
 
+def no_rows_message(config: ExternalData, library_name: str) -> str:
+    """The error for a library without rows in the files tables of ``config``, with the way to add
+    them."""
+    tables = ", ".join(config.library_files)
+    fix = (
+        "run `snappy scan-files` to add them"
+        if config.scan is not None
+        else "add them to the table"
+    )
+    return f"The files tables {tables} list no files of library {library_name!r}; {fix}"
+
+
 class ExternalDataWorkflow(BaseStep):
     """Provides existing files to other tasks; has no rules of its own."""
 
@@ -150,8 +190,8 @@ class ExternalDataWorkflow(BaseStep):
     produces = [DataSignature(DataType.RAW)]
     config_model_class = ExternalData
 
-    #: Per-library files are found with the project's read discovery
-    needs_discovery = True
+    #: The files tables are read once per run, by the project
+    needs_project = True
 
     @classmethod
     def task_produces(cls, config, upstream):
@@ -160,16 +200,26 @@ class ExternalDataWorkflow(BaseStep):
 
     @classmethod
     def output_keys(cls, config, signature=None) -> set[str]:
-        """The keys of ``files``, of the search patterns or of each kit."""
+        """The keys of ``files``, of each kit, or of the files tables (``None`` while a table
+        does not exist yet)."""
         if config.files:
             return set(config.files)
         if config.kits:
             return set(next(iter(config.kits.values())))
-        return {key for pattern in config.search_patterns for key in pattern}
+        try:
+            return files_table_keys(config.library_files, config.patterns_find_reads())
+        except ValueError as e:
+            raise ConfigError(str(e)) from None
 
     @classmethod
     def get_output_paths(
-        cls, config, signature=None, library_name=None, library_kit=None, discovery=None, **kwargs
+        cls,
+        config,
+        signature=None,
+        library_name=None,
+        library_kit=None,
+        project=None,
+        **kwargs,
     ) -> dict[str, str]:
         """Return the absolute paths of the files: project-wide, of ``library_name`` or of
         ``library_kit``."""
@@ -179,5 +229,7 @@ class ExternalDataWorkflow(BaseStep):
             if library_kit not in config.kits:
                 raise ConfigError(f"No kit {library_kit!r}; known kits: {sorted(config.kits)}")
             return {key: os.path.abspath(path) for key, path in config.kits[library_kit].items()}
-        roots = [os.path.abspath(path) for path in config.search_paths]
-        return discovery.find_files(roots, library_name, config.search_patterns)
+        files = project.files_table(config).files(library_name)
+        if not files:
+            raise ConfigError(no_rows_message(config, library_name))
+        return files

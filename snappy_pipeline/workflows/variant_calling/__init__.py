@@ -182,10 +182,15 @@ Mutect2 with the resources of the GATK resource bundle, one ``external_data`` ta
         config:
           produces: {type: index, tags: [bwa, dna]}
           files: {index: /refs/GRCh38/bwa/Homo_sapiens_assembly38}
+      - name: reads
+        step: external_data
+        config:
+          produces: {type: raw, tags: [fastq]}
+          library_files: [reads.tsv]
       - name: mapping
         step: ngs_mapping
         config:
-          depends_on: {reads: data_sets, reference: genome, index: bwa_index}
+          depends_on: {reads: reads, reference: genome, index: bwa_index}
           tool: bwa
           bwa: {}
       - name: gatk_pon
@@ -238,10 +243,15 @@ The annotation and the other consumers read the result of the FDR control:
           produces: {type: regions, tags: [kits]}
           kits:
             Agilent_SureSelect_V6: {targets: /refs/kits/V6_targets.bed, baits: /refs/kits/V6_baits.bed}
+      - name: reads
+        step: external_data
+        config:
+          produces: {type: raw, tags: [fastq]}
+          library_files: [reads.tsv]
       - name: mapping
         step: ngs_mapping
         config:
-          depends_on: {reads: data_sets, reference: genome, index: bwa_index}
+          depends_on: {reads: reads, reference: genome, index: bwa_index}
           tool: bwa
           bwa: {}
       - name: candidates

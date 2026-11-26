@@ -74,7 +74,7 @@ def test_candidates_are_the_fitting_tasks_newest_first():
     assert candidates(keys["alignments"], entries) == ["mapping"]
     assert candidates(keys["reference"], entries) == ["genome"]
     reads = required_keys("ngs_mapping", "bwa")[0]
-    assert candidates(reads, entries)[0] == "data_sets"
+    assert candidates(reads, entries) == ["genome"]  # the only task producing raw data
     variants = required_keys("variant_filtration", "vembrane")[0]
     assert candidates(variants, entries) == ["calling"]
 

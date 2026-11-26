@@ -61,11 +61,19 @@ KITS = (
 )
 
 
+#: The FASTQ files of the libraries, from a files table
+READS = (
+    "external_data",
+    "reads",
+    {"produces": {"type": "raw", "tags": ["fastq"]}, "library_files": ["reads.tsv"]},
+)
+
+
 def _config(*tasks):
     return {
         "tasks": [
             {"step": step, "name": name, "config": config}
-            for step, name, config in (GENOME, BWA_INDEX, *tasks, VEP_CACHE)
+            for step, name, config in (GENOME, BWA_INDEX, READS, *tasks, VEP_CACHE)
         ],
         "project": {"name": "test"},
         "data_sets": {},
@@ -73,7 +81,7 @@ def _config(*tasks):
 
 
 def _mapping(name="mapping", depends_on=None, **config):
-    depends_on = {"reads": "data_sets", "reference": "genome", "index": "bwa_index"} | (
+    depends_on = {"reads": "reads", "reference": "genome", "index": "bwa_index"} | (
         depends_on or {}
     )
     config = {"tool": "bwa", "bwa": {}, **config}
@@ -120,6 +128,7 @@ def test_load_project_resolves_dependencies_and_orders_tasks():
     assert [task.name for task in project.tasks] == [
         "genome",
         "bwa_index",
+        "reads",
         "mapping",
         "calling",
         "vep_cache",
@@ -127,7 +136,11 @@ def test_load_project_resolves_dependencies_and_orders_tasks():
         "filtration",
     ]
     assert project.dependencies["filtration"] == {"variants": "annotation"}
-    assert project.dependencies["mapping"] == {"reference": "genome", "index": "bwa_index"}
+    assert project.dependencies["mapping"] == {
+        "reads": "reads",
+        "reference": "genome",
+        "index": "bwa_index",
+    }
     assert project.task_configs["calling"].tool == "mutect2"
     assert project.project_dir == WORK_DIR
     assert project.config_paths == (f"{WORK_DIR}/config.yaml",)
@@ -249,7 +262,7 @@ def test_load_project_uses_defaults_for_keys_without_value(caplog):
         project = load_project(_config(mapping), WORK_DIR)
 
     assert project.task_configs["mapping"].bwa.mask_duplicates is True
-    assert "tasks[2].config.bwa.mask_duplicates has no value" in caplog.text
+    assert "tasks[3].config.bwa.mask_duplicates has no value" in caplog.text
 
 
 def test_load_project_validates_step_configs():
@@ -365,33 +378,30 @@ def test_load_project_requires_tool():
         load_project(_config(_mapping(), calling), WORK_DIR)
 
 
-def test_load_project_accepts_reads_from_data_sets():
-    project = load_project(_config(_mapping(depends_on={"reads": "data_sets"})), WORK_DIR)
-    assert project.dependencies["mapping"] == {"reference": "genome", "index": "bwa_index"}
+def test_load_project_resolves_the_reads_task():
+    project = load_project(_config(_mapping()), WORK_DIR)
+    assert project.dependencies["mapping"] == {
+        "reads": "reads",
+        "reference": "genome",
+        "index": "bwa_index",
+    }
 
 
-def test_load_project_reserves_data_sets_for_reads():
-    with pytest.raises(
-        ValueError, match="depends_on.alignments is 'data_sets', which is not a task"
-    ):
-        load_project(_config(_mapping(), _calling(mapping="data_sets")), WORK_DIR)
-    with pytest.raises(ValueError, match="Task name 'data_sets' is reserved"):
-        load_project(_config(_mapping(name="data_sets")), WORK_DIR)
+def test_load_project_rejects_a_dependency_that_is_no_task():
+    with pytest.raises(ValueError, match="depends_on.alignments is 'nobody', which is not a task"):
+        load_project(_config(_mapping(), _calling(mapping="nobody")), WORK_DIR)
 
 
 def _external(name, data_type, tags, **config):
     return ("external_data", name, {"produces": {"type": data_type, "tags": tags}, **config})
 
 
-BAM_PATTERN = {"bam": r".+\.bam", "bai": r".+\.bam\.bai"}
 #: A reads pattern with only a left file
 LEFT = {"left": r"(?P<readgroup>.+)_1\.fq\.gz"}
 
 
 def test_external_alignments_feed_variant_calling():
-    bams = _external(
-        "bams", "alignments", ["dna"], search_paths=["/data"], search_patterns=[BAM_PATTERN]
-    )
+    bams = _external("bams", "alignments", ["dna"], library_files=["/data/bams.tsv"])
     project = load_project(_config(bams, _calling(mapping="bams")), WORK_DIR)
     assert project.signatures["bams"] == (DataSignature(DataType.ALIGNMENTS, frozenset({"dna"})),)
 
@@ -408,14 +418,14 @@ def test_external_panel_of_normals_feeds_mutect2():
         load_project(_config(_mapping(), cnvkit_pon, _calling(panel_of_normals="pon")), WORK_DIR)
 
 
-def test_external_data_is_checked_against_requirements_and_schemas():
+def test_external_data_is_checked_against_requirements_and_schemas(tmp_path):
     vcfs = _external("vcfs", "variants", ["germline"], files={"vcf": "/data/x.vcf.gz"})
     with pytest.raises(ValueError, match=r"depends_on.variants requires variants \[somatic\]"):
         load_project(_config(KITS, vcfs, _tmb(variants="vcfs")), WORK_DIR)
 
-    bams = _external(
-        "bams", "alignments", ["dna"], search_paths=["/data"], search_patterns=[{"bam": r".+\.bam"}]
-    )
+    # The keys of a files table are checked once the table exists
+    (tmp_path / "bams.tsv").write_text("library\tbam\n")
+    bams = _external("bams", "alignments", ["dna"], library_files=[str(tmp_path / "bams.tsv")])
     with pytest.raises(
         ValueError, match="depends_on.alignments needs bai, which task 'bams' does not provide"
     ):
@@ -453,20 +463,26 @@ def test_regions_filter_reads_any_bed_file_of_regions():
     "config, error",
     [
         ({}, "Set one of files"),
-        (
-            {"files": {"x": "/a"}, "search_paths": ["/b"], "search_patterns": [LEFT]},
-            "Set one of files",
-        ),
+        ({"files": {"x": "/a"}, "library_files": ["/b/reads.tsv"]}, "Set one of files"),
         ({"files": {"x": "/a"}, "kits": {"k": {"x": "/a"}}}, "Set one of files"),
-        ({"search_paths": ["/b"]}, "search_paths need search_patterns"),
-        ({"search_paths": ["/b"], "search_patterns": [{"left": r".+\.fastq\.gz"}]}, "readgroup"),
+        (
+            {"files": {"x": "/a"}, "scan": {"search_paths": ["/b"], "search_patterns": [LEFT]}},
+            "set library_files",
+        ),
+        (
+            {
+                "library_files": ["/b/r.tsv"],
+                "scan": {"search_paths": ["/b"], "search_patterns": [{"left": r".+\.fastq\.gz"}]},
+            },
+            "readgroup",
+        ),
         ({"kits": {"Kit V1": {"targets": "/a"}}}, "Kit names may only contain"),
         ({"kits": {"a": {"targets": "/a"}, "b": {"baits": "/b"}}}, "same keys"),
     ],
 )
 def test_external_data_config_errors(config, error):
     with pytest.raises(ConfigError, match=error):
-        load_project(_config(_external("reads", "raw", [], **config)), WORK_DIR)
+        load_project(_config(_external("ext", "raw", [], **config)), WORK_DIR)
 
 
 # create_task_instances ---------------------------------------------------------------------------
@@ -607,17 +623,15 @@ def test_config_paths_are_resolved_against_the_project_directory_with_pathvars()
     named = _external("named", "regions", [], files={"bed": "<refs>/b.bed"})
     default = _external("default", "regions", [], files={"bed": "<resources>/c.bed"})
     config = _config(relative, named, default) | {"pathvars": {"refs": "/data/refs"}}
-    data_set = {"file": "sheets/sheet.tsv", "search_paths": ["raw"], "search_patterns": [LEFT]}
-    config["data_sets"] = {"first": data_set}
+    config["data_sets"] = {"first": {"file": "sheets/sheet.tsv"}}
     project = load_project(config, WORK_DIR)
 
     assert project.task_configs["relative"].files == {"bed": f"{WORK_DIR}/beds/a.bed"}
     assert project.task_configs["named"].files == {"bed": "/data/refs/b.bed"}
     # Snakemake's default pathvars apply, too
     assert project.task_configs["default"].files == {"bed": f"{WORK_DIR}/resources/c.bed"}
-    data_set = project.model.data_sets["first"]
-    assert data_set.file == f"{WORK_DIR}/sheets/sheet.tsv"
-    assert data_set.search_paths == [f"{WORK_DIR}/raw"]
+    assert project.model.data_sets["first"].file == f"{WORK_DIR}/sheets/sheet.tsv"
+    assert project.task_configs["reads"].library_files == [f"{WORK_DIR}/reads.tsv"]
     assert project.file_paths["relative"] == (f"{WORK_DIR}/beds/a.bed",)
 
 
@@ -643,7 +657,7 @@ def test_missing_files_lists_paths_and_genome_sidecars(tmp_path):
         {"produces": {"type": "index", "tags": ["bwa", "dna"]}},
     )
     bwa_index[2]["files"] = {"index": "index"}  # a prefix: index.amb, ...
-    tasks = (genome, bwa_index, _mapping())
+    tasks = (genome, bwa_index, READS, _mapping())
     config = {
         "tasks": [{"step": s, "name": n, "config": c} for s, n, c in tasks],
         "project": {"name": "test"},
@@ -651,16 +665,21 @@ def test_missing_files_lists_paths_and_genome_sidecars(tmp_path):
     }
     project = load_project(config, str(tmp_path))
 
-    assert orchestration.missing_files(project) == {"genome": [str(tmp_path / "genome.dict")]}
+    assert orchestration.missing_files(project) == {
+        "genome": [str(tmp_path / "genome.dict")],
+        "reads": [str(tmp_path / "reads.tsv")],
+    }
 
 
 def test_missing_files_lists_the_index_of_a_vcf(tmp_path):
     for name in ("genome.fa", "genome.fa.fai", "genome.dict", "index.amb", "dbsnp.vcf.gz"):
         (tmp_path / name).touch()
+    (tmp_path / "reads.tsv").write_text("library\treadgroup\tleft\n")
     tasks = (
         _external("genome", "raw", ["reference", "dna"], files={"fasta": "genome.fa"}),
         _external("bwa_index", "index", ["bwa", "dna"], files={"index": "index"}),
         _external("dbsnp", "variants", ["dbsnp"], files={"vcf": "dbsnp.vcf.gz"}),
+        READS,
         _mapping(),
         _calling(tool="gatk4_hc_gvcf", dbsnp="dbsnp"),
     )
@@ -677,6 +696,7 @@ def test_missing_files_lists_the_index_of_a_vcf(tmp_path):
 def test_missing_files_lists_the_index_of_a_mappability_track(tmp_path):
     for name in ("genome.fa", "genome.fa.fai", "genome.dict", "index.amb", "kit.bed", "map.bed"):
         (tmp_path / name).touch()
+    (tmp_path / "reads.tsv").write_text("library\treadgroup\tleft\n")
     kits = {"Kit": {"targets": "kit.bed", "baits": "kit.bed"}}
     depends_on = {"alignments": "mapping", "reference": "genome", "kits": "kits"}
     tasks = (
@@ -684,6 +704,7 @@ def test_missing_files_lists_the_index_of_a_mappability_track(tmp_path):
         _external("bwa_index", "index", ["bwa", "dna"], files={"index": "index"}),
         _external("kits", "regions", ["kits"], kits=kits),
         _external("mappable", "regions", ["mappable"], files={"bed": "map.bed"}),
+        READS,
         _mapping(),
         (
             "gcnv_model",

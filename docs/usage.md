@@ -18,6 +18,7 @@ The table lists each command with the first sentence of its help.
 The listing commands `snappy task list`, `snappy check-files` and `snappy rules` share one output style.
 On a terminal they print a table; on a pipe, or with `--plain`, tab-separated lines without header and frame; with `--json`, an array with one object per row.
 The data goes to stdout and the messages to stderr, so `snappy check-files --json > missing.json` holds only the rows.
+`snappy scan-files` writes the files tables of the `external_data` tasks with a `scan` section (see {ref}`overview`); `snappy run --scan` runs it first.
 `snappy rules` lists the rules of the project as Snakemake names them: `<task>_<step>_<part>_<action>` for the jobs of a step part and `<task>_results` for the job that links the results of a task.
 `--task` and `--part` restrict the listing, and `--names` prints only the names, one per line, so that a rerun of the QC summaries of every task is one command:
 

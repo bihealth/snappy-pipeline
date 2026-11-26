@@ -156,12 +156,8 @@ def dot(contracts: list[StepContract]) -> str:
         + " ".join(f'"{name}";' for name in sorted(RESOURCE_STEPS))
         + " }"
     )
-    lines.append(
-        '    "data_sets" [style="rounded,dashed", label=<<B>data_sets</B><BR ALIGN="LEFT"/>'
-        + _small("FASTQ files of the sample sheet")
-        + '<BR ALIGN="LEFT"/>>];'
-    )
-    edges[("data_sets", DataType.RAW)] = (False, True)
+    # The FASTQ files of the libraries come from an external_data task's files tables
+    edges[("external_data", DataType.RAW)] = (False, True)
     hubs.add(DataType.RAW)
     for data_type in sorted(hubs):
         color = TYPE_COLORS[data_type]

@@ -14,7 +14,14 @@ data_sets:
   first_batch:
     file: %(sheet_file)s
     type: %(sheet_type)s
-    search_paths:
-      - raw
 
-tasks: []
+tasks:
+  - name: reads
+    step: external_data
+    config:
+      produces: {type: raw, tags: [fastq]}
+      library_files: [reads.tsv]
+      scan:
+        search_paths: [raw]
+        search_patterns:
+          - {left: '(?P<readgroup>.+)\.R1\.fastq\.gz', right: '(?P<readgroup>.+)\.R2\.fastq\.gz'}

@@ -3,7 +3,7 @@ from typing import Any
 
 from pydantic import ConfigDict, Field, model_validator
 
-from snappy_pipeline.models import ConfigPath, LibraryFolders, SnappyModel
+from snappy_pipeline.models import ConfigPath, SnappyModel
 
 
 class DataSetType(enum.StrEnum):
@@ -17,21 +17,12 @@ class NamingScheme(enum.StrEnum):
     SECONDARY_ID_PK = "secondary_id_pk"
 
 
-class DataSet(LibraryFolders):
-    """A sample sheet, and the folders with the reads of its libraries below ``search_paths``.
+class DataSet(SnappyModel):
+    """A sample sheet. The files of its libraries come from ``external_data`` tasks, whose files
+    tables ``snappy scan-files`` writes from the sheet's ``folderName`` of each library."""
 
-    The sheet's ``folderName`` names the folder of each library. A library's reads are searched
-    only below the search paths of its own data set."""
-
-    file: ConfigPath = ""
+    file: ConfigPath
     """The sample sheet"""
-
-    search_patterns: list[dict[str, str]] = [
-        {"left": r"(?P<readgroup>.+)\.R1\.fastq\.gz", "right": r"(?P<readgroup>.+)\.R2\.fastq\.gz"}
-    ]
-    """Regular expressions for the paths below a library's folder, by mate, with a
-    ``(?P<readgroup>...)`` group that pairs the mates; the default finds ``*.R1.fastq.gz`` and
-    ``*.R2.fastq.gz``"""
 
     type: DataSetType = DataSetType.MATCHED_CANCER
     naming_scheme: NamingScheme = NamingScheme.SECONDARY_ID_PK
@@ -97,6 +88,8 @@ class ConfigModel(SnappyModel):
     pathvars: dict[str, str] = {}
     """Named roots for paths, used as ``<name>`` in any path of the configuration, with the
     defaults and semantics of Snakemake's ``pathvars``"""
-    data_sets: dict[str, DataSet]
+    data_sets: dict[str, DataSet] = {}
+    """The sample sheets by name; a project without libraries, such as one that only builds
+    reference data, has none"""
     resources: Resources = Resources()
     tasks: list[TaskModel]

@@ -32,7 +32,8 @@ from ..base import ConfigError
 from ..log_archive import SNKMT_DB, build_archive, git_state, latest_snakemake_log
 from ..models import ConfigMode
 from ..orchestration import CONFIG_FILE, create_task_instances, load_project, missing_files
-from ..sheet_summary import missing_reads
+from ..sheet_summary import missing_library_files
+from .scan_files import scan_files
 from ..workflow_registry import WORKFLOW_REGISTRY
 from .impl.fsmanip import (
     create_directory,
@@ -865,10 +866,17 @@ def offer_commit(directory: str) -> None:
     ),
 )
 @click.option(
+    "--scan",
+    is_flag=True,
+    default=False,
+    help="First write the files tables of the external_data tasks with a scan section, as "
+    "snappy scan-files does",
+)
+@click.option(
     "--verbose", is_flag=True, help="Log the Snakemake command line and other debug messages"
 )
 @click.pass_context
-def run(ctx, directory, task_name, frozen, verbose):
+def run(ctx, directory, task_name, frozen, scan, verbose):
     """Run snappy pipeline workflows.
 
     The executor and its settings, such as SLURM, come from a Snakemake profile of the system or
@@ -876,6 +884,8 @@ def run(ctx, directory, task_name, frozen, verbose):
     if frozen and not task_name:
         raise click.UsageError("--frozen requires --task")
     setup_logging(verbose)
+    if scan:
+        ctx.invoke(scan_files_command, directory=directory, task_names=())
 
     snakemake_args = list(ctx.args)
     if _interactive() and not _dry_run(snakemake_args):
@@ -955,17 +965,56 @@ def logs(directory, snakemake_log):
     log("Logs archived in {path}", {"path": str(archive)}, level=LVL_IMPORTANT)
 
 
+@main.command(name="scan-files")
+@directory_option
+@click.option(
+    "--task",
+    "task_names",
+    type=str,
+    multiple=True,
+    shell_complete=_complete_task_names,
+    help="Write only the tables of this task; default: every external_data task with a scan",
+)
+def scan_files_command(directory, task_names):
+    """Write the files tables of the external_data tasks with a scan section.
+
+    For every library of the sample sheets, the files are searched in a folder named like the
+    library (the sheet's folder_name, else the library name) below the scan's search_paths, with
+    its search_patterns, and listed in the first table of library_files. Run it once after the
+    sheets gain libraries; snappy run stops for a library without rows and names this command.
+    It exits with 1 if a library has no files or two libraries share a folder; the table is
+    written anyway, with the libraries that have files.
+    """
+    config_path = _project_config(directory)
+    try:
+        project = load_project(load_configfile(config_path), os.path.dirname(config_path))
+        written, problems = scan_files(project, task_names)
+    except (ConfigError, ValueError) as e:
+        log(str(e), level=LVL_ERROR)
+        sys.exit(1)
+    for message in written:
+        log(message, level=LVL_IMPORTANT)
+    for problem in problems:
+        log(problem, level=LVL_ERROR)
+    if problems:
+        sys.exit(1)
+    if not written:
+        log("No external_data task has a scan section", level=LVL_ERROR)
+        sys.exit(1)
+
+
 @main.command(name="check-files")
 @directory_option
 @listing_options
 def check_files(directory, as_json, plain):
     """List the files that config.yaml names but that do not exist, and the libraries whose
-    reads are not found.
+    files are not found.
 
-    The files are those in tool sections, the external_data paths, the sample sheets and search
-    paths, the .fai and .dict of a genome and the index of a VCF or of the mappability BED file.
-    The reads are checked for every library of the tasks that read FASTQ files, below the search
-    paths of its data set or external_data task. Snakemake checks the inputs of the jobs it runs
+    The files are those in tool sections, the external_data paths, the files tables and the
+    files they list, the sample sheets and search paths, the .fai and .dict of a genome and the
+    index of a VCF or of the mappability BED file. The reads are checked for every library of the
+    tasks that read FASTQ files, below the search paths of its data set or external_data task or
+    in the files tables. Snakemake checks the inputs of the jobs it runs
     anyway; this command checks all of them, for example after moving a project to another
     machine. Each row has the kind (file or reads), the task, the file or the library, and the
     problem. It exits with 1 if a file is missing.
@@ -975,7 +1024,7 @@ def check_files(directory, as_json, plain):
         project = load_project(load_configfile(config_path), os.path.dirname(config_path))
         missing = missing_files(project)
         # The task objects load the sample sheets and find the reads as the Snakefile does
-        problems = missing_reads(create_task_instances(None, project))
+        problems = missing_library_files(create_task_instances(None, project))
     except ConfigError as e:
         log(str(e), level=LVL_ERROR)
         sys.exit(1)

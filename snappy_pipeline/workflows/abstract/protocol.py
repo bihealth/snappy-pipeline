@@ -6,7 +6,6 @@ from typing import Annotated
 from pydantic import BaseModel
 
 #: Reserved ``depends_on.reads`` value: search FASTQs in the data sets' search paths.
-DATA_SETS = "data_sets"
 
 
 class DataType(StrEnum):

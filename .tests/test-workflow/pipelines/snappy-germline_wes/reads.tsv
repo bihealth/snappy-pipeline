@@ -1,0 +1,4 @@
+library	readgroup	left	right
+case001subregion-N1-DNA1-WES1	case001subregion-N1-DNA1-WES1	raw/case001subregion-N1-DNA1-WES1/case001subregion-N1-DNA1-WES1.R1.fastq.gz	raw/case001subregion-N1-DNA1-WES1/case001subregion-N1-DNA1-WES1.R2.fastq.gz
+case001subregionFather-N1-DNA1-WES1	case001subregionFather-N1-DNA1-WES1	raw/case001subregionFather-N1-DNA1-WES1/case001subregionFather-N1-DNA1-WES1.R1.fastq.gz	raw/case001subregionFather-N1-DNA1-WES1/case001subregionFather-N1-DNA1-WES1.R2.fastq.gz
+case001subregionMother-N1-DNA1-WES1	case001subregionMother-N1-DNA1-WES1	raw/case001subregionMother-N1-DNA1-WES1/case001subregionMother-N1-DNA1-WES1.R1.fastq.gz	raw/case001subregionMother-N1-DNA1-WES1/case001subregionMother-N1-DNA1-WES1.R2.fastq.gz

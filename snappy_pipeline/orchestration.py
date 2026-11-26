@@ -18,10 +18,9 @@ from snakemake.pathvars import Pathvars
 from snappy_pipeline.base import ConfigError, in_task
 from snappy_pipeline.log_archive import archive_after_run, record_git_state
 from snappy_pipeline.models import SnappyStepModel
-from snappy_pipeline.reads import ReadDiscovery
+from snappy_pipeline.reads import FilesTable, read_files_tables
 from snappy_pipeline.workflow_model import ConfigModel, TaskModel
 from snappy_pipeline.workflows.abstract.protocol import (
-    DATA_SETS,
     DataSignature,
     ExpectedIndexedRegions,
     ExpectedPathSchema,
@@ -80,13 +79,18 @@ class Project:
     group_by: Mapping[str, str] = dataclass_field(default_factory=dict)
     #: Task name (``data_sets`` for the data sets) -> the paths in its configuration, resolved.
     file_paths: Mapping[str, tuple[str, ...]] = dataclass_field(default_factory=dict)
-    #: FASTQ discovery shared by all tasks, so each search path is walked once per run
-    read_discovery: ReadDiscovery = dataclass_field(default_factory=ReadDiscovery, compare=False)
     #: ``include_background`` -> the library table without relationships, built once per run
     #: and shared by all tasks (``BaseStep.library_table``)
     library_tables: dict[bool, Any] = dataclass_field(default_factory=dict, compare=False)
     #: ``include_background`` -> the donor table of the germline sheets (``BaseStep.pedigree_donors``)
     donor_tables: dict[bool, Any] = dataclass_field(default_factory=dict, compare=False)
+    #: Snakemake's ``pathvars`` of the configuration, expanded in the paths of files tables
+    pathvars: Any = None
+    #: The files tables of an ``external_data`` task (its ``library_files``) -> their contents,
+    #: read once per run (:meth:`files_table`)
+    _files_tables: dict[tuple[str, ...], FilesTable] = dataclass_field(
+        default_factory=dict, compare=False, repr=False
+    )
     #: The data sets with their sample sheets, loaded on first use (:attr:`data_set_infos`)
     _data_sets: list[Any] = dataclass_field(default_factory=list, compare=False, repr=False)
 
@@ -108,6 +112,19 @@ class Project:
                 for name, data_set in self.model.data_sets.items()
             )
         return self._data_sets
+
+    def files_table(self, config: Any) -> FilesTable:
+        """Return the files of the libraries that the files tables of the ``external_data`` task
+        config ``config`` list, read once per run; raises :class:`ConfigError` for a bad table."""
+        key = tuple(config.library_files)
+        if key not in self._files_tables:
+            try:
+                self._files_tables[key] = read_files_tables(
+                    key, config.patterns_find_reads(), config.mixed_se_pe, self.pathvars
+                )
+            except ValueError as e:
+                raise ConfigError(str(e)) from None
+        return self._files_tables[key]
 
     def task(self, name: str) -> TaskModel:
         """Return the task called ``name``."""
@@ -138,7 +155,7 @@ def load_project(config: Mapping[str, Any], project_dir: str) -> Project:
         return {"project_dir": project_dir, "pathvars": pathvars, "paths": paths}
 
     try:
-        model = ConfigModel.model_validate(config, context=context(DATA_SETS))
+        model = ConfigModel.model_validate(config, context=context("data_sets"))
     except ValidationError as e:
         raise ConfigError(f"{CONFIG_FILE} is invalid:\n{_format_validation_error(e)}") from None
 
@@ -146,8 +163,6 @@ def load_project(config: Mapping[str, Any], project_dir: str) -> Project:
     duplicates = sorted({name for name in names if names.count(name) > 1})
     if duplicates:
         raise ConfigError(f"Task names must be unique; duplicates: {', '.join(duplicates)}")
-    if DATA_SETS in names:
-        raise ConfigError(f"Task name {DATA_SETS!r} is reserved for depends_on.reads")
 
     task_configs: dict[str, SnappyStepModel] = {}
     dependencies: dict[str, dict[str, str]] = {}
@@ -190,6 +205,7 @@ def load_project(config: Mapping[str, Any], project_dir: str) -> Project:
         selected=selected,
         group_by=resolve_group_by(tasks, task_configs, dependencies),
         file_paths={name: tuple(paths) for name, paths in file_paths.items()},
+        pathvars=pathvars,
     )
     _check_granularity(project)
     _check_filter_ids(project)
@@ -337,6 +353,10 @@ def missing_files(project: Project) -> dict[str, list[str]]:
     ``external_data`` task declare as inputs (the ``.fai`` and ``.dict`` of a genome, the index of
     a VCF or of an indexed BED file)."""
     paths = {name: list(found) for name, found in project.file_paths.items()}
+    for name, config in project.task_configs.items():
+        tables = getattr(config, "library_files", None)
+        if tables and all(os.path.exists(table) for table in tables):
+            paths[name] += project.files_table(config).paths()
     for consumer, dependencies in project.dependencies.items():
         config = project.task_configs[consumer]
         fields = type(config.depends_on).model_fields if dependencies else {}
@@ -448,14 +468,13 @@ def _resolve_dependencies(
     """Return ``depends_on`` field -> upstream task name (a tuple for a list field) for the set
     fields of one task.
 
-    ``reads: data_sets`` names no task, so it is not a dependency.
     """
     depends_on = getattr(task_config, "depends_on", None)
     if depends_on is None:
         return {}
     result: dict[str, str | tuple[str, ...]] = {}
     for field, value in depends_on.model_dump().items():
-        if not value or (field == "reads" and value == DATA_SETS):
+        if not value:
             continue
         upstreams = value if isinstance(value, list) else [value]
         for upstream in upstreams:
@@ -544,6 +563,8 @@ def _check_output_keys(field, schema, upstream, signature, steps, task_configs) 
     if schema is None:
         return
     keys = WORKFLOW_REGISTRY[steps[upstream]].output_keys(task_configs[upstream], signature)
+    if keys is None:  # a files table that does not exist yet; checked at setup
+        return
     missing = [
         name for name, f in schema.model_fields.items() if f.is_required() and name not in keys
     ]

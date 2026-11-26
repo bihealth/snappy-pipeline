@@ -116,6 +116,17 @@ tasks:
       produces: {type: raw, tags: [reference, dna]}
       files: {fasta: /path/to/genome.fa}
 
+  - name: reads
+    step: external_data
+    config:
+      produces: {type: raw, tags: [fastq]}
+      library_files: [reads.tsv]
+      scan:
+        search_paths: [raw]
+        search_patterns:
+          - left: '(?P<readgroup>.+)\.R1\.fastq\.gz'
+            right: '(?P<readgroup>.+)\.R2\.fastq\.gz'
+
   - name: gnomad
     step: external_data
     config:
@@ -145,7 +156,7 @@ tasks:
     step: ngs_mapping
     config:
       depends_on:
-        reads: data_sets
+        reads: reads
         reference: genome
         index: bwa_index
       tool: bwa

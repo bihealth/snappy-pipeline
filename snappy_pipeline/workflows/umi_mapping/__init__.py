@@ -43,7 +43,7 @@ Downstream tasks read the keys ``bam``, ``bai``, ``bamstats``, ``flagstats`` and
 Reads and sample sheet
 ----------------------
 
-A data set or an ``external_data`` task locates the reads below its ``search_paths``, in a folder per library, as for :ref:`step_ngs_mapping`.
+An ``external_data`` task lists the FASTQ files of each library in its files tables, as for :ref:`step_ngs_mapping`.
 Each read group gets its own ``@RG`` in the grouped BAM file, with the name that the ``readgroup`` group captured as ``ID`` and ``PU``, the library name as ``SM`` and ``LB``, and ``platform`` as ``PL``.
 The consensus reads of a library form one read group with the same ``SM``.
 

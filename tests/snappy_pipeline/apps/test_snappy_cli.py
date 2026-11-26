@@ -60,16 +60,17 @@ def test_task_list_shows_name_step_tool_and_dependencies(tmp_path):
     assert result.output.splitlines() == [
         "genome\texternal_data\t\t",
         "bwa_index\texternal_data\t\t",
-        "mapping\tngs_mapping\tbwa\treads: data_sets, reference: genome, index: bwa_index",
+        "reads\texternal_data\t\t",
+        "mapping\tngs_mapping\tbwa\treads: reads, reference: genome, index: bwa_index",
     ]
     result = runner.invoke(
         snappy_cli.main, ["task", "list", "--json", "--directory", str(tmp_path)]
     )
-    assert json.loads(result.output)[2] == {
+    assert json.loads(result.output)[3] == {
         "name": "mapping",
         "step": "ngs_mapping",
         "tool": "bwa",
-        "depends_on": {"reads": "data_sets", "reference": "genome", "index": "bwa_index"},
+        "depends_on": {"reads": "reads", "reference": "genome", "index": "bwa_index"},
     }
     (tmp_path / "config.yaml").write_text("tasks: []\n")
     result = runner.invoke(snappy_cli.main, ["task", "list", "--directory", str(tmp_path)])
@@ -106,20 +107,18 @@ def test_complete_task_names(tmp_path, mocker):
         "bwa_index",
         "genome",
         "mapping",
+        "reads",
     ]
     assert [c.value for c in snappy_cli._complete_task_names(ctx, None, "ma")] == ["mapping"]
 
 
-#: A mapping task reading the FASTQ files of one germline library
+#: A mapping task reading the FASTQ files of one germline library from a files table
 CHECK_FILES_CONFIG = """
 project:
   name: check
 data_sets:
   first:
     file: sheet.tsv
-    search_paths: [raw]
-    search_patterns:
-      - {left: '(?P<readgroup>.+)_R1.fastq.gz', right: '(?P<readgroup>.+)_R2.fastq.gz'}
     type: germline_variants
     naming_scheme: only_secondary_id
 tasks:
@@ -133,10 +132,19 @@ tasks:
     config:
       produces: {type: index, tags: [bwa, dna]}
       files: {index: refs/genome}
+  - name: reads
+    step: external_data
+    config:
+      produces: {type: raw, tags: [fastq]}
+      library_files: [reads.tsv]
+      scan:
+        search_paths: [raw]
+        search_patterns:
+          - {left: '(?P<readgroup>.+)_R1.fastq.gz', right: '(?P<readgroup>.+)_R2.fastq.gz'}
   - name: mapping
     step: ngs_mapping
     config:
-      depends_on: {reads: data_sets, reference: genome, index: bwa_index}
+      depends_on: {reads: reads, reference: genome, index: bwa_index}
       tool: bwa
       bwa: {}
 """
@@ -156,23 +164,30 @@ def test_check_files_lists_missing_files_and_libraries_without_reads(tmp_path):
         (tmp_path / "refs").mkdir(exist_ok=True)
         (tmp_path / "refs" / name).touch()
 
+    # Before the scan, the files table is missing
     result = CliRunner().invoke(snappy_cli.main, ["check-files", "--directory", str(tmp_path)])
     assert result.exit_code == 1
     assert result.output.splitlines() == [
-        f"reads\tmapping\tP001-N1-DNA1-WGS1\tFound no reads of 'P001' below {tmp_path}/raw",
+        f"file\treads\t{tmp_path}/reads.tsv\tdoes not exist",
+        f"reads\treads\t{tmp_path}/reads.tsv\tdoes not exist; run `snappy scan-files`",
     ]
 
     (tmp_path / "raw" / "P001").mkdir()
     for mate in ("R1", "R2"):
         (tmp_path / "raw" / "P001" / f"P001_{mate}.fastq.gz").touch()
+    result = CliRunner().invoke(snappy_cli.main, ["scan-files", "--directory", str(tmp_path)])
+    assert result.exit_code == 0, result.output
     result = CliRunner().invoke(snappy_cli.main, ["check-files", "--directory", str(tmp_path)])
     assert result.exit_code == 0, result.output
 
+    # A listed FASTQ file that goes missing, and a sidecar of the genome
+    (tmp_path / "raw" / "P001" / "P001_R2.fastq.gz").unlink()
     (tmp_path / "refs" / "genome.dict").unlink()
     result = CliRunner().invoke(snappy_cli.main, ["check-files", "--directory", str(tmp_path)])
     assert result.exit_code == 1
     assert result.output.splitlines() == [
-        f"file\tgenome\t{tmp_path}/refs/genome.dict\tdoes not exist"
+        f"file\tgenome\t{tmp_path}/refs/genome.dict\tdoes not exist",
+        f"file\treads\t{tmp_path}/raw/P001/P001_R2.fastq.gz\tdoes not exist",
     ]
 
 
@@ -258,6 +273,10 @@ def _write_project(directory: Path, config: str) -> None:
     (directory / "refs").mkdir()
     for name in ("raw/P001/P001_R1.fastq.gz", "raw/P001/P001_R2.fastq.gz"):
         (directory / name).touch()
+    (directory / "reads.tsv").write_text(
+        "library\treadgroup\tleft\tright\n"
+        "P001-N1-DNA1-WGS1\tP001\traw/P001/P001_R1.fastq.gz\traw/P001/P001_R2.fastq.gz\n"
+    )
     for name in ("genome.fa", "genome.fa.fai", "genome.dict"):
         (directory / "refs" / name).touch()
 
@@ -355,6 +374,7 @@ def test_task_add_keeps_the_style_of_the_config_and_comments_the_new_task(tmp_pa
     ] == [
         "genome",
         "bwa_index",
+        "reads",
         "mapping",
         "qc",
     ]
@@ -467,7 +487,8 @@ def test_init_writes_the_static_sections_before_the_tasks(tmp_path):
     assert data_sets < tasks < lines.index("  - name: genome") < lines.index("  - name: mapping")
     assert not any(line.startswith("#") for line in lines[tasks:])
     config = snappy_cli.load_configfile(str(project / "config.yaml"))
-    assert [task["name"] for task in config["tasks"]] == ["genome", "mapping"]
+    # The reads task of the template comes first
+    assert [task["name"] for task in config["tasks"]] == ["reads", "genome", "mapping"]
     assert list(config["data_sets"]) == ["first_batch"]
 
 

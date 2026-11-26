@@ -9,7 +9,7 @@ from snappy_pipeline.sheet_summary import (
     check_libraries,
     library_summary,
     library_warnings,
-    missing_reads,
+    missing_library_files,
 )
 
 
@@ -91,38 +91,80 @@ def test_schema_rejects_unknown_extraction_type_and_bad_kit_names(row):
         check_libraries(_libraries(row))
 
 
-def _reads_task(source, libraries, read_groups):
-    project = SimpleNamespace(
-        task=lambda name: SimpleNamespace(step="external_data" if name == "raw" else "trimming")
-    )
+def _project(tmp_path, table_libraries=("a", "b")):
+    """A project with the external_data tasks raw (reads) and tables (BAMs), whose files tables
+    exist and list ``table_libraries``, and missing, whose table does not exist."""
+    steps = {"raw": "external_data", "tables": "external_data", "missing": "external_data"}
+    (tmp_path / "r.tsv").touch()
+    (tmp_path / "t.tsv").touch()
     return SimpleNamespace(
-        depends_on=SimpleNamespace(reads=source),
-        project=project,
-        libraries=pd.DataFrame({"library_name": libraries}),
-        read_groups=read_groups,
-        reads_from_task=lambda source: (
-            source not in ("", "data_sets") and project.task(source).step != "external_data"
+        task=lambda name: SimpleNamespace(step=steps.get(name, "trimming")),
+        dependencies={},
+        task_configs={
+            "raw": SimpleNamespace(library_files=[str(tmp_path / "r.tsv")], scan=None),
+            "tables": SimpleNamespace(library_files=[str(tmp_path / "t.tsv")], scan=None),
+            "missing": SimpleNamespace(library_files=["/none/m.tsv"], scan=object()),
+        },
+        files_table=lambda config: SimpleNamespace(
+            files=lambda library: {"bam": "a.bam"} if library == "a" else {},
+            libraries=list(table_libraries),
         ),
     )
 
 
-def test_missing_reads_checks_each_library_of_a_source_once_and_skips_trimmed_reads():
+def _task(project, name, field, source, libraries, read_groups=None):
+    project.dependencies[name] = {field: source}
+    return SimpleNamespace(
+        depends_on=SimpleNamespace(reads=source if field == "reads" else ""),
+        project=project,
+        libraries=pd.DataFrame({"library_name": libraries}),
+        read_groups=lambda library, source=None: read_groups(library),
+        reads_from_task=lambda source: project.task(source).step != "external_data",
+        library_table=lambda include_background: pd.DataFrame({"library_name": ["a", "b"]}),
+    )
+
+
+def test_missing_reads_checks_each_library_of_a_source_once_and_skips_trimmed_reads(tmp_path):
     def read_groups(library):
         if library == "b":
-            raise ValueError("Found no reads of 'b' below /raw")
+            raise ValueError("The files tables r.tsv list no files of library 'b'")
         return ["group"]
 
     def fail(library):
         raise AssertionError("the trimming task finds the reads, not its reader")
 
+    project = _project(tmp_path)
     tasks = {
-        "mapping": _reads_task("data_sets", ["a", "b"], read_groups),
-        "qc": _reads_task("data_sets", ["b"], read_groups),
-        "external": _reads_task("raw", ["b"], read_groups),
-        "trimmed": _reads_task("trimming", ["b"], fail),
-        "genome": SimpleNamespace(depends_on=None),
+        "mapping": _task(project, "mapping", "reads", "raw", ["a", "b"], read_groups),
+        "qc": _task(project, "qc", "reads", "raw", ["b"], read_groups),
+        "trimmed": _task(project, "trimmed", "reads", "trimming", ["b"], fail),
+        "genome": SimpleNamespace(depends_on=None, project=project),
     }
-    assert missing_reads(tasks) == [
-        ("mapping", "b", "Found no reads of 'b' below /raw"),
-        ("external", "b", "Found no reads of 'b' below /raw"),
+    assert missing_library_files(tasks) == [
+        ("mapping", "b", "The files tables r.tsv list no files of library 'b'"),
+    ]
+
+
+def test_missing_library_files_checks_files_tables_and_their_unknown_libraries(tmp_path):
+    project = _project(tmp_path, table_libraries=("a", "zzz"))
+    tasks = {"calling": _task(project, "calling", "alignments", "tables", ["a", "b"])}
+    table = tmp_path / "t.tsv"
+    assert missing_library_files(tasks) == [
+        (
+            "calling",
+            "b",
+            f"The files tables {table} list no files of library 'b'; add them to the table",
+        ),
+        ("tables", "zzz", "is in a files table but in no sample sheet"),
+    ]
+
+
+def test_a_missing_files_table_is_reported_once_with_the_command_that_writes_it(tmp_path):
+    project = _project(tmp_path)
+    tasks = {
+        "mapping": _task(project, "mapping", "reads", "missing", ["a", "b"]),
+        "qc": _task(project, "qc", "reads", "missing", ["a"]),
+    }
+    assert missing_library_files(tasks) == [
+        ("missing", "/none/m.tsv", "does not exist; run `snappy scan-files`"),
     ]

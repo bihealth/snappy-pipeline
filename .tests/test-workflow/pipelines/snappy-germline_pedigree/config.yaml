@@ -6,10 +6,6 @@ project:
 data_sets:
   pedigree:
     file: samplesheet.tsv
-    search_patterns:
-      - { left: '(?P<readgroup>.+)\.R1\.fastq\.gz', right: '(?P<readgroup>.+)\.R2\.fastq\.gz' }
-    search_paths:
-      - raw
     type: germline_variants
     naming_scheme: only_secondary_id
 
@@ -19,6 +15,16 @@ tasks:
     config:
       produces: {type: raw, tags: [reference, dna]}
       files: {fasta: ../../resources/refs/subregion.fa}
+
+  - name: reads
+    step: external_data
+    config:
+      produces: {type: raw, tags: [fastq]}
+      library_files: [reads.tsv]
+      scan:
+        search_paths: [raw]
+        search_patterns:
+          - { left: '(?P<readgroup>.+)\.R1\.fastq\.gz', right: '(?P<readgroup>.+)\.R2\.fastq\.gz' }
 
   - name: kits
     step: external_data
@@ -40,7 +46,7 @@ tasks:
     step: ngs_mapping
     config:
       depends_on:
-        reads: data_sets
+        reads: reads
         reference: genome
         index: bwa_index
       tool: bwa

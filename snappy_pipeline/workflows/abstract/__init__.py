@@ -26,7 +26,6 @@ from snappy_pipeline.base import (
 )
 from snappy_pipeline.models import (
     Intermediate,
-    LibraryFolders,
     RelationshipDefinition,
     SnappyStepModel,
     ToolModel,
@@ -46,7 +45,6 @@ from snappy_pipeline.library_table import (
 )
 from snappy_pipeline.reads import ReadGroup
 from snappy_pipeline.workflows.abstract.protocol import (
-    DATA_SETS,
     DataSignature,
     field_contract,
     select_signature,
@@ -549,7 +547,7 @@ class BaseStep:
     uses_background: bool = False
 
     #: Whether ``get_output_paths`` needs the project's read discovery (``discovery`` keyword)
-    needs_discovery: bool = False
+    needs_project: bool = False
 
     def __init_subclass__(cls, **kwargs):
         """Enforce that every ``BaseStep`` subclass declares a ``produces`` contract."""
@@ -725,9 +723,7 @@ class BaseStep:
 
         ``source`` defaults to ``depends_on.reads``:
 
-        - ``data_sets``: the folder named in the sample sheet, below the search paths of the
-          library's data set;
-        - an ``external_data`` task: a folder named like the library, below its search paths;
+        - an ``external_data`` task: the rows of its files tables (``library_files``);
         - a task that writes FASTQs (``adapter_trimming``): its ``work/<library>/out``, where
           the files keep the names and sub-directories of the task's own input.
         """
@@ -736,29 +732,13 @@ class BaseStep:
             out_dir = self.namespaced_path(source, f"work/{library_name}/out")
             upstream = self.project.task_configs[source].depends_on.reads
             return [group.rebased(out_dir) for group in self.read_groups(library_name, upstream)]
-        folders, folder_name = self._library_folders(library_name, source)
-        discovery = self.project.read_discovery
-        groups = discovery.find(
-            folders.search_paths, folder_name, folders.search_patterns, folders.mixed_se_pe
-        )
-        if not groups:
-            raise ConfigError(discovery.missing(folders.search_paths, folder_name))
-        return groups
+        from snappy_pipeline.workflows.external_data import no_rows_message
 
-    def _library_folders(self, library_name: str, source: str) -> tuple[LibraryFolders, str]:
-        """Return where the reads of ``library_name`` are, and the name of its folder: the
-        library's data set and the sheet's ``folderName``, or an ``external_data`` task and the
-        library name."""
-        if source in ("", DATA_SETS):
-            row = self.library_row(library_name)
-            folder_name = row.get("folder_name")
-            if not isinstance(folder_name, str) or not folder_name:
-                raise ConfigError(
-                    f"Library {library_name!r} of data set {row['data_set']!r} has no folderName in "
-                    "the sample sheet"
-                )
-            return self.w_config.data_sets[row["data_set"]], folder_name
-        return self.project.task_configs[source], library_name
+        config = self.project.task_configs[source]
+        groups = self.project.files_table(config).read_groups(library_name)
+        if not groups:
+            raise ConfigError(no_rows_message(config, library_name))
+        return groups
 
     def reads_input(self, library_name: str) -> list[str]:
         """Return the Snakemake inputs that provide the reads of ``library_name``.
@@ -773,8 +753,8 @@ class BaseStep:
 
     def reads_from_task(self, source: str) -> bool:
         """Whether ``source`` (a ``depends_on.reads`` value) is a task that writes FASTQs, such as
-        ``adapter_trimming``, rather than the data sets or an ``external_data`` task"""
-        return source not in ("", DATA_SETS) and self.project.task(source).step != "external_data"
+        ``adapter_trimming``, rather than an ``external_data`` task"""
+        return self.project.task(source).step != "external_data"
 
     def build_library_dataframe(self, include_background: bool = False):
         """Return the unified library dataframe for this workflow, with its relationships.
@@ -1294,8 +1274,8 @@ class BaseStep:
                     f"depends_on.{req_field_name} task {dependency.task_name!r} produces no "
                     f"{signature}"
                 )
-        if dependency.workflow_cls.needs_discovery:
-            kwargs["discovery"] = self.project.read_discovery
+        if dependency.workflow_cls.needs_project:
+            kwargs["project"] = self.project
         local_paths = dependency.workflow_cls.get_output_paths(
             self.project.task_configs[dependency.task_name], selected, **kwargs
         )

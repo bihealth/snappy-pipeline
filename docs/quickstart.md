@@ -66,16 +66,17 @@ Keep the project in git for the history of its configuration.
 ## Configure the tasks
 
 Besides `project`, `config.yaml` has two main sections.
-`data_sets` names the sample sheets and where their FASTQ files are.
+`data_sets` names the sample sheets.
 `tasks` lists the tasks, each with a `step`, a unique `name` and a `config`.
 
 A task names the tasks it reads from in `config.depends_on`.
 The keys are named after the data: `reads`, `alignments`, `variants`, `reference`, `index` and so on.
-Each value is the name of a task, except `reads: data_sets`, which reads the FASTQ files of the `data_sets`.
+Each value is the name of a task.
 Every task sets one `tool` and configures it in the section of the same name.
 
-Reference data comes from `external_data` tasks.
+Reference data and the files of the libraries come from `external_data` tasks.
 They have no rules and declare in `produces` what their files are.
+The `reads` task below lists the FASTQ files of each library in `reads.tsv`, which `snappy scan-files` writes.
 
 ```yaml
 project:
@@ -85,13 +86,19 @@ data_sets:
   my_batch:
     file: samplesheet.tsv
     type: matched_cancer
-    search_paths:
-      - raw
-    search_patterns:
-      - left: '(?P<readgroup>.+)\.R1\.fastq\.gz'
-        right: '(?P<readgroup>.+)\.R2\.fastq\.gz'
 
 tasks:
+  - name: reads
+    step: external_data
+    config:
+      produces: {type: raw, tags: [fastq]}
+      library_files: [reads.tsv]
+      scan:
+        search_paths: [raw]
+        search_patterns:
+          - left: '(?P<readgroup>.+)\.R1\.fastq\.gz'
+            right: '(?P<readgroup>.+)\.R2\.fastq\.gz'
+
   - name: genome
     step: external_data
     config:
@@ -108,7 +115,7 @@ tasks:
     step: ngs_mapping
     config:
       depends_on:
-        reads: data_sets
+        reads: reads
         reference: genome
         index: bwa_index
       tool: bwa
@@ -167,9 +174,11 @@ P001         N1          N        WES          P001-N1-DNA1-WES1
 P001         T1          Y        WES          P001-T1-DNA1-WES1
 ```
 
-The reads of a library are in a folder named like its `folderName`, at any depth below a `search_paths` entry of its data set.
+The reads of a library are in a folder named like its `folderName`, at any depth below a `search_paths` entry of the `scan` section of the `reads` task.
 `search_patterns` are regular expressions for the path below that folder.
 The `(?P<readgroup>...)` group pairs the `left` and `right` file of a read group, usually a lane.
+`snappy scan-files` searches the folders once and writes `reads.tsv`, one row per read group, which the tasks read from then on.
+Run it again after adding libraries; `snappy run` stops for a library without rows and names the command.
 
 ```text
 my_project/
@@ -188,7 +197,7 @@ my_project/
 
 ## Run
 
-`snappy check-files` lists the files that `config.yaml` names but that do not exist, and the libraries whose reads are not found below the search paths.
+`snappy check-files` lists the files that `config.yaml` names but that do not exist, the files of `reads.tsv` included, and the libraries without rows in it.
 Then start with a dry-run.
 It validates `config.yaml` and lists the jobs without running them.
 Everything after `--` goes to Snakemake.

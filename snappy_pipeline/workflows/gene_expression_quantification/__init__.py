@@ -55,11 +55,16 @@ The example maps RNA reads with STAR, infers the strandedness, and counts with f
         config:
           produces: {type: index, tags: [star, rna]}
           files: {index: resources/star_index}
+      - name: reads
+        step: external_data
+        config:
+          produces: {type: raw, tags: [fastq]}
+          library_files: [reads.tsv]
       - name: mapping
         step: ngs_mapping
         config:
           depends_on:
-            reads: data_sets
+            reads: reads
             reference: genome
             features: annotation
             index: star_index

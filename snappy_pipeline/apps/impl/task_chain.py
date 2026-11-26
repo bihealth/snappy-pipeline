@@ -21,9 +21,7 @@ from snappy_pipeline.workflows.abstract.protocol import (
 
 #: The step of existing data, which can provide any key
 EXTERNAL = "external_data"
-#: The FASTQ source that is no task
-DATA_SETS = "data_sets"
-#: Schemas of files per library, which an ``external_data`` task gives through search patterns
+#: Schemas of files per library, which an ``external_data`` task gives through files tables
 PER_LIBRARY = (ExpectedAlignments, ExpectedVariants)
 
 
@@ -97,9 +95,8 @@ def _produces_type(step: str, data_type: DataType) -> bool:
 
 def candidates(key: Key, entries: list[TaskEntry]) -> list[str]:
     """The names of the tasks in ``entries`` that can provide ``key``, newest first:
-    an ``external_data`` task by what it produces, another task by the type its step produces;
-    ``data_sets`` first for the reads."""
-    names = [DATA_SETS] if key.name == "reads" else []
+    an ``external_data`` task by what it produces, another task by the type its step produces."""
+    names = []
     signature = key.contract.signature
     for entry in reversed(entries):
         if signature is None:

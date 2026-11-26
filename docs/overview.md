@@ -133,6 +133,17 @@ tasks:
       produces: {type: raw, tags: [reference, dna]}
       files: {fasta: /path/to/genome.fa}
 
+  - name: reads
+    step: external_data
+    config:
+      produces: {type: raw, tags: [fastq]}
+      library_files: [reads.tsv]
+      scan:
+        search_paths: [raw]
+        search_patterns:
+          - left: '(?P<readgroup>.+)\.R1\.fastq\.gz'
+            right: '(?P<readgroup>.+)\.R2\.fastq\.gz'
+
   - name: bwa_index
     step: external_data
     config:
@@ -143,7 +154,7 @@ tasks:
     step: ngs_mapping
     config:
       depends_on:
-        reads: data_sets
+        reads: reads
         reference: genome
         index: bwa_index
       tool: bwa
@@ -169,8 +180,8 @@ Examples are reads, BAM or VCF files of another pipeline, and project-wide files
 Such a task has no rules, and consumers read the files where they are.
 
 With `files: {key: path}`, a task provides project-wide files.
-With `search_paths` and `search_patterns`, it provides per-library files from a folder named like the library.
-The pattern keys (`vcf`, `bam`, `left`, ...) are the keys under which consumers read the files.
+With `library_files`, it provides the files of each library from files tables: one row per library, the columns `library` and the keys under which consumers read the files (`vcf`, `bam`, ...), or one row per read group for reads.
+`snappy scan-files` writes a table from a `scan` section, as for reads.
 
 ```yaml
 tasks:
@@ -178,9 +189,11 @@ tasks:
     step: external_data
     config:
       produces: {type: variants, tags: [germline, snv, indel]}
-      search_paths: [/path/to/dragen]
-      search_patterns:
-        - { vcf: '.+\.hard-filtered\.vcf\.gz', vcf_tbi: '.+\.hard-filtered\.vcf\.gz\.tbi' }
+      library_files: [dragen_calls.tsv]   # the columns library, vcf, vcf_tbi
+      scan:
+        search_paths: [/path/to/dragen]
+        search_patterns:
+          - { vcf: '.+\.hard-filtered\.vcf\.gz', vcf_tbi: '.+\.hard-filtered\.vcf\.gz\.tbi' }
 ```
 
 ### Dependencies and task-local files
@@ -244,9 +257,7 @@ tasks:
     step: external_data
     config:
       produces: {type: variants, tags: [germline, snv, indel]}
-      search_paths: [/path/to/calls]
-      search_patterns:
-        - { vcf: '.+\.vcf\.gz', vcf_tbi: '.+\.vcf\.gz\.tbi' }
+      library_files: [calls.tsv]   # the columns library, vcf, vcf_tbi
 
   - name: blacklist
     step: external_data
@@ -302,42 +313,74 @@ An undefined name fails when the project loads.
 
 snappy does not check whether the files exist when the project loads, so a dry-run works on a machine without them.
 Snakemake checks the inputs of the jobs it runs.
-`snappy check-files` lists every file of the configuration that does not exist.
+`snappy check-files` lists every file of the configuration that does not exist, the files of the files tables included.
 This includes the `.fai` and `.dict` of a genome and the index of a VCF or of the mappability BED file.
 
-## How FASTQ files are found
+## How the files of the libraries are found
 
 Every task that reads FASTQ files names its source in `depends_on.reads`:
 
-- `data_sets`, for the reads of the libraries in the sample sheets.
-- An `external_data` task that produces `raw` data, for reads from elsewhere.
+- An `external_data` task that produces `raw` data, with the FASTQ files of the libraries.
 - An `adapter_trimming` task, for its trimmed files.
 
-A data set and an `external_data` task find reads the same way, with the same fields: `search_paths`, `search_patterns` and `mixed_se_pe`.
-Each library has a folder, which can be at any depth below a search path.
-For a data set, the `folderName` column of the sample sheet names the folder, and only the search paths of the library's own data set are searched.
-For an `external_data` task, the folder is named like the library.
-snappy searches for the files once per `snappy run`.
-
-`search_patterns` are regular expressions for the path below the library folder, and each must match the whole path.
-The `(?P<readgroup>...)` group pairs the `left` and `right` file of a read group, usually a lane.
+An `external_data` task lists the files of each library in files tables, `library_files`.
+A files table is a TSV file with one row per read group of a library, usually a lane: the columns `library`, `readgroup`, `left` and, for paired-end data, `right`.
+The `readgroup` becomes the read group of the alignments.
+An empty cell is no value, and relative paths are relative to the table's directory.
 Read groups are processed in the order of the path of their left file.
-Every left file needs a right file, unless `mixed_se_pe: true` accepts read groups without one, so that single-end and paired-end data can be mixed.
-A data set without `search_patterns` finds `*.R1.fastq.gz` and `*.R2.fastq.gz` (`(?P<readgroup>.+)\.R1\.fastq\.gz` and `...R2...`).
-`search_paths` have no default.
+Every read group needs a right file when the table has a `right` column, unless `mixed_se_pe: true` on the task accepts read groups without one, so that single-end and paired-end data can be mixed.
 Steps read the files where they are, so the project holds no copies or links of FASTQ files.
+
+`snappy scan-files` writes the tables.
+The task's `scan` section says where to look: the files of a library are in a folder named like its `folder_name` in the sample sheet, else like the library, at any depth below a `search_paths` entry.
+`search_patterns` are regular expressions for the path below that folder, and each must match the whole path.
+The `(?P<readgroup>...)` group pairs the `left` and `right` file of a read group.
+The command searches once and lists what it found; the table is the record of the run, so keep it in git.
+Run it again when the sheets gain libraries.
+A library without rows stops `snappy run` and `snappy check-files` with an error that names the libraries and the command; `snappy run --scan` runs the scan first.
+A row for a library that no sheet has is an error as well.
+Two libraries that share a folder are an error of the scan.
 
 ```yaml
 data_sets:
   my_batch:
     file: samplesheet.tsv
     type: matched_cancer
-    search_paths:
-      - raw
-    search_patterns:
-      - left: '(?P<readgroup>.+)\.R1\.fastq\.gz'
-        right: '(?P<readgroup>.+)\.R2\.fastq\.gz'
+
+tasks:
+  - name: reads
+    step: external_data
+    config:
+      produces: {type: raw, tags: [fastq]}
+      library_files: [reads.tsv]
+      scan:
+        search_paths: [raw]
+        search_patterns:
+          - left: '(?P<readgroup>.+)\.R1\.fastq\.gz'
+            right: '(?P<readgroup>.+)\.R2\.fastq\.gz'
+
+  - name: genome
+    step: external_data
+    config:
+      produces: {type: raw, tags: [reference, dna]}
+      files: {fasta: /refs/GRCh38.fa}
+
+  - name: bwa_index
+    step: external_data
+    config:
+      produces: {type: index, tags: [bwa, dna]}
+      files: {index: /refs/bwa/GRCh38}
+
+  - name: mapping
+    step: ngs_mapping
+    config:
+      depends_on: {reads: reads, reference: genome, index: bwa_index}
+      tool: bwa
+      bwa: {}
 ```
+
+The same tables serve the other entry points: an `external_data` task with `produces: {type: alignments, tags: [dna]}` lists one row per library with the columns `library`, `bam` and `bai`, and a task with `type: variants` the columns `library`, `vcf` and `vcf_tbi`.
+Such a project needs no FASTQ files.
 
 ## Sample sheets
 

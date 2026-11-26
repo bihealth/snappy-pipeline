@@ -683,11 +683,9 @@ Steps whose per-library output is optional (the coverage report, a targeted gCNV
 
 ### `reads`
 
-`reads` names an `external_data` task, a task that writes FASTQs (such as `adapter_trimming`), or the reserved value `data_sets`.
-`data_sets` searches each library's FASTQs below the search paths of its data set.
-Data sets and `external_data` reads tasks share `LibraryFolders` (`search_paths`, `search_patterns`, `mixed_se_pe`) and one code path in `BaseStep.read_groups()`.
-Only the folder name differs (the sheet's `folderName`, or the library name).
-No task may be called `data_sets`.
+`reads` names an `external_data` task with the FASTQ files of the libraries, or a task that writes FASTQs (such as `adapter_trimming`).
+An `external_data` task lists the files of each library in files tables (`library_files`; `FilesTable` in `snappy_pipeline/reads.py`), read once per run through `Project.files_table()`; `BaseStep.read_groups()` takes the read groups of a library from them.
+`snappy scan-files` writes the tables with `ReadDiscovery` from the task's `scan` section (`search_paths`, `search_patterns`); nothing searches directories at run time.
 
 ### `FILTER` IDs
 

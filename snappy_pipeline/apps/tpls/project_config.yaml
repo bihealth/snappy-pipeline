@@ -23,21 +23,17 @@ project:
 
 # Data Sets ========================================================================
 #
-# A data set is a sample sheet (biomedsheets TSV) and the search paths of the raw FASTQ files
-# of its libraries, in a folder named like the sheet's folderName of the library. Search
-# patterns are regular expressions for the path below that folder; their (?P<readgroup>...)
-# group pairs the left and right file of each lane. The default patterns find
-# <folder>/*.R1.fastq.gz and *.R2.fastq.gz, another naming needs explicit patterns:
-#
-#     search_patterns:
-#     - {left: '(?P<readgroup>.+)_R1_001\.fastq\.gz', right: '(?P<readgroup>.+)_R2_001\.fastq\.gz'}
+# A data set is a sample sheet (biomedsheets TSV). The FASTQ files of its libraries come from the
+# `reads` task below: `snappy scan-files` lists them in reads.tsv from the folder of each library
+# (named like the sheet's folderName) below the scan's search paths. The search patterns are
+# regular expressions for the path below that folder; their (?P<readgroup>...) group pairs the
+# left and right file of each lane. Another naming needs other patterns, for example
+# {left: '(?P<readgroup>.+)_R1_001\.fastq\.gz', right: '(?P<readgroup>.+)_R2_001\.fastq\.gz'}.
 
 data_sets:
   first_batch:
     file: %(sheet_file)s
     type: %(sheet_type)s
-    search_paths:
-      - raw
 
 # Resources =======================================================================
 #
@@ -87,4 +83,15 @@ data_sets:
 #       produces: {type: database, tags: [vep]}
 #       files: {cache: /path/to/vep/cache}
 #
-tasks: []
+tasks:
+  # The FASTQ files of the libraries: `snappy scan-files` lists them in reads.tsv, one row per
+  # read group, from the folders below raw/ (one per library, named like the sheet's folderName)
+  - name: reads
+    step: external_data
+    config:
+      produces: {type: raw, tags: [fastq]}
+      library_files: [reads.tsv]
+      scan:
+        search_paths: [raw]
+        search_patterns:
+          - {left: '(?P<readgroup>.+)\.R1\.fastq\.gz', right: '(?P<readgroup>.+)\.R2\.fastq\.gz'}

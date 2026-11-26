@@ -1,0 +1,7 @@
+library	readgroup	left	right
+pgf-N1-DNA1-WES1	pgf-N1-DNA1-WES1	raw/pgf-N1-DNA1-WES1/pgf-N1-DNA1-WES1.R1.fastq.gz	raw/pgf-N1-DNA1-WES1/pgf-N1-DNA1-WES1.R2.fastq.gz
+fa-N1-DNA1-WES1	fa-N1-DNA1-WES1	raw/fa-N1-DNA1-WES1/fa-N1-DNA1-WES1.R1.fastq.gz	raw/fa-N1-DNA1-WES1/fa-N1-DNA1-WES1.R2.fastq.gz
+mgm-N1-DNA1-WES1	mgm-N1-DNA1-WES1	raw/mgm-N1-DNA1-WES1/mgm-N1-DNA1-WES1.R1.fastq.gz	raw/mgm-N1-DNA1-WES1/mgm-N1-DNA1-WES1.R2.fastq.gz
+mo-N1-DNA1-WES1	mo-N1-DNA1-WES1	raw/mo-N1-DNA1-WES1/mo-N1-DNA1-WES1.R1.fastq.gz	raw/mo-N1-DNA1-WES1/mo-N1-DNA1-WES1.R2.fastq.gz
+idx-N1-DNA1-WES1	idx-N1-DNA1-WES1	raw/idx-N1-DNA1-WES1/idx-N1-DNA1-WES1.R1.fastq.gz	raw/idx-N1-DNA1-WES1/idx-N1-DNA1-WES1.R2.fastq.gz
+sib1-N1-DNA1-WES1	sib1-N1-DNA1-WES1	raw/sib1-N1-DNA1-WES1/sib1-N1-DNA1-WES1.R1.fastq.gz	raw/sib1-N1-DNA1-WES1/sib1-N1-DNA1-WES1.R2.fastq.gz

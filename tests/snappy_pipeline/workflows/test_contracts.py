@@ -161,21 +161,15 @@ def test_get_upstream_paths_errors(field, error):
 # get_task_config --------------------------------------------------------------------------------
 
 
-def _mapping_step(*tasks, reads="data_sets"):
+def _mapping_step(*tasks, reads="reads"):
     """Return the workflow object of task "mapping" in a loaded project with ``tasks``."""
     mapping = _mapping(depends_on={"reads": reads})
     return _step(load_project(_config(*tasks, mapping), WORK_DIR), "mapping")
 
 
-READS_PATTERN = {
-    "left": r"(?P<readgroup>.+)\.R1\.fastq\.gz",
-    "right": r"(?P<readgroup>.+)\.R2\.fastq\.gz",
-}
-
-
 def _external_reads(name, path):
-    config = {"produces": {"type": "raw"}, "search_paths": [path]}
-    return ("external_data", name, config | {"search_patterns": [READS_PATTERN]})
+    config = {"produces": {"type": "raw"}, "library_files": [f"{path}/reads.tsv"]}
+    return ("external_data", name, config)
 
 
 TRIMMED = _external_reads("trimmed", "/data/trimmed")
@@ -190,13 +184,13 @@ def test_get_task_config_returns_own_config():
 
 def test_get_task_config_follows_depends_on():
     step = _mapping_step(TRIMMED, RAW, reads="trimmed")
-    assert step.get_task_config("reads").search_paths == ["/data/trimmed"]
+    assert step.get_task_config("reads").library_files == ["/data/trimmed/reads.tsv"]
 
 
 def test_get_task_config_does_not_guess_unset_dependencies():
-    # "raw" is the only external_data task, but depends_on.reads is data_sets.
-    with pytest.raises(ValueError, match="depends_on.reads names no task"):
-        _mapping_step(RAW).get_task_config("reads")
+    # bwa does not read depends_on.exons, so the field is unset although a task could provide it
+    with pytest.raises(ValueError, match="depends_on.exons names no task"):
+        _mapping_step(RAW).get_task_config("exons")
 
 
 def test_get_task_config_rejects_unknown_fields():
@@ -237,13 +231,13 @@ def test_external_files_are_used_where_they_are(tmp_path):
     for name in ("T1.bam", "T1.bam.bai"):
         (tmp_path / "T1").mkdir(exist_ok=True)
         (tmp_path / "T1" / name).touch()
+    (tmp_path / "bams.tsv").write_text("library\tbam\tbai\nT1\tT1/T1.bam\tT1/T1.bam.bai\n")
     bams = (
         "external_data",
         "bams",
         {
             "produces": {"type": "alignments", "tags": ["dna"]},
-            "search_paths": [str(tmp_path)],
-            "search_patterns": [{"bam": r".+\.bam", "bai": r".+\.bam\.bai"}],
+            "library_files": [str(tmp_path / "bams.tsv")],
         },
     )
     project = load_project(_config(bams, _calling(mapping="bams")), WORK_DIR)

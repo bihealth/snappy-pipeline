@@ -2,7 +2,7 @@
 """Check of the libraries in the sample sheets, with a summary and warnings.
 
 The main Snakefile runs :func:`print_library_summary` once per run, in the main Snakemake
-process, so cluster jobs do not repeat it. It ends with :func:`missing_reads`, which
+process, so cluster jobs do not repeat it. It ends with :func:`missing_library_files`, which
 ``snappy check-files`` runs as well: every library of a task that reads FASTQ files must have
 reads, or the DAG build would fail later with the first of them.
 """
@@ -17,6 +17,7 @@ from ruamel.yaml import YAML
 
 from snappy_pipeline.base import ConfigError
 from snappy_pipeline.workflows.abstract import BaseStep
+from snappy_pipeline.workflows.external_data import no_rows_message
 from snappy_pipeline.library_table import TARGETED_LIBRARY_TYPES
 
 #: JSON schema of the sample sheet values of one library
@@ -87,28 +88,58 @@ def library_warnings(df: pd.DataFrame) -> list[str]:
     return warnings
 
 
-def missing_reads(instances: Mapping[str, BaseStep]) -> list[tuple[str, str, str]]:
-    """Return ``(task, library, problem)`` for every library of the tasks that read FASTQ files
-    from the data sets or an ``external_data`` task whose reads are not found below the search
-    paths (or are found twice, or mix single-end and paired-end read groups).
+def missing_library_files(instances: Mapping[str, BaseStep]) -> list[tuple[str, str, str]]:
+    """Return ``(task, library, problem)`` for every library of a task whose files an
+    ``external_data`` source does not provide: the files tables of the task (``library_files``)
+    have no row for the library. Rows of such a table for libraries that no sample sheet has are
+    reported for the table's task.
 
     A task that reads the FASTQs of another task (trimmed reads) is covered by that task. Each
     library is checked once per source, with the first task that reads it.
     """
     problems = []
     checked: set[tuple[str, str]] = set()
+    table_tasks: dict[str, BaseStep] = {}
     for name, task in instances.items():
-        source = getattr(task.depends_on, "reads", "")
-        if not source or task.reads_from_task(source):
-            continue
-        for library in task.libraries["library_name"]:
-            if (source, library) in checked:
+        for field, source in task.project.dependencies.get(name, {}).items():
+            if not isinstance(source, str):
                 continue
-            checked.add((source, library))
-            try:
-                task.read_groups(library)
-            except ValueError as e:
-                problems.append((name, library, str(e)))
+            config = task.project.task_configs.get(source)
+            reads = field == "reads"
+            tables = getattr(config, "library_files", None)
+            if reads and task.reads_from_task(source):
+                continue
+            if not reads and not tables:
+                continue
+            if tables:
+                if missing := [table for table in tables if not os.path.exists(table)]:
+                    fix = "run `snappy scan-files`" if config.scan is not None else "write it"
+                    problems += [
+                        (source, table, f"does not exist; {fix}")
+                        for table in missing
+                        if (source, table) not in checked
+                    ]
+                    checked.update((source, table) for table in missing)
+                    continue
+                table_tasks.setdefault(source, task)
+            for library in task.libraries["library_name"]:
+                if (source, library) in checked:
+                    continue
+                checked.add((source, library))
+                try:
+                    if reads:
+                        task.read_groups(library, source)
+                    elif not task.project.files_table(config).files(library):
+                        problems.append((name, library, no_rows_message(config, library)))
+                except (ValueError, ConfigError) as e:
+                    problems.append((name, library, str(e)))
+    for source, task in table_tasks.items():
+        config = task.project.task_configs[source]
+        known = set(task.library_table(include_background=True)["library_name"])
+        table = task.project.files_table(config)
+        for library in table.libraries:
+            if library not in known:
+                problems.append((source, library, "is in a files table but in no sample sheet"))
     return problems
 
 
@@ -124,6 +155,6 @@ def print_library_summary(instances: Mapping[str, BaseStep]) -> None:
     warnings += [warning for task in instances.values() for warning in task.library_warnings()]
     for warning in warnings:
         print(f"[snappy] Warning: {warning}", flush=True)
-    if problems := missing_reads(instances):
+    if problems := missing_library_files(instances):
         lines = [f"{task}: {library}: {problem}" for task, library, problem in problems]
-        raise ConfigError("Libraries without reads:\n  " + "\n  ".join(lines))
+        raise ConfigError("Libraries without files:\n  " + "\n  ".join(lines))

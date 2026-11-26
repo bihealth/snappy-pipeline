@@ -43,7 +43,7 @@ def test_config_model_accepts_minimal_config():
     assert config.tasks[0].config == {"tool": "bwa"}
 
 
-@pytest.mark.parametrize("missing", ["project", "tasks", "data_sets"])
+@pytest.mark.parametrize("missing", ["project", "tasks"])
 def test_config_model_requires_top_level_sections(missing):
     config = _minimal_config()
     del config[missing]
@@ -251,20 +251,12 @@ def test_default_config_writes_the_answers_without_tags():
     assert re.search(r"\nfiles:\n  fasta:\s+# REQUIRED\n", text)
     mapping = WORKFLOW_REGISTRY["ngs_mapping"].config_model_class
     text = default_config_yaml_string(
-        mapping, "commented", tool="bwa", answers={"depends_on": {"reads": "data_sets"}}
+        mapping, "commented", tool="bwa", answers={"depends_on": {"reads": "reads"}}
     )
-    assert "\n  reads: data_sets\n" in text and re.search(r"\n  index:\s+# REQUIRED", text)
+    assert "\n  reads: reads\n" in text and re.search(r"\n  index:\s+# REQUIRED", text)
 
 
 def test_pedigree_field_needs_a_sheet_with_pedigrees():
-    DataSet(type="germline_variants", pedigree_field="familyId")
+    DataSet(file="sheet.tsv", type="germline_variants", pedigree_field="familyId")
     with pytest.raises(pydantic.ValidationError, match="matched_cancer sheet has no pedigrees"):
-        DataSet(type="matched_cancer", pedigree_field="familyId")
-
-
-def test_data_set_defaults_to_r1_r2_patterns_but_not_to_search_paths():
-    data_set = DataSet()
-    assert data_set.search_paths == []
-    assert data_set.search_patterns == [
-        {"left": r"(?P<readgroup>.+)\.R1\.fastq\.gz", "right": r"(?P<readgroup>.+)\.R2\.fastq\.gz"}
-    ]
+        DataSet(file="sheet.tsv", type="matched_cancer", pedigree_field="familyId")

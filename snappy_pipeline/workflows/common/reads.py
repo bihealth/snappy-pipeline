@@ -5,13 +5,12 @@ task wrote the reads (``adapter_trimming``), only its ``out/`` directory is a jo
 is the rule input and the wrappers take the file lists from ``params.args.input`` instead.
 """
 
-from snappy_pipeline.workflows.abstract import DATA_SETS, BaseStep
+from snappy_pipeline.workflows.abstract import BaseStep
 
 
 def reads_are_inputs(step: BaseStep) -> bool:
     """Return whether the FASTQ files of ``step`` exist before the run, so they are inputs."""
-    source = step.depends_on.reads
-    return source in ("", DATA_SETS) or step.project.task(source).step == "external_data"
+    return not step.reads_from_task(step.depends_on.reads)
 
 
 def _read_lists(step: BaseStep, library_name: str) -> dict[str, list[str]]:

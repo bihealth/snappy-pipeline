@@ -74,6 +74,7 @@ KNOWN_BROKEN: dict[str, str] = {}
 #: file, otherwise its snapshot checks nothing.
 EXPECTED_EMPTY = {
     "external_data": "provides existing files; has no rules",
+    "reads": "provides existing files; has no rules",
     "genome": "provides existing files; has no rules",
     "features": "provides existing files; has no rules",
     "dbsnp": "provides existing files; has no rules",
@@ -240,7 +241,7 @@ def _write_closure_project(
         "data_sets": config.get("data_sets", {}),
     }
 
-    # Redirect search_paths to a temporary raw directory inside the tmp_path
+    # The files tables of the external_data tasks list dummy files below tmp_path/raw
     raw_dir = tmp_path / "raw"
     raw_dir.mkdir(parents=True, exist_ok=True)
     if "data_sets" in closure_config:
@@ -249,21 +250,17 @@ def _write_closure_project(
                 ds_config["file"] = str(_task_sample_sheet(task_name))
                 if task_name in GERMLINE_TASKS:
                     ds_config["type"] = "germline_variants"
-                ds_config["search_paths"] = [str(raw_dir)]
     for task in closure_config["tasks"]:
-        if task["step"] == "external_data" and "search_paths" in task["config"]:
-            task["config"]["search_paths"] = [str(raw_dir)]
+        if task["step"] == "external_data" and "library_files" in task["config"]:
+            reads = task["config"]["produces"]["type"] == "raw"
+            task["config"]["library_files"] = [
+                str(tmp_path / ("reads.tsv" if reads else "vcfs.tsv"))
+            ]
         # The snapshots record every declared intermediate as temp, not only scatter fragments
         task["config"]["delete_intermediates"] = ["intermediates"]
 
-    # Touch dummy FASTQ files, and VCFs for the external_data tasks
-    for folder in _task_raw_folders(task_name):
-        f_dir = raw_dir / folder
-        f_dir.mkdir(parents=True, exist_ok=True)
-        for suffix in (".R1.fastq.gz", ".R2.fastq.gz", ".vcf.gz", ".vcf.gz.tbi"):
-            (f_dir / f"{folder}{suffix}").touch()
-        (raw_dir / f"{folder}.R1.fastq.gz").touch()
-        (raw_dir / f"{folder}.R2.fastq.gz").touch()
+    # Touch dummy FASTQ files and VCFs, and list them in the files tables
+    _write_files_tables(tmp_path, _task_raw_folders(task_name))
 
     # Write config.yaml directly in tmp_path (no .snappy_pipeline subfolder!)
     closure_config_path = tmp_path / "config.yaml"
@@ -281,14 +278,37 @@ def _write_closure_project(
     assert isinstance(reloaded, dict), f"Generated closure config is not a mapping for {task_name}"
 
 
+def _write_files_tables(project_dir: Path, folders: tuple[str, ...], append: bool = False) -> None:
+    """Touch the dummy FASTQs and VCFs of the libraries ``folders`` below ``project_dir/raw`` and
+    list them in the files tables ``reads.tsv`` and ``vcfs.tsv`` of the project."""
+    raw_dir = project_dir / "raw"
+    reads, vcfs = [], []
+    for folder in folders:
+        f_dir = raw_dir / folder
+        f_dir.mkdir(parents=True, exist_ok=True)
+        for suffix in (".R1.fastq.gz", ".R2.fastq.gz", ".vcf.gz", ".vcf.gz.tbi"):
+            (f_dir / f"{folder}{suffix}").touch()
+        reads.append(
+            f"{folder}\t{folder}\traw/{folder}/{folder}.R1.fastq.gz\traw/{folder}/{folder}.R2.fastq.gz"
+        )
+        vcfs.append(f"{folder}\traw/{folder}/{folder}.vcf.gz\traw/{folder}/{folder}.vcf.gz.tbi")
+    mode = "a" if append else "w"
+    with (project_dir / "reads.tsv").open(mode) as f:
+        f.write("" if append else "library\treadgroup\tleft\tright\n")
+        f.write("".join(line + "\n" for line in reads))
+    with (project_dir / "vcfs.tsv").open(mode) as f:
+        f.write("" if append else "library\tvcf\tvcf_tbi\n")
+        f.write("".join(line + "\n" for line in vcfs))
+
+
 def _upstream_roots(upstream: str, tasks: dict[str, Any], project_dir: Path) -> list[str]:
     """Return the path prefixes of the files that a task reads from ``upstream``."""
-    if upstream == "data_sets":
-        return [str(project_dir / "raw")]
     if tasks[upstream]["step"] != "external_data":
         return [f"tasks/{upstream}/"]
     config = tasks[upstream]["config"]
-    paths = list(config.get("search_paths", []))
+    if config.get("library_files"):
+        return [str(project_dir / "raw")]
+    paths = []
     for value in config.get("files", {}).values():
         paths += value if isinstance(value, list) else [value]
     for kit in config.get("kits", {}).values():
@@ -429,11 +449,11 @@ def _job_with_reads_from(
     return next(j for j in jobs if j["rule"].endswith(rule_suffix)), jobs
 
 
-#: An adapter trimming task that reads the FASTQs of the data sets
+#: An adapter trimming task that reads the FASTQs of the reads task
 TRIMMING = {
     "step": "adapter_trimming",
     "name": "trimming",
-    "config": {"depends_on": {"reads": "data_sets"}, "tool": "fastp", "fastp": {}},
+    "config": {"depends_on": {"reads": "reads"}, "tool": "fastp", "fastp": {}},
 }
 
 
@@ -505,13 +525,7 @@ def test_mapping_reads_from_an_external_data_task(
         "name": "external_reads",
         "config": {
             "produces": {"type": "raw"},
-            "search_paths": [str(tmp_path / "raw")],
-            "search_patterns": [
-                {
-                    "left": r"(?P<readgroup>.+)\.R1\.fastq\.gz",
-                    "right": r"(?P<readgroup>.+)\.R2\.fastq\.gz",
-                }
-            ],
+            "library_files": [str(tmp_path / "reads.tsv")],
         },
     }
     job, _ = _job_with_reads_from(
@@ -557,10 +571,7 @@ def test_somatic_trio_calls_the_relapse_against_the_primary_tumor(
     # A sample sheet column (timepoint) selects the tumors; a relationship pairs the relapse with
     # the primary tumor instead of the normal
     _write_closure_project("variant_calling_mutect2", generated_task_config, tmp_path)
-    relapse_folder = tmp_path / "raw" / "case001subregion-T2-DNA1-WES1"
-    relapse_folder.mkdir()
-    for mate in ("R1", "R2"):
-        (relapse_folder / f"case001subregion-T2-DNA1-WES1.{mate}.fastq.gz").touch()
+    _write_files_tables(tmp_path, ("case001subregion-T2-DNA1-WES1",), append=True)
     primary_tumor = "role == 'tumor' and extraction_type == 'dna' and timepoint == 'primary'"
     tasks = {
         "calling_primary": {"library_selection": "timepoint == 'primary'"},

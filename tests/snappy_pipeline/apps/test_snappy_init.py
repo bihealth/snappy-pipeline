@@ -52,7 +52,7 @@ def test_init_fails_on_a_duplicate_task_but_keeps_the_others(tmp_path):
     )
     assert result.exit_code == 1
     config = load_configfile(str(project / "config.yaml"))
-    assert [task["name"] for task in config["tasks"]] == ["ngs_mapping"]
+    assert [task["name"] for task in config["tasks"]] == ["reads", "ngs_mapping"]
 
 
 needs_git = pytest.mark.skipif(shutil.which("git") is None, reason="git is not installed")
@@ -178,7 +178,7 @@ def test_init_asks_for_what_no_option_gives(tmp_path, git, answers):
         "ngs_mapping",  # step
         "mapping",  # name
         "bwa_mem3",  # tool
-        "data_sets",  # reads
+        "reads",  # reads: the external_data task of the template
         snappy_cli.LEAVE_EMPTY,  # index: nothing provides it yet, filled in later
         snappy_cli.ADD_PROVIDER,  # reference: add a task that provides it now
         "external_data",  # its step
@@ -201,7 +201,7 @@ def test_init_asks_for_what_no_option_gives(tmp_path, git, answers):
     assert text.index("- name: genome\n") < text.index("- name: mapping\n")
     assert "type: raw\n" in text and "- dna\n" in text and "- reference\n" in text
     assert re.search(r"\n      files:\n        fasta:\s+# REQUIRED\n", text)  # to fill in
-    assert "tool: bwa_mem3\n" in text and "reads: data_sets\n" in text
+    assert "tool: bwa_mem3\n" in text and "reads: reads\n" in text
     assert "reference: genome\n" in text
     assert re.search(r"\n\s+index:\s+# REQUIRED", text)  # left to be filled
     # The block is that of bwa_mem3: its section, no keys that only STAR reads

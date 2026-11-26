@@ -1,11 +1,6 @@
 project:
   name: snappy-ref-download-index
 
-data_sets:
-  reference:
-    file: samplesheet.tsv
-    type: matched_cancer
-
 tasks:
   - step: reference_download
     name: download_chrmt

@@ -2,7 +2,8 @@ import re
 
 from pydantic import model_validator
 
-from snappy_pipeline.models import ConfigPath, LibraryFolders, SnappyModel, SnappyStepModel
+from snappy_pipeline.models import ConfigPath, SnappyModel, SnappyStepModel
+from snappy_pipeline.reads import compile_search_pattern
 from snappy_pipeline.workflows.abstract.protocol import DataType
 
 
@@ -17,12 +18,26 @@ class Produces(SnappyModel):
 KIT_NAME = re.compile(r"[A-Za-z0-9_.-]+")
 
 
-class ExternalData(SnappyStepModel, LibraryFolders):
+class Scan(SnappyModel):
+    """Where ``snappy scan-files`` looks for the files of each library, to write the files table:
+    a folder named like the library (the sheet's ``folder_name``, else the library name) at any
+    depth below ``search_paths``."""
+
+    search_paths: list[ConfigPath]
+    """Directories that contain the folder of each library, at any depth"""
+
+    search_patterns: list[dict[str, str]]
+    """Regular expressions for the paths below a library's folder, by output key. Reads need a
+    ``left`` key (and ``right`` for paired-end data) and a ``(?P<readgroup>...)`` group, which
+    pairs the mates of one read group."""
+
+
+class ExternalData(SnappyStepModel):
     """Existing data from outside the project: project-wide files, files per library or files
     per enrichment kit.
 
-    Paths are absolute or relative to the project directory. Per-library data is in a folder
-    named like each library below ``search_paths``, found like the reads of a data set.
+    Paths are absolute or relative to the project directory. Per-library data is listed in the
+    files tables of ``library_files``, which ``snappy scan-files`` writes from ``scan``.
     """
 
     produces: Produces
@@ -38,13 +53,37 @@ class ExternalData(SnappyStepModel, LibraryFolders):
     the kit named exactly like its ``libraryKit`` in the sample sheet. Every kit has the same
     keys."""
 
+    library_files: list[ConfigPath] = []
+    """Files tables with the files of each library: TSV files with one row per read group
+    (``type: raw``: the columns ``library``, ``readgroup``, ``left`` and, for paired-end data,
+    ``right``) or one row per library (``library`` and the output keys, such as ``bam`` and
+    ``bai``). An empty cell is no value; relative paths are relative to the table's directory.
+    ``snappy scan-files`` writes the first table from ``scan``."""
+
+    scan: Scan | None = None
+    """Where ``snappy scan-files`` looks for the files of each library of the sample sheets, to
+    write the first table of ``library_files``"""
+
+    mixed_se_pe: bool = False
+    """For reads: accept read groups without a ``right`` file, so that single-end and paired-end
+    data can be mixed"""
+
     @model_validator(mode="after")
     def check_mode(self):
-        if sum(map(bool, (self.files, self.search_paths, self.kits))) != 1:
+        if sum(map(bool, (self.files, self.kits, self.library_files))) != 1:
             raise ValueError(
-                "Set one of files (project-wide data), search_paths with search_patterns "
-                "(per-library data) or kits (per-kit data)"
+                "Set one of files (project-wide data), library_files (files tables per library) "
+                "or kits (per-kit data)"
             )
+        if self.mixed_se_pe and not self.patterns_find_reads():
+            raise ValueError("mixed_se_pe is only for reads")
+        if self.scan is not None:
+            if not self.library_files:
+                raise ValueError("scan writes the first table of library_files; set library_files")
+            if not self.scan.search_patterns:
+                raise ValueError("scan needs search_patterns")
+            for pattern in self.scan.search_patterns:
+                compile_search_pattern(pattern, reads=self.patterns_find_reads())
         if bad := sorted(name for name in self.kits if not KIT_NAME.fullmatch(name)):
             raise ValueError(f"Kit names may only contain A-Z, a-z, 0-9, '_', '.' and '-': {bad}")
         if len({frozenset(files) for files in self.kits.values()}) > 1:
@@ -52,4 +91,5 @@ class ExternalData(SnappyStepModel, LibraryFolders):
         return self
 
     def patterns_find_reads(self) -> bool:
+        """Whether the files are reads (rows per read group), or one file per key and library."""
         return self.produces.type == DataType.RAW

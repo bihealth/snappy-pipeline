@@ -12,7 +12,7 @@ from snappy_pipeline.workflows.ngs_mapping import NgsMappingWorkflow
 from snappy_pipeline.workflows.ngs_mapping.model import NgsMapping
 
 STAR_DEPENDS_ON = {
-    "reads": "data_sets",
+    "reads": "reads",
     "reference": "genome",
     "index": "star",
     "features": "genes",
@@ -58,6 +58,6 @@ def test_only_steps_with_a_bam_for_other_tasks_delete_it():
     with pytest.raises(pydantic.ValidationError, match="writes no BAM file to delete"):
         NoBam(delete_intermediates=["bam"])
     assert NoBam(delete_intermediates=["intermediates"]).delete_intermediates == ["intermediates"]
-    depends_on = {"reads": "data_sets", "reference": "genome", "index": "bwa"}
+    depends_on = {"reads": "reads", "reference": "genome", "index": "bwa"}
     config = NgsMapping(tool="bwa", bwa={}, depends_on=depends_on, delete_intermediates=["bam"])
     assert config.delete_intermediates == ["bam"]

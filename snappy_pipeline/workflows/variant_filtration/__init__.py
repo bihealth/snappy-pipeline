@@ -62,9 +62,7 @@ The example tags the variants in regions of low mappability, from a BED file of 
         name: calls
         config:
           produces: {type: variants, tags: [somatic, snv, indel]}
-          search_paths: [/data/calls]
-          search_patterns:
-            - {vcf: '.+\\.vcf\\.gz', vcf_tbi: '.+\\.vcf\\.gz\\.tbi'}
+          library_files: [calls.tsv]   # the columns library, vcf, vcf_tbi
 
       - step: external_data
         name: low_mappability

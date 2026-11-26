@@ -56,7 +56,7 @@ DEPENDENCY_TASKS: dict[str, str] = {
     "microsatellites": "regions",
     "par_regions": "tagged_regions",
     "phased_variants": "variant_phasing_gatk_read_backed_phasing",
-    "reads": "data_sets",
+    "reads": "reads",
     "reference": "genome",
     "snp_loci": "tagged_regions",
     "somatic_variants": "variant_calling_mutect2",
@@ -151,22 +151,6 @@ def validate_step_config(name: str, workflow_cls: type, config: dict[str, Any]) 
             return validated.model_dump(mode="json", exclude_none=True)
 
 
-def raw_data_dir(base_config: dict[str, Any], base_config_path: Path) -> str:
-    data_sets = base_config.get("data_sets", {})
-    if not isinstance(data_sets, dict) or not data_sets:
-        return str(base_config_path.parent)
-
-    first = next(iter(data_sets.values()))
-    if not isinstance(first, dict):
-        return str(base_config_path.parent)
-
-    search_paths = first.get("search_paths", [])
-    if isinstance(search_paths, list) and search_paths:
-        return str((base_config_path.parent / str(search_paths[0])).resolve())
-
-    return str(base_config_path.parent)
-
-
 def dependency_fields(workflow_cls: type) -> list[str]:
     """Return the names of the ``depends_on`` fields of a step."""
     dep_field = workflow_cls.config_model_class.model_fields.get("depends_on")
@@ -213,7 +197,8 @@ def fixture_paths(base_config: dict[str, Any], base_config_path: Path) -> dict[s
         "placeholder_file": PLACEHOLDER_FILE,
         "umis": str(FIXTURES / "umis.txt"),
         "vcf": str(FIXTURES.parents[2] / ".tests/test-workflow/resources/refs/dbsnp.vcf.gz"),
-        "raw_data_dir": [raw_data_dir(base_config, base_config_path)],
+        "reads_table": str(FIXTURES / "reads.tsv"),
+        "vcfs_table": str(FIXTURES / "vcfs.tsv"),
     }
 
 
@@ -238,13 +223,7 @@ TASK_CONFIG: dict[tuple[str, str | None], dict[str, Any]] = {
     ("adapter_trimming", "bbduk"): {"bbduk": {"adapter_sequences": [PLACEHOLDER]}},
     ("external_data", None): {
         "produces": {"type": "raw"},
-        "search_paths": Fixture("raw_data_dir"),
-        "search_patterns": [
-            {
-                "left": r"(?P<readgroup>.+)\.R1\.fastq\.gz",
-                "right": r"(?P<readgroup>.+)\.R2\.fastq\.gz",
-            }
-        ],
+        "library_files": [Fixture("reads_table")],
     },
     ("gene_expression_quantification", "dupradar"): {"dupradar": {}},
     ("gene_expression_quantification", "rnaseqc"): {"rnaseqc": {}},
@@ -365,9 +344,11 @@ def _external_kits(name: str) -> dict[str, Any]:
 
 
 def _external_vcfs(name: str, tags: list[str]) -> dict[str, Any]:
-    pattern = {"vcf": r".+\.vcf\.gz", "vcf_tbi": r".+\.vcf\.gz\.tbi"}
-    config = {"produces": {"type": "variants", "tags": tags}, "search_patterns": [pattern]}
-    config["search_paths"] = Fixture("raw_data_dir")
+    """Per-library VCFs from a files table (``library``, ``vcf``, ``vcf_tbi``)."""
+    config = {
+        "produces": {"type": "variants", "tags": tags},
+        "library_files": [Fixture("vcfs_table")],
+    }
     return {"step": "external_data", "name": name, "config": config}
 
 
@@ -379,6 +360,15 @@ def _external_vcfs(name: str, tags: list[str]) -> dict[str, Any]:
 #: population_variants name a VCF, and mappable_regions an empty BED, whose indexes the jobs read
 #: as well.
 EXTRA_TASKS: list[dict[str, Any]] = [
+    # The FASTQ files of the libraries, from a files table (library, readgroup, left, right)
+    {
+        "step": "external_data",
+        "name": "reads",
+        "config": {
+            "produces": {"type": "raw", "tags": ["fastq"]},
+            "library_files": [Fixture("reads_table")],
+        },
+    },
     _external_file("genome", "raw", ["reference", "dna"], "fasta"),
     _external_file("features", "raw", ["features", "rnaseqc"], "gtf"),
     _external_file("dbsnp", "variants", ["dbsnp"], "vcf", VCF),
@@ -703,33 +693,12 @@ def build_all_tasks(base_config: dict[str, Any], base_config_path: Path) -> list
 
 
 def normalize_data_set_paths(config: dict[str, Any], base_config_path: Path) -> None:
+    """Make the sample sheet paths of the data sets absolute, relative to the base config."""
     base_dir = base_config_path.parent
-    data_sets = config.get("data_sets", {})
-    if not isinstance(data_sets, dict):
-        return
-
-    for _, data_set in data_sets.items():
-        if not isinstance(data_set, dict):
-            continue
-
+    for data_set in config.get("data_sets", {}).values():
         sheet_file = data_set.get("file")
-        if isinstance(sheet_file, str) and sheet_file:
-            path = Path(sheet_file)
-            if not path.is_absolute():
-                data_set["file"] = str((base_dir / path).resolve())
-
-        search_paths = data_set.get("search_paths", [])
-        if isinstance(search_paths, list):
-            normalized = []
-            for p in search_paths:
-                if isinstance(p, str) and p:
-                    path = Path(p)
-                    normalized.append(
-                        str((base_dir / path).resolve()) if not path.is_absolute() else p
-                    )
-                else:
-                    normalized.append(p)
-            data_set["search_paths"] = normalized
+        if isinstance(sheet_file, str) and sheet_file and not Path(sheet_file).is_absolute():
+            data_set["file"] = str((base_dir / sheet_file).resolve())
 
 
 def build_config(

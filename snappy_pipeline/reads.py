@@ -1,13 +1,20 @@
-"""Central discovery of the FASTQ files of libraries.
+"""The files of libraries: files tables, and the discovery that writes them.
 
-A library's files are in a folder named after it (the sample sheet's folder name) somewhere below
-a data set's search paths. Search patterns are regular expressions that must match the whole path
-below that folder. Their ``readgroup`` group pairs the mates of one sequencing unit, usually a lane.
-``find_files`` finds other per-library files the same way, one file per pattern key.
+A files table (:class:`FilesTable`) is a TSV with one row per read group of a library (reads:
+``library``, ``readgroup``, ``left``, ``right``, ...) or one row per library (other data:
+``library`` and the output keys, such as ``bam`` and ``bai``). Relative paths are relative to the
+table's directory.
+
+:class:`ReadDiscovery` finds the files below search paths, in a folder named after the library.
+Search patterns are regular expressions that must match the whole path below that folder; their
+``readgroup`` group pairs the mates of one sequencing unit, usually a lane. ``snappy scan-files``
+writes the tables with it; ``find_files`` finds other per-library files the same way, one file per
+pattern key.
 """
 
 from __future__ import annotations
 
+import csv
 import difflib
 import os
 import re
@@ -171,3 +178,177 @@ class ReadDiscovery:
         hint = difflib.get_close_matches(folder_name, sorted(folders), n=3)
         message = f"Found no {what} of {folder_name!r} below {', '.join(roots)}"
         return message + (f"; similar folders: {', '.join(hint)}" if hint else "")
+
+
+#: The first column of a files table, and the second one of a reads table
+LIBRARY, READGROUP_COLUMN = "library", "readgroup"
+
+
+@dataclass(frozen=True)
+class FilesTable:
+    """The files of libraries, read from one or more files tables (:func:`read_files_tables`).
+
+    ``keys`` are the file columns (``left``, ``right``, ... for reads; the output keys otherwise).
+    """
+
+    #: The file columns
+    keys: tuple[str, ...]
+    #: Whether the rows are read groups (``reads``) or one row of files per library
+    reads: bool
+    #: Library -> its read groups, ordered by the path of the left file
+    _read_groups: Mapping[str, tuple[ReadGroup, ...]] = field(default_factory=dict)
+    #: Library -> key -> path
+    _files: Mapping[str, Mapping[str, str]] = field(default_factory=dict)
+
+    @property
+    def libraries(self) -> list[str]:
+        """The libraries with rows, in table order."""
+        return list(self._read_groups if self.reads else self._files)
+
+    def read_groups(self, library: str) -> list[ReadGroup]:
+        """Return the read groups of ``library``; ``[]`` without rows."""
+        return list(self._read_groups.get(library, ()))
+
+    def files(self, library: str) -> dict[str, str]:
+        """Return key -> path of ``library``; ``{}`` without a row."""
+        return dict(self._files.get(library, {}))
+
+    def paths(self) -> list[str]:
+        """Every path of the tables, for ``snappy check-files``."""
+        if self.reads:
+            return [
+                p for groups in self._read_groups.values() for g in groups for p in g.paths.values()
+            ]
+        return [p for files in self._files.values() for p in files.values()]
+
+
+def read_files_tables(
+    paths: Iterable[str], reads: bool, mixed_se_pe: bool = False, pathvars=None
+) -> FilesTable:
+    """Read the files tables ``paths`` into one :class:`FilesTable`.
+
+    Raises ``ValueError`` (with ``path:line``) for a bad header, an empty required cell, a read
+    group or library listed twice, a path listed twice, a library that mixes single-end and
+    paired-end read groups, and a library without right files when the table has them and
+    ``mixed_se_pe`` is not set.
+    """
+    rows: list[tuple[str, int, dict[str, str]]] = []
+    keys: tuple[str, ...] | None = None
+    for path in paths:
+        table_keys, table_rows = _read_table(path, reads, pathvars)
+        if keys is None:
+            keys = table_keys
+        elif set(table_keys) != set(keys):
+            raise ValueError(
+                f"{path}: columns {', '.join(table_keys)} differ from {', '.join(keys)} of the "
+                "other tables of the task"
+            )
+        rows += table_rows
+    keys = keys or ()
+    seen_paths: dict[str, str] = {}
+    for path, line, row in rows:
+        for key in keys:
+            if (p := row.get(key)) and p in seen_paths:
+                raise ValueError(f"{path}:{line}: {p} is also listed at {seen_paths[p]}")
+            elif p:
+                seen_paths[p] = f"{path}:{line}"
+    if reads:
+        return FilesTable(keys, True, _read_groups_of(rows, keys, mixed_se_pe))
+    files: dict[str, dict[str, str]] = {}
+    where: dict[str, str] = {}
+    for path, line, row in rows:
+        library = row[LIBRARY]
+        if library in files:
+            raise ValueError(
+                f"{path}:{line}: library {library!r} is also listed at {where[library]}"
+            )
+        files[library] = {key: row[key] for key in keys if row.get(key)}
+        where[library] = f"{path}:{line}"
+    return FilesTable(keys, False, _files=files)
+
+
+def files_table_keys(paths: Iterable[str], reads: bool) -> set[str] | None:
+    """Return the file columns of the files tables ``paths``, ``None`` if one does not exist yet
+    (``snappy scan-files`` writes it; the libraries without rows are reported at setup)."""
+    keys: set[str] = set()
+    for path in paths:
+        if not os.path.exists(path):
+            return None
+        keys |= set(_read_table(path, reads, None)[0])
+    return keys
+
+
+def _read_table(path: str, reads: bool, pathvars) -> tuple[tuple[str, ...], list]:
+    directory = os.path.dirname(os.path.abspath(path))
+    try:
+        with open(path, newline="") as f:
+            lines = list(csv.reader(f, delimiter="\t"))
+    except OSError as e:
+        raise ValueError(f"Files table {path}: {e.strerror}") from None
+    if not lines or not any(lines[0]):
+        raise ValueError(f"{path}:1: the files table is empty")
+    header = lines[0]
+    fixed = [LIBRARY, READGROUP_COLUMN, "left"] if reads else [LIBRARY]
+    if header[: len(fixed)] != fixed:
+        raise ValueError(f"{path}:1: the columns must start with {', '.join(fixed)}")
+    if len(set(header)) != len(header):
+        raise ValueError(f"{path}:1: a column name is repeated")
+    keys = tuple(c for c in header if c not in (LIBRARY, READGROUP_COLUMN))
+    if not keys:
+        raise ValueError(f"{path}:1: the table needs a file column besides {', '.join(fixed)}")
+    required = fixed
+    rows = []
+    for number, cells in enumerate(lines[1:], start=2):
+        if not cells or (len(cells) == 1 and not cells[0].strip()):
+            continue
+        if len(cells) != len(header):
+            raise ValueError(f"{path}:{number}: {len(cells)} cells, the header has {len(header)}")
+        row = dict(zip(header, (c.strip() for c in cells)))
+        for column in required:
+            if not row[column]:
+                raise ValueError(f"{path}:{number}: {column} is empty")
+        for key in keys:
+            if row[key]:
+                row[key] = _table_path(row[key], directory, pathvars)
+        rows.append((path, number, row))
+    return keys, rows
+
+
+def _table_path(value: str, directory: str, pathvars) -> str:
+    if pathvars is not None:
+        value = pathvars.apply(value)
+    return os.path.normpath(os.path.join(directory, value))
+
+
+def _read_groups_of(rows, keys, mixed_se_pe) -> dict[str, tuple[ReadGroup, ...]]:
+    by_library: dict[str, dict[str, tuple[str, int, dict[str, str]]]] = {}
+    for path, line, row in rows:
+        groups = by_library.setdefault(row[LIBRARY], {})
+        if row[READGROUP_COLUMN] in groups:
+            seen = groups[row[READGROUP_COLUMN]]
+            raise ValueError(
+                f"{path}:{line}: read group {row[READGROUP_COLUMN]!r} of {row[LIBRARY]!r} is also "
+                f"listed at {seen[0]}:{seen[1]}"
+            )
+        groups[row[READGROUP_COLUMN]] = (path, line, row)
+    result = {}
+    for library, groups in by_library.items():
+        paths = [{k: r[k] for k in keys if r[k]} for _, _, r in groups.values()]
+        if "right" in keys:
+            with_right = {"right" in p for p in paths}
+            if with_right == {True, False}:
+                raise ValueError(f"Library {library!r} mixes single-end and paired-end read groups")
+            if with_right == {False} and not mixed_se_pe:
+                raise ValueError(
+                    f"Library {library!r} has no right files; set mixed_se_pe on the task for "
+                    "single-end data"
+                )
+        common = os.path.commonpath([p for files in paths for p in files.values()])
+        if os.path.isfile(common):
+            common = os.path.dirname(common)
+        read_groups = [
+            ReadGroup(name, files, {k: os.path.relpath(p, common) for k, p in files.items()})
+            for name, files in zip(groups, paths)
+        ]
+        result[library] = tuple(sorted(read_groups, key=lambda g: g.left))
+    return result

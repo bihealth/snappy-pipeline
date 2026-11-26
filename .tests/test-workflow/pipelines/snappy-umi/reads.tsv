@@ -1,0 +1,2 @@
+library	readgroup	left	right
+umi001-T1-DNA1-WES1	umi001-T1-DNA1-WES1	raw/umi001-T1-DNA1-WES1/umi001-T1-DNA1-WES1.R1.fastq.gz	raw/umi001-T1-DNA1-WES1/umi001-T1-DNA1-WES1.R2.fastq.gz

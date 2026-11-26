@@ -23,8 +23,6 @@ from pydantic_core import PydanticUndefined
 from ruamel.yaml import YAML
 from snakemake.exceptions import UndefinedPathvarException
 
-from snappy_pipeline.reads import compile_search_pattern
-
 
 def _resolve_path(value: str, info: ValidationInfo) -> str:
     """Expand the ``pathvars`` in ``value`` and make it absolute against the project directory.
@@ -725,38 +723,6 @@ def _yaml_instance():
     return yaml
 
 
-class LibraryFolders(SnappyModel):
-    """Files in a folder per library below search paths: the reads of a data set, or the files of
-    an ``external_data`` task in ``search_paths`` mode. ``BaseStep.read_groups()`` finds the reads
-    of both the same way."""
-
-    search_paths: list[ConfigPath] = []
-    """Directories that contain the folder of each library, at any depth"""
-
-    search_patterns: list[dict[str, str]] = []
-    """Regular expressions for the paths below a library's folder, by key. Reads need a ``left``
-    key (and ``right`` for paired-end data) and a ``(?P<readgroup>...)`` group, which pairs the
-    mates of one read group."""
-
-    mixed_se_pe: bool = False
-    """For reads: accept read groups without a ``right`` file, so that single-end and paired-end
-    data can be mixed"""
-
-    def patterns_find_reads(self) -> bool:
-        """Whether the patterns find reads, or one file per key."""
-        return True
-
-    @model_validator(mode="after")
-    def check_search_patterns(self):
-        if self.search_paths and not self.search_patterns:
-            raise ValueError("search_paths need search_patterns")
-        for pattern in self.search_patterns:
-            compile_search_pattern(pattern, reads=self.patterns_find_reads())
-        if self.mixed_se_pe and not self.patterns_find_reads():
-            raise ValueError("mixed_se_pe is only for reads")
-        return self
-
-
 class ToggleModel(SnappyModel):
     enabled: bool = False
 
@@ -767,7 +733,6 @@ class ToggleModel(SnappyModel):
 __all__ = [
     "ConfigPath",
     "ContainerImage",
-    "LibraryFolders",
     "RelationshipDefinition",
     "SnappyModel",
     "SnappyStepModel",

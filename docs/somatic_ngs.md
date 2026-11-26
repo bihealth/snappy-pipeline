@@ -12,7 +12,7 @@ Each task names the task before it in `depends_on`, so together they form a chai
 The variant callers read the BAM files of the last task of the chain.
 
 ```{graphviz}
-:alt: The chain of tasks from the FASTQ files of the data sets to the variant callers
+:alt: The chain of tasks from the FASTQ files of the libraries to the variant callers
 
 digraph chain {
     rankdir=LR; nodesep=0.12; ranksep=0.3;
@@ -20,16 +20,16 @@ digraph chain {
     label=<<FONT POINT-SIZE="7" COLOR="#898781">Arrow labels: the depends_on key of the reading task</FONT>>;
     node [shape=box, style="rounded,filled", fillcolor="#ffffff", color="#c3c2b7", fontname="Helvetica", fontsize=9, fontcolor="#0b0b0b", margin="0.08,0.03"];
     edge [arrowsize=0.5, penwidth=1.0, fontname="Helvetica", fontsize=7, fontcolor="#52514e"];
-    "data_sets" [style="rounded,dashed", label=<<B>data_sets</B><BR ALIGN="LEFT"/><FONT POINT-SIZE="7" COLOR="#52514e">FASTQ files of the sample sheet</FONT><BR ALIGN="LEFT"/>>];
+    "reads" [style="rounded,dashed", label=<<B>reads</B><BR ALIGN="LEFT"/><FONT POINT-SIZE="7" COLOR="#52514e">external_data: the FASTQ files of the libraries</FONT><BR ALIGN="LEFT"/>>];
     "adapter_trimming" [label=<<B>adapter_trimming</B><BR ALIGN="LEFT"/><FONT POINT-SIZE="7" COLOR="#52514e">optional, tool: bbduk or fastp</FONT><BR ALIGN="LEFT"/>>];
     "ngs_mapping" [label=<<B>ngs_mapping</B><BR ALIGN="LEFT"/>>];
     "umi_mapping" [label=<<B>umi_mapping</B><BR ALIGN="LEFT"/><FONT POINT-SIZE="7" COLOR="#52514e">UMI libraries, tool: fgumi</FONT><BR ALIGN="LEFT"/>>];
     "alignment_processing" [label=<<B>alignment_processing</B><BR ALIGN="LEFT"/><FONT POINT-SIZE="7" COLOR="#52514e">optional, tool: gatk4_bqsr</FONT><BR ALIGN="LEFT"/>>];
     "callers" [label=<<B>variant callers</B><BR ALIGN="LEFT"/>>];
-    "data_sets" -> "adapter_trimming" [color="#2a78d6b3", label="reads"];
+    "reads" -> "adapter_trimming" [color="#2a78d6b3", label="reads"];
     "adapter_trimming" -> "ngs_mapping" [color="#2a78d6b3", label="reads"];
     "ngs_mapping" -> "alignment_processing" [color="#eb6834b3", label="alignments"];
-    "data_sets" -> "umi_mapping" [color="#2a78d6b3", label="reads"];
+    "reads" -> "umi_mapping" [color="#2a78d6b3", label="reads"];
     "umi_mapping" -> "callers" [color="#eb6834b3", label="alignments"];
     "alignment_processing" -> "callers" [color="#eb6834b3", label="alignments"];
 }
@@ -60,6 +60,17 @@ tasks:
       produces: {type: raw, tags: [reference, dna]}
       files: {fasta: /path/to/genome.fa}
 
+  - name: reads
+    step: external_data
+    config:
+      produces: {type: raw, tags: [fastq]}
+      library_files: [reads.tsv]
+      scan:
+        search_paths: [raw]
+        search_patterns:
+          - left: '(?P<readgroup>.+)\.R1\.fastq\.gz'
+            right: '(?P<readgroup>.+)\.R2\.fastq\.gz'
+
   - name: bwa_index
     step: external_data
     config:
@@ -70,7 +81,7 @@ tasks:
     step: adapter_trimming
     config:
       depends_on:
-        reads: data_sets
+        reads: reads
       tool: bbduk
       bbduk:
         adapter_sequences: [/path/to/adapters.fa]
@@ -87,7 +98,7 @@ tasks:
 ```
 
 The mapping task reads the trimmed FASTQ files from `tasks/trimming/work/`.
-`adapter_trimming` does not rename the files, so the `search_patterns` of the data set still apply.
+`adapter_trimming` does not rename the files, so the read groups of the files table still apply.
 
 ## Base quality score recalibration
 
@@ -114,6 +125,17 @@ tasks:
       produces: {type: raw, tags: [reference, dna]}
       files: {fasta: /path/to/genome.fa}
 
+  - name: reads
+    step: external_data
+    config:
+      produces: {type: raw, tags: [fastq]}
+      library_files: [reads.tsv]
+      scan:
+        search_paths: [raw]
+        search_patterns:
+          - left: '(?P<readgroup>.+)\.R1\.fastq\.gz'
+            right: '(?P<readgroup>.+)\.R2\.fastq\.gz'
+
   - name: umis
     step: external_data
     config:
@@ -129,7 +151,7 @@ tasks:
   - name: mapping
     step: umi_mapping
     config:
-      depends_on: {reads: data_sets, reference: genome, index: bwa_mem3_index, umis: umis}
+      depends_on: {reads: reads, reference: genome, index: bwa_mem3_index, umis: umis}
       tool: fgumi
       consensus: duplex
       fgumi:
@@ -150,6 +172,17 @@ tasks:
       produces: {type: raw, tags: [reference, dna]}
       files: {fasta: /path/to/genome.fa}
 
+  - name: reads
+    step: external_data
+    config:
+      produces: {type: raw, tags: [fastq]}
+      library_files: [reads.tsv]
+      scan:
+        search_paths: [raw]
+        search_patterns:
+          - left: '(?P<readgroup>.+)\.R1\.fastq\.gz'
+            right: '(?P<readgroup>.+)\.R2\.fastq\.gz'
+
   - name: common_variants
     step: external_data
     config:
@@ -165,7 +198,7 @@ tasks:
   - name: mapping
     step: ngs_mapping
     config:
-      depends_on: {reads: data_sets, reference: genome, index: bwa_mem2_index}
+      depends_on: {reads: reads, reference: genome, index: bwa_mem2_index}
       tool: bwa_mem2
       bwa_mem2: {}
       delete_intermediates: [bam]

@@ -590,14 +590,13 @@ To migrate an existing project, go through these notes.
    For example, a VEP task now needs a cache task in `depends_on.database`.
 
 7. snappy no longer looks for sample sheets in the parent directory of the project.
-   `data_sets` search paths are relative to the project directory instead of the sample sheet's directory.
-   Give these paths relative to `config.yaml`, as absolute paths, or with a `pathvars` root.
+   `data_sets` names only the sheets (`file`, `type`, `is_background`); the paths of `config.yaml` are relative to the project directory, absolute, or below a `pathvars` root.
 
-8. `data_sets` `search_patterns` are regular expressions instead of glob patterns.
-   They match the path below a library's folder, and their `(?P<readgroup>...)` group pairs the `left` and `right` files.
-   A data set has no default `search_paths` any more (main: `../raw`).
-   `search_patterns` default to `(?P<readgroup>.+)\.R1\.fastq\.gz` and `(?P<readgroup>.+)\.R2\.fastq\.gz`.
-   A library's reads are searched only below the search paths of its own data set, not those of all data sets.
+8. snappy searches no directories at run time.
+   An `external_data` task lists the FASTQ files of each library in a files table (`library_files: [reads.tsv]`, the columns `library`, `readgroup`, `left`, `right`), and the tasks name it in `depends_on.reads` instead of `data_sets`.
+   `snappy scan-files` writes the table from the task's `scan` section: `search_paths` and `search_patterns`, regular expressions for the path below a library's folder (named like the sheet's `folderName`, else the library) whose `(?P<readgroup>...)` group pairs the `left` and `right` files.
+   Run it once per project and again after adding libraries; `snappy run --scan` does it first.
+   Existing alignments or variants enter the same way, as a table with the columns `library`, `bam`, `bai` or `library`, `vcf`, `vcf_tbi`.
 
 ### Steps and tools
 
@@ -868,9 +867,20 @@ data_sets:
   cancer:
     file: sheet.tsv
     type: matched_cancer
-    search_paths: [raw]
 
 tasks:
+  # The FASTQ files of the libraries, listed by snappy scan-files
+  - name: reads
+    step: external_data
+    config:
+      produces: {type: raw, tags: [fastq]}
+      library_files: [reads.tsv]
+      scan:
+        search_paths: [raw]
+        search_patterns:
+          - left: '(?P<readgroup>.+)\.R1\.fastq\.gz'
+            right: '(?P<readgroup>.+)\.R2\.fastq\.gz'
+
   # Reference data (static_data_config and the path_* fields on main)
   - name: genome
     step: external_data
@@ -927,25 +937,25 @@ tasks:
   - name: mapping_dna
     step: ngs_mapping
     config:
-      depends_on: {reads: data_sets, index: bwa_index, reference: genome}
+      depends_on: {reads: reads, index: bwa_index, reference: genome}
       tool: bwa
       bwa: {}
   - name: mapping_rna
     step: ngs_mapping
     config:
-      depends_on: {reads: data_sets, index: star_index, reference: genome, features: genes, exons: exons}
+      depends_on: {reads: reads, index: star_index, reference: genome, features: genes, exons: exons}
       tool: star
       star: {}
   - name: expression
     step: gene_expression_quantification
     config:
-      depends_on: {reads: data_sets, features: genes, index: salmon_index}
+      depends_on: {reads: reads, features: genes, index: salmon_index}
       tool: salmon
       salmon: {}
   - name: fusions
     step: somatic_gene_fusion_calling
     config:
-      depends_on: {reads: data_sets, index: star_index, reference: genome, features: genes}
+      depends_on: {reads: reads, index: star_index, reference: genome, features: genes}
       tool: arriba
       arriba: {}
 
@@ -953,14 +963,14 @@ tasks:
   - name: hla_optitype_dna
     step: hla_typing
     config:
-      depends_on: {reads: data_sets}
+      depends_on: {reads: reads}
       tool: optitype
       library_selection: "extraction_type == 'dna'"  # tumor and normal
       optitype: {max_reads: 5000, num_mapping_threads: 4}
   - name: hla_optitype_rna
     step: hla_typing
     config:
-      depends_on: {reads: data_sets}
+      depends_on: {reads: reads}
       tool: optitype
       library_selection: "extraction_type == 'rna'"
       optitype: {max_reads: 5000, num_mapping_threads: 4}

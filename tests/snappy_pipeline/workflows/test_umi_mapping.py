@@ -15,7 +15,7 @@ from snappy_pipeline.workflows.umi_mapping import (
 )
 from snappy_pipeline.workflows.umi_mapping.model import Consensus, UmiMapping
 
-DEPENDS_ON = {"reads": "data_sets", "reference": "genome", "index": "bwa_mem3_index"}
+DEPENDS_ON = {"reads": "reads", "reference": "genome", "index": "bwa_mem3_index"}
 
 
 def _config(consensus="duplex", depends_on=None, **fgumi):
