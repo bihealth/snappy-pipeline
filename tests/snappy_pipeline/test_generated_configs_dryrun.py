@@ -83,6 +83,7 @@ EXPECTED_EMPTY = {
     "tagged_regions": "provides existing files; has no rules",
     "mappable_regions": "provides existing files; has no rules",
     "population_variants": "provides existing files; has no rules",
+    "umis": "provides existing files; has no rules",
     "salmon_index": "provides existing files; has no rules",
     "star_index": "provides existing files; has no rules",
     "proteome": "provides existing files; has no rules",

@@ -476,7 +476,7 @@ In a pull request, a changed environment file must come with its changed pin fil
 | ------------------------------------------------------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | **`somatic_wgs_sv_calling` workflow**: a specialised SV calling pipeline for whole-genome data with its own complex config                       | It was not widely used. SV calling for targeted data with `sv_calling_targeted` is unaffected.                                                                |
 | **Jannovar statistics report** (`jannovar_stats` of `variant_calling`)                                                                           |                                                                                                                                                               |
-| **`mbcs` tool of `ngs_mapping`** and its nested Snakemake run (`nested_snakemake.py`), with `depends_on.common_variants` of `ngs_mapping`        | Molecular barcodes have no replacement. BQSR is a task of its own (migration note 20).                                                                        |
+| **`mbcs` tool of `ngs_mapping`** and its nested Snakemake run (`nested_snakemake.py`), with `depends_on.common_variants` of `ngs_mapping`        | Molecular barcodes (UMIs) take an `umi_mapping` task with fgumi, BQSR an `alignment_processing` task (migration note 20).                                     |
 | **`fusioncatcher` tool of `somatic_gene_fusion_calling`**                                                                                        | It had no wrapper, not even on main, so it could not run.                                                                                                     |
 | **`defuse`, `hera`, `jaffa` and `pizzly` tools of `somatic_gene_fusion_calling`**                                                                | They were untested and probably broken. `arriba` (recommended) and `star_fusion` remain.                                                                      |
 | **main's germline filters** (`variant_denovo_filtration`, the germline filters of main's `variant_filtration` and the `protected` rescue filter) | They no longer ran on main (a deleted shell library, Jannovar inputs). `vembrane` expressions in a `variant_filtration` task cover their per-record criteria. |
@@ -676,7 +676,8 @@ To migrate an existing project, go through these notes.
 
 ### `ngs_mapping` features as tasks
 
-20. `tool: mbcs` of `ngs_mapping` is removed with its AGeNT steps, and snappy handles no molecular barcodes for now.
+20. `tool: mbcs` of `ngs_mapping` is removed with its AGeNT steps.
+    Libraries with molecular barcodes (UMIs) take an `umi_mapping` task with `tool: fgumi` ({ref}`step_umi_mapping`), whose consensus BAM files the callers read like those of a mapping task; the read structure comes from the sheet's custom field `readStructure`.
     Its BQSR (`recalibrate`, `depends_on.common_variants`) is an `alignment_processing` task with `tool: gatk4_bqsr`.
     It follows a mapping task with the tool of `mbcs.mapping_tool`, as the recipe in {ref}`somatic_ngs` shows.
     With main's mbcs output without BQSR as input, `gatk4_bqsr` writes main's recalibrated BAM.

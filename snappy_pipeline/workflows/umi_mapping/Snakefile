@@ -1,0 +1,11 @@
+# -*- coding: utf-8 -*-
+"""SNAPPY Pipeline umi_mapping step Snakefile"""
+
+from snappy_pipeline.orchestration import task_instance
+
+# WorkflowImpl Object Setup ===================================================
+
+wf = task_instance(config["__task_name__"])
+
+
+include: "../common/wrapper_rules.rules"

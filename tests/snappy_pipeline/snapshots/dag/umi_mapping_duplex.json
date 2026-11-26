@@ -1,0 +1,630 @@
+[
+ {
+  "benchmark": null,
+  "input": [
+   "tasks/umi_mapping_duplex/work/case001subregion-N1-DNA1-WES1/report/umi_qc/case001subregion-N1-DNA1-WES1.group.family_sizes.txt",
+   "tasks/umi_mapping_duplex/work/case001subregion-T1-DNA1-WES1/report/umi_qc/case001subregion-T1-DNA1-WES1.group.family_sizes.txt",
+   "tasks/umi_mapping_duplex/work/case001subregion-N1-DNA1-WES1/report/umi_qc/case001subregion-N1-DNA1-WES1.group.family_sizes.txt.md5",
+   "tasks/umi_mapping_duplex/work/case001subregion-T1-DNA1-WES1/report/umi_qc/case001subregion-T1-DNA1-WES1.group.family_sizes.txt.md5",
+   "tasks/umi_mapping_duplex/work/case001subregion-N1-DNA1-WES1/report/umi_qc/case001subregion-N1-DNA1-WES1.group.grouping_metrics.txt",
+   "tasks/umi_mapping_duplex/work/case001subregion-T1-DNA1-WES1/report/umi_qc/case001subregion-T1-DNA1-WES1.group.grouping_metrics.txt",
+   "tasks/umi_mapping_duplex/work/case001subregion-N1-DNA1-WES1/report/umi_qc/case001subregion-N1-DNA1-WES1.group.grouping_metrics.txt.md5",
+   "tasks/umi_mapping_duplex/work/case001subregion-T1-DNA1-WES1/report/umi_qc/case001subregion-T1-DNA1-WES1.group.grouping_metrics.txt.md5",
+   "tasks/umi_mapping_duplex/work/case001subregion-N1-DNA1-WES1/report/umi_qc/case001subregion-N1-DNA1-WES1.group.position_group_sizes.txt",
+   "tasks/umi_mapping_duplex/work/case001subregion-T1-DNA1-WES1/report/umi_qc/case001subregion-T1-DNA1-WES1.group.position_group_sizes.txt",
+   "tasks/umi_mapping_duplex/work/case001subregion-N1-DNA1-WES1/report/umi_qc/case001subregion-N1-DNA1-WES1.group.position_group_sizes.txt.md5",
+   "tasks/umi_mapping_duplex/work/case001subregion-T1-DNA1-WES1/report/umi_qc/case001subregion-T1-DNA1-WES1.group.position_group_sizes.txt.md5",
+   "tasks/umi_mapping_duplex/work/case001subregion-N1-DNA1-WES1/report/umi_qc/case001subregion-N1-DNA1-WES1.correct.txt",
+   "tasks/umi_mapping_duplex/work/case001subregion-T1-DNA1-WES1/report/umi_qc/case001subregion-T1-DNA1-WES1.correct.txt",
+   "tasks/umi_mapping_duplex/work/case001subregion-N1-DNA1-WES1/report/umi_qc/case001subregion-N1-DNA1-WES1.correct.txt.md5",
+   "tasks/umi_mapping_duplex/work/case001subregion-T1-DNA1-WES1/report/umi_qc/case001subregion-T1-DNA1-WES1.correct.txt.md5",
+   "tasks/umi_mapping_duplex/work/case001subregion-N1-DNA1-WES1/out/case001subregion-N1-DNA1-WES1.bam",
+   "tasks/umi_mapping_duplex/work/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1.bam",
+   "tasks/umi_mapping_duplex/work/case001subregion-N1-DNA1-WES1/out/case001subregion-N1-DNA1-WES1.bam.bai",
+   "tasks/umi_mapping_duplex/work/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1.bam.bai",
+   "tasks/umi_mapping_duplex/work/case001subregion-N1-DNA1-WES1/out/case001subregion-N1-DNA1-WES1.bam.md5",
+   "tasks/umi_mapping_duplex/work/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1.bam.md5",
+   "tasks/umi_mapping_duplex/work/case001subregion-N1-DNA1-WES1/out/case001subregion-N1-DNA1-WES1.bam.bai.md5",
+   "tasks/umi_mapping_duplex/work/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1.bam.bai.md5",
+   "tasks/umi_mapping_duplex/work/case001subregion-N1-DNA1-WES1/report/bam_qc/case001subregion-N1-DNA1-WES1.bam.bamstats.txt",
+   "tasks/umi_mapping_duplex/work/case001subregion-T1-DNA1-WES1/report/bam_qc/case001subregion-T1-DNA1-WES1.bam.bamstats.txt",
+   "tasks/umi_mapping_duplex/work/case001subregion-N1-DNA1-WES1/report/bam_qc/case001subregion-N1-DNA1-WES1.bam.bamstats.txt.md5",
+   "tasks/umi_mapping_duplex/work/case001subregion-T1-DNA1-WES1/report/bam_qc/case001subregion-T1-DNA1-WES1.bam.bamstats.txt.md5",
+   "tasks/umi_mapping_duplex/work/case001subregion-N1-DNA1-WES1/report/bam_qc/case001subregion-N1-DNA1-WES1.bam.flagstats.txt",
+   "tasks/umi_mapping_duplex/work/case001subregion-T1-DNA1-WES1/report/bam_qc/case001subregion-T1-DNA1-WES1.bam.flagstats.txt",
+   "tasks/umi_mapping_duplex/work/case001subregion-N1-DNA1-WES1/report/bam_qc/case001subregion-N1-DNA1-WES1.bam.flagstats.txt.md5",
+   "tasks/umi_mapping_duplex/work/case001subregion-T1-DNA1-WES1/report/bam_qc/case001subregion-T1-DNA1-WES1.bam.flagstats.txt.md5",
+   "tasks/umi_mapping_duplex/work/case001subregion-N1-DNA1-WES1/report/bam_qc/case001subregion-N1-DNA1-WES1.bam.idxstats.txt",
+   "tasks/umi_mapping_duplex/work/case001subregion-T1-DNA1-WES1/report/bam_qc/case001subregion-T1-DNA1-WES1.bam.idxstats.txt",
+   "tasks/umi_mapping_duplex/work/case001subregion-N1-DNA1-WES1/report/bam_qc/case001subregion-N1-DNA1-WES1.bam.idxstats.txt.md5",
+   "tasks/umi_mapping_duplex/work/case001subregion-T1-DNA1-WES1/report/bam_qc/case001subregion-T1-DNA1-WES1.bam.idxstats.txt.md5",
+   "tasks/umi_mapping_duplex/work/case001subregion-N1-DNA1-WES1/report/umi_qc/case001subregion-N1-DNA1-WES1.consensus.family_sizes.txt",
+   "tasks/umi_mapping_duplex/work/case001subregion-T1-DNA1-WES1/report/umi_qc/case001subregion-T1-DNA1-WES1.consensus.family_sizes.txt",
+   "tasks/umi_mapping_duplex/work/case001subregion-N1-DNA1-WES1/report/umi_qc/case001subregion-N1-DNA1-WES1.consensus.family_sizes.txt.md5",
+   "tasks/umi_mapping_duplex/work/case001subregion-T1-DNA1-WES1/report/umi_qc/case001subregion-T1-DNA1-WES1.consensus.family_sizes.txt.md5",
+   "tasks/umi_mapping_duplex/work/case001subregion-N1-DNA1-WES1/report/umi_qc/case001subregion-N1-DNA1-WES1.consensus.duplex_family_sizes.txt",
+   "tasks/umi_mapping_duplex/work/case001subregion-T1-DNA1-WES1/report/umi_qc/case001subregion-T1-DNA1-WES1.consensus.duplex_family_sizes.txt",
+   "tasks/umi_mapping_duplex/work/case001subregion-N1-DNA1-WES1/report/umi_qc/case001subregion-N1-DNA1-WES1.consensus.duplex_family_sizes.txt.md5",
+   "tasks/umi_mapping_duplex/work/case001subregion-T1-DNA1-WES1/report/umi_qc/case001subregion-T1-DNA1-WES1.consensus.duplex_family_sizes.txt.md5",
+   "tasks/umi_mapping_duplex/work/case001subregion-N1-DNA1-WES1/report/umi_qc/case001subregion-N1-DNA1-WES1.consensus.umi_counts.txt",
+   "tasks/umi_mapping_duplex/work/case001subregion-T1-DNA1-WES1/report/umi_qc/case001subregion-T1-DNA1-WES1.consensus.umi_counts.txt",
+   "tasks/umi_mapping_duplex/work/case001subregion-N1-DNA1-WES1/report/umi_qc/case001subregion-N1-DNA1-WES1.consensus.umi_counts.txt.md5",
+   "tasks/umi_mapping_duplex/work/case001subregion-T1-DNA1-WES1/report/umi_qc/case001subregion-T1-DNA1-WES1.consensus.umi_counts.txt.md5",
+   "tasks/umi_mapping_duplex/work/case001subregion-N1-DNA1-WES1/report/umi_qc/case001subregion-N1-DNA1-WES1.consensus.duplex_yield_metrics.txt",
+   "tasks/umi_mapping_duplex/work/case001subregion-T1-DNA1-WES1/report/umi_qc/case001subregion-T1-DNA1-WES1.consensus.duplex_yield_metrics.txt",
+   "tasks/umi_mapping_duplex/work/case001subregion-N1-DNA1-WES1/report/umi_qc/case001subregion-N1-DNA1-WES1.consensus.duplex_yield_metrics.txt.md5",
+   "tasks/umi_mapping_duplex/work/case001subregion-T1-DNA1-WES1/report/umi_qc/case001subregion-T1-DNA1-WES1.consensus.duplex_yield_metrics.txt.md5",
+   "tasks/umi_mapping_duplex/work/case001subregion-N1-DNA1-WES1/report/umi_qc/case001subregion-N1-DNA1-WES1.consensus.txt",
+   "tasks/umi_mapping_duplex/work/case001subregion-T1-DNA1-WES1/report/umi_qc/case001subregion-T1-DNA1-WES1.consensus.txt",
+   "tasks/umi_mapping_duplex/work/case001subregion-N1-DNA1-WES1/report/umi_qc/case001subregion-N1-DNA1-WES1.consensus.txt.md5",
+   "tasks/umi_mapping_duplex/work/case001subregion-T1-DNA1-WES1/report/umi_qc/case001subregion-T1-DNA1-WES1.consensus.txt.md5",
+   "tasks/umi_mapping_duplex/work/case001subregion-N1-DNA1-WES1/report/umi_qc/case001subregion-N1-DNA1-WES1.filter.txt",
+   "tasks/umi_mapping_duplex/work/case001subregion-T1-DNA1-WES1/report/umi_qc/case001subregion-T1-DNA1-WES1.filter.txt",
+   "tasks/umi_mapping_duplex/work/case001subregion-N1-DNA1-WES1/report/umi_qc/case001subregion-N1-DNA1-WES1.filter.txt.md5",
+   "tasks/umi_mapping_duplex/work/case001subregion-T1-DNA1-WES1/report/umi_qc/case001subregion-T1-DNA1-WES1.filter.txt.md5",
+   "tasks/umi_mapping_duplex/work/qc_summary/out/qc_summary.tsv",
+   "tasks/umi_mapping_duplex/work/qc_summary/out/qc_summary.tsv.md5",
+   "tasks/umi_mapping_duplex/output/.manifest.tsv"
+  ],
+  "log": [],
+  "output": [],
+  "params": {},
+  "resources": {},
+  "rule": "all",
+  "temp": [],
+  "threads": 1,
+  "wildcards": {},
+  "wrapper": null
+ },
+ {
+  "benchmark": null,
+  "input": [
+   "<repo>/.tests/test-workflow/resources/refs/subregion.fa"
+  ],
+  "log": [
+   "tasks/reference_index_bwa_mem3/work/reference_index/log/reference_index.index.log"
+  ],
+  "output": [
+   "tasks/reference_index_bwa_mem3/work/reference_index/out/reference.amb",
+   "tasks/reference_index_bwa_mem3/work/reference_index/out/reference.ann",
+   "tasks/reference_index_bwa_mem3/work/reference_index/out/reference.bwt.2bit.64",
+   "tasks/reference_index_bwa_mem3/work/reference_index/out/reference.pac"
+  ],
+  "params": {
+   "args": {
+    "code": "<hash>",
+    "extra_arguments": []
+   }
+  },
+  "resources": {
+   "mem": "16 GB",
+   "mem_mb": 16000,
+   "mem_mib": 15259,
+   "partition": "medium",
+   "runtime": 1440
+  },
+  "rule": "reference_index_bwa_mem3_reference_index_bwa_mem3_run",
+  "temp": [],
+  "threads": 1,
+  "wildcards": {},
+  "wrapper": "file://<repo>/snappy_wrappers/wrappers/reference_index/bwa_mem3"
+ },
+ {
+  "benchmark": null,
+  "input": [
+   "tasks/umi_mapping_duplex/work/case001subregion-N1-DNA1-WES1/report/umi_qc/case001subregion-N1-DNA1-WES1.group.family_sizes.txt",
+   "tasks/umi_mapping_duplex/work/case001subregion-T1-DNA1-WES1/report/umi_qc/case001subregion-T1-DNA1-WES1.group.family_sizes.txt",
+   "tasks/umi_mapping_duplex/work/case001subregion-N1-DNA1-WES1/report/umi_qc/case001subregion-N1-DNA1-WES1.group.family_sizes.txt.md5",
+   "tasks/umi_mapping_duplex/work/case001subregion-T1-DNA1-WES1/report/umi_qc/case001subregion-T1-DNA1-WES1.group.family_sizes.txt.md5",
+   "tasks/umi_mapping_duplex/work/case001subregion-N1-DNA1-WES1/report/umi_qc/case001subregion-N1-DNA1-WES1.group.grouping_metrics.txt",
+   "tasks/umi_mapping_duplex/work/case001subregion-T1-DNA1-WES1/report/umi_qc/case001subregion-T1-DNA1-WES1.group.grouping_metrics.txt",
+   "tasks/umi_mapping_duplex/work/case001subregion-N1-DNA1-WES1/report/umi_qc/case001subregion-N1-DNA1-WES1.group.grouping_metrics.txt.md5",
+   "tasks/umi_mapping_duplex/work/case001subregion-T1-DNA1-WES1/report/umi_qc/case001subregion-T1-DNA1-WES1.group.grouping_metrics.txt.md5",
+   "tasks/umi_mapping_duplex/work/case001subregion-N1-DNA1-WES1/report/umi_qc/case001subregion-N1-DNA1-WES1.group.position_group_sizes.txt",
+   "tasks/umi_mapping_duplex/work/case001subregion-T1-DNA1-WES1/report/umi_qc/case001subregion-T1-DNA1-WES1.group.position_group_sizes.txt",
+   "tasks/umi_mapping_duplex/work/case001subregion-N1-DNA1-WES1/report/umi_qc/case001subregion-N1-DNA1-WES1.group.position_group_sizes.txt.md5",
+   "tasks/umi_mapping_duplex/work/case001subregion-T1-DNA1-WES1/report/umi_qc/case001subregion-T1-DNA1-WES1.group.position_group_sizes.txt.md5",
+   "tasks/umi_mapping_duplex/work/case001subregion-N1-DNA1-WES1/report/umi_qc/case001subregion-N1-DNA1-WES1.correct.txt",
+   "tasks/umi_mapping_duplex/work/case001subregion-T1-DNA1-WES1/report/umi_qc/case001subregion-T1-DNA1-WES1.correct.txt",
+   "tasks/umi_mapping_duplex/work/case001subregion-N1-DNA1-WES1/report/umi_qc/case001subregion-N1-DNA1-WES1.correct.txt.md5",
+   "tasks/umi_mapping_duplex/work/case001subregion-T1-DNA1-WES1/report/umi_qc/case001subregion-T1-DNA1-WES1.correct.txt.md5",
+   "tasks/umi_mapping_duplex/work/case001subregion-N1-DNA1-WES1/out/case001subregion-N1-DNA1-WES1.bam",
+   "tasks/umi_mapping_duplex/work/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1.bam",
+   "tasks/umi_mapping_duplex/work/case001subregion-N1-DNA1-WES1/out/case001subregion-N1-DNA1-WES1.bam.bai",
+   "tasks/umi_mapping_duplex/work/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1.bam.bai",
+   "tasks/umi_mapping_duplex/work/case001subregion-N1-DNA1-WES1/out/case001subregion-N1-DNA1-WES1.bam.md5",
+   "tasks/umi_mapping_duplex/work/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1.bam.md5",
+   "tasks/umi_mapping_duplex/work/case001subregion-N1-DNA1-WES1/out/case001subregion-N1-DNA1-WES1.bam.bai.md5",
+   "tasks/umi_mapping_duplex/work/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1.bam.bai.md5",
+   "tasks/umi_mapping_duplex/work/case001subregion-N1-DNA1-WES1/report/bam_qc/case001subregion-N1-DNA1-WES1.bam.bamstats.txt",
+   "tasks/umi_mapping_duplex/work/case001subregion-T1-DNA1-WES1/report/bam_qc/case001subregion-T1-DNA1-WES1.bam.bamstats.txt",
+   "tasks/umi_mapping_duplex/work/case001subregion-N1-DNA1-WES1/report/bam_qc/case001subregion-N1-DNA1-WES1.bam.bamstats.txt.md5",
+   "tasks/umi_mapping_duplex/work/case001subregion-T1-DNA1-WES1/report/bam_qc/case001subregion-T1-DNA1-WES1.bam.bamstats.txt.md5",
+   "tasks/umi_mapping_duplex/work/case001subregion-N1-DNA1-WES1/report/bam_qc/case001subregion-N1-DNA1-WES1.bam.flagstats.txt",
+   "tasks/umi_mapping_duplex/work/case001subregion-T1-DNA1-WES1/report/bam_qc/case001subregion-T1-DNA1-WES1.bam.flagstats.txt",
+   "tasks/umi_mapping_duplex/work/case001subregion-N1-DNA1-WES1/report/bam_qc/case001subregion-N1-DNA1-WES1.bam.flagstats.txt.md5",
+   "tasks/umi_mapping_duplex/work/case001subregion-T1-DNA1-WES1/report/bam_qc/case001subregion-T1-DNA1-WES1.bam.flagstats.txt.md5",
+   "tasks/umi_mapping_duplex/work/case001subregion-N1-DNA1-WES1/report/bam_qc/case001subregion-N1-DNA1-WES1.bam.idxstats.txt",
+   "tasks/umi_mapping_duplex/work/case001subregion-T1-DNA1-WES1/report/bam_qc/case001subregion-T1-DNA1-WES1.bam.idxstats.txt",
+   "tasks/umi_mapping_duplex/work/case001subregion-N1-DNA1-WES1/report/bam_qc/case001subregion-N1-DNA1-WES1.bam.idxstats.txt.md5",
+   "tasks/umi_mapping_duplex/work/case001subregion-T1-DNA1-WES1/report/bam_qc/case001subregion-T1-DNA1-WES1.bam.idxstats.txt.md5",
+   "tasks/umi_mapping_duplex/work/case001subregion-N1-DNA1-WES1/report/umi_qc/case001subregion-N1-DNA1-WES1.consensus.family_sizes.txt",
+   "tasks/umi_mapping_duplex/work/case001subregion-T1-DNA1-WES1/report/umi_qc/case001subregion-T1-DNA1-WES1.consensus.family_sizes.txt",
+   "tasks/umi_mapping_duplex/work/case001subregion-N1-DNA1-WES1/report/umi_qc/case001subregion-N1-DNA1-WES1.consensus.family_sizes.txt.md5",
+   "tasks/umi_mapping_duplex/work/case001subregion-T1-DNA1-WES1/report/umi_qc/case001subregion-T1-DNA1-WES1.consensus.family_sizes.txt.md5",
+   "tasks/umi_mapping_duplex/work/case001subregion-N1-DNA1-WES1/report/umi_qc/case001subregion-N1-DNA1-WES1.consensus.duplex_family_sizes.txt",
+   "tasks/umi_mapping_duplex/work/case001subregion-T1-DNA1-WES1/report/umi_qc/case001subregion-T1-DNA1-WES1.consensus.duplex_family_sizes.txt",
+   "tasks/umi_mapping_duplex/work/case001subregion-N1-DNA1-WES1/report/umi_qc/case001subregion-N1-DNA1-WES1.consensus.duplex_family_sizes.txt.md5",
+   "tasks/umi_mapping_duplex/work/case001subregion-T1-DNA1-WES1/report/umi_qc/case001subregion-T1-DNA1-WES1.consensus.duplex_family_sizes.txt.md5",
+   "tasks/umi_mapping_duplex/work/case001subregion-N1-DNA1-WES1/report/umi_qc/case001subregion-N1-DNA1-WES1.consensus.umi_counts.txt",
+   "tasks/umi_mapping_duplex/work/case001subregion-T1-DNA1-WES1/report/umi_qc/case001subregion-T1-DNA1-WES1.consensus.umi_counts.txt",
+   "tasks/umi_mapping_duplex/work/case001subregion-N1-DNA1-WES1/report/umi_qc/case001subregion-N1-DNA1-WES1.consensus.umi_counts.txt.md5",
+   "tasks/umi_mapping_duplex/work/case001subregion-T1-DNA1-WES1/report/umi_qc/case001subregion-T1-DNA1-WES1.consensus.umi_counts.txt.md5",
+   "tasks/umi_mapping_duplex/work/case001subregion-N1-DNA1-WES1/report/umi_qc/case001subregion-N1-DNA1-WES1.consensus.duplex_yield_metrics.txt",
+   "tasks/umi_mapping_duplex/work/case001subregion-T1-DNA1-WES1/report/umi_qc/case001subregion-T1-DNA1-WES1.consensus.duplex_yield_metrics.txt",
+   "tasks/umi_mapping_duplex/work/case001subregion-N1-DNA1-WES1/report/umi_qc/case001subregion-N1-DNA1-WES1.consensus.duplex_yield_metrics.txt.md5",
+   "tasks/umi_mapping_duplex/work/case001subregion-T1-DNA1-WES1/report/umi_qc/case001subregion-T1-DNA1-WES1.consensus.duplex_yield_metrics.txt.md5",
+   "tasks/umi_mapping_duplex/work/case001subregion-N1-DNA1-WES1/report/umi_qc/case001subregion-N1-DNA1-WES1.consensus.txt",
+   "tasks/umi_mapping_duplex/work/case001subregion-T1-DNA1-WES1/report/umi_qc/case001subregion-T1-DNA1-WES1.consensus.txt",
+   "tasks/umi_mapping_duplex/work/case001subregion-N1-DNA1-WES1/report/umi_qc/case001subregion-N1-DNA1-WES1.consensus.txt.md5",
+   "tasks/umi_mapping_duplex/work/case001subregion-T1-DNA1-WES1/report/umi_qc/case001subregion-T1-DNA1-WES1.consensus.txt.md5",
+   "tasks/umi_mapping_duplex/work/case001subregion-N1-DNA1-WES1/report/umi_qc/case001subregion-N1-DNA1-WES1.filter.txt",
+   "tasks/umi_mapping_duplex/work/case001subregion-T1-DNA1-WES1/report/umi_qc/case001subregion-T1-DNA1-WES1.filter.txt",
+   "tasks/umi_mapping_duplex/work/case001subregion-N1-DNA1-WES1/report/umi_qc/case001subregion-N1-DNA1-WES1.filter.txt.md5",
+   "tasks/umi_mapping_duplex/work/case001subregion-T1-DNA1-WES1/report/umi_qc/case001subregion-T1-DNA1-WES1.filter.txt.md5",
+   "tasks/umi_mapping_duplex/work/qc_summary/out/qc_summary.tsv",
+   "tasks/umi_mapping_duplex/work/qc_summary/out/qc_summary.tsv.md5"
+  ],
+  "local": true,
+  "log": [],
+  "output": [
+   "tasks/umi_mapping_duplex/output/.manifest.tsv"
+  ],
+  "params": {
+   "task_dir": "tasks/umi_mapping_duplex"
+  },
+  "resources": {},
+  "rule": "umi_mapping_duplex_results",
+  "temp": [],
+  "threads": 1,
+  "wildcards": {},
+  "wrapper": null
+ },
+ {
+  "benchmark": "tasks/umi_mapping_duplex/benchmarks/case001subregion-N1-DNA1-WES1/case001subregion-N1-DNA1-WES1.consensus.tsv",
+  "input": [
+   "tasks/umi_mapping_duplex/work/case001subregion-N1-DNA1-WES1/out/case001subregion-N1-DNA1-WES1.grouped.bam",
+   "tasks/reference_index_bwa_mem3/work/reference_index/out/reference.amb",
+   "tasks/reference_index_bwa_mem3/work/reference_index/out/reference.ann",
+   "tasks/reference_index_bwa_mem3/work/reference_index/out/reference.bwt.2bit.64",
+   "tasks/reference_index_bwa_mem3/work/reference_index/out/reference.pac",
+   "<repo>/.tests/test-workflow/resources/refs/subregion.fa",
+   "<repo>/.tests/test-workflow/resources/refs/subregion.fa.fai",
+   "<repo>/.tests/test-workflow/resources/refs/subregion.dict"
+  ],
+  "log": [
+   "tasks/umi_mapping_duplex/work/case001subregion-N1-DNA1-WES1/log/case001subregion-N1-DNA1-WES1.consensus.log"
+  ],
+  "output": [
+   "tasks/umi_mapping_duplex/work/case001subregion-N1-DNA1-WES1/out/case001subregion-N1-DNA1-WES1.bam",
+   "tasks/umi_mapping_duplex/work/case001subregion-N1-DNA1-WES1/out/case001subregion-N1-DNA1-WES1.bam.bai",
+   "tasks/umi_mapping_duplex/work/case001subregion-N1-DNA1-WES1/out/case001subregion-N1-DNA1-WES1.bam.md5",
+   "tasks/umi_mapping_duplex/work/case001subregion-N1-DNA1-WES1/out/case001subregion-N1-DNA1-WES1.bam.bai.md5",
+   "tasks/umi_mapping_duplex/work/case001subregion-N1-DNA1-WES1/report/bam_qc/case001subregion-N1-DNA1-WES1.bam.bamstats.txt",
+   "tasks/umi_mapping_duplex/work/case001subregion-N1-DNA1-WES1/report/bam_qc/case001subregion-N1-DNA1-WES1.bam.bamstats.txt.md5",
+   "tasks/umi_mapping_duplex/work/case001subregion-N1-DNA1-WES1/report/bam_qc/case001subregion-N1-DNA1-WES1.bam.flagstats.txt",
+   "tasks/umi_mapping_duplex/work/case001subregion-N1-DNA1-WES1/report/bam_qc/case001subregion-N1-DNA1-WES1.bam.flagstats.txt.md5",
+   "tasks/umi_mapping_duplex/work/case001subregion-N1-DNA1-WES1/report/bam_qc/case001subregion-N1-DNA1-WES1.bam.idxstats.txt",
+   "tasks/umi_mapping_duplex/work/case001subregion-N1-DNA1-WES1/report/bam_qc/case001subregion-N1-DNA1-WES1.bam.idxstats.txt.md5",
+   "tasks/umi_mapping_duplex/work/case001subregion-N1-DNA1-WES1/report/umi_qc/case001subregion-N1-DNA1-WES1.consensus.family_sizes.txt",
+   "tasks/umi_mapping_duplex/work/case001subregion-N1-DNA1-WES1/report/umi_qc/case001subregion-N1-DNA1-WES1.consensus.family_sizes.txt.md5",
+   "tasks/umi_mapping_duplex/work/case001subregion-N1-DNA1-WES1/report/umi_qc/case001subregion-N1-DNA1-WES1.consensus.duplex_family_sizes.txt",
+   "tasks/umi_mapping_duplex/work/case001subregion-N1-DNA1-WES1/report/umi_qc/case001subregion-N1-DNA1-WES1.consensus.duplex_family_sizes.txt.md5",
+   "tasks/umi_mapping_duplex/work/case001subregion-N1-DNA1-WES1/report/umi_qc/case001subregion-N1-DNA1-WES1.consensus.umi_counts.txt",
+   "tasks/umi_mapping_duplex/work/case001subregion-N1-DNA1-WES1/report/umi_qc/case001subregion-N1-DNA1-WES1.consensus.umi_counts.txt.md5",
+   "tasks/umi_mapping_duplex/work/case001subregion-N1-DNA1-WES1/report/umi_qc/case001subregion-N1-DNA1-WES1.consensus.duplex_yield_metrics.txt",
+   "tasks/umi_mapping_duplex/work/case001subregion-N1-DNA1-WES1/report/umi_qc/case001subregion-N1-DNA1-WES1.consensus.duplex_yield_metrics.txt.md5",
+   "tasks/umi_mapping_duplex/work/case001subregion-N1-DNA1-WES1/report/umi_qc/case001subregion-N1-DNA1-WES1.consensus.txt",
+   "tasks/umi_mapping_duplex/work/case001subregion-N1-DNA1-WES1/report/umi_qc/case001subregion-N1-DNA1-WES1.consensus.txt.md5",
+   "tasks/umi_mapping_duplex/work/case001subregion-N1-DNA1-WES1/report/umi_qc/case001subregion-N1-DNA1-WES1.filter.txt",
+   "tasks/umi_mapping_duplex/work/case001subregion-N1-DNA1-WES1/report/umi_qc/case001subregion-N1-DNA1-WES1.filter.txt.md5"
+  ],
+  "params": {
+   "args": {
+    "aligner": {
+     "bases_per_batch": 150000000,
+     "extra_arguments": [],
+     "num_threads": 16
+    },
+    "caller": {
+     "filter_min_reads": [
+      3,
+      2,
+      2
+     ],
+     "min_input_base_quality": 20,
+     "min_reads": [
+      1
+     ],
+     "require_single_strand_agreement": true
+    },
+    "clip": null,
+    "code": "<hash>",
+    "compression_level": 6,
+    "consensus": "duplex",
+    "extra_arguments": [],
+    "filter": {
+     "extra_arguments": [],
+     "max_base_error_rate": 0.1,
+     "max_no_call_fraction": 0.2,
+     "max_read_error_rate": 0.025,
+     "min_base_quality": 40
+    },
+    "num_threads": 4,
+    "realign": {
+     "chunk_size": 10000000
+    }
+   }
+  },
+  "report": [
+   "tasks/umi_mapping_duplex/work/case001subregion-N1-DNA1-WES1/report/bam_qc/case001subregion-N1-DNA1-WES1.bam.bamstats.txt",
+   "tasks/umi_mapping_duplex/work/case001subregion-N1-DNA1-WES1/report/bam_qc/case001subregion-N1-DNA1-WES1.bam.flagstats.txt",
+   "tasks/umi_mapping_duplex/work/case001subregion-N1-DNA1-WES1/report/bam_qc/case001subregion-N1-DNA1-WES1.bam.idxstats.txt",
+   "tasks/umi_mapping_duplex/work/case001subregion-N1-DNA1-WES1/report/umi_qc/case001subregion-N1-DNA1-WES1.consensus.duplex_family_sizes.txt",
+   "tasks/umi_mapping_duplex/work/case001subregion-N1-DNA1-WES1/report/umi_qc/case001subregion-N1-DNA1-WES1.consensus.duplex_yield_metrics.txt",
+   "tasks/umi_mapping_duplex/work/case001subregion-N1-DNA1-WES1/report/umi_qc/case001subregion-N1-DNA1-WES1.consensus.family_sizes.txt",
+   "tasks/umi_mapping_duplex/work/case001subregion-N1-DNA1-WES1/report/umi_qc/case001subregion-N1-DNA1-WES1.consensus.txt",
+   "tasks/umi_mapping_duplex/work/case001subregion-N1-DNA1-WES1/report/umi_qc/case001subregion-N1-DNA1-WES1.consensus.umi_counts.txt",
+   "tasks/umi_mapping_duplex/work/case001subregion-N1-DNA1-WES1/report/umi_qc/case001subregion-N1-DNA1-WES1.filter.txt"
+  ],
+  "resources": {
+   "mem": "73.73 GB",
+   "mem_mb": 73728,
+   "mem_mib": 70313,
+   "partition": "medium",
+   "runtime": 4320
+  },
+  "rule": "umi_mapping_duplex_umi_mapping_fgumi_consensus",
+  "temp": [],
+  "threads": 1,
+  "wildcards": {
+   "library_name": "case001subregion-N1-DNA1-WES1"
+  },
+  "wrapper": "file://<repo>/snappy_wrappers/wrappers/fgumi/consensus"
+ },
+ {
+  "benchmark": "tasks/umi_mapping_duplex/benchmarks/case001subregion-T1-DNA1-WES1/case001subregion-T1-DNA1-WES1.consensus.tsv",
+  "input": [
+   "tasks/umi_mapping_duplex/work/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1.grouped.bam",
+   "tasks/reference_index_bwa_mem3/work/reference_index/out/reference.amb",
+   "tasks/reference_index_bwa_mem3/work/reference_index/out/reference.ann",
+   "tasks/reference_index_bwa_mem3/work/reference_index/out/reference.bwt.2bit.64",
+   "tasks/reference_index_bwa_mem3/work/reference_index/out/reference.pac",
+   "<repo>/.tests/test-workflow/resources/refs/subregion.fa",
+   "<repo>/.tests/test-workflow/resources/refs/subregion.fa.fai",
+   "<repo>/.tests/test-workflow/resources/refs/subregion.dict"
+  ],
+  "log": [
+   "tasks/umi_mapping_duplex/work/case001subregion-T1-DNA1-WES1/log/case001subregion-T1-DNA1-WES1.consensus.log"
+  ],
+  "output": [
+   "tasks/umi_mapping_duplex/work/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1.bam",
+   "tasks/umi_mapping_duplex/work/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1.bam.bai",
+   "tasks/umi_mapping_duplex/work/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1.bam.md5",
+   "tasks/umi_mapping_duplex/work/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1.bam.bai.md5",
+   "tasks/umi_mapping_duplex/work/case001subregion-T1-DNA1-WES1/report/bam_qc/case001subregion-T1-DNA1-WES1.bam.bamstats.txt",
+   "tasks/umi_mapping_duplex/work/case001subregion-T1-DNA1-WES1/report/bam_qc/case001subregion-T1-DNA1-WES1.bam.bamstats.txt.md5",
+   "tasks/umi_mapping_duplex/work/case001subregion-T1-DNA1-WES1/report/bam_qc/case001subregion-T1-DNA1-WES1.bam.flagstats.txt",
+   "tasks/umi_mapping_duplex/work/case001subregion-T1-DNA1-WES1/report/bam_qc/case001subregion-T1-DNA1-WES1.bam.flagstats.txt.md5",
+   "tasks/umi_mapping_duplex/work/case001subregion-T1-DNA1-WES1/report/bam_qc/case001subregion-T1-DNA1-WES1.bam.idxstats.txt",
+   "tasks/umi_mapping_duplex/work/case001subregion-T1-DNA1-WES1/report/bam_qc/case001subregion-T1-DNA1-WES1.bam.idxstats.txt.md5",
+   "tasks/umi_mapping_duplex/work/case001subregion-T1-DNA1-WES1/report/umi_qc/case001subregion-T1-DNA1-WES1.consensus.family_sizes.txt",
+   "tasks/umi_mapping_duplex/work/case001subregion-T1-DNA1-WES1/report/umi_qc/case001subregion-T1-DNA1-WES1.consensus.family_sizes.txt.md5",
+   "tasks/umi_mapping_duplex/work/case001subregion-T1-DNA1-WES1/report/umi_qc/case001subregion-T1-DNA1-WES1.consensus.duplex_family_sizes.txt",
+   "tasks/umi_mapping_duplex/work/case001subregion-T1-DNA1-WES1/report/umi_qc/case001subregion-T1-DNA1-WES1.consensus.duplex_family_sizes.txt.md5",
+   "tasks/umi_mapping_duplex/work/case001subregion-T1-DNA1-WES1/report/umi_qc/case001subregion-T1-DNA1-WES1.consensus.umi_counts.txt",
+   "tasks/umi_mapping_duplex/work/case001subregion-T1-DNA1-WES1/report/umi_qc/case001subregion-T1-DNA1-WES1.consensus.umi_counts.txt.md5",
+   "tasks/umi_mapping_duplex/work/case001subregion-T1-DNA1-WES1/report/umi_qc/case001subregion-T1-DNA1-WES1.consensus.duplex_yield_metrics.txt",
+   "tasks/umi_mapping_duplex/work/case001subregion-T1-DNA1-WES1/report/umi_qc/case001subregion-T1-DNA1-WES1.consensus.duplex_yield_metrics.txt.md5",
+   "tasks/umi_mapping_duplex/work/case001subregion-T1-DNA1-WES1/report/umi_qc/case001subregion-T1-DNA1-WES1.consensus.txt",
+   "tasks/umi_mapping_duplex/work/case001subregion-T1-DNA1-WES1/report/umi_qc/case001subregion-T1-DNA1-WES1.consensus.txt.md5",
+   "tasks/umi_mapping_duplex/work/case001subregion-T1-DNA1-WES1/report/umi_qc/case001subregion-T1-DNA1-WES1.filter.txt",
+   "tasks/umi_mapping_duplex/work/case001subregion-T1-DNA1-WES1/report/umi_qc/case001subregion-T1-DNA1-WES1.filter.txt.md5"
+  ],
+  "params": {
+   "args": {
+    "aligner": {
+     "bases_per_batch": 150000000,
+     "extra_arguments": [],
+     "num_threads": 16
+    },
+    "caller": {
+     "filter_min_reads": [
+      3,
+      2,
+      2
+     ],
+     "min_input_base_quality": 20,
+     "min_reads": [
+      1
+     ],
+     "require_single_strand_agreement": true
+    },
+    "clip": null,
+    "code": "<hash>",
+    "compression_level": 6,
+    "consensus": "duplex",
+    "extra_arguments": [],
+    "filter": {
+     "extra_arguments": [],
+     "max_base_error_rate": 0.1,
+     "max_no_call_fraction": 0.2,
+     "max_read_error_rate": 0.025,
+     "min_base_quality": 40
+    },
+    "num_threads": 4,
+    "realign": {
+     "chunk_size": 10000000
+    }
+   }
+  },
+  "report": [
+   "tasks/umi_mapping_duplex/work/case001subregion-T1-DNA1-WES1/report/bam_qc/case001subregion-T1-DNA1-WES1.bam.bamstats.txt",
+   "tasks/umi_mapping_duplex/work/case001subregion-T1-DNA1-WES1/report/bam_qc/case001subregion-T1-DNA1-WES1.bam.flagstats.txt",
+   "tasks/umi_mapping_duplex/work/case001subregion-T1-DNA1-WES1/report/bam_qc/case001subregion-T1-DNA1-WES1.bam.idxstats.txt",
+   "tasks/umi_mapping_duplex/work/case001subregion-T1-DNA1-WES1/report/umi_qc/case001subregion-T1-DNA1-WES1.consensus.duplex_family_sizes.txt",
+   "tasks/umi_mapping_duplex/work/case001subregion-T1-DNA1-WES1/report/umi_qc/case001subregion-T1-DNA1-WES1.consensus.duplex_yield_metrics.txt",
+   "tasks/umi_mapping_duplex/work/case001subregion-T1-DNA1-WES1/report/umi_qc/case001subregion-T1-DNA1-WES1.consensus.family_sizes.txt",
+   "tasks/umi_mapping_duplex/work/case001subregion-T1-DNA1-WES1/report/umi_qc/case001subregion-T1-DNA1-WES1.consensus.txt",
+   "tasks/umi_mapping_duplex/work/case001subregion-T1-DNA1-WES1/report/umi_qc/case001subregion-T1-DNA1-WES1.consensus.umi_counts.txt",
+   "tasks/umi_mapping_duplex/work/case001subregion-T1-DNA1-WES1/report/umi_qc/case001subregion-T1-DNA1-WES1.filter.txt"
+  ],
+  "resources": {
+   "mem": "73.73 GB",
+   "mem_mb": 73728,
+   "mem_mib": 70313,
+   "partition": "medium",
+   "runtime": 4320
+  },
+  "rule": "umi_mapping_duplex_umi_mapping_fgumi_consensus",
+  "temp": [],
+  "threads": 1,
+  "wildcards": {
+   "library_name": "case001subregion-T1-DNA1-WES1"
+  },
+  "wrapper": "file://<repo>/snappy_wrappers/wrappers/fgumi/consensus"
+ },
+ {
+  "benchmark": "tasks/umi_mapping_duplex/benchmarks/case001subregion-N1-DNA1-WES1/case001subregion-N1-DNA1-WES1.grouping.tsv",
+  "input": [
+   "<project>/raw/case001subregion-N1-DNA1-WES1/case001subregion-N1-DNA1-WES1.R1.fastq.gz",
+   "<project>/raw/case001subregion-N1-DNA1-WES1/case001subregion-N1-DNA1-WES1.R2.fastq.gz",
+   "tasks/reference_index_bwa_mem3/work/reference_index/out/reference.amb",
+   "tasks/reference_index_bwa_mem3/work/reference_index/out/reference.ann",
+   "tasks/reference_index_bwa_mem3/work/reference_index/out/reference.bwt.2bit.64",
+   "tasks/reference_index_bwa_mem3/work/reference_index/out/reference.pac",
+   "<repo>/.tests/test-workflow/resources/refs/subregion.fa",
+   "<repo>/.tests/test-workflow/resources/refs/subregion.fa.fai",
+   "<repo>/.tests/test-workflow/resources/refs/subregion.dict",
+   "<repo>/tests/snappy_pipeline/fixtures/umis.txt"
+  ],
+  "log": [
+   "tasks/umi_mapping_duplex/work/case001subregion-N1-DNA1-WES1/log/case001subregion-N1-DNA1-WES1.grouping.log"
+  ],
+  "output": [
+   "tasks/umi_mapping_duplex/work/case001subregion-N1-DNA1-WES1/out/case001subregion-N1-DNA1-WES1.grouped.bam",
+   "tasks/umi_mapping_duplex/work/case001subregion-N1-DNA1-WES1/report/umi_qc/case001subregion-N1-DNA1-WES1.group.family_sizes.txt",
+   "tasks/umi_mapping_duplex/work/case001subregion-N1-DNA1-WES1/report/umi_qc/case001subregion-N1-DNA1-WES1.group.family_sizes.txt.md5",
+   "tasks/umi_mapping_duplex/work/case001subregion-N1-DNA1-WES1/report/umi_qc/case001subregion-N1-DNA1-WES1.group.grouping_metrics.txt",
+   "tasks/umi_mapping_duplex/work/case001subregion-N1-DNA1-WES1/report/umi_qc/case001subregion-N1-DNA1-WES1.group.grouping_metrics.txt.md5",
+   "tasks/umi_mapping_duplex/work/case001subregion-N1-DNA1-WES1/report/umi_qc/case001subregion-N1-DNA1-WES1.group.position_group_sizes.txt",
+   "tasks/umi_mapping_duplex/work/case001subregion-N1-DNA1-WES1/report/umi_qc/case001subregion-N1-DNA1-WES1.group.position_group_sizes.txt.md5",
+   "tasks/umi_mapping_duplex/work/case001subregion-N1-DNA1-WES1/report/umi_qc/case001subregion-N1-DNA1-WES1.correct.txt",
+   "tasks/umi_mapping_duplex/work/case001subregion-N1-DNA1-WES1/report/umi_qc/case001subregion-N1-DNA1-WES1.correct.txt.md5"
+  ],
+  "params": {
+   "args": {
+    "aligner": {
+     "bases_per_batch": 150000000,
+     "extra_arguments": [],
+     "num_threads": 16
+    },
+    "code": "<hash>",
+    "correct": {
+     "max_mismatches": 2,
+     "min_distance": 1
+    },
+    "group": {
+     "allow_unmapped": false,
+     "edits": 1,
+     "extra_arguments": [],
+     "min_map_q": 1
+    },
+    "num_threads": 4,
+    "platform": "ILLUMINA",
+    "read_groups": [
+     "case001subregion-N1-DNA1-WES1"
+    ],
+    "read_structures": [
+     "8M+T",
+     "8M+T"
+    ],
+    "sample_name": "case001subregion-N1-DNA1-WES1",
+    "strategy": "paired"
+   }
+  },
+  "report": [
+   "tasks/umi_mapping_duplex/work/case001subregion-N1-DNA1-WES1/report/umi_qc/case001subregion-N1-DNA1-WES1.correct.txt",
+   "tasks/umi_mapping_duplex/work/case001subregion-N1-DNA1-WES1/report/umi_qc/case001subregion-N1-DNA1-WES1.group.family_sizes.txt",
+   "tasks/umi_mapping_duplex/work/case001subregion-N1-DNA1-WES1/report/umi_qc/case001subregion-N1-DNA1-WES1.group.grouping_metrics.txt",
+   "tasks/umi_mapping_duplex/work/case001subregion-N1-DNA1-WES1/report/umi_qc/case001subregion-N1-DNA1-WES1.group.position_group_sizes.txt"
+  ],
+  "resources": {
+   "mem": "73.73 GB",
+   "mem_mb": 73728,
+   "mem_mib": 70313,
+   "partition": "medium",
+   "runtime": 4320
+  },
+  "rule": "umi_mapping_duplex_umi_mapping_fgumi_grouping",
+  "temp": [
+   "tasks/umi_mapping_duplex/work/case001subregion-N1-DNA1-WES1/out/case001subregion-N1-DNA1-WES1.grouped.bam"
+  ],
+  "threads": 1,
+  "wildcards": {
+   "library_name": "case001subregion-N1-DNA1-WES1"
+  },
+  "wrapper": "file://<repo>/snappy_wrappers/wrappers/fgumi/grouping"
+ },
+ {
+  "benchmark": "tasks/umi_mapping_duplex/benchmarks/case001subregion-T1-DNA1-WES1/case001subregion-T1-DNA1-WES1.grouping.tsv",
+  "input": [
+   "<project>/raw/case001subregion-T1-DNA1-WES1/case001subregion-T1-DNA1-WES1.R1.fastq.gz",
+   "<project>/raw/case001subregion-T1-DNA1-WES1/case001subregion-T1-DNA1-WES1.R2.fastq.gz",
+   "tasks/reference_index_bwa_mem3/work/reference_index/out/reference.amb",
+   "tasks/reference_index_bwa_mem3/work/reference_index/out/reference.ann",
+   "tasks/reference_index_bwa_mem3/work/reference_index/out/reference.bwt.2bit.64",
+   "tasks/reference_index_bwa_mem3/work/reference_index/out/reference.pac",
+   "<repo>/.tests/test-workflow/resources/refs/subregion.fa",
+   "<repo>/.tests/test-workflow/resources/refs/subregion.fa.fai",
+   "<repo>/.tests/test-workflow/resources/refs/subregion.dict",
+   "<repo>/tests/snappy_pipeline/fixtures/umis.txt"
+  ],
+  "log": [
+   "tasks/umi_mapping_duplex/work/case001subregion-T1-DNA1-WES1/log/case001subregion-T1-DNA1-WES1.grouping.log"
+  ],
+  "output": [
+   "tasks/umi_mapping_duplex/work/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1.grouped.bam",
+   "tasks/umi_mapping_duplex/work/case001subregion-T1-DNA1-WES1/report/umi_qc/case001subregion-T1-DNA1-WES1.group.family_sizes.txt",
+   "tasks/umi_mapping_duplex/work/case001subregion-T1-DNA1-WES1/report/umi_qc/case001subregion-T1-DNA1-WES1.group.family_sizes.txt.md5",
+   "tasks/umi_mapping_duplex/work/case001subregion-T1-DNA1-WES1/report/umi_qc/case001subregion-T1-DNA1-WES1.group.grouping_metrics.txt",
+   "tasks/umi_mapping_duplex/work/case001subregion-T1-DNA1-WES1/report/umi_qc/case001subregion-T1-DNA1-WES1.group.grouping_metrics.txt.md5",
+   "tasks/umi_mapping_duplex/work/case001subregion-T1-DNA1-WES1/report/umi_qc/case001subregion-T1-DNA1-WES1.group.position_group_sizes.txt",
+   "tasks/umi_mapping_duplex/work/case001subregion-T1-DNA1-WES1/report/umi_qc/case001subregion-T1-DNA1-WES1.group.position_group_sizes.txt.md5",
+   "tasks/umi_mapping_duplex/work/case001subregion-T1-DNA1-WES1/report/umi_qc/case001subregion-T1-DNA1-WES1.correct.txt",
+   "tasks/umi_mapping_duplex/work/case001subregion-T1-DNA1-WES1/report/umi_qc/case001subregion-T1-DNA1-WES1.correct.txt.md5"
+  ],
+  "params": {
+   "args": {
+    "aligner": {
+     "bases_per_batch": 150000000,
+     "extra_arguments": [],
+     "num_threads": 16
+    },
+    "code": "<hash>",
+    "correct": {
+     "max_mismatches": 2,
+     "min_distance": 1
+    },
+    "group": {
+     "allow_unmapped": false,
+     "edits": 1,
+     "extra_arguments": [],
+     "min_map_q": 1
+    },
+    "num_threads": 4,
+    "platform": "ILLUMINA",
+    "read_groups": [
+     "case001subregion-T1-DNA1-WES1"
+    ],
+    "read_structures": [
+     "8M+T",
+     "8M+T"
+    ],
+    "sample_name": "case001subregion-T1-DNA1-WES1",
+    "strategy": "paired"
+   }
+  },
+  "report": [
+   "tasks/umi_mapping_duplex/work/case001subregion-T1-DNA1-WES1/report/umi_qc/case001subregion-T1-DNA1-WES1.correct.txt",
+   "tasks/umi_mapping_duplex/work/case001subregion-T1-DNA1-WES1/report/umi_qc/case001subregion-T1-DNA1-WES1.group.family_sizes.txt",
+   "tasks/umi_mapping_duplex/work/case001subregion-T1-DNA1-WES1/report/umi_qc/case001subregion-T1-DNA1-WES1.group.grouping_metrics.txt",
+   "tasks/umi_mapping_duplex/work/case001subregion-T1-DNA1-WES1/report/umi_qc/case001subregion-T1-DNA1-WES1.group.position_group_sizes.txt"
+  ],
+  "resources": {
+   "mem": "73.73 GB",
+   "mem_mb": 73728,
+   "mem_mib": 70313,
+   "partition": "medium",
+   "runtime": 4320
+  },
+  "rule": "umi_mapping_duplex_umi_mapping_fgumi_grouping",
+  "temp": [
+   "tasks/umi_mapping_duplex/work/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1.grouped.bam"
+  ],
+  "threads": 1,
+  "wildcards": {
+   "library_name": "case001subregion-T1-DNA1-WES1"
+  },
+  "wrapper": "file://<repo>/snappy_wrappers/wrappers/fgumi/grouping"
+ },
+ {
+  "benchmark": "tasks/umi_mapping_duplex/benchmarks/qc_summary/qc_summary.tsv",
+  "directory": [
+   "tasks/umi_mapping_duplex/work/qc_summary/report/html"
+  ],
+  "input": [
+   "tasks/umi_mapping_duplex/work/case001subregion-N1-DNA1-WES1/report/bam_qc/case001subregion-N1-DNA1-WES1.bam.bamstats.txt",
+   "tasks/umi_mapping_duplex/work/case001subregion-T1-DNA1-WES1/report/bam_qc/case001subregion-T1-DNA1-WES1.bam.bamstats.txt",
+   "tasks/umi_mapping_duplex/work/case001subregion-N1-DNA1-WES1/report/bam_qc/case001subregion-N1-DNA1-WES1.bam.flagstats.txt",
+   "tasks/umi_mapping_duplex/work/case001subregion-T1-DNA1-WES1/report/bam_qc/case001subregion-T1-DNA1-WES1.bam.flagstats.txt",
+   "tasks/umi_mapping_duplex/work/case001subregion-N1-DNA1-WES1/report/bam_qc/case001subregion-N1-DNA1-WES1.bam.idxstats.txt",
+   "tasks/umi_mapping_duplex/work/case001subregion-T1-DNA1-WES1/report/bam_qc/case001subregion-T1-DNA1-WES1.bam.idxstats.txt",
+   "tasks/umi_mapping_duplex/work/case001subregion-N1-DNA1-WES1/report/umi_qc/case001subregion-N1-DNA1-WES1.group.grouping_metrics.txt",
+   "tasks/umi_mapping_duplex/work/case001subregion-T1-DNA1-WES1/report/umi_qc/case001subregion-T1-DNA1-WES1.group.grouping_metrics.txt",
+   "tasks/umi_mapping_duplex/work/case001subregion-N1-DNA1-WES1/report/umi_qc/case001subregion-N1-DNA1-WES1.group.family_sizes.txt",
+   "tasks/umi_mapping_duplex/work/case001subregion-T1-DNA1-WES1/report/umi_qc/case001subregion-T1-DNA1-WES1.group.family_sizes.txt",
+   "tasks/umi_mapping_duplex/work/case001subregion-N1-DNA1-WES1/report/umi_qc/case001subregion-N1-DNA1-WES1.group.position_group_sizes.txt",
+   "tasks/umi_mapping_duplex/work/case001subregion-T1-DNA1-WES1/report/umi_qc/case001subregion-T1-DNA1-WES1.group.position_group_sizes.txt",
+   "tasks/umi_mapping_duplex/work/case001subregion-N1-DNA1-WES1/report/umi_qc/case001subregion-N1-DNA1-WES1.consensus.family_sizes.txt",
+   "tasks/umi_mapping_duplex/work/case001subregion-T1-DNA1-WES1/report/umi_qc/case001subregion-T1-DNA1-WES1.consensus.family_sizes.txt",
+   "tasks/umi_mapping_duplex/work/case001subregion-N1-DNA1-WES1/report/umi_qc/case001subregion-N1-DNA1-WES1.consensus.umi_counts.txt",
+   "tasks/umi_mapping_duplex/work/case001subregion-T1-DNA1-WES1/report/umi_qc/case001subregion-T1-DNA1-WES1.consensus.umi_counts.txt",
+   "tasks/umi_mapping_duplex/work/case001subregion-N1-DNA1-WES1/report/umi_qc/case001subregion-N1-DNA1-WES1.consensus.duplex_yield_metrics.txt",
+   "tasks/umi_mapping_duplex/work/case001subregion-T1-DNA1-WES1/report/umi_qc/case001subregion-T1-DNA1-WES1.consensus.duplex_yield_metrics.txt",
+   "tasks/umi_mapping_duplex/work/case001subregion-N1-DNA1-WES1/report/umi_qc/case001subregion-N1-DNA1-WES1.consensus.txt",
+   "tasks/umi_mapping_duplex/work/case001subregion-T1-DNA1-WES1/report/umi_qc/case001subregion-T1-DNA1-WES1.consensus.txt",
+   "tasks/umi_mapping_duplex/work/case001subregion-N1-DNA1-WES1/report/umi_qc/case001subregion-N1-DNA1-WES1.filter.txt",
+   "tasks/umi_mapping_duplex/work/case001subregion-T1-DNA1-WES1/report/umi_qc/case001subregion-T1-DNA1-WES1.filter.txt",
+   "tasks/umi_mapping_duplex/work/case001subregion-N1-DNA1-WES1/report/umi_qc/case001subregion-N1-DNA1-WES1.consensus.duplex_family_sizes.txt",
+   "tasks/umi_mapping_duplex/work/case001subregion-T1-DNA1-WES1/report/umi_qc/case001subregion-T1-DNA1-WES1.consensus.duplex_family_sizes.txt",
+   "tasks/umi_mapping_duplex/work/case001subregion-N1-DNA1-WES1/report/umi_qc/case001subregion-N1-DNA1-WES1.correct.txt",
+   "tasks/umi_mapping_duplex/work/case001subregion-T1-DNA1-WES1/report/umi_qc/case001subregion-T1-DNA1-WES1.correct.txt"
+  ],
+  "log": [
+   "tasks/umi_mapping_duplex/work/qc_summary/log/qc_summary.log"
+  ],
+  "output": [
+   "tasks/umi_mapping_duplex/work/qc_summary/out/qc_summary.tsv",
+   "tasks/umi_mapping_duplex/work/qc_summary/out/qc_summary.tsv.md5",
+   "tasks/umi_mapping_duplex/work/qc_summary/report/html"
+  ],
+  "params": {
+   "args": {
+    "code": "<hash>",
+    "consensus": "duplex",
+    "format": "umi",
+    "labels": [
+     "case001subregion-N1-DNA1-WES1",
+     "case001subregion-T1-DNA1-WES1"
+    ],
+    "title": "UMI QC"
+   }
+  },
+  "report": [
+   "tasks/umi_mapping_duplex/work/qc_summary/report/html"
+  ],
+  "resources": {
+   "mem": "4 GB",
+   "mem_mb": 4000,
+   "mem_mib": 3815,
+   "partition": "medium",
+   "runtime": 120
+  },
+  "rule": "umi_mapping_duplex_umi_mapping_qc_summary_run",
+  "temp": [],
+  "threads": 1,
+  "wildcards": {},
+  "wrapper": "file://<repo>/snappy_wrappers/wrappers/qc_summary"
+ }
+]

@@ -61,12 +61,13 @@ DEPENDENCY_TASKS: dict[str, str] = {
     "snp_loci": "tagged_regions",
     "somatic_variants": "variant_calling_mutect2",
     "structural_variants": "sv_calling_targeted_delly2",
+    "umis": "umis",
     "variants": "variant_calling_gatk4_hc_gvcf",
 }
 
 #: Steps with one task per value of a config field instead of per tool: step -> field.
 #: The tasks are named ``<step>_<value>``, and ``TASK_CONFIG`` keys them by the value.
-VARIANT_FIELDS: dict[str, str] = {"gcnv_model": "intervals"}
+VARIANT_FIELDS: dict[str, str] = {"gcnv_model": "intervals", "umi_mapping": "consensus"}
 
 #: Exceptions to ``DEPENDENCY_TASKS``: (step, field) -> upstream task, or ``None`` to leave the
 #: field unset. ``strandedness`` and ``panel_of_normals`` are wired per tool in build_all_tasks.
@@ -82,6 +83,8 @@ STEP_DEPENDENCY_TASKS: dict[tuple[str, str], str | list[str] | None] = {
     ("gene_expression_quantification", "index"): "salmon_index",
     ("somatic_gene_fusion_calling", "index"): "star_index",
     ("reference_index", "reference"): "genome",
+    # The UMI consensus mapper aligns with bwa-mem3
+    ("umi_mapping", "index"): "reference_index_bwa_mem3",
     ("homologous_recombination_deficiency", "copy_number"): (
         "somatic_targeted_seq_cnv_calling_sequenza"
     ),
@@ -208,6 +211,7 @@ def fixture_paths(base_config: dict[str, Any], base_config_path: Path) -> dict[s
         "mappable": str(FIXTURES / "mappable.bed"),
         "mehari_db": str(FIXTURES / "mehari_db"),
         "placeholder_file": PLACEHOLDER_FILE,
+        "umis": str(FIXTURES / "umis.txt"),
         "vcf": str(FIXTURES.parents[2] / ".tests/test-workflow/resources/refs/dbsnp.vcf.gz"),
         "raw_data_dir": [raw_data_dir(base_config, base_config_path)],
     }
@@ -255,6 +259,12 @@ TASK_CONFIG: dict[tuple[str, str | None], dict[str, Any]] = {
     ("ngs_mapping", "star"): {
         "library_selection": RNA,
         "strandedness": {"strand": -1, "threshold": 0.85},
+    },
+    # One task per consensus mode; duplex also corrects the UMIs, simplex clips the read ends
+    ("umi_mapping", None): {"tool": "fgumi", "fgumi": {}, "library_selection": DNA},
+    ("umi_mapping", "duplex"): {"fgumi": {"duplex": {}, "correct": {}}},
+    ("umi_mapping", "simplex"): {
+        "fgumi": {"simplex": {}, "clip": {"read_one_five_prime": 15, "read_two_five_prime": 15}}
     },
     ("panel_of_normals", "purecn"): {"purecn": {"path_normals_list": Overwrite("")}},
     ("reference_download", None): {"source": "ensembl"},
@@ -377,6 +387,7 @@ EXTRA_TASKS: list[dict[str, Any]] = [
     _external_file("tagged_regions", "regions", ["par", "snp_loci", "genes"], "bed", PLACEHOLDER),
     _external_file("mappable_regions", "regions", ["mappable"], "bed", MAPPABLE),
     _external_file("population_variants", "variants", ["population", "common"], "vcf", VCF),
+    _external_file("umis", "tabular", ["umis"], "umis", Fixture("umis")),
     _external_files(
         "salmon_index",
         "index",

@@ -20,6 +20,7 @@ After reading this chapter, you should
 
 `ngs_mapping` ({ref}`step_ngs_mapping`) is one of the few steps that read raw FASTQ files.
 Most steps work on its alignments or on data further downstream.
+`umi_mapping` ({ref}`step_umi_mapping`) reads FASTQ files the same way and produces alignments under the same contract, so this chapter applies to it as well.
 The code is in `snappy_pipeline/workflows/ngs_mapping/`.
 
 ## Tasks and configuration

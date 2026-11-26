@@ -28,8 +28,8 @@ class QcSummaryStepPart(BaseStepPart):
     """Summary of the QC files of a task's libraries, rendered with datavzrd.
 
     A subclass names the ``source``: the step part and action whose outputs hold the QC files of
-    one library; ``source_keys`` map a kind of file to the output key of that action, and
-    ``format`` names the parser. ``report_outputs`` gives the subcategory, which titles the site,
+    one library; ``source_keys`` map a kind of file to the output key of that action (or to
+    ``(action, key)`` of another action of the part), and ``format`` names the parser. ``report_outputs`` gives the subcategory, which titles the site,
     and the caption. ``entities`` lists the libraries that have the files, and the label of a
     file is the value of ``label_wildcard``, by default the entity.
     ``summary_options`` adds params that the format module takes as keyword arguments.
@@ -44,8 +44,9 @@ class QcSummaryStepPart(BaseStepPart):
     #: Step part and action whose per-library outputs the summary reads
     source: tuple[str, str]
 
-    #: Kind of file -> output key of the source action; the wrapper gets the files by kind
-    source_keys: dict[str, str]
+    #: Kind of file -> output key of the source action, or ``(action, key)`` of another action of
+    #: the source part; the wrapper gets the files by kind
+    source_keys: dict[str, str | tuple[str, str]]
 
     #: Parser of the files: a module of ``snappy_wrappers.tools.qc_summary``
     format: str
@@ -90,13 +91,13 @@ class QcSummaryStepPart(BaseStepPart):
     def source_files(self) -> list[tuple[str, dict[str, str]]]:
         """``(label, path by kind)`` for each file set of each entity, from the output templates
         of the source action and the result wildcards of its entities."""
-        part_name, action = self.source
+        part_name, source_action = self.source
         part = self.parent.sub_steps[part_name]
-        outputs = part.get_output_files(action)
-        templates = {
-            kind: re.sub(r"\{(\w+),[^}]*\}", r"{\1}", str(outputs[key]))
-            for kind, key in self.source_keys.items()
-        }
+        templates = {}
+        for kind, key in self.source_keys.items():
+            action, key = key if isinstance(key, tuple) else (source_action, key)
+            output = part.get_output_files(action)[key]
+            templates[kind] = re.sub(r"\{(\w+),[^}]*\}", r"{\1}", str(output))
         result = []
         for entity in self.entities():
             wildcards = part._result_wildcards(entity)

@@ -1,0 +1,1 @@
+Tables and charts of the ``samtools`` statistics and the fgumi metrics of all libraries: read counts and fractions of the consensus reads per library, the templates that grouping accepted and discarded, the family size distributions, the duplex or simplex yield against the sequencing depth, the UMI counts and the filter's pass rate.

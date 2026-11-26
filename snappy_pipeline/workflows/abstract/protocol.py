@@ -216,6 +216,12 @@ class ExpectedRegions(BaseModel):
     bed: str
 
 
+class ExpectedUmis(BaseModel):
+    """The fixed UMIs of a kit, one sequence per line (``fgumi correct --umi-files``)."""
+
+    umis: str
+
+
 class ExpectedIndexedRegions(ExpectedRegions):
     """A BED file of regions that GATK queries by interval, with its index next to it."""
 
@@ -263,4 +269,8 @@ Exons = Annotated[
 #: ``BaseStep.library_kit_paths()``
 Kits = Annotated[
     str, DataSignature(DataType.REGIONS, frozenset({"kits"})), ExpectedPathSchema(ExpectedKits)
+]
+#: The fixed UMIs of a kit (``type: tabular``, tag ``umis``), which ``fgumi correct`` corrects against
+Umis = Annotated[
+    str, DataSignature(DataType.TABULAR, frozenset({"umis"})), ExpectedPathSchema(ExpectedUmis)
 ]

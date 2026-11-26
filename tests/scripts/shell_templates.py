@@ -38,7 +38,12 @@ SHFMT = [
 REDUNDANT_PREAMBLE = re.compile(r"^set (-x|-euo pipefail)[ \t]*$", re.MULTILINE)
 
 #: Modules with shell text that wrappers paste into their templates
-SHELL_MODULES = ("snappy_wrappers/tools/bwa_mem.py", "snappy_wrappers/tools/shards.py")
+SHELL_MODULES = (
+    "snappy_wrappers/tools/bwa_mem.py",
+    "snappy_wrappers/tools/fgumi_consensus.py",
+    "snappy_wrappers/tools/fgumi_grouping.py",
+    "snappy_wrappers/tools/shards.py",
+)
 
 
 @dataclass

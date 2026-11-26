@@ -5,7 +5,7 @@
 Somatic variants in low-purity or degraded samples depend on the quality of the mapping.
 So do sub-clonal variants.
 Adapter trimming and base quality score recalibration (BQSR) can improve the quality of the mapping.
-snappy does not handle molecular barcodes (UMIs) yet.
+Libraries with unique molecular identifiers (UMIs) take an `umi_mapping` task instead of `ngs_mapping` (see below).
 
 Adapter trimming and BQSR are tasks of their own: `adapter_trimming` runs before the mapping, `alignment_processing` after it.
 Each task names the task before it in `depends_on`, so together they form a chain.
@@ -23,11 +23,14 @@ digraph chain {
     "data_sets" [style="rounded,dashed", label=<<B>data_sets</B><BR ALIGN="LEFT"/><FONT POINT-SIZE="7" COLOR="#52514e">FASTQ files of the sample sheet</FONT><BR ALIGN="LEFT"/>>];
     "adapter_trimming" [label=<<B>adapter_trimming</B><BR ALIGN="LEFT"/><FONT POINT-SIZE="7" COLOR="#52514e">optional, tool: bbduk or fastp</FONT><BR ALIGN="LEFT"/>>];
     "ngs_mapping" [label=<<B>ngs_mapping</B><BR ALIGN="LEFT"/>>];
+    "umi_mapping" [label=<<B>umi_mapping</B><BR ALIGN="LEFT"/><FONT POINT-SIZE="7" COLOR="#52514e">UMI libraries, tool: fgumi</FONT><BR ALIGN="LEFT"/>>];
     "alignment_processing" [label=<<B>alignment_processing</B><BR ALIGN="LEFT"/><FONT POINT-SIZE="7" COLOR="#52514e">optional, tool: gatk4_bqsr</FONT><BR ALIGN="LEFT"/>>];
     "callers" [label=<<B>variant callers</B><BR ALIGN="LEFT"/>>];
     "data_sets" -> "adapter_trimming" [color="#2a78d6b3", label="reads"];
     "adapter_trimming" -> "ngs_mapping" [color="#2a78d6b3", label="reads"];
     "ngs_mapping" -> "alignment_processing" [color="#eb6834b3", label="alignments"];
+    "data_sets" -> "umi_mapping" [color="#2a78d6b3", label="reads"];
+    "umi_mapping" -> "callers" [color="#eb6834b3", label="alignments"];
     "alignment_processing" -> "callers" [color="#eb6834b3", label="alignments"];
 }
 ```
@@ -43,6 +46,7 @@ A task reads the trimmed files when its `depends_on.reads` names the `adapter_tr
 These steps read FASTQ files:
 
 - `ngs_mapping`
+- `umi_mapping`
 - `hla_typing`
 - `ngs_data_qc`
 - `gene_expression_quantification`
@@ -92,6 +96,46 @@ The mapping task reads the trimmed FASTQ files from `tasks/trimming/work/`.
 It reads the BAM files of the task in `depends_on.alignments`: a mapping task or another `alignment_processing` task.
 `depends_on.common_variants` names an `external_data` task with a VCF of common germline variants, for example `small_exac_common_3.vcf` of the GATK resource bundle.
 BQSR does not count these known variant sites as sequencing errors.
+
+## UMI consensus mapping
+
+Libraries with unique molecular identifiers (UMIs) are mapped by `umi_mapping` with `tool: fgumi` instead of `ngs_mapping` ({ref}`step_umi_mapping`).
+The task extracts the UMIs, aligns the reads with bwa-mem3, groups them by UMI and position, calls one consensus read per molecule, and realigns and filters the consensus reads.
+Its result files are BAM files like those of a mapping task, so the variant callers and the other consumers read them through `depends_on.alignments` as usual.
+`consensus: duplex` serves libraries with UMIs on both reads, whose two strands form one duplex consensus read; `consensus: simplex` serves libraries with one UMI per molecule.
+The read structures of the FASTQ files come from the sample sheet's custom field `readStructure`, for example `8M+T 8M+T` for 8 bp UMIs at the start of both reads.
+A kit with a fixed set of UMIs gets a `correct` section and an `external_data` task with the UMIs in `depends_on.umis`.
+
+```yaml
+tasks:
+  - name: genome
+    step: external_data
+    config:
+      produces: {type: raw, tags: [reference, dna]}
+      files: {fasta: /path/to/genome.fa}
+
+  - name: umis
+    step: external_data
+    config:
+      produces: {type: tabular, tags: [umis]}
+      files: {umis: /path/to/kit_umis.txt}
+
+  - name: bwa_mem3_index
+    step: reference_index
+    config:
+      depends_on: {reference: genome}
+      tool: bwa_mem3
+
+  - name: mapping
+    step: umi_mapping
+    config:
+      depends_on: {reads: data_sets, reference: genome, index: bwa_mem3_index, umis: umis}
+      tool: fgumi
+      consensus: duplex
+      fgumi:
+        correct: {max_mismatches: 1, min_distance: 2}
+        duplex: {}
+```
 
 ## Recipe: mapping and BQSR
 

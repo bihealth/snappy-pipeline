@@ -237,6 +237,7 @@ DEPENDS_ON_KEYS = {
     "exons",
     "index",
     "gcnv_model",
+    "umis",
 }
 
 
@@ -717,6 +718,7 @@ WRAPPERS_WITHOUT_EXTRA_ARGUMENTS = {
             "cnvkit/report",
             "cnvkit/target",
             "delly2/germline/genotype",
+            "fgumi/grouping",
             "gatk4_hc/combine_gvcfs",
             "gatk4_hc/genotype",
             "gcnv/annotate_gc",

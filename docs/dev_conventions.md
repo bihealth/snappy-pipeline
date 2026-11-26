@@ -573,7 +573,7 @@ The message names the fix.
 ### The `depends_on` vocabulary
 
 `depends_on` keys are named after the data they bring in, not after the step that produces it.
-The vocabulary has these keys: `reads`, `alignments`, `variants`, `copy_number`, `structural_variants`, `fusions`, `expression`, `hla_types`, `strandedness`, `qc`, `panel_of_normals`, `access`, `reference`, `features`, `proteome`, `dbsnp`, `common_variants`, `germline_resource`, `regions`, `excluded_regions`, `mappable_regions`, `par_regions`, `microsatellites`, `snp_loci`, `gene_regions`, `exons`, `kits`, `index`, `database` and `gcnv_model`.
+The vocabulary has these keys: `reads`, `alignments`, `variants`, `copy_number`, `structural_variants`, `fusions`, `expression`, `hla_types`, `strandedness`, `qc`, `panel_of_normals`, `access`, `reference`, `features`, `proteome`, `dbsnp`, `common_variants`, `germline_resource`, `regions`, `excluded_regions`, `mappable_regions`, `par_regions`, `microsatellites`, `snp_loci`, `gene_regions`, `exons`, `kits`, `index`, `database`, `gcnv_model` and `umis`.
 A step with two inputs of one kind qualifies them by role: `somatic_variants`, `germline_variants`, `combined_variants`, `annotated_variants`, `phased_variants` and `candidates`.
 A step that needs only one input of a kind uses the plain key, such as `alignments`.
 It narrows the input by the tags of the key's `DataSignature` instead (`alignments [rna]`).

@@ -1,0 +1,1 @@
+The metrics of the fgumi chain: the family sizes and discarded templates of ``fgumi group``, the family sizes, UMI counts and yield of the consensus caller, the statistics of the caller and the filter, and those of ``fgumi correct`` and ``fgumi clip`` when they run.

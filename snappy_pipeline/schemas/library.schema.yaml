@@ -14,6 +14,10 @@ properties:
     enum: [WES, WGS, Panel_seq, mRNA_seq, total_RNA_seq]
   library_kit:
     type: string
+  read_structure:
+    description: The sheet's readStructure, the fgumi read structures of the FASTQ files of a read group, space separated (umi_mapping).
+    type: string
+    pattern: "^(\\.|((\\d+[TMBCS])*(\\d+|\\+)[TMBCS])( (\\d+[TMBCS])*(\\d+|\\+)[TMBCS])*)$"
   related_group:
     description: The name of the library's related group (its pedigree or donor), which names the group's files.
     type: string

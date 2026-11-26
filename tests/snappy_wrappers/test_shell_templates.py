@@ -48,5 +48,7 @@ def test_the_shell_text_of_the_tool_modules_is_checked():
     }
     assert {path: len(lines) for path, lines in found.items()} == {
         "snappy_wrappers/tools/bwa_mem.py": 3,  # READ_FUNCTIONS, MAPPING_PIPELINE, TEMPLATE
+        "snappy_wrappers/tools/fgumi_consensus.py": 3,  # CLIP, NO_CLIP, CONSENSUS
+        "snappy_wrappers/tools/fgumi_grouping.py": 4,  # EXTRACT, CORRECT, NO_CORRECT, GROUP
         "snappy_wrappers/tools/shards.py": 3,  # INTERVALS, RUN_SHARDS, GATHER
     }
