@@ -145,10 +145,10 @@ HEADER = "donor_name\tsex\tsample_name\tis_tumor\tpurity\tlibrary_name\tlibrary_
             "P1 \tmale\tS1\tfalse\t\tL1\tWES\tF1\t\t",
             ["2: donor_name: 'P1 ' has leading or trailing whitespace"],
         ),
-        ("P1\tmale\tS1\tY\t\tL1\tWES\tF1\t\t", ["2: is_tumor: 'Y' is not true or false"]),
+        ("P1\tmale\tS1\tmaybe\t\tL1\tWES\tF1\t\t", ["2: is_tumor: 'maybe' is no known value"]),
         (
-            "P1\tM\tS1\tfalse\t\tL1\tWES\tF1\t\t",
-            ["2: sex: Input should be 'male', 'female' or 'unknown'"],
+            "P1\tdiverse\tS1\tfalse\t\tL1\tWES\tF1\t\t",
+            ["2: sex: 'diverse' is no known value"],
         ),
         (
             "P1\tmale\tS1\ttrue\t1.5\tL1\tWES\tF1\t\t",
@@ -177,10 +177,8 @@ HEADER = "donor_name\tsex\tsample_name\tis_tumor\tpurity\tlibrary_name\tlibrary_
             ],
         ),
         (
-            "P1\tmale\tS1\tfalse\t\tL1\tExome\tF1\t\t",
-            [
-                "2: library_type: Input should be 'WES', 'WGS', 'Panel_seq', 'mRNA_seq' or 'total_RNA_seq'"
-            ],
+            "P1\tmale\tS1\tfalse\t\tL1\tRNA\tF1\t\t",
+            ["2: library_type: 'RNA' is no known value"],
         ),
         ("P1\tmale\tS1\tfalse\t\tL1\t\tF1\t\t", ["2: library_type: a library needs its type"]),
         (
@@ -317,3 +315,56 @@ def test_columns_have_levels_and_isa_headers_and_the_header_lists_the_core_first
     )
     assert header() == "donor_name\tlibrary_name\tlibrary_type\n"
     assert header(["is_tumor", "sex"]) == "donor_name\tsex\tis_tumor\tlibrary_name\tlibrary_type\n"
+
+
+def test_synonyms_are_read_as_their_value_and_noted(tmp_path):
+    text = (
+        "donor_name\tsex\tis_affected\tis_tumor\tlibrary_name\tlibrary_type\tseq_platform\n"
+        "P1\tF\tyes\tN\tL1\texome\tillumina\n"
+        "P2\tXY\t\t1\tL2\tWGS\tPacBio\n"
+    )
+    sheets = read_sheets([_write(tmp_path, text)])
+    rows = [row.values for row in sheets.rows]
+    assert [(r.sex, r.is_affected, r.is_tumor, r.library_type, r.seq_platform) for r in rows] == [
+        ("female", True, False, "WES", "Illumina"),
+        ("male", None, True, "WGS", "PacBio"),
+    ]
+    assert [str(n).split(":", 1)[1] for n in sheets.notes] == [
+        "2: sex: 'F' is read as 'female'",
+        "2: is_affected: 'yes' is read as 'true'",
+        "2: is_tumor: 'N' is read as 'false'",
+        "2: library_type: 'exome' is read as 'WES'",
+        "2: seq_platform: 'illumina' is read as 'Illumina'",
+        "3: sex: 'XY' is read as 'male'",
+        "3: is_tumor: '1' is read as 'true'",
+    ]
+
+
+def test_ped_codes_of_is_affected_are_rejected_and_unknown_values_too(tmp_path):
+    text = "donor_name\tsex\tis_affected\tlibrary_name\tlibrary_type\nP1\tdiverse\t2\tL1\tWES\n"
+    assert _problems(tmp_path, text) == [
+        "samplesheet.tsv:2: is_affected: '2' is no known value; the PED codes 1 and 2 are ambiguous, write true or false",
+        "samplesheet.tsv:2: sex: 'diverse' is no known value",
+    ]
+
+
+def test_fix_sheet_rewrites_the_synonyms_and_nothing_else(tmp_path):
+    from snappy_pipeline.sample_sheet import fix_sheet
+
+    text = (
+        "# kept\r\n"
+        "donor_name\tsex\tis_tumor\tlibrary_name\tlibrary_type\tnote\r\n"
+        "\r\n"
+        "P1\tF\tY\tL1\twes\tkeep F\r\n"
+        "P2\tmale\tfalse\tL2\tWGS\t\r\n"
+    )
+    path = _write(tmp_path, text)
+    assert fix_sheet(path) == 3
+    assert (tmp_path / "samplesheet.tsv").read_bytes().decode() == (
+        "# kept\r\n"
+        "donor_name\tsex\tis_tumor\tlibrary_name\tlibrary_type\tnote\r\n"
+        "\r\n"
+        "P1\tfemale\ttrue\tL1\tWES\tkeep F\r\n"
+        "P2\tmale\tfalse\tL2\tWGS\t\r\n"
+    )
+    assert fix_sheet(path) == 0 and read_sheets([path]).notes == []

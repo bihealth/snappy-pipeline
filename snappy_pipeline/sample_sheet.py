@@ -5,6 +5,12 @@ unsequenced relative). Columns are matched by name in any order; every column wo
 ``library_selection`` query. Lines starting with ``#`` and blank lines are skipped. A missing value
 is an empty cell: ``.`` is an error. Booleans are ``true`` or ``false``.
 
+Sheets that collaborators typed are read as they are: the synonyms of :data:`SYNONYMS` (``F``,
+``woman`` or ``XX`` for ``female``; ``yes``, ``Y`` or ``1`` for ``true``; ``exome`` for ``WES``;
+``illumina`` for ``Illumina``) are read as the canonical value, and each such cell is a note, which
+``snappy sheet check`` lists and ``snappy sheet check --fix`` rewrites. The PED codes of
+``is_affected`` (``1``, ``2``) are rejected as ambiguous.
+
 The core columns are ``donor_name``, ``library_name`` and ``library_type``. The other known columns
 (:data:`COLUMNS`) are typed and checked at load; a step declares the columns it needs. Any other
 snake_case column is kept as a string.
@@ -59,6 +65,50 @@ DERIVED_COLUMNS = frozenset(
 CORE_COLUMNS = ("donor_name", "library_name", "library_type")
 #: Problems reported at most
 MAX_PROBLEMS = 50
+
+
+#: Column -> lower-case synonym -> canonical value (:func:`canonical`); the canonical values
+#: themselves are accepted in any case
+SYNONYMS: Mapping[str, Mapping[str, str]] = {
+    "sex": {
+        "female": "female", "f": "female", "woman": "female", "xx": "female", "2": "female",
+        "male": "male", "m": "male", "man": "male", "xy": "male", "1": "male",
+        "unknown": "unknown", "u": "unknown", "?": "unknown", "na": "unknown", "n/a": "unknown",
+        "none": "unknown", "0": "unknown", "-9": "unknown",
+    },
+    "library_type": {
+        "wes": "WES", "exome": "WES", "wxs": "WES",
+        "wgs": "WGS", "genome": "WGS",
+        "panel_seq": "Panel_seq", "panel": "Panel_seq", "panel-seq": "Panel_seq",
+        "targeted": "Panel_seq",
+        "mrna_seq": "mRNA_seq", "mrna-seq": "mRNA_seq", "mrnaseq": "mRNA_seq", "mrna": "mRNA_seq",
+        "total_rna_seq": "total_RNA_seq", "total-rna-seq": "total_RNA_seq",
+        "totalrnaseq": "total_RNA_seq", "total_rna": "total_RNA_seq",
+    },
+    "seq_platform": {
+        "illumina": "Illumina",
+        "pacbio": "PacBio", "pacbio_smrt": "PacBio",
+        "ont": "ONT", "oxford_nanopore": "ONT", "nanopore": "ONT",
+        "other": "other",
+    },
+}  # fmt: skip
+#: Lower-case synonyms of the booleans
+BOOLEANS = {
+    "true": "true", "t": "true", "yes": "true", "y": "true", "1": "true",
+    "false": "false", "f": "false", "no": "false", "n": "false", "0": "false",
+}  # fmt: skip
+#: Boolean columns whose digits are PED codes with another meaning, so no digits are read
+NO_DIGIT_BOOLEANS = frozenset({"is_affected"})
+
+
+def canonical(column: str, cell: str) -> str | None:
+    """The canonical value of ``cell`` in ``column``, ``None`` when it is no known value."""
+    key = cell.strip().lower()
+    if column in BOOL_COLUMNS:
+        if column in NO_DIGIT_BOOLEANS and key.isdigit():
+            return None
+        return BOOLEANS.get(key)
+    return SYNONYMS.get(column, {}).get(key)
 
 
 class Level(enum.StrEnum):
@@ -223,11 +273,13 @@ class Row:
 
 @dataclass(frozen=True)
 class Sheet:
-    """A sample sheet: its header, in file order, and its rows."""
+    """A sample sheet: its header, in file order, its rows, and the notes about cells read as a
+    synonym of their canonical value."""
 
     path: str
     columns: tuple[str, ...]
     rows: tuple[Row, ...] = ()
+    notes: tuple[Problem, ...] = ()
 
     @property
     def libraries(self) -> list[Row]:
@@ -255,6 +307,11 @@ class Sheets:
         present = {name for sheet in self.sheets for name in sheet.columns}
         known = [name for name in COLUMNS if name in present]
         return known + sorted(present - set(COLUMNS))
+
+    @property
+    def notes(self) -> list[Problem]:
+        """The cells of all sheets read as a synonym (``snappy sheet check --fix`` rewrites them)."""
+        return [note for sheet in self.sheets for note in sheet.notes]
 
 
 def read_sheets(paths: Iterable[str]) -> Sheets:
@@ -298,7 +355,7 @@ def parse_sheet(lines: list[list[str]], path: str) -> tuple[Sheet | None, list[P
     problems = _check_header(path, header_line, header)
     if problems:
         return None, problems
-    rows = []
+    rows, notes = [], []
     for number, cells in numbered[1:]:
         if len(cells) != len(header):
             problems.append(
@@ -311,8 +368,9 @@ def parse_sheet(lines: list[list[str]], path: str) -> tuple[Sheet | None, list[P
                 )
             )
             continue
-        values, cell_problems = _convert_cells(path, number, header, cells)
+        values, cell_problems, cell_notes = _convert_cells(path, number, header, cells)
         problems += cell_problems
+        notes += cell_notes
         if cell_problems:
             continue
         try:
@@ -325,7 +383,7 @@ def parse_sheet(lines: list[list[str]], path: str) -> tuple[Sheet | None, list[P
             continue
         problems += _check_row(path, number, row)
         rows.append(Row(path, number, row))
-    return Sheet(path, tuple(header), tuple(rows)), problems
+    return Sheet(path, tuple(header), tuple(rows), tuple(notes)), problems
 
 
 def _check_header(path: str, line: int, header: list[str]) -> list[Problem]:
@@ -349,9 +407,10 @@ def _check_header(path: str, line: int, header: list[str]) -> list[Problem]:
 
 def _convert_cells(
     path: str, line: int, header: list[str], cells: list[str]
-) -> tuple[dict[str, object], list[Problem]]:
+) -> tuple[dict[str, object], list[Problem], list[Problem]]:
+    """The values of a row; its problems; its notes (cells read as a synonym)."""
     values: dict[str, object] = {}
-    problems = []
+    problems, notes = [], []
     for name, cell in zip(header, cells):
         if cell != cell.strip():
             problems.append(
@@ -363,14 +422,47 @@ def _convert_cells(
             continue
         if cell == "":
             values[name] = None
-        elif name in BOOL_COLUMNS:
-            if cell.lower() in ("true", "false"):
-                values[name] = cell.lower() == "true"
-            else:
-                problems.append(Problem(path, line, name, f"{cell!r} is not true or false"))
+            continue
+        if name in BOOL_COLUMNS or name in SYNONYMS:
+            value = canonical(name, cell)
+            if value is None:
+                hint = (
+                    "; the PED codes 1 and 2 are ambiguous, write true or false"
+                    if name in NO_DIGIT_BOOLEANS and cell.isdigit()
+                    else ""
+                )
+                problems.append(Problem(path, line, name, f"{cell!r} is no known value{hint}"))
+                continue
+            if value != cell:
+                notes.append(Problem(path, line, name, f"{cell!r} is read as {value!r}"))
+            values[name] = value == "true" if name in BOOL_COLUMNS else value
         else:
             values[name] = cell
-    return values, problems
+    return values, problems, notes
+
+
+def fix_sheet(path: str) -> int:
+    """Rewrite the cells of ``path`` that are synonyms with their canonical values; return how
+    many. Everything else stays as it is, comments and blank lines included."""
+    sheet, problems = read_sheet(path)
+    if sheet is None or not sheet.notes:
+        return 0
+    with open(path, encoding="utf-8-sig", newline="") as f:
+        text = f.read()
+    newline = "\r\n" if "\r\n" in text else "\n"
+    lines = text.split(newline)
+    by_line: dict[int, list[Problem]] = {}
+    for note in sheet.notes:
+        by_line.setdefault(note.line, []).append(note)
+    for number, notes in by_line.items():
+        cells = lines[number - 1].split("\t")
+        for note in notes:
+            index = sheet.columns.index(note.column)
+            cells[index] = canonical(note.column, cells[index])
+        lines[number - 1] = "\t".join(cells)
+    with open(path, "w", encoding="utf-8", newline="") as f:
+        f.write(newline.join(lines))
+    return len(sheet.notes)
 
 
 #: The columns a donor-only row leaves empty: everything below the donor
