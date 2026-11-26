@@ -34,7 +34,6 @@ from ..models import ConfigMode
 from ..orchestration import CONFIG_FILE, create_task_instances, load_project, missing_files
 from ..sheet_summary import missing_library_files
 from .scan_files import scan_files
-from .snappy_sheet import convert, summary
 from ..workflow_registry import WORKFLOW_REGISTRY
 from .impl.fsmanip import (
     create_directory,
@@ -1026,7 +1025,7 @@ def scan_files_command(directory, task_names, search_paths, patterns):
 
 @main.group()
 def sheet():
-    """Check sample sheets, or convert biomedsheets sheets to the plain TSV layout."""
+    """Check sample sheets."""
 
 
 @sheet.command(name="check")
@@ -1063,63 +1062,12 @@ def sheet_check(sheets, fix):
                 {"n": len(loaded.notes)},
                 level=LVL_IMPORTANT,
             )
-    log(summary(loaded), level=LVL_SUCCESS)
-
-
-@sheet.command(name="convert")
-@click.argument("old", type=click.Path(exists=True, dir_okay=False))
-@click.option(
-    "--type",
-    "sheet_type",
-    type=click.Choice(["matched_cancer", "germline_variants", "generic"]),
-    required=True,
-    help="The biomedsheets format of the sheet, the data set's type on snappy before this layout",
-)
-@click.option(
-    "--naming-scheme",
-    type=click.Choice(["only_secondary_id", "secondary_id_pk"]),
-    default="only_secondary_id",
-    show_default=True,
-    help="The data set's naming_scheme, which decides whether the names carry a -000001 suffix",
-)
-@click.option("--pedigree-field", default=None, help="The data set's pedigree_field, if it had one")
-@click.option(
-    "--output",
-    "-o",
-    type=click.Path(dir_okay=False),
-    default=None,
-    help="Write here, not to stdout",
-)
-def sheet_convert(old, sheet_type, naming_scheme, pedigree_field, output):
-    """Convert a biomedsheets TSV sheet to the plain TSV layout, with the same names.
-
-    Needs the biomedsheets package. The result is checked like any sheet; its problems go to
-    stderr and the command exits with 1, but the sheet is written anyway, to be fixed by hand.
-    """
-    from ..sample_sheet import SheetError, parse_sheet
-
-    try:
-        text = convert(old, sheet_type, naming_scheme, pedigree_field)
-    except ConfigError as e:
-        log(str(e), level=LVL_ERROR)
-        sys.exit(1)
-    if output:
-        with open(output, "w") as f:
-            f.write(text)
-        log("Wrote {path}", {"path": output}, level=LVL_SUCCESS)
-    else:
-        click.echo(text, nl=False)
-    import csv
-
-    lines = list(csv.reader(text.splitlines(), delimiter="\t", quoting=csv.QUOTE_NONE))
-    sheet_, problems = parse_sheet(lines, output or old)
-    if not problems and sheet_ is not None:
-        from ..sample_sheet import check_rows
-
-        problems = check_rows(list(sheet_.rows))
-    if problems:
-        log(str(SheetError(problems)), level=LVL_ERROR)
-        sys.exit(1)
+    donors = {row.values.donor_name for row in loaded.rows}
+    log(
+        "{libraries} libraries of {donors} donors in {files}",
+        {"libraries": len(loaded.libraries), "donors": len(donors), "files": ", ".join(sheets)},
+        level=LVL_SUCCESS,
+    )
 
 
 @main.command(name="check-files")
