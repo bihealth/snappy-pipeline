@@ -24,11 +24,11 @@ project:
 # Data Sets ========================================================================
 #
 # A data set is a sample sheet (biomedsheets TSV). The FASTQ files of its libraries come from the
-# `reads` task below: `snappy scan-files` lists them in reads.tsv from the folder of each library
-# (named like the sheet's folderName) below raw/, as <folder>/*.R1.fastq.gz and *.R2.fastq.gz.
-# Another layout takes --search-path and --pattern key=regex, for example
-# --pattern 'left=(?P<readgroup>.+)_R1_001\.fastq\.gz' --pattern 'right=(?P<readgroup>.+)_R2_001\.fastq\.gz';
-# the table records the command, so a bare `snappy scan-files` rescans the same way later.
+# `reads` task below: `snappy scan-files` lists them in reads.tsv from the files below raw/ in a
+# folder named like the sheet's folderName of the library, or named after it (<folder>_..., flat
+# or in batch folders), with the common namings (_R1_001.fastq.gz, .R1.fastq.gz, _1.fq.gz, ...).
+# Another layout takes --search-path and --pattern key=regex; the table records the command, so
+# a bare `snappy scan-files` rescans the same way later.
 
 data_sets:
   first_batch:

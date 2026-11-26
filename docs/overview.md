@@ -323,8 +323,9 @@ Every read group needs a right file when the table has a `right` column, unless 
 Steps read the files where they are, so the project holds no copies or links of FASTQ files.
 
 `snappy scan-files` writes the tables.
-The files of a library are in a folder named like its `folder_name` in the sample sheet, else like the library, at any depth below a search path, `raw` by default (`--search-path`).
-The patterns are regular expressions for the path below that folder, one per output key (`--pattern key=regex`), and each must match the whole path; by default `*.R1.fastq.gz` and `*.R2.fastq.gz`, whose `(?P<readgroup>...)` group pairs the `left` and `right` file of a read group.
+The files of a library are below a folder named like its `folder_name` in the sample sheet, else like the library, at any depth below a search path, `raw` by default (`--search-path`), or they are named after it (`<name>_...` or `<name>....`) anywhere below the search path, flat or in batch folders.
+By default the command knows the common namings, `_R1_001.fastq.gz` of bcl2fastq, `.R1.fastq.gz`, `_R1.fastq.gz` and the `_1.fastq.gz` of SRA, as `.fastq.gz` or `.fq.gz`; the part between the library's name and the mate suffix becomes the read group.
+Other namings take `--pattern key=regex`, regular expressions for the path below the folder or the file name, one per output key, whose `(?P<readgroup>...)` group pairs the `left` and `right` file.
 The command searches once and lists what it found; the table is the record of the run, so keep it in git.
 Its first line records the command, so a bare `snappy scan-files` rescans the same way when the sheets gain libraries.
 A library without rows stops `snappy run` and `snappy check-files` with an error that names the libraries and the command; `snappy run --scan` runs the scan first.

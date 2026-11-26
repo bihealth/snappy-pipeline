@@ -27,9 +27,21 @@ from snappy_pipeline.reads import (
 
 #: Where reads are searched without other arguments
 DEFAULT_SEARCH_PATHS = ("raw",)
-#: The patterns of reads without other arguments
+#: The patterns of reads without other arguments: bcl2fastq's ``_R1_001``, ``.R1``/``_R1`` and
+#: the ``_1``/``.1`` of SRA and some facilities, as .fastq.gz or .fq.gz
 DEFAULT_PATTERNS = (
-    {"left": r"(?P<readgroup>.+)\.R1\.fastq\.gz", "right": r"(?P<readgroup>.+)\.R2\.fastq\.gz"},
+    {
+        "left": r"(?P<readgroup>.+)_R1_001\.(fastq|fq)\.gz",
+        "right": r"(?P<readgroup>.+)_R2_001\.(fastq|fq)\.gz",
+    },
+    {
+        "left": r"(?P<readgroup>.+)[._]R1\.(fastq|fq)\.gz",
+        "right": r"(?P<readgroup>.+)[._]R2\.(fastq|fq)\.gz",
+    },
+    {
+        "left": r"(?P<readgroup>.+)[._]1\.(fastq|fq)\.gz",
+        "right": r"(?P<readgroup>.+)[._]2\.(fastq|fq)\.gz",
+    },
 )
 #: The first line of a table written by the command
 COMMENT = "# snappy scan-files"
@@ -50,8 +62,9 @@ class Scan:
         for path in self.search_paths:
             relative = path.startswith(directory + os.sep)
             args += ["--search-path", os.path.relpath(path, directory) if relative else path]
-        for pattern in self.patterns:
-            args += [f"--pattern={key}={regex}" for key, regex in pattern.items()]
+        if self.patterns != DEFAULT_PATTERNS:
+            for pattern in self.patterns:
+                args += [f"--pattern={key}={regex}" for key, regex in pattern.items()]
         return COMMENT + " " + shlex.join(args)
 
 
@@ -89,7 +102,7 @@ def recorded_scan(table: str) -> Scan | None:
             pattern[key] = regex
     if pattern:
         patterns.append(pattern)
-    return Scan(tuple(search_paths), tuple(patterns))
+    return Scan(tuple(search_paths), tuple(patterns) or DEFAULT_PATTERNS)
 
 
 def scan_tasks(project: Project, task_names: Iterable[str] = ()) -> list[str]:
@@ -122,6 +135,8 @@ def scan_of(project: Project, task_name: str, search_paths=(), patterns=()) -> S
             paths = tuple(os.path.join(project.project_dir, p) for p in DEFAULT_SEARCH_PATHS)
         if not pats and reads:
             pats = DEFAULT_PATTERNS
+        if not pats and recorded is not None:
+            pats = recorded.patterns
         if not paths or not pats:
             raise ValueError(f"Task {task_name!r}: give --search-path and --pattern key=regex")
         return Scan(tuple(os.path.abspath(p) for p in paths), pats)
@@ -165,6 +180,7 @@ def scan_files(
         reads = config.patterns_find_reads()
         keys = list(dict.fromkeys(key for pattern in scan.patterns for key in pattern))
         rows: list[list[str]] = []
+        claimed: dict[str, str] = {}
         found = 0
         for library, folder in folders.items():
             if len(shared[folder]) > 1:
@@ -180,13 +196,22 @@ def scan_files(
                     )
                     if not groups:
                         raise ValueError(discovery.missing(scan.search_paths, folder))
-                    for group in groups:
-                        rows.append(
-                            [library, group.name] + [group.paths.get(key, "") for key in keys]
-                        )
+                    paths = [p for group in groups for p in group.paths.values()]
+                    new_rows = [
+                        [library, group.name] + [group.paths.get(key, "") for key in keys]
+                        for group in groups
+                    ]
                 else:
                     files = discovery.find_files(scan.search_paths, folder, scan.patterns)
-                    rows.append([library] + [files.get(key, "") for key in keys])
+                    paths = list(files.values())
+                    new_rows = [[library] + [files.get(key, "") for key in keys]]
+                if taken := [p for p in paths if p in claimed]:
+                    raise ValueError(
+                        f"{taken[0]} belongs to library {claimed[taken[0]]!r} as well; name the "
+                        "files unambiguously, or put those of each library in a folder of its own"
+                    )
+                claimed.update(dict.fromkeys(paths, library))
+                rows += new_rows
             except ValueError as e:
                 problems.append(f"{name}: {library}: {e}")
                 continue

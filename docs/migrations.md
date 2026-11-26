@@ -594,7 +594,7 @@ To migrate an existing project, go through these notes.
 
 8. snappy searches no directories at run time.
    An `external_data` task lists the FASTQ files of each library in a files table (`library_files: [reads.tsv]`, the columns `library`, `readgroup`, `left`, `right`), and the tasks name it in `depends_on.reads` instead of `data_sets`.
-   `snappy scan-files` writes the table from the folders named like the sheet's `folderName` (else the library) below `raw`, with `*.R1.fastq.gz` and `*.R2.fastq.gz`; `--search-path` and `--pattern key=regex` (regular expressions for the path below the folder, whose `(?P<readgroup>...)` group pairs the mates) change that, and the table records the command.
+   `snappy scan-files` writes the table from the files below `raw` in a folder named like the sheet's `folderName` (else the library) or named after it, with the common namings (`_R1_001.fastq.gz`, `.R1.fastq.gz`, `_R1.fastq.gz`, `_1.fastq.gz`, also `.fq.gz`); `--search-path` and `--pattern key=regex` (regular expressions for the path below the folder or the file name, whose `(?P<readgroup>...)` group pairs the mates) change that, and the table records the command.
    Run it once per project and again after adding libraries; `snappy run --scan` does it first.
    Existing alignments or variants enter the same way, as a table with the columns `library`, `bam`, `bai` or `library`, `vcf`, `vcf_tbi`.
 

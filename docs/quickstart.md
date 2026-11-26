@@ -169,9 +169,9 @@ P001         N1          N        WES          P001-N1-DNA1-WES1
 P001         T1          Y        WES          P001-T1-DNA1-WES1
 ```
 
-The reads of a library are in a folder named like its `folderName`, at any depth below `raw`.
-`snappy scan-files` searches the folders once and writes `reads.tsv`, one row per read group, which the tasks read from then on.
-Files named otherwise take `--pattern key=regex` for the path below the folder, whose `(?P<readgroup>...)` group pairs the `left` and `right` file of a read group, and another directory takes `--search-path`; the table records the command.
+The reads of a library are below `raw`, in a folder named like its `folderName` or named after it (`P001-N1-DNA1-WES1_S1_L001_R1_001.fastq.gz`), flat or in batch folders; the common namings of sequencing facilities and SRA are known.
+`snappy scan-files` searches once and writes `reads.tsv`, one row per read group, which the tasks read from then on.
+Other namings take `--pattern key=regex` for the path below the folder or the file name, whose `(?P<readgroup>...)` group pairs the `left` and `right` file of a read group, and another directory takes `--search-path`; the table records the command.
 Run it again after adding libraries; `snappy run` stops for a library without rows and names the command.
 
 ```text

@@ -87,9 +87,7 @@ def test_scan_files_writes_the_reads_table_with_the_defaults(tmp_path):
     assert "bams" not in result.output  # other data needs its patterns once
 
     assert (tmp_path / "reads.tsv").read_text() == (
-        "# snappy scan-files --task reads --search-path raw "
-        "'--pattern=left=(?P<readgroup>.+)\\.R1\\.fastq\\.gz' "
-        "'--pattern=right=(?P<readgroup>.+)\\.R2\\.fastq\\.gz'\n"
+        "# snappy scan-files --task reads --search-path raw\n"
         "library\treadgroup\tleft\tright\n"
         "P001-N1-DNA1-WGS1\tL1\traw/P001/L1.R1.fastq.gz\traw/P001/L1.R2.fastq.gz\n"
         "P001-N1-DNA1-WGS1\tL2\traw/P001/L2.R1.fastq.gz\traw/P001/L2.R2.fastq.gz\n"
@@ -168,3 +166,42 @@ def test_scan_files_names_tasks_without_tables(tmp_path):
     result = _scan(tmp_path, "--task", "genome")
     assert result.exit_code == 1
     assert "Task 'genome' is no external_data task with library_files" in result.output
+
+
+def test_the_defaults_cover_flat_layouts_and_the_common_namings(tmp_path):
+    (tmp_path / "config.yaml").write_text(CONFIG)
+    (tmp_path / "sheet.tsv").write_text(SHEET % {"folder1": "P001"})
+    _touch(
+        tmp_path,
+        "raw/P001_S3_L001_R1_001.fastq.gz",  # bcl2fastq, flat below raw
+        "raw/P001_S3_L001_R2_001.fastq.gz",
+        "raw/P001_S3_L002_R1_001.fastq.gz",
+        "raw/P001_S3_L002_R2_001.fastq.gz",
+        "raw/batch2/P002_1.fq.gz",  # SRA style, in a batch folder
+        "raw/batch2/P002_2.fq.gz",
+    )
+    result = _scan(tmp_path, "--task", "reads")
+    assert result.exit_code == 0, result.output
+    lines = (tmp_path / "reads.tsv").read_text().splitlines()
+    assert (
+        lines[0] == "# snappy scan-files --task reads --search-path raw"
+    )  # the defaults are not recorded
+    assert lines[2:] == [
+        "P001-N1-DNA1-WGS1\tS3_L001\traw/P001_S3_L001_R1_001.fastq.gz\traw/P001_S3_L001_R2_001.fastq.gz",
+        "P001-N1-DNA1-WGS1\tS3_L002\traw/P001_S3_L002_R1_001.fastq.gz\traw/P001_S3_L002_R2_001.fastq.gz",
+        "P002-N1-DNA1-WGS1\tP002\traw/batch2/P002_1.fq.gz\traw/batch2/P002_2.fq.gz",
+    ]
+
+
+def test_a_file_that_two_libraries_claim_is_a_problem(tmp_path):
+    (tmp_path / "config.yaml").write_text(CONFIG)
+    # The second library's folder name starts like the first one's, so S1_A_... files fit both
+    sheet = (SHEET % {"folder1": "S1"}).replace("WGS\tP002\t.", "WGS\tS1_A\t.")
+    (tmp_path / "sheet.tsv").write_text(sheet)
+    _touch(tmp_path, "raw/S1_A_L1.R1.fastq.gz", "raw/S1_A_L1.R2.fastq.gz")
+    result = _scan(tmp_path, "--task", "reads")
+    assert result.exit_code == 1
+    assert (
+        f"reads: P002-N1-DNA1-WGS1: {tmp_path}/raw/S1_A_L1.R1.fastq.gz belongs to library "
+        "'P001-N1-DNA1-WGS1' as well" in result.output
+    )

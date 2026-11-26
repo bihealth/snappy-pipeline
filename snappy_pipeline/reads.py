@@ -24,6 +24,23 @@ from dataclasses import dataclass, field
 
 #: Name of the regex group that identifies the read group of a file
 READGROUP = "readgroup"
+#: What may follow a library's name in a file named after it (not ``-``, which library names
+#: such as ``P001-N1-DNA1-WES1`` carry themselves)
+NAME_SEPARATORS = "_."
+
+
+def _named_after(file_name: str, name: str) -> bool:
+    """Whether ``file_name`` is ``name`` followed by a separator."""
+    return (
+        file_name.startswith(name)
+        and len(file_name) > len(name)
+        and file_name[len(name)] in NAME_SEPARATORS
+    )
+
+
+def _without_prefix(readgroup: str, name: str) -> str:
+    """The read group without the library's name in front; the name itself stays."""
+    return readgroup[len(name) + 1 :] if _named_after(readgroup, name) else readgroup
 
 
 @dataclass(frozen=True)
@@ -91,37 +108,51 @@ class ReadDiscovery:
         patterns: Iterable[Mapping[str, str]],
         single_end: bool = False,
     ) -> list[ReadGroup]:
-        """Return the read groups in the folders named ``folder_name`` below ``roots``.
+        """Return the read groups of the library ``folder_name`` below ``roots``.
 
-        A folder of that name may be at any depth. Each file below it is matched against every
-        pattern; the ``readgroup`` group pairs the mates. Read groups are ordered by the path of
-        their left file below the folder. ``single_end`` accepts read groups without a right mate
-        when the patterns have one. Returns an empty list when no file matches; raises
-        ``ValueError`` for missing mates, duplicate files and libraries that mix single-end and
-        paired-end read groups.
+        The files of a library are below a folder of that name, at any depth, or are named after
+        it: ``<name>`` followed by ``_`` or ``.`` (:meth:`library_files`). The path below
+        the folder, or the file name, is matched against every pattern; the ``readgroup`` group
+        pairs the mates, and loses the library's name prefix. Read groups are ordered by the path
+        of their left file. ``single_end`` accepts read groups without a right mate when the
+        patterns have one. Returns an empty list when no file matches; raises ``ValueError`` for
+        missing mates, duplicate files and libraries that mix single-end and paired-end read
+        groups.
         """
-        roots = list(dict.fromkeys(roots))
         compiled = [compile_search_pattern(pattern) for pattern in patterns]
         groups: dict[str, dict[str, tuple[str, str]]] = {}
-        for root in roots:
-            for rel in self.files(root):
-                parts = rel.split("/")
-                if folder_name not in parts[:-1]:
-                    continue
-                inner = "/".join(parts[parts.index(folder_name) + 1 :])
-                for pattern in compiled:
-                    for mate, regex in pattern.items():
-                        if match := regex.fullmatch(inner):
-                            group = groups.setdefault(match[READGROUP], {})
-                            if mate in group:
-                                raise ValueError(
-                                    f"Read group {match[READGROUP]!r} of {folder_name!r} has two "
-                                    f"{mate} files: {group[mate][0]} and {os.path.join(root, rel)}"
-                                )
-                            group[mate] = (os.path.join(root, rel), inner)
+        for path, inner in self.library_files(roots, folder_name):
+            for pattern in compiled:
+                for mate, regex in pattern.items():
+                    if match := regex.fullmatch(inner):
+                        name = _without_prefix(match[READGROUP], folder_name)
+                        group = groups.setdefault(name, {})
+                        if mate in group:
+                            raise ValueError(
+                                f"Read group {name!r} of {folder_name!r} has two {mate} files: "
+                                f"{group[mate][0]} and {path}"
+                            )
+                        group[mate] = (path, inner)
         if not groups:
             return []
         return self._check(folder_name, groups, compiled, single_end)
+
+    def library_files(self, roots: Iterable[str], folder_name: str) -> list[tuple[str, str]]:
+        """Return ``(path, inner)`` for the files of a library below ``roots``: those below a
+        folder named ``folder_name`` (``inner``: the path below that folder), else those whose
+        name starts with ``folder_name`` and a separator (``inner``: the file name)."""
+        found = []
+        for root in list(dict.fromkeys(roots)):
+            for rel in self.files(root):
+                parts = rel.split("/")
+                if folder_name in parts[:-1]:
+                    inner = "/".join(parts[parts.index(folder_name) + 1 :])
+                elif _named_after(parts[-1], folder_name):
+                    inner = parts[-1]
+                else:
+                    continue
+                found.append((os.path.join(root, rel), inner))
+        return found
 
     @staticmethod
     def _check(folder_name, groups, compiled, single_end) -> list[ReadGroup]:
@@ -146,29 +177,23 @@ class ReadDiscovery:
     def find_files(
         self, roots: Iterable[str], folder_name: str, patterns: Iterable[Mapping[str, str]]
     ) -> dict[str, str]:
-        """Return output key -> path of the one file per key in the folders ``folder_name``.
+        """Return output key -> path of the one file per key of the library ``folder_name``.
 
         For data other than reads: each key's regex must match the whole path below the folder,
-        for exactly one file. Raises ``ValueError`` if no file matches or a key matches twice.
+        or the whole file name (:meth:`library_files`), for exactly one file. Raises
+        ``ValueError`` if no file matches or a key matches twice.
         """
-        roots = list(dict.fromkeys(roots))
         compiled = [compile_search_pattern(pattern, reads=False) for pattern in patterns]
         found: dict[str, str] = {}
-        for root in roots:
-            for rel in self.files(root):
-                parts = rel.split("/")
-                if folder_name not in parts[:-1]:
-                    continue
-                inner = "/".join(parts[parts.index(folder_name) + 1 :])
-                for pattern in compiled:
-                    for key, regex in pattern.items():
-                        if regex.fullmatch(inner):
-                            if key in found:
-                                raise ValueError(
-                                    f"Two {key} files for {folder_name!r}: {found[key]} and "
-                                    f"{os.path.join(root, rel)}"
-                                )
-                            found[key] = os.path.join(root, rel)
+        for path, inner in self.library_files(roots, folder_name):
+            for pattern in compiled:
+                for key, regex in pattern.items():
+                    if regex.fullmatch(inner):
+                        if key in found:
+                            raise ValueError(
+                                f"Two {key} files for {folder_name!r}: {found[key]} and {path}"
+                            )
+                        found[key] = path
         if not found:
             raise ValueError(self.missing(roots, folder_name, what="files"))
         return found

@@ -270,3 +270,44 @@ def test_files_table_errors(tmp_path, lines, error):
 def test_missing_files_table(tmp_path):
     with pytest.raises(ValueError, match="Files table .*/none.tsv: No such file"):
         read_files_tables([str(tmp_path / "none.tsv")], reads=True)
+
+
+# -- files named after the library -----------------------------------------------------------
+
+
+def test_files_named_after_the_library_are_found_without_a_folder(tmp_path):
+    _touch(
+        tmp_path,
+        "P001-N1_S3_L001.R1.fastq.gz",
+        "P001-N1_S3_L001.R2.fastq.gz",
+        "batch2/P001-N1_S3_L002.R1.fastq.gz",
+        "batch2/P001-N1_S3_L002.R2.fastq.gz",
+        "P001-N1-DNA1.R1.fastq.gz",  # another library whose name starts like this one
+        "P001-N1-DNA1.R2.fastq.gz",
+        "P001-N10.R1.fastq.gz",
+    )
+    groups = ReadDiscovery().find([str(tmp_path)], "P001-N1", [PAIRED])
+    assert [(g.name, g.relpaths["left"]) for g in groups] == [
+        ("S3_L001", "P001-N1_S3_L001.R1.fastq.gz"),
+        ("S3_L002", "P001-N1_S3_L002.R1.fastq.gz"),
+    ]
+
+
+def test_a_file_named_like_the_library_keeps_the_name_as_read_group(tmp_path):
+    _touch(tmp_path, "P1.R1.fastq.gz", "P1.R2.fastq.gz")
+    (group,) = ReadDiscovery().find([str(tmp_path)], "P1", [PAIRED])
+    assert group.name == "P1"
+
+
+def test_a_folder_named_after_the_library_takes_precedence_over_its_name(tmp_path):
+    _touch(tmp_path, "P1/P1_L1.R1.fastq.gz", "P1/P1_L1.R2.fastq.gz")
+    (group,) = ReadDiscovery().find([str(tmp_path)], "P1", [PAIRED])
+    assert group.name == "L1" and group.relpaths["left"] == "P1_L1.R1.fastq.gz"
+
+
+def test_find_files_matches_file_names_too(tmp_path):
+    _touch(tmp_path, "P1.bam", "P1.bam.bai", "P10.bam")
+    found = ReadDiscovery().find_files(
+        [str(tmp_path)], "P1", [{"bam": r".+\.bam", "bai": r".+\.bai"}]
+    )
+    assert found == {"bam": str(tmp_path / "P1.bam"), "bai": str(tmp_path / "P1.bam.bai")}
