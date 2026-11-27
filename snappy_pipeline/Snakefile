@@ -58,19 +58,22 @@ for task in project.model.tasks:
     t_name = task.name
     t_step = task.step
     alias = t_name + TASK_SEPARATOR
+    # Snakemake binds a module under its name in this namespace, so the module is not named
+    # after the task: a task named report or expand would shadow Snakemake's function
+    t_module = f"task_{t_name}"
     # Each task writes below tasks/<name>/
     task_root = BaseStep.task_root(t_name)
     prefixes = {d: f"{task_root}/{d}" for d in ("output/", "work/", "benchmarks/")}
 
     module:
-        name: t_name
+        name: t_module
         snakefile: f"workflows/{t_step}/Snakefile"
         config: {"__task_name__": t_name}
         replace_prefix: prefixes
 
     known_rules = {r.name for r in workflow.rules}
 
-    use rule * from t_name as alias*
+    use rule * from t_module as alias*
 
     # The task's jobs join its job group; local rules stay local, which a group would prevent
     if job_group := project.task_configs[t_name].job_group:
