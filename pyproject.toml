@@ -48,10 +48,11 @@ dependencies = [
     "snkmt @ git+https://github.com/tedil/snkmt.git@3ac54fc376da0c5d6071caf9e53539ba0dbe30e5",
     "snakemake-logger-plugin-snkmt @ git+https://github.com/cademirch/snakemake-logger-plugin-snkmt.git@dbb6c802e16d0136e1f38a8374b635c4ecfc555b",
     # Styled console output with progress bars, the default console logger of snappy run; from the
-    # tedil fork (0.5.2 plus the stacked branches up to feat/time-remaining: one summary line for
-    # the removed temporary outputs, the slurm submission lines folded into the job display, the
-    # pending jobs and the estimated remaining time in the progress bars) until upstream has them
-    "snakemake-logger-plugin-rich @ git+https://github.com/tedil/snakemake-logger-plugin-rich.git@e748c79089710bf5f07fab84f4c05ed2a2f9cfd0",
+    # tedil fork (0.5.2 plus the stacked branches up to feat/interrupt: one summary line for the
+    # removed temporary outputs, the slurm submission lines folded into the job display, the
+    # pending jobs and the estimated remaining time in the progress bars, an interrupted run
+    # marked) until upstream has them
+    "snakemake-logger-plugin-rich @ git+https://github.com/tedil/snakemake-logger-plugin-rich.git@80984de39fd25d69115b90995e079b6edab76cc7",
     # Library for working with VCF files.
     "vcfpy >=0.14.2,<0.15",
     # Jinja 2 template rendering
