@@ -45,9 +45,9 @@ tasks:
 """
 
 
-def _project(tmp_path, reads, table=None):
+def _project(tmp_path, reads, table=None, sheet=SHEET):
     (tmp_path / "config.yaml").write_text(CONFIG % {"reads": reads})
-    (tmp_path / "sheet.tsv").write_text(SHEET)
+    (tmp_path / "sheet.tsv").write_text(sheet)
     if table is not None:
         (tmp_path / "reads.tsv").write_text(textwrap.dedent(table))
     return load_project(
@@ -116,24 +116,39 @@ def test_a_missing_table_loads_and_is_reported_at_setup(tmp_path):
     }
 
 
-def test_rows_of_unknown_libraries_and_missing_files_are_reported(tmp_path):
+def test_rows_of_libraries_outside_the_sheets_are_unused(tmp_path):
+    """A ``#`` in front of a sheet row takes the library out of the run; its rows in the files
+    table stay, and ``check-files`` passes over its files."""
     table = """\
         library\treadgroup\tleft\tright
         P001-N1-DNA1-WGS1\tL1\traw/P001/L1_R1.fastq.gz\traw/P001/L1_R2.fastq.gz
         P002-N1-DNA1-WGS1\tL1\traw/P002/L1_R1.fastq.gz\traw/P002/L1_R2.fastq.gz
         P009\tL1\traw/P009/L1_R1.fastq.gz\traw/P009/L1_R2.fastq.gz
         """
-    project = _project(tmp_path, "reads", table=table)
+    sheet = SHEET.replace("P002\tmale", "#P002\tmale")
+    project = _project(tmp_path, "reads", table=table, sheet=sheet)
     _touch(tmp_path, "raw/P001/L1_R1.fastq.gz", "raw/P001/L1_R2.fastq.gz")
     mapping = create_task_instances(None, project)["mapping"]
+    assert missing_library_files({"mapping": mapping}) == []
+    assert "reads" not in missing_files(project)
+
+
+def test_a_renamed_library_shows_on_both_sides(tmp_path):
+    table = """\
+        library\treadgroup\tleft\tright
+        P001-N1-DNA1-WGS1\tL1\traw/P001/L1_R1.fastq.gz\traw/P001/L1_R2.fastq.gz
+        P002-N1-DNA1-WGS2\tL1\traw/P002/L1_R1.fastq.gz\traw/P002/L1_R2.fastq.gz
+        """
+    project = _project(tmp_path, "reads", table=table)
+    mapping = create_task_instances(None, project)["mapping"]
     assert missing_library_files({"mapping": mapping}) == [
-        ("reads", "P009", "is in a files table but in no sample sheet")
-    ]
-    assert missing_files(project)["reads"] == [
-        f"{tmp_path}/raw/P002/L1_R1.fastq.gz",
-        f"{tmp_path}/raw/P002/L1_R2.fastq.gz",
-        f"{tmp_path}/raw/P009/L1_R1.fastq.gz",
-        f"{tmp_path}/raw/P009/L1_R2.fastq.gz",
+        (
+            "mapping",
+            "P002-N1-DNA1-WGS1",
+            f"The files tables {tmp_path}/reads.tsv list no files of library 'P002-N1-DNA1-WGS1'; "
+            "run `snappy scan-files` to add them",
+        ),
+        ("reads", "P002-N1-DNA1-WGS2", "is in a files table but in no sample sheet"),
     ]
 
 

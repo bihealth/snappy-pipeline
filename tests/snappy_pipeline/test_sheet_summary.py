@@ -127,7 +127,14 @@ def test_missing_reads_checks_each_library_of_a_source_once_and_skips_trimmed_re
     ]
 
 
-def test_missing_library_files_checks_files_tables_and_their_unknown_libraries(tmp_path):
+def test_rows_of_libraries_outside_the_sheets_are_unused(tmp_path):
+    """A ``#`` in front of a sheet row takes the library out of the run; its rows stay."""
+    project = _project(tmp_path, table_libraries=("a", "zzz"))
+    tasks = {"calling": _task(project, "calling", "alignments", "tables", ["a"])}
+    assert missing_library_files(tasks) == []
+
+
+def test_unknown_table_libraries_are_a_hint_beside_a_library_without_rows(tmp_path):
     project = _project(tmp_path, table_libraries=("a", "zzz"))
     tasks = {"calling": _task(project, "calling", "alignments", "tables", ["a", "b"])}
     table = tmp_path / "t.tsv"

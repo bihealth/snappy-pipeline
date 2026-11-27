@@ -16,6 +16,7 @@ from pydantic import ValidationError
 from snakemake.pathvars import Pathvars
 
 from snappy_pipeline.base import ConfigError, in_task
+from snappy_pipeline.library_table import build_library_dataframe
 from snappy_pipeline.log_archive import archive_after_run, record_git_state
 from snappy_pipeline.models import SnappyStepModel
 from snappy_pipeline.reads import FilesTable, read_files_tables
@@ -349,14 +350,21 @@ def _exists(path: str) -> bool:
 
 def missing_files(project: Project) -> dict[str, list[str]]:
     """Return task name (``sample_sheets`` for the sheets) -> the files of its configuration that do
-    not exist: its ``ConfigPath`` values and the sidecars that the jobs reading an
-    ``external_data`` task declare as inputs (the ``.fai`` and ``.dict`` of a genome, the index of
-    a VCF or of an indexed BED file)."""
+    not exist: its ``ConfigPath`` values, the files that its files tables list for the libraries
+    of the sheets, and the sidecars that the jobs reading an ``external_data`` task declare as
+    inputs (the ``.fai`` and ``.dict`` of a genome, the index of a VCF or of an indexed BED
+    file)."""
     paths = {name: list(found) for name, found in project.file_paths.items()}
+    libraries = None
     for name, config in project.task_configs.items():
         tables = getattr(config, "library_files", None)
         if tables and all(os.path.exists(table) for table in tables):
-            paths[name] += project.files_table(config).paths()
+            if libraries is None:
+                tables = project.library_tables  # filled as BaseStep.library_table does
+                if True not in tables:
+                    tables[True] = build_library_dataframe(project.sheets, include_background=True)
+                libraries = set(tables[True]["library_name"])
+            paths[name] += project.files_table(config).paths(libraries)
     for consumer, dependencies in project.dependencies.items():
         config = project.task_configs[consumer]
         fields = type(config.depends_on).model_fields if dependencies else {}

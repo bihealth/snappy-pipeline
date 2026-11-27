@@ -15,7 +15,7 @@ An empty cell is no value, and relative paths are relative to the table's direct
 ``mixed_se_pe: true`` accepts read groups without a ``right`` file.
 ``snappy scan-files`` writes the first table from the libraries of the sample sheets: the files of a library are below a folder named like its ``folderName`` in the sheet, else like the library, at any depth below a search path (``--search-path``, default ``raw``), or are named after it (``<name>_...``); the patterns (``--pattern key=regex``) are regular expressions for the path below that folder or the file name, by output key, and the ``(?P<readgroup>...)`` group of a read pattern pairs the mates (default: the common namings ``_R1_001.fastq.gz``, ``.R1.fastq.gz``, ``_R1.fastq.gz`` and ``_1.fastq.gz``, also as ``.fq.gz``).
 The first line of the table records that command, so a bare ``snappy scan-files`` rescans the same way after the sheets gained libraries.
-A library without rows is an error when the project loads, and so is a row for a library that no sheet has.
+A library without rows is an error when the project loads; rows of libraries that no sheet has are unused.
 With ``kits``, it provides files per enrichment kit, by kit name and output key.
 A targeted library (``WES``, ``Panel_seq``) uses the kit named exactly like its ``library_kit`` in the sample sheet.
 If a library's kit is missing, its consumer fails when the project loads.

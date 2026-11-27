@@ -329,7 +329,8 @@ Other namings take `--pattern key=regex`, regular expressions for the path below
 The command searches once and lists what it found; the table is the record of the run, so keep it in git.
 Its first line records the command, so a bare `snappy scan-files` rescans the same way when the sheets gain libraries.
 A library without rows stops `snappy run` and `snappy check-files` with an error that names the libraries and the command; `snappy run --scan` runs the scan first.
-A row for a library that no sheet has is an error as well.
+Rows of libraries that no sheet has are unused, so a `#` in front of a sheet row takes the sample out of the run and the files table stays as it is.
+The error for a library without rows lists them, as a renamed library appears on both sides.
 Two libraries that share a folder are an error of the scan.
 
 ```yaml
@@ -371,6 +372,7 @@ A sample sheet is a plain TSV file with one header line and one row per library,
 `sample_sheets` in `config.yaml` lists the sheets, by default `samplesheet.tsv` next to it; a project without libraries sets `sample_sheets: []`.
 Several sheets, such as a cohort kept outside the project, are read together, and library names are unique across them.
 Columns are matched by name in any order, every column works as is in a `library_selection` query, lines starting with `#` are comments, and a missing value is an empty cell (`.` is an error).
+A `#` in front of a row takes the library out of the run; for a parent, clear the library cells of its row instead, since the rows of its children name the donor.
 `snappy sheet check` reports every problem of every sheet at once as `path:line: column: message`.
 
 ```tsv

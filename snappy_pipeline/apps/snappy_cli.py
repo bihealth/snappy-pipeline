@@ -1092,12 +1092,12 @@ def check_files(directory, as_json, plain):
     files are not found.
 
     The files are those in tool sections, the external_data paths, the files tables and the
-    files they list, the sample sheets and search paths, the .fai and .dict of a genome and the
-    index of a VCF or of the mappability BED file. The reads are checked for every library of the
-    tasks that read FASTQ files, in the files tables of their external_data task. Snakemake checks the inputs of the jobs it runs
-    anyway; this command checks all of them, for example after moving a project to another
-    machine. Each row has the kind (file or reads), the task, the file or the library, and the
-    problem. It exits with 1 if a file is missing.
+    files they list for the libraries of the sheets, the sample sheets, the .fai and .dict of a
+    genome and the index of a VCF or of the mappability BED file. The reads are checked for every
+    library of the tasks that read FASTQ files, in the files tables of their external_data task.
+    Snakemake checks the inputs of the jobs it runs anyway; this command checks all of them, for
+    example after moving a project to another machine. Each row has the kind (file or reads), the
+    task, the file or the library, and the problem. It exits with 1 if a file is missing.
     """
     config_path = _project_config(directory)
     try:

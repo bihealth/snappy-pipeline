@@ -19,7 +19,7 @@ import csv
 import difflib
 import os
 import re
-from collections.abc import Iterable, Mapping
+from collections.abc import Collection, Iterable, Mapping
 from dataclasses import dataclass, field
 
 #: Name of the regex group that identifies the read group of a file
@@ -239,13 +239,14 @@ class FilesTable:
         """Return key -> path of ``library``; ``{}`` without a row."""
         return dict(self._files.get(library, {}))
 
-    def paths(self) -> list[str]:
-        """Every path of the tables, for ``snappy check-files``."""
+    def paths(self, libraries: Collection[str] | None = None) -> list[str]:
+        """Every path of the tables, or those of ``libraries``, for ``snappy check-files``."""
+        rows = self._read_groups if self.reads else self._files
+        if libraries is not None:
+            rows = {library: rows[library] for library in rows if library in libraries}
         if self.reads:
-            return [
-                p for groups in self._read_groups.values() for g in groups for p in g.paths.values()
-            ]
-        return [p for files in self._files.values() for p in files.values()]
+            return [p for groups in rows.values() for g in groups for p in g.paths.values()]
+        return [p for files in rows.values() for p in files.values()]
 
 
 def read_files_tables(

@@ -55,13 +55,16 @@ def missing_library_files(instances: Mapping[str, BaseStep]) -> list[tuple[str, 
     """Return ``(task, library, problem)`` for every library of a task whose files an
     ``external_data`` source does not provide: the files tables of the task (``library_files``)
     have no row for the library. Rows of such a table for libraries that no sample sheet has are
-    reported for the table's task.
+    unused (a ``#`` in front of a sheet row takes the library out of the run); they are listed for
+    the table's task when a library of the task has a problem, as a renamed library shows on both
+    sides.
 
     A task that reads the FASTQs of another task (trimmed reads) is covered by that task. Each
     library is checked once per source, with the first task that reads it.
     """
     problems = []
     checked: set[tuple[str, str]] = set()
+    failed_sources: set[str] = set()
     table_tasks: dict[str, BaseStep] = {}
     for name, task in instances.items():
         for field, source in task.project.dependencies.get(name, {}).items():
@@ -98,9 +101,13 @@ def missing_library_files(instances: Mapping[str, BaseStep]) -> list[tuple[str, 
                         task.read_groups(library, source)
                     elif not task.project.files_table(config).files(library):
                         problems.append((name, library, no_rows_message(config, library, source)))
+                        failed_sources.add(source)
                 except (ValueError, ConfigError) as e:
                     problems.append((name, library, str(e)))
+                    failed_sources.add(source)
     for source, task in table_tasks.items():
+        if source not in failed_sources:
+            continue
         config = task.project.task_configs[source]
         known = set(task.library_table(include_background=True)["library_name"])
         table = task.project.files_table(config)
