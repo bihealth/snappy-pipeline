@@ -96,6 +96,7 @@ environments:
       - pypi: ./
       - pypi: git+https://github.com/cademirch/snakemake-logger-plugin-snkmt.git?rev=dbb6c802e16d0136e1f38a8374b635c4ecfc555b#dbb6c802e16d0136e1f38a8374b635c4ecfc555b
       - pypi: git+https://github.com/snakemake/snakemake.git?rev=d8528b75c79433cb166713d3c3329513bff208b1#d8528b75c79433cb166713d3c3329513bff208b1
+      - pypi: git+https://github.com/tedil/snakemake-logger-plugin-rich.git?rev=e748c79089710bf5f07fab84f4c05ed2a2f9cfd0#e748c79089710bf5f07fab84f4c05ed2a2f9cfd0
       - pypi: git+https://github.com/tedil/snkmt.git?rev=3ac54fc376da0c5d6071caf9e53539ba0dbe30e5#3ac54fc376da0c5d6071caf9e53539ba0dbe30e5
       - pypi: https://files.pythonhosted.org/packages/04/4b/29cac41a4d98d144bf5f6d33995617b185d14b22401f75ca86f384e87ff1/h11-0.16.0-py3-none-any.whl
       - pypi: https://files.pythonhosted.org/packages/04/9e/2669ac7d718539a3783c3a6c440b3440b68193b59d763d7f89d33c0b1e8e/questo-0.4.2-py3-none-any.whl
@@ -167,7 +168,6 @@ environments:
       - pypi: https://files.pythonhosted.org/packages/b8/0c/51f6841f1d84f404f92463fc2b1ba0da357ca1e3db6b7fbda26956c3b82a/ruamel_yaml-0.19.1-py3-none-any.whl
       - pypi: https://files.pythonhosted.org/packages/bc/8a/340a1555ae33d7354dbca4faa54948d76d89a27ceef032c8c3bc661d003e/aiofiles-25.1.0-py3-none-any.whl
       - pypi: https://files.pythonhosted.org/packages/bd/df/c9b4e25dce00f6349fd28aadba7b6c3f7431cc8bd4308a158fbe57b6a22e/connection_pool-0.0.3.tar.gz
-      - pypi: https://files.pythonhosted.org/packages/be/c7/9567935e3a07b9282e8e297f9333ad55e6e897ba73ea6d38b726ca01270a/snakemake_logger_plugin_rich-0.5.2-py3-none-any.whl
       - pypi: https://files.pythonhosted.org/packages/c1/d4/59e74daffcb57a07668852eeeb6035af9f32cbfd7a1d2511f17d2fe6a738/smmap-5.0.3-py3-none-any.whl
       - pypi: https://files.pythonhosted.org/packages/c2/05/135215bc571cfa643b0914bf8a9d7a327dde46044a0ab592cd69ec173b06/snakemake_interface_software_deployment_plugins-0.21.2-py3-none-any.whl
       - pypi: https://files.pythonhosted.org/packages/c9/31/5f0ac2f1a1c67423c995c731a11cd4ad05d081a2be969d74f868bdb9cc70/markdown_it_py-4.3.0-py3-none-any.whl
@@ -367,6 +367,7 @@ environments:
       - pypi: ./
       - pypi: git+https://github.com/cademirch/snakemake-logger-plugin-snkmt.git?rev=dbb6c802e16d0136e1f38a8374b635c4ecfc555b#dbb6c802e16d0136e1f38a8374b635c4ecfc555b
       - pypi: git+https://github.com/snakemake/snakemake.git?rev=d8528b75c79433cb166713d3c3329513bff208b1#d8528b75c79433cb166713d3c3329513bff208b1
+      - pypi: git+https://github.com/tedil/snakemake-logger-plugin-rich.git?rev=e748c79089710bf5f07fab84f4c05ed2a2f9cfd0#e748c79089710bf5f07fab84f4c05ed2a2f9cfd0
       - pypi: git+https://github.com/tedil/snkmt.git?rev=3ac54fc376da0c5d6071caf9e53539ba0dbe30e5#3ac54fc376da0c5d6071caf9e53539ba0dbe30e5
       - pypi: https://files.pythonhosted.org/packages/01/8a/03246179f8bafea1c4f0b664ef5fcad1814f2cf55af6acb2f614463eca20/shfmt_py-4.2.0-py2.py3-none-manylinux2014_x86_64.whl
       - pypi: https://files.pythonhosted.org/packages/01/f9/575c8d760eae1fc99651b7cc5efd96ad5379ca4d6b53750b0fb4fe983f34/imagesize-2.0.1-py3-none-any.whl
@@ -464,7 +465,6 @@ environments:
       - pypi: https://files.pythonhosted.org/packages/bc/8a/340a1555ae33d7354dbca4faa54948d76d89a27ceef032c8c3bc661d003e/aiofiles-25.1.0-py3-none-any.whl
       - pypi: https://files.pythonhosted.org/packages/bd/df/c9b4e25dce00f6349fd28aadba7b6c3f7431cc8bd4308a158fbe57b6a22e/connection_pool-0.0.3.tar.gz
       - pypi: https://files.pythonhosted.org/packages/be/48/3df7d81249fd69ee6a49519b149fb5d11e13118fd7d0e8d65329a237087b/ruff-0.17.6-py3-none-manylinux_2_17_x86_64.manylinux2014_x86_64.whl
-      - pypi: https://files.pythonhosted.org/packages/be/c7/9567935e3a07b9282e8e297f9333ad55e6e897ba73ea6d38b726ca01270a/snakemake_logger_plugin_rich-0.5.2-py3-none-any.whl
       - pypi: https://files.pythonhosted.org/packages/c1/2b/238f02a4927fa2e27aa995371d240a468b52e42eae44a678434aff736b38/distlib-0.4.4-py2.py3-none-any.whl
       - pypi: https://files.pythonhosted.org/packages/c1/d4/59e74daffcb57a07668852eeeb6035af9f32cbfd7a1d2511f17d2fe6a738/smmap-5.0.3-py3-none-any.whl
       - pypi: https://files.pythonhosted.org/packages/c2/05/135215bc571cfa643b0914bf8a9d7a327dde46044a0ab592cd69ec173b06/snakemake_interface_software_deployment_plugins-0.21.2-py3-none-any.whl
@@ -657,6 +657,7 @@ environments:
       - pypi: ./
       - pypi: git+https://github.com/cademirch/snakemake-logger-plugin-snkmt.git?rev=dbb6c802e16d0136e1f38a8374b635c4ecfc555b#dbb6c802e16d0136e1f38a8374b635c4ecfc555b
       - pypi: git+https://github.com/snakemake/snakemake.git?rev=d8528b75c79433cb166713d3c3329513bff208b1#d8528b75c79433cb166713d3c3329513bff208b1
+      - pypi: git+https://github.com/tedil/snakemake-logger-plugin-rich.git?rev=e748c79089710bf5f07fab84f4c05ed2a2f9cfd0#e748c79089710bf5f07fab84f4c05ed2a2f9cfd0
       - pypi: git+https://github.com/tedil/snkmt.git?rev=3ac54fc376da0c5d6071caf9e53539ba0dbe30e5#3ac54fc376da0c5d6071caf9e53539ba0dbe30e5
       - pypi: https://files.pythonhosted.org/packages/01/f9/575c8d760eae1fc99651b7cc5efd96ad5379ca4d6b53750b0fb4fe983f34/imagesize-2.0.1-py3-none-any.whl
       - pypi: https://files.pythonhosted.org/packages/04/4b/29cac41a4d98d144bf5f6d33995617b185d14b22401f75ca86f384e87ff1/h11-0.16.0-py3-none-any.whl
@@ -741,7 +742,6 @@ environments:
       - pypi: https://files.pythonhosted.org/packages/b8/0c/51f6841f1d84f404f92463fc2b1ba0da357ca1e3db6b7fbda26956c3b82a/ruamel_yaml-0.19.1-py3-none-any.whl
       - pypi: https://files.pythonhosted.org/packages/bc/8a/340a1555ae33d7354dbca4faa54948d76d89a27ceef032c8c3bc661d003e/aiofiles-25.1.0-py3-none-any.whl
       - pypi: https://files.pythonhosted.org/packages/bd/df/c9b4e25dce00f6349fd28aadba7b6c3f7431cc8bd4308a158fbe57b6a22e/connection_pool-0.0.3.tar.gz
-      - pypi: https://files.pythonhosted.org/packages/be/c7/9567935e3a07b9282e8e297f9333ad55e6e897ba73ea6d38b726ca01270a/snakemake_logger_plugin_rich-0.5.2-py3-none-any.whl
       - pypi: https://files.pythonhosted.org/packages/c1/d4/59e74daffcb57a07668852eeeb6035af9f32cbfd7a1d2511f17d2fe6a738/smmap-5.0.3-py3-none-any.whl
       - pypi: https://files.pythonhosted.org/packages/c2/05/135215bc571cfa643b0914bf8a9d7a327dde46044a0ab592cd69ec173b06/snakemake_interface_software_deployment_plugins-0.21.2-py3-none-any.whl
       - pypi: https://files.pythonhosted.org/packages/c4/28/a0c50761cd215b7042f4bc617a6bc5c0cd7be62f75bc908e169e28a4d21e/sphinx-9.2.0-py3-none-any.whl
@@ -998,6 +998,7 @@ environments:
       - pypi: ./
       - pypi: git+https://github.com/cademirch/snakemake-logger-plugin-snkmt.git?rev=dbb6c802e16d0136e1f38a8374b635c4ecfc555b#dbb6c802e16d0136e1f38a8374b635c4ecfc555b
       - pypi: git+https://github.com/snakemake/snakemake.git?rev=d8528b75c79433cb166713d3c3329513bff208b1#d8528b75c79433cb166713d3c3329513bff208b1
+      - pypi: git+https://github.com/tedil/snakemake-logger-plugin-rich.git?rev=e748c79089710bf5f07fab84f4c05ed2a2f9cfd0#e748c79089710bf5f07fab84f4c05ed2a2f9cfd0
       - pypi: git+https://github.com/tedil/snkmt.git?rev=3ac54fc376da0c5d6071caf9e53539ba0dbe30e5#3ac54fc376da0c5d6071caf9e53539ba0dbe30e5
       - pypi: https://files.pythonhosted.org/packages/04/4b/29cac41a4d98d144bf5f6d33995617b185d14b22401f75ca86f384e87ff1/h11-0.16.0-py3-none-any.whl
       - pypi: https://files.pythonhosted.org/packages/04/9e/2669ac7d718539a3783c3a6c440b3440b68193b59d763d7f89d33c0b1e8e/questo-0.4.2-py3-none-any.whl
@@ -1073,7 +1074,6 @@ environments:
       - pypi: https://files.pythonhosted.org/packages/b8/0c/51f6841f1d84f404f92463fc2b1ba0da357ca1e3db6b7fbda26956c3b82a/ruamel_yaml-0.19.1-py3-none-any.whl
       - pypi: https://files.pythonhosted.org/packages/bc/8a/340a1555ae33d7354dbca4faa54948d76d89a27ceef032c8c3bc661d003e/aiofiles-25.1.0-py3-none-any.whl
       - pypi: https://files.pythonhosted.org/packages/bd/df/c9b4e25dce00f6349fd28aadba7b6c3f7431cc8bd4308a158fbe57b6a22e/connection_pool-0.0.3.tar.gz
-      - pypi: https://files.pythonhosted.org/packages/be/c7/9567935e3a07b9282e8e297f9333ad55e6e897ba73ea6d38b726ca01270a/snakemake_logger_plugin_rich-0.5.2-py3-none-any.whl
       - pypi: https://files.pythonhosted.org/packages/c1/d4/59e74daffcb57a07668852eeeb6035af9f32cbfd7a1d2511f17d2fe6a738/smmap-5.0.3-py3-none-any.whl
       - pypi: https://files.pythonhosted.org/packages/c2/05/135215bc571cfa643b0914bf8a9d7a327dde46044a0ab592cd69ec173b06/snakemake_interface_software_deployment_plugins-0.21.2-py3-none-any.whl
       - pypi: https://files.pythonhosted.org/packages/c9/31/5f0ac2f1a1c67423c995c731a11cd4ad05d081a2be969d74f868bdb9cc70/markdown_it_py-4.3.0-py3-none-any.whl
@@ -4977,7 +4977,7 @@ packages:
   - snakemake @ git+https://github.com/snakemake/snakemake.git@d8528b75c79433cb166713d3c3329513bff208b1
   - snakemake-executor-plugin-slurm>=2.8.0,<3
   - snakemake-interface-common>=1.24.1,<2
-  - snakemake-logger-plugin-rich>=0.5.2,<0.6
+  - snakemake-logger-plugin-rich @ git+https://github.com/tedil/snakemake-logger-plugin-rich.git@e748c79089710bf5f07fab84f4c05ed2a2f9cfd0
   - snakemake-logger-plugin-snkmt @ git+https://github.com/cademirch/snakemake-logger-plugin-snkmt.git@dbb6c802e16d0136e1f38a8374b635c4ecfc555b
   - snakemake-software-deployment-plugin-conda>=0.8.7,<0.9
   - snakemake-software-deployment-plugin-container>=0.7.6,<0.8
@@ -5041,6 +5041,19 @@ packages:
   - peppy ; extra == 'all'
   - pygments ; extra == 'all'
   requires_python: '>=3.11'
+- pypi: git+https://github.com/tedil/snakemake-logger-plugin-rich.git?rev=e748c79089710bf5f07fab84f4c05ed2a2f9cfd0#e748c79089710bf5f07fab84f4c05ed2a2f9cfd0
+  name: snakemake-logger-plugin-rich
+  version: 0.5.2
+  requires_dist:
+  - pydantic>=2.10.6
+  - rich>=13.9.4
+  - snakemake-interface-executor-plugins>=9.3.2
+  - snakemake-interface-logger-plugins>=1.0.0
+  - pytest>=8.3.5 ; extra == 'dev'
+  - snakemake>=9.0.1 ; extra == 'dev'
+  - ruff>=0.9.10 ; extra == 'dev'
+  - mypy>=1.0.0 ; extra == 'dev'
+  requires_python: '>=3.11,<4.0'
 - pypi: git+https://github.com/tedil/snkmt.git?rev=3ac54fc376da0c5d6071caf9e53539ba0dbe30e5#3ac54fc376da0c5d6071caf9e53539ba0dbe30e5
   name: snkmt
   version: 0.4.0
@@ -6253,20 +6266,6 @@ packages:
   version: 0.17.6
   sha256: aa3b08254a732acba246891089a152c47c5733dc36b8ecb76ce8602f8326e5e4
   requires_python: '>=3.7'
-- pypi: https://files.pythonhosted.org/packages/be/c7/9567935e3a07b9282e8e297f9333ad55e6e897ba73ea6d38b726ca01270a/snakemake_logger_plugin_rich-0.5.2-py3-none-any.whl
-  name: snakemake-logger-plugin-rich
-  version: 0.5.2
-  sha256: b7de3bdeb4af6fdf87b1ef6fb0514e1b07a7faaa7ebccc1d6fff1c5b3c06a12e
-  requires_dist:
-  - pydantic>=2.10.6
-  - rich>=13.9.4
-  - snakemake-interface-executor-plugins>=9.3.2
-  - snakemake-interface-logger-plugins>=1.0.0
-  - mypy>=1.0.0 ; extra == 'dev'
-  - pytest>=8.3.5 ; extra == 'dev'
-  - ruff>=0.9.10 ; extra == 'dev'
-  - snakemake>=9.0.1 ; extra == 'dev'
-  requires_python: '>=3.11,<4.0'
 - pypi: https://files.pythonhosted.org/packages/c1/2b/238f02a4927fa2e27aa995371d240a468b52e42eae44a678434aff736b38/distlib-0.4.4-py2.py3-none-any.whl
   name: distlib
   version: 0.4.4

@@ -334,7 +334,7 @@ snappy always applies its workflow profile (`snappy_pipeline/apps/profile/`).
 It sets:
 
 - `software-deployment-method: [conda, container]` with `sdm-container-runtime: apptainer`: jobs run in their conda environments, and the tools with a container image run in it with apptainer, without `--use-conda` or `--use-apptainer`.
-- `logger: [rich, snkmt]`: the console output comes from the `rich` logger plugin (styled messages, one progress bar per rule, the job summary table), and the `snkmt` logger writes the structured log to the SQLite database `.snakemake/log/snkmt.sqlite`, which `snappy watch` shows live.
+- `logger: [rich, snkmt]`: the console output comes from the `rich` logger plugin (styled messages, one progress bar per rule with its pending jobs and estimated remaining time, the job summary table, one line for the removed temporary outputs), and the `snkmt` logger writes the structured log to the SQLite database `.snakemake/log/snkmt.sqlite`, which `snappy watch` shows live.
   `snappy run -- --logger snkmt` restores Snakemake's plain console output; Snakemake's own log file in `.snakemake/log/` is written either way.
 - `persistence-backend: db`: a single SQLite file for Snakemake's metadata instead of many small files in `.snakemake/`.
   This matters on shared network file systems such as CephFS and NFS, which handle one large file much better than thousands of small ones.
