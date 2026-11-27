@@ -77,7 +77,7 @@
    "partition": "medium",
    "runtime": 4320
   },
-  "rule": "ngs_mapping_bwa_ngs_mapping_bwa_run",
+  "rule": "ngs_mapping_bwa_bwa_run",
   "temp": [],
   "threads": 1,
   "wildcards": {
@@ -114,7 +114,7 @@
    "partition": "medium",
    "runtime": 1440
   },
-  "rule": "reference_index_bwa_reference_index_bwa_run",
+  "rule": "reference_index_bwa_bwa_run",
   "temp": [],
   "threads": 1,
   "wildcards": {},
@@ -180,7 +180,7 @@
    "partition": "medium",
    "runtime": 1440
   },
-  "rule": "variant_annotation_vep_variant_annotation_vep_run",
+  "rule": "variant_annotation_vep_vep_run",
   "temp": [],
   "threads": 1,
   "wildcards": {
@@ -233,7 +233,7 @@
    "partition": "medium",
    "runtime": 2880
   },
-  "rule": "variant_calling_gatk4_hc_gvcf_variant_calling_gatk4_hc_gvcf_combine_gvcfs",
+  "rule": "variant_calling_gatk4_hc_gvcf_gatk4_hc_gvcf_combine_gvcfs",
   "temp": [],
   "threads": 1,
   "wildcards": {
@@ -288,7 +288,7 @@
    "partition": "medium",
    "runtime": 2880
   },
-  "rule": "variant_calling_gatk4_hc_gvcf_variant_calling_gatk4_hc_gvcf_discover",
+  "rule": "variant_calling_gatk4_hc_gvcf_gatk4_hc_gvcf_discover",
   "temp": [
    "tasks/variant_calling_gatk4_hc_gvcf/work/case001subregion-N1-DNA1-WES1/out/case001subregion-N1-DNA1-WES1.discover.g.vcf.gz",
    "tasks/variant_calling_gatk4_hc_gvcf/work/case001subregion-N1-DNA1-WES1/out/case001subregion-N1-DNA1-WES1.discover.g.vcf.gz.tbi"
@@ -349,36 +349,13 @@
    "partition": "medium",
    "runtime": 2880
   },
-  "rule": "variant_calling_gatk4_hc_gvcf_variant_calling_gatk4_hc_gvcf_genotype",
+  "rule": "variant_calling_gatk4_hc_gvcf_gatk4_hc_gvcf_genotype",
   "temp": [],
   "threads": 1,
   "wildcards": {
    "library_name": "case001subregion"
   },
   "wrapper": "file://<repo>/snappy_wrappers/wrappers/gatk4_hc/genotype"
- },
- {
-  "benchmark": null,
-  "input": [
-   "tasks/variant_filtration_ebfilter/work/case001subregion/out/case001subregion.vcf.gz",
-   "tasks/variant_filtration_ebfilter/work/case001subregion/out/case001subregion.vcf.gz.tbi",
-   "tasks/variant_filtration_ebfilter/work/case001subregion/out/case001subregion.vcf.gz.md5",
-   "tasks/variant_filtration_ebfilter/work/case001subregion/out/case001subregion.vcf.gz.tbi.md5"
-  ],
-  "local": true,
-  "log": [],
-  "output": [
-   "tasks/variant_filtration_ebfilter/output/.manifest.tsv"
-  ],
-  "params": {
-   "task_dir": "tasks/variant_filtration_ebfilter"
-  },
-  "resources": {},
-  "rule": "variant_filtration_ebfilter_results",
-  "temp": [],
-  "threads": 1,
-  "wildcards": {},
-  "wrapper": null
  },
  {
   "benchmark": null,
@@ -404,7 +381,7 @@
    "partition": "medium",
    "runtime": 60
   },
-  "rule": "variant_filtration_ebfilter_variant_filtration_ebfilter_write_panel",
+  "rule": "variant_filtration_ebfilter_ebfilter_write_panel",
   "temp": [],
   "threads": 1,
   "wildcards": {},
@@ -456,12 +433,35 @@
    "partition": "medium",
    "runtime": 1440
   },
-  "rule": "variant_filtration_ebfilter_variant_filtration_filter_run",
+  "rule": "variant_filtration_ebfilter_filter_run",
   "temp": [],
   "threads": 1,
   "wildcards": {
    "library_name": "case001subregion"
   },
   "wrapper": "file://<repo>/snappy_wrappers/wrappers/eb_filter"
+ },
+ {
+  "benchmark": null,
+  "input": [
+   "tasks/variant_filtration_ebfilter/work/case001subregion/out/case001subregion.vcf.gz",
+   "tasks/variant_filtration_ebfilter/work/case001subregion/out/case001subregion.vcf.gz.tbi",
+   "tasks/variant_filtration_ebfilter/work/case001subregion/out/case001subregion.vcf.gz.md5",
+   "tasks/variant_filtration_ebfilter/work/case001subregion/out/case001subregion.vcf.gz.tbi.md5"
+  ],
+  "local": true,
+  "log": [],
+  "output": [
+   "tasks/variant_filtration_ebfilter/output/.manifest.tsv"
+  ],
+  "params": {
+   "task_dir": "tasks/variant_filtration_ebfilter"
+  },
+  "resources": {},
+  "rule": "variant_filtration_ebfilter_results",
+  "temp": [],
+  "threads": 1,
+  "wildcards": {},
+  "wrapper": null
  }
 ]

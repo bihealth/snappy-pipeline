@@ -17,7 +17,7 @@ include: "../common/wrapper_rules.rules"
 # Write out pedigree file -----------------------------------------------------
 
 
-rule variant_checking_write_pedigree_run:
+rule write_pedigree_run:
     output:
         wf.get_output_files("write_pedigree", "run"),
     localrule: True

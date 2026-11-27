@@ -14,7 +14,7 @@ include: "../common/wrapper_rules.rules"
 # Rules =======================================================================
 
 
-rule gcnv_model_write_pedigree_run:
+rule write_pedigree_run:
     output:
         wf.get_output_files("write_pedigree", "run"),
     localrule: True
@@ -47,7 +47,7 @@ checkpoint gcnv_model_scatter_intervals:
 
 
 # The input function takes the checkpoints object, so the include cannot write this rule
-rule gcnv_model_gcnv_post_germline_calls:
+rule gcnv_post_germline_calls:
     input:
         unpack(gcnv_model_post_germline_calls_input),
     output:

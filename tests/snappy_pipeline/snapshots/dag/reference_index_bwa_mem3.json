@@ -45,7 +45,7 @@
    "partition": "medium",
    "runtime": 1440
   },
-  "rule": "reference_index_bwa_mem3_reference_index_bwa_mem3_run",
+  "rule": "reference_index_bwa_mem3_bwa_mem3_run",
   "temp": [],
   "threads": 1,
   "wildcards": {},

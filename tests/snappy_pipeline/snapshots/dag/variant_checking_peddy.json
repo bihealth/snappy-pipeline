@@ -87,7 +87,7 @@
    "partition": "medium",
    "runtime": 4320
   },
-  "rule": "ngs_mapping_bwa_ngs_mapping_bwa_run",
+  "rule": "ngs_mapping_bwa_bwa_run",
   "temp": [],
   "threads": 1,
   "wildcards": {
@@ -124,7 +124,7 @@
    "partition": "medium",
    "runtime": 1440
   },
-  "rule": "reference_index_bwa_reference_index_bwa_run",
+  "rule": "reference_index_bwa_bwa_run",
   "temp": [],
   "threads": 1,
   "wildcards": {},
@@ -175,7 +175,7 @@
    "partition": "medium",
    "runtime": 2880
   },
-  "rule": "variant_calling_gatk4_hc_gvcf_variant_calling_gatk4_hc_gvcf_combine_gvcfs",
+  "rule": "variant_calling_gatk4_hc_gvcf_gatk4_hc_gvcf_combine_gvcfs",
   "temp": [],
   "threads": 1,
   "wildcards": {
@@ -230,7 +230,7 @@
    "partition": "medium",
    "runtime": 2880
   },
-  "rule": "variant_calling_gatk4_hc_gvcf_variant_calling_gatk4_hc_gvcf_discover",
+  "rule": "variant_calling_gatk4_hc_gvcf_gatk4_hc_gvcf_discover",
   "temp": [
    "tasks/variant_calling_gatk4_hc_gvcf/work/case001subregion-N1-DNA1-WES1/out/case001subregion-N1-DNA1-WES1.discover.g.vcf.gz",
    "tasks/variant_calling_gatk4_hc_gvcf/work/case001subregion-N1-DNA1-WES1/out/case001subregion-N1-DNA1-WES1.discover.g.vcf.gz.tbi"
@@ -291,46 +291,13 @@
    "partition": "medium",
    "runtime": 2880
   },
-  "rule": "variant_calling_gatk4_hc_gvcf_variant_calling_gatk4_hc_gvcf_genotype",
+  "rule": "variant_calling_gatk4_hc_gvcf_gatk4_hc_gvcf_genotype",
   "temp": [],
   "threads": 1,
   "wildcards": {
    "library_name": "case001subregion"
   },
   "wrapper": "file://<repo>/snappy_wrappers/wrappers/gatk4_hc/genotype"
- },
- {
-  "benchmark": null,
-  "input": [
-   "tasks/variant_checking_peddy/work/case001subregion/out/case001subregion.background_pca.json",
-   "tasks/variant_checking_peddy/work/case001subregion/out/case001subregion.background_pca.json.md5",
-   "tasks/variant_checking_peddy/work/case001subregion/out/case001subregion.het_check.csv",
-   "tasks/variant_checking_peddy/work/case001subregion/out/case001subregion.het_check.csv.md5",
-   "tasks/variant_checking_peddy/work/case001subregion/out/case001subregion.html",
-   "tasks/variant_checking_peddy/work/case001subregion/out/case001subregion.html.md5",
-   "tasks/variant_checking_peddy/work/case001subregion/out/case001subregion.ped_check.csv",
-   "tasks/variant_checking_peddy/work/case001subregion/out/case001subregion.ped_check.csv.md5",
-   "tasks/variant_checking_peddy/work/case001subregion/out/case001subregion.ped",
-   "tasks/variant_checking_peddy/work/case001subregion/out/case001subregion.ped.md5",
-   "tasks/variant_checking_peddy/work/case001subregion/out/case001subregion.sex_check.csv",
-   "tasks/variant_checking_peddy/work/case001subregion/out/case001subregion.sex_check.csv.md5",
-   "tasks/variant_checking_peddy/work/qc_summary/out/qc_summary.tsv",
-   "tasks/variant_checking_peddy/work/qc_summary/out/qc_summary.tsv.md5"
-  ],
-  "local": true,
-  "log": [],
-  "output": [
-   "tasks/variant_checking_peddy/output/.manifest.tsv"
-  ],
-  "params": {
-   "task_dir": "tasks/variant_checking_peddy"
-  },
-  "resources": {},
-  "rule": "variant_checking_peddy_results",
-  "temp": [],
-  "threads": 1,
-  "wildcards": {},
-  "wrapper": null
  },
  {
   "benchmark": "tasks/variant_checking_peddy/benchmarks/case001subregion/snakemake.filter.tsv",
@@ -372,7 +339,7 @@
    "partition": "medium",
    "runtime": 600
   },
-  "rule": "variant_checking_peddy_variant_checking_peddy_run",
+  "rule": "variant_checking_peddy_peddy_run",
   "temp": [],
   "threads": 1,
   "wildcards": {
@@ -418,11 +385,44 @@
    "partition": "medium",
    "runtime": 120
   },
-  "rule": "variant_checking_peddy_variant_checking_qc_summary_run",
+  "rule": "variant_checking_peddy_qc_summary_run",
   "temp": [],
   "threads": 1,
   "wildcards": {},
   "wrapper": "file://<repo>/snappy_wrappers/wrappers/qc_summary"
+ },
+ {
+  "benchmark": null,
+  "input": [
+   "tasks/variant_checking_peddy/work/case001subregion/out/case001subregion.background_pca.json",
+   "tasks/variant_checking_peddy/work/case001subregion/out/case001subregion.background_pca.json.md5",
+   "tasks/variant_checking_peddy/work/case001subregion/out/case001subregion.het_check.csv",
+   "tasks/variant_checking_peddy/work/case001subregion/out/case001subregion.het_check.csv.md5",
+   "tasks/variant_checking_peddy/work/case001subregion/out/case001subregion.html",
+   "tasks/variant_checking_peddy/work/case001subregion/out/case001subregion.html.md5",
+   "tasks/variant_checking_peddy/work/case001subregion/out/case001subregion.ped_check.csv",
+   "tasks/variant_checking_peddy/work/case001subregion/out/case001subregion.ped_check.csv.md5",
+   "tasks/variant_checking_peddy/work/case001subregion/out/case001subregion.ped",
+   "tasks/variant_checking_peddy/work/case001subregion/out/case001subregion.ped.md5",
+   "tasks/variant_checking_peddy/work/case001subregion/out/case001subregion.sex_check.csv",
+   "tasks/variant_checking_peddy/work/case001subregion/out/case001subregion.sex_check.csv.md5",
+   "tasks/variant_checking_peddy/work/qc_summary/out/qc_summary.tsv",
+   "tasks/variant_checking_peddy/work/qc_summary/out/qc_summary.tsv.md5"
+  ],
+  "local": true,
+  "log": [],
+  "output": [
+   "tasks/variant_checking_peddy/output/.manifest.tsv"
+  ],
+  "params": {
+   "task_dir": "tasks/variant_checking_peddy"
+  },
+  "resources": {},
+  "rule": "variant_checking_peddy_results",
+  "temp": [],
+  "threads": 1,
+  "wildcards": {},
+  "wrapper": null
  },
  {
   "benchmark": null,
@@ -438,7 +438,7 @@
    }
   },
   "resources": {},
-  "rule": "variant_checking_peddy_variant_checking_write_pedigree_run",
+  "rule": "variant_checking_peddy_write_pedigree_run",
   "temp": [],
   "threads": 1,
   "wildcards": {

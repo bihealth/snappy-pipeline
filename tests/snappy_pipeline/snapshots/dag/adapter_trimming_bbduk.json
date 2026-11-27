@@ -136,7 +136,7 @@
    "partition": "medium",
    "runtime": 720
   },
-  "rule": "adapter_trimming_bbduk_adapter_trimming_bbduk_run",
+  "rule": "adapter_trimming_bbduk_bbduk_run",
   "temp": [],
   "threads": 1,
   "wildcards": {
@@ -281,7 +281,7 @@
    "partition": "medium",
    "runtime": 720
   },
-  "rule": "adapter_trimming_bbduk_adapter_trimming_bbduk_run",
+  "rule": "adapter_trimming_bbduk_bbduk_run",
   "temp": [],
   "threads": 1,
   "wildcards": {

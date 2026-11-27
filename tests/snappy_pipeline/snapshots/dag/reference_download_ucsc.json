@@ -21,6 +21,31 @@
   "wrapper": null
  },
  {
+  "benchmark": null,
+  "input": [
+   "tasks/reference_download_ucsc/work/reference_download/out/reference.fa",
+   "tasks/reference_download_ucsc/work/reference_download/out/reference.fa.md5",
+   "tasks/reference_download_ucsc/work/reference_download/out/reference.fa.fai",
+   "tasks/reference_download_ucsc/work/reference_download/out/reference.fa.fai.md5",
+   "tasks/reference_download_ucsc/work/reference_download/out/reference.dict",
+   "tasks/reference_download_ucsc/work/reference_download/out/reference.dict.md5"
+  ],
+  "local": true,
+  "log": [],
+  "output": [
+   "tasks/reference_download_ucsc/output/.manifest.tsv"
+  ],
+  "params": {
+   "task_dir": "tasks/reference_download_ucsc"
+  },
+  "resources": {},
+  "rule": "reference_download_ucsc_results",
+  "temp": [],
+  "threads": 1,
+  "wildcards": {},
+  "wrapper": null
+ },
+ {
   "benchmark": "tasks/reference_download_ucsc/benchmarks/reference_download/reference_download.sidecars.tsv",
   "input": [
    "tasks/reference_download_ucsc/work/reference_download/out/reference.fa"
@@ -47,7 +72,7 @@
    "partition": "medium",
    "runtime": 60
   },
-  "rule": "reference_download_ucsc_reference_download_sidecars_run",
+  "rule": "reference_download_ucsc_sidecars_run",
   "temp": [],
   "threads": 1,
   "wildcards": {},
@@ -80,35 +105,10 @@
    "partition": "medium",
    "runtime": 120
   },
-  "rule": "reference_download_ucsc_reference_download_ucsc_run",
+  "rule": "reference_download_ucsc_ucsc_run",
   "temp": [],
   "threads": 1,
   "wildcards": {},
   "wrapper": "file://<repo>/snappy_wrappers/wrappers/reference_download/ucsc"
- },
- {
-  "benchmark": null,
-  "input": [
-   "tasks/reference_download_ucsc/work/reference_download/out/reference.fa",
-   "tasks/reference_download_ucsc/work/reference_download/out/reference.fa.md5",
-   "tasks/reference_download_ucsc/work/reference_download/out/reference.fa.fai",
-   "tasks/reference_download_ucsc/work/reference_download/out/reference.fa.fai.md5",
-   "tasks/reference_download_ucsc/work/reference_download/out/reference.dict",
-   "tasks/reference_download_ucsc/work/reference_download/out/reference.dict.md5"
-  ],
-  "local": true,
-  "log": [],
-  "output": [
-   "tasks/reference_download_ucsc/output/.manifest.tsv"
-  ],
-  "params": {
-   "task_dir": "tasks/reference_download_ucsc"
-  },
-  "resources": {},
-  "rule": "reference_download_ucsc_results",
-  "temp": [],
-  "threads": 1,
-  "wildcards": {},
-  "wrapper": null
  }
 ]

@@ -77,7 +77,7 @@
    "partition": "medium",
    "runtime": 4320
   },
-  "rule": "ngs_mapping_bwa_ngs_mapping_bwa_run",
+  "rule": "ngs_mapping_bwa_bwa_run",
   "temp": [],
   "threads": 1,
   "wildcards": {
@@ -114,34 +114,11 @@
    "partition": "medium",
    "runtime": 1440
   },
-  "rule": "reference_index_bwa_reference_index_bwa_run",
+  "rule": "reference_index_bwa_bwa_run",
   "temp": [],
   "threads": 1,
   "wildcards": {},
   "wrapper": "file://<repo>/snappy_wrappers/wrappers/reference_index/bwa"
- },
- {
-  "benchmark": null,
-  "input": [
-   "tasks/sv_calling_wgs_delly2/work/case001subregion/out/case001subregion.vcf.gz",
-   "tasks/sv_calling_wgs_delly2/work/case001subregion/out/case001subregion.vcf.gz.tbi",
-   "tasks/sv_calling_wgs_delly2/work/case001subregion/out/case001subregion.vcf.gz.md5",
-   "tasks/sv_calling_wgs_delly2/work/case001subregion/out/case001subregion.vcf.gz.tbi.md5"
-  ],
-  "local": true,
-  "log": [],
-  "output": [
-   "tasks/sv_calling_wgs_delly2/output/.manifest.tsv"
-  ],
-  "params": {
-   "task_dir": "tasks/sv_calling_wgs_delly2"
-  },
-  "resources": {},
-  "rule": "sv_calling_wgs_delly2_results",
-  "temp": [],
-  "threads": 1,
-  "wildcards": {},
-  "wrapper": null
  },
  {
   "benchmark": "tasks/sv_calling_wgs_delly2/benchmarks/case001subregion-N1-DNA1-WES1/case001subregion-N1-DNA1-WES1.call.tsv",
@@ -179,7 +156,7 @@
    "partition": "medium",
    "runtime": 2880
   },
-  "rule": "sv_calling_wgs_delly2_sv_calling_wgs_delly2_call",
+  "rule": "sv_calling_wgs_delly2_delly2_call",
   "temp": [
    "tasks/sv_calling_wgs_delly2/work/case001subregion-N1-DNA1-WES1/out/case001subregion-N1-DNA1-WES1.call.bcf",
    "tasks/sv_calling_wgs_delly2/work/case001subregion-N1-DNA1-WES1/out/case001subregion-N1-DNA1-WES1.call.bcf.csi"
@@ -227,7 +204,7 @@
    "partition": "medium",
    "runtime": 2880
   },
-  "rule": "sv_calling_wgs_delly2_sv_calling_wgs_delly2_genotype",
+  "rule": "sv_calling_wgs_delly2_delly2_genotype",
   "temp": [
    "tasks/sv_calling_wgs_delly2/work/case001subregion-N1-DNA1-WES1/out/case001subregion-N1-DNA1-WES1.genotype.bcf",
    "tasks/sv_calling_wgs_delly2/work/case001subregion-N1-DNA1-WES1/out/case001subregion-N1-DNA1-WES1.genotype.bcf.csi"
@@ -263,7 +240,7 @@
    "partition": "medium",
    "runtime": 1440
   },
-  "rule": "sv_calling_wgs_delly2_sv_calling_wgs_delly2_merge_calls",
+  "rule": "sv_calling_wgs_delly2_delly2_merge_calls",
   "temp": [
    "tasks/sv_calling_wgs_delly2/work/case001subregion/out/case001subregion.merge_calls.bcf",
    "tasks/sv_calling_wgs_delly2/work/case001subregion/out/case001subregion.merge_calls.bcf.csi"
@@ -301,12 +278,35 @@
    "partition": "medium",
    "runtime": 1440
   },
-  "rule": "sv_calling_wgs_delly2_sv_calling_wgs_delly2_merge_genotypes",
+  "rule": "sv_calling_wgs_delly2_delly2_merge_genotypes",
   "temp": [],
   "threads": 1,
   "wildcards": {
    "library_name": "case001subregion"
   },
   "wrapper": "file://<repo>/snappy_wrappers/wrappers/delly2/germline/merge_genotypes"
+ },
+ {
+  "benchmark": null,
+  "input": [
+   "tasks/sv_calling_wgs_delly2/work/case001subregion/out/case001subregion.vcf.gz",
+   "tasks/sv_calling_wgs_delly2/work/case001subregion/out/case001subregion.vcf.gz.tbi",
+   "tasks/sv_calling_wgs_delly2/work/case001subregion/out/case001subregion.vcf.gz.md5",
+   "tasks/sv_calling_wgs_delly2/work/case001subregion/out/case001subregion.vcf.gz.tbi.md5"
+  ],
+  "local": true,
+  "log": [],
+  "output": [
+   "tasks/sv_calling_wgs_delly2/output/.manifest.tsv"
+  ],
+  "params": {
+   "task_dir": "tasks/sv_calling_wgs_delly2"
+  },
+  "resources": {},
+  "rule": "sv_calling_wgs_delly2_results",
+  "temp": [],
+  "threads": 1,
+  "wildcards": {},
+  "wrapper": null
  }
 ]

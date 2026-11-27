@@ -1423,7 +1423,7 @@ class BaseStep:
                 options = part.rule_options.get(action, RuleOptions())
                 if options.explicit or options.cache != cached:
                     continue
-                name = f"{self.step_name}_{part.name}_{action}"
+                name = f"{part.name}_{action}"
                 rules.append(WrapperRule(name, part.name, action, options))
         return rules
 

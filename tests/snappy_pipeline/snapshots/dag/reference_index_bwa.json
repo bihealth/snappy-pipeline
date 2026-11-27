@@ -48,7 +48,7 @@
    "partition": "medium",
    "runtime": 1440
   },
-  "rule": "reference_index_bwa_reference_index_bwa_run",
+  "rule": "reference_index_bwa_bwa_run",
   "temp": [],
   "threads": 1,
   "wildcards": {},

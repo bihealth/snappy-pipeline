@@ -6,6 +6,7 @@ from types import SimpleNamespace
 
 from ruamel.yaml import YAML
 
+from snappy_pipeline.rule_names import task_parts
 from snappy_pipeline.rulegraph import fit_labels, rule_graph_dot, rule_label, write_rulegraph
 
 #: Snakemake's ``--rulegraph`` output of a small run
@@ -21,10 +22,11 @@ DOT = """digraph snakemake_dag {
 }
 """
 
-TASK_STEPS = {
-    "mapping": "ngs_mapping",
-    "filtration": "variant_filtration",
-    "filtration_dkfz": "variant_filtration",
+TASK_PARTS = {
+    "mapping": {"bwa": ("run",), "qc_summary": ("run",)},
+    "mapping_qc": {"alfred": ("run",)},
+    "filtration": {"filter": ("run",)},
+    "filtration_dkfz": {"filter": ("run",)},
 }
 
 
@@ -34,21 +36,18 @@ class Job:
 
 
 def test_rule_label_names_the_task_and_the_rest_of_the_rule():
-    assert rule_label("mapping_ngs_mapping_bwa_run", TASK_STEPS) == "mapping: bwa run"
-    # the longest task name wins, so a task that prefixes another is not mistaken for it
-    assert (
-        rule_label("filtration_dkfz_variant_filtration_filter_run", TASK_STEPS)
-        == "filtration_dkfz: filter run"
-    )
-    assert (
-        rule_label("filtration_variant_filtration_filter_run", TASK_STEPS)
-        == "filtration: filter run"
-    )
-    assert rule_label("all", TASK_STEPS) == "all"
+    assert rule_label("mapping_bwa_run", TASK_PARTS) == "mapping: bwa run"
+    # the task whose part matches wins over the longer task name
+    assert rule_label("mapping_qc_summary_run", TASK_PARTS) == "mapping: qc summary run"
+    assert rule_label("mapping_qc_alfred_run", TASK_PARTS) == "mapping_qc: alfred run"
+    assert rule_label("filtration_dkfz_filter_run", TASK_PARTS) == "filtration_dkfz: filter run"
+    assert rule_label("filtration_filter_run", TASK_PARTS) == "filtration: filter run"
+    assert rule_label("mapping_results", TASK_PARTS) == "mapping: results"
+    assert rule_label("all", TASK_PARTS) == "all"
 
 
 def test_rule_graph_dot_lists_the_rules_and_their_edges():
-    bwa_a, bwa_b, calls, all_ = Job("bwa"), Job("bwa"), Job("calls_x_freebayes"), Job("all")
+    bwa_a, bwa_b, calls, all_ = Job("bwa"), Job("bwa"), Job("calls_freebayes"), Job("all")
     dag = SimpleNamespace(
         jobs=[all_, calls, bwa_a, bwa_b],
         dependencies={all_: [calls], calls: [bwa_a, bwa_b], bwa_a: [], bwa_b: []},
@@ -57,12 +56,12 @@ def test_rule_graph_dot_lists_the_rules_and_their_edges():
         "digraph snakemake_dag {",
         '\t0[label = "all", style="rounded"];',
         '\t1[label = "bwa", style="rounded"];',
-        '\t2[label = "calls_x_freebayes", style="rounded"];',
+        '\t2[label = "calls_freebayes", style="rounded"];',
         "\t2 -> 0",
         "\t1 -> 2",
         "}",
     ]
-    assert rule_graph_dot(dag, {"calls": "x"}, skip=["all"]).splitlines() == [
+    assert rule_graph_dot(dag, {"calls": {"freebayes": ("run",)}}, skip=["all"]).splitlines() == [
         "digraph snakemake_dag {",
         '\t0[label = "bwa", style="rounded"];',
         '\t1[label = "calls: freebayes", style="rounded"];',
@@ -112,8 +111,7 @@ def test_the_rulegraph_job_draws_the_whole_run(tmp_path):
 
     root = Path(snappy_pipeline.__file__).resolve().parent.parent
     pipeline = root / ".tests" / "test-workflow" / "pipelines" / "snappy-cancer_wes"
-    tasks = YAML(typ="safe").load(pipeline / "config.yaml")["tasks"]
-    task_steps = {task["name"]: task["step"] for task in tasks}
+    task_names = [t["name"] for t in YAML(typ="safe").load(pipeline / "config.yaml")["tasks"]]
     with SnakemakeApi(OutputSettings()) as api:
         workflow_api = api.workflow(
             resource_settings=ResourceSettings(cores=1),
@@ -129,8 +127,9 @@ def test_the_rulegraph_job_draws_the_whole_run(tmp_path):
         jobs = [job for job in workflow.dag.jobs if job.rule.name == "rulegraph"]
         assert len(jobs) == 1
         assert is_flagged(jobs[0].output[0], "report")
-        skip = ["all", "rulegraph", *(f"{name}_results" for name in task_steps)]
-        dot = rule_graph_dot(workflow.dag, task_steps, skip=skip)
+        skip = ["all", "rulegraph", *(f"{name}_results" for name in task_names)]
+        parts = task_parts(workflow.globals["task_instances"])
+        dot = rule_graph_dot(workflow.dag, parts, skip=skip)
 
     labels = re.findall(r'label = "([^"]+)"', dot)
     assert len(labels) > 20

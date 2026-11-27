@@ -78,7 +78,7 @@
    "partition": "medium",
    "runtime": 4320
   },
-  "rule": "ngs_mapping_bwa_ngs_mapping_bwa_run",
+  "rule": "ngs_mapping_bwa_bwa_run",
   "temp": [],
   "threads": 1,
   "wildcards": {
@@ -145,7 +145,7 @@
    "partition": "medium",
    "runtime": 4320
   },
-  "rule": "ngs_mapping_bwa_ngs_mapping_bwa_run",
+  "rule": "ngs_mapping_bwa_bwa_run",
   "temp": [],
   "threads": 1,
   "wildcards": {
@@ -182,7 +182,7 @@
    "partition": "medium",
    "runtime": 1440
   },
-  "rule": "reference_index_bwa_reference_index_bwa_run",
+  "rule": "reference_index_bwa_bwa_run",
   "temp": [],
   "threads": 1,
   "wildcards": {},
@@ -262,7 +262,7 @@
    "partition": "medium",
    "runtime": 1440
   },
-  "rule": "somatic_targeted_seq_cnv_calling_sequenza_somatic_targeted_seq_cnv_calling_sequenza_coverage",
+  "rule": "somatic_targeted_seq_cnv_calling_sequenza_sequenza_coverage",
   "temp": [],
   "threads": 1,
   "wildcards": {
@@ -296,7 +296,7 @@
    "partition": "medium",
    "runtime": 60
   },
-  "rule": "somatic_targeted_seq_cnv_calling_sequenza_somatic_targeted_seq_cnv_calling_sequenza_gcreference",
+  "rule": "somatic_targeted_seq_cnv_calling_sequenza_sequenza_gcreference",
   "temp": [],
   "threads": 1,
   "wildcards": {},
@@ -406,7 +406,7 @@
    "partition": "medium",
    "runtime": 1440
   },
-  "rule": "somatic_targeted_seq_cnv_calling_sequenza_somatic_targeted_seq_cnv_calling_sequenza_run",
+  "rule": "somatic_targeted_seq_cnv_calling_sequenza_sequenza_run",
   "temp": [],
   "threads": 1,
   "wildcards": {

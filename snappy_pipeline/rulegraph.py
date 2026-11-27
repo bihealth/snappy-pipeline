@@ -3,9 +3,11 @@
 import os
 import xml.etree.ElementTree as ET
 from collections import defaultdict
-from collections.abc import Iterable, Mapping
+from collections.abc import Iterable
 
 from snakevision.snakevision import SnakeVision
+
+from snappy_pipeline.rule_names import TaskParts, parse_rule_name
 
 #: The SVG below the project directory, a ``report()`` output of the main Snakefile
 RULEGRAPH_SVG = "report/rulegraph.svg"
@@ -18,27 +20,20 @@ CHAR_WIDTH = 9.0
 SVG_NS = "http://www.w3.org/2000/svg"
 
 
-def rule_label(rule: str, task_steps: Mapping[str, str]) -> str:
-    """``<task>: <part> <action>`` for a task's rule ``<task>_<step>_<part>_<action>``, else ``rule``.
-
-    ``task_steps`` maps the task names to their steps.
-    """
-    # A task name may be the prefix of another one's (filtration, filtration_dkfz)
-    for task in sorted(task_steps, key=len, reverse=True):
-        prefix = f"{task}_"
-        if rule.startswith(prefix):
-            rest = rule.removeprefix(prefix).removeprefix(f"{task_steps[task]}_")
-            return f"{task}: {rest.replace('_', ' ')}"
-    return rule
+def rule_label(rule: str, parts: TaskParts) -> str:
+    """``<task>: <part> <action>`` for a task's rule ``<task>_<part>_<action>``, else ``rule``."""
+    parsed = parse_rule_name(rule, parts)
+    if parsed is None:
+        return rule
+    rest = f"{parsed.part}_{parsed.action}" if parsed.part else rule.removeprefix(f"{parsed.task}_")
+    return f"{parsed.task}: {rest.replace('_', ' ')}"
 
 
-def rule_graph_dot(
-    dag, task_steps: Mapping[str, str] | None = None, skip: Iterable[str] = ()
-) -> str:
+def rule_graph_dot(dag, parts: TaskParts | None = None, skip: Iterable[str] = ()) -> str:
     """The rule graph of Snakemake's ``dag`` as DOT text, as ``snakemake --rulegraph`` prints it.
 
-    One node per rule with a job, labelled by ``rule_label`` when ``task_steps`` is given, and
-    one edge from a rule to each rule that reads its outputs. The rules in ``skip`` are left out.
+    One node per rule with a job, labelled by ``rule_label`` with the tasks' ``parts``, and one
+    edge from a rule to each rule that reads its outputs. The rules in ``skip`` are left out.
     """
     skipped = set(skip)
     graph: dict[str, set[str]] = defaultdict(set)
@@ -49,7 +44,7 @@ def rule_graph_dot(
             dep.rule.name for dep in dag.dependencies[job] if dep.rule.name not in skipped
         )
     ids = {name: i for i, name in enumerate(sorted(graph))}
-    labels = {name: rule_label(name, task_steps) if task_steps else name for name in ids}
+    labels = {name: rule_label(name, parts or {}) for name in ids}
     nodes = [f'\t{i}[label = "{labels[name]}", style="rounded"];' for name, i in ids.items()]
     edges = [f"\t{ids[dep]} -> {ids[name]}" for name in ids for dep in sorted(graph[name])]
     return "digraph snakemake_dag {\n" + "\n".join(nodes + edges) + "\n}\n"

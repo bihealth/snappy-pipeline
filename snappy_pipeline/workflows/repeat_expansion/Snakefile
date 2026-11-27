@@ -14,7 +14,7 @@ include: "../common/wrapper_rules.rules"
 # Rules =======================================================================
 
 
-rule repeat_expansion_annotate_expansionhunter:
+rule annotate_expansionhunter:
     input:
         unpack(wf.get_input_files("expansionhunter", "annotate")),
     output:

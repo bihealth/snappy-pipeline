@@ -77,7 +77,7 @@
    "partition": "medium",
    "runtime": 4320
   },
-  "rule": "ngs_mapping_bwa_ngs_mapping_bwa_run",
+  "rule": "ngs_mapping_bwa_bwa_run",
   "temp": [],
   "threads": 1,
   "wildcards": {
@@ -114,34 +114,11 @@
    "partition": "medium",
    "runtime": 1440
   },
-  "rule": "reference_index_bwa_reference_index_bwa_run",
+  "rule": "reference_index_bwa_bwa_run",
   "temp": [],
   "threads": 1,
   "wildcards": {},
   "wrapper": "file://<repo>/snappy_wrappers/wrappers/reference_index/bwa"
- },
- {
-  "benchmark": null,
-  "input": [
-   "tasks/variant_annotation_mehari/work/case001subregion/out/case001subregion.vcf.gz",
-   "tasks/variant_annotation_mehari/work/case001subregion/out/case001subregion.vcf.gz.tbi",
-   "tasks/variant_annotation_mehari/work/case001subregion/out/case001subregion.vcf.gz.md5",
-   "tasks/variant_annotation_mehari/work/case001subregion/out/case001subregion.vcf.gz.tbi.md5"
-  ],
-  "local": true,
-  "log": [],
-  "output": [
-   "tasks/variant_annotation_mehari/output/.manifest.tsv"
-  ],
-  "params": {
-   "task_dir": "tasks/variant_annotation_mehari"
-  },
-  "resources": {},
-  "rule": "variant_annotation_mehari_results",
-  "temp": [],
-  "threads": 1,
-  "wildcards": {},
-  "wrapper": null
  },
  {
   "benchmark": "tasks/variant_annotation_mehari/benchmarks/case001subregion/case001subregion.tsv",
@@ -192,13 +169,36 @@
    "partition": "medium",
    "runtime": 20
   },
-  "rule": "variant_annotation_mehari_variant_annotation_mehari_run",
+  "rule": "variant_annotation_mehari_mehari_run",
   "temp": [],
   "threads": 1,
   "wildcards": {
    "library_name": "case001subregion"
   },
   "wrapper": "file://<repo>/snappy_wrappers/wrappers/mehari/run"
+ },
+ {
+  "benchmark": null,
+  "input": [
+   "tasks/variant_annotation_mehari/work/case001subregion/out/case001subregion.vcf.gz",
+   "tasks/variant_annotation_mehari/work/case001subregion/out/case001subregion.vcf.gz.tbi",
+   "tasks/variant_annotation_mehari/work/case001subregion/out/case001subregion.vcf.gz.md5",
+   "tasks/variant_annotation_mehari/work/case001subregion/out/case001subregion.vcf.gz.tbi.md5"
+  ],
+  "local": true,
+  "log": [],
+  "output": [
+   "tasks/variant_annotation_mehari/output/.manifest.tsv"
+  ],
+  "params": {
+   "task_dir": "tasks/variant_annotation_mehari"
+  },
+  "resources": {},
+  "rule": "variant_annotation_mehari_results",
+  "temp": [],
+  "threads": 1,
+  "wildcards": {},
+  "wrapper": null
  },
  {
   "benchmark": "tasks/variant_calling_gatk4_hc_gvcf/benchmarks/case001subregion/case001subregion.combine_gvcfs.tsv",
@@ -245,7 +245,7 @@
    "partition": "medium",
    "runtime": 2880
   },
-  "rule": "variant_calling_gatk4_hc_gvcf_variant_calling_gatk4_hc_gvcf_combine_gvcfs",
+  "rule": "variant_calling_gatk4_hc_gvcf_gatk4_hc_gvcf_combine_gvcfs",
   "temp": [],
   "threads": 1,
   "wildcards": {
@@ -300,7 +300,7 @@
    "partition": "medium",
    "runtime": 2880
   },
-  "rule": "variant_calling_gatk4_hc_gvcf_variant_calling_gatk4_hc_gvcf_discover",
+  "rule": "variant_calling_gatk4_hc_gvcf_gatk4_hc_gvcf_discover",
   "temp": [
    "tasks/variant_calling_gatk4_hc_gvcf/work/case001subregion-N1-DNA1-WES1/out/case001subregion-N1-DNA1-WES1.discover.g.vcf.gz",
    "tasks/variant_calling_gatk4_hc_gvcf/work/case001subregion-N1-DNA1-WES1/out/case001subregion-N1-DNA1-WES1.discover.g.vcf.gz.tbi"
@@ -361,7 +361,7 @@
    "partition": "medium",
    "runtime": 2880
   },
-  "rule": "variant_calling_gatk4_hc_gvcf_variant_calling_gatk4_hc_gvcf_genotype",
+  "rule": "variant_calling_gatk4_hc_gvcf_gatk4_hc_gvcf_genotype",
   "temp": [],
   "threads": 1,
   "wildcards": {

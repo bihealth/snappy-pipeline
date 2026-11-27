@@ -22,7 +22,7 @@ tools = wf.config.pvactools
 
 if tools.pvacseq.enabled:
 
-    rule somatic_neoepitope_prediction_pvacseq_run:
+    rule pvacseq_run:
         input:
             unpack(wf.get_input_files("pvacseq", "run")),
         output:
@@ -48,7 +48,7 @@ if tools.pvacseq.enabled:
 
 if tools.pvacfuse.enabled:
 
-    rule somatic_neoepitope_prediction_pvacfuse_run:
+    rule pvacfuse_run:
         input:
             unpack(wf.get_input_files("pvacfuse", "run")),
         output:
@@ -74,7 +74,7 @@ if tools.pvacfuse.enabled:
 
 if tools.pvacsplice.enabled:
 
-    rule somatic_neoepitope_prediction_pvacsplice_run:
+    rule pvacsplice_run:
         input:
             unpack(wf.get_input_files("pvacsplice", "run")),
         output:
@@ -103,7 +103,7 @@ predictions = [getattr(tools, name) for name in wf.enabled_predictions]
 
 if any(prediction.netmhc_stab.enabled for prediction in predictions):
 
-    rule somatic_neoepitope_prediction_netstab_run:
+    rule netstab_run:
         input:
             unpack(wf.get_input_files("netstab", "run")),
         output:

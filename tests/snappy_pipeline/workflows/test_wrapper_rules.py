@@ -19,7 +19,7 @@ def _step(parts):
     return step
 
 
-def test_one_rule_per_wrapper_action_named_after_the_step_part_and_action():
+def test_one_rule_per_wrapper_action_named_after_the_part_and_action():
     tool = SimpleNamespace(
         name="tool", actions=("prepare", "run", "write"), wrappers={"run": "x", "prepare": "y"}
     )
@@ -28,8 +28,8 @@ def test_one_rule_per_wrapper_action_named_after_the_step_part_and_action():
     rules = _step({"helper": helper, "tool": tool}).wrapper_rules()
 
     assert [(r.name, r.part, r.action) for r in rules] == [
-        ("example_tool_prepare", "tool", "prepare"),
-        ("example_tool_run", "tool", "run"),
+        ("tool_prepare", "tool", "prepare"),
+        ("tool_run", "tool", "run"),
     ]
     assert rules[0].options == RuleOptions()
 

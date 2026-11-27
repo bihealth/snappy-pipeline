@@ -65,7 +65,7 @@
    "partition": "medium",
    "runtime": 60
   },
-  "rule": "ngs_data_qc_ngs_chew_ngs_data_qc_ngs_chew_compare",
+  "rule": "ngs_data_qc_ngs_chew_ngs_chew_compare",
   "temp": [],
   "threads": 1,
   "wildcards": {},
@@ -100,7 +100,7 @@
    "partition": "medium",
    "runtime": 240
   },
-  "rule": "ngs_data_qc_ngs_chew_ngs_data_qc_ngs_chew_fingerprint",
+  "rule": "ngs_data_qc_ngs_chew_ngs_chew_fingerprint",
   "temp": [],
   "threads": 1,
   "wildcards": {
@@ -137,7 +137,7 @@
    "partition": "medium",
    "runtime": 240
   },
-  "rule": "ngs_data_qc_ngs_chew_ngs_data_qc_ngs_chew_fingerprint",
+  "rule": "ngs_data_qc_ngs_chew_ngs_chew_fingerprint",
   "temp": [],
   "threads": 1,
   "wildcards": {
@@ -199,7 +199,7 @@
    "partition": "medium",
    "runtime": 120
   },
-  "rule": "ngs_data_qc_ngs_chew_ngs_data_qc_qc_summary_run",
+  "rule": "ngs_data_qc_ngs_chew_qc_summary_run",
   "temp": [],
   "threads": 1,
   "wildcards": {},
@@ -297,7 +297,7 @@
    "partition": "medium",
    "runtime": 4320
   },
-  "rule": "ngs_mapping_bwa_ngs_mapping_bwa_run",
+  "rule": "ngs_mapping_bwa_bwa_run",
   "temp": [],
   "threads": 1,
   "wildcards": {
@@ -364,7 +364,7 @@
    "partition": "medium",
    "runtime": 4320
   },
-  "rule": "ngs_mapping_bwa_ngs_mapping_bwa_run",
+  "rule": "ngs_mapping_bwa_bwa_run",
   "temp": [],
   "threads": 1,
   "wildcards": {
@@ -401,7 +401,7 @@
    "partition": "medium",
    "runtime": 1440
   },
-  "rule": "reference_index_bwa_reference_index_bwa_run",
+  "rule": "reference_index_bwa_bwa_run",
   "temp": [],
   "threads": 1,
   "wildcards": {},

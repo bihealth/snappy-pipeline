@@ -101,7 +101,7 @@
    "partition": "medium",
    "runtime": 5760
   },
-  "rule": "wgs_sv_export_external_wgs_sv_export_external_varfish_annotator_external_annotate",
+  "rule": "wgs_sv_export_external_varfish_annotator_external_annotate",
   "temp": [],
   "threads": 1,
   "wildcards": {
@@ -139,7 +139,7 @@
    "partition": "medium",
    "runtime": 120
   },
-  "rule": "wgs_sv_export_external_wgs_sv_export_external_varfish_annotator_external_merge_vcf",
+  "rule": "wgs_sv_export_external_varfish_annotator_external_merge_vcf",
   "temp": [
    "tasks/wgs_sv_export_external/work/case001subregion/out/case001subregion.vcf.gz",
    "tasks/wgs_sv_export_external/work/case001subregion/out/case001subregion.vcf.gz.tbi"
@@ -164,7 +164,7 @@
    }
   },
   "resources": {},
-  "rule": "wgs_sv_export_external_wgs_sv_export_external_write_pedigree_run",
+  "rule": "wgs_sv_export_external_write_pedigree_run",
   "temp": [],
   "threads": 1,
   "wildcards": {

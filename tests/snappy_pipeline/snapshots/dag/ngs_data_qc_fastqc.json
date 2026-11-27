@@ -49,7 +49,7 @@
    "partition": "medium",
    "runtime": 240
   },
-  "rule": "ngs_data_qc_fastqc_ngs_data_qc_fastqc_run",
+  "rule": "ngs_data_qc_fastqc_fastqc_run",
   "temp": [],
   "threads": 1,
   "wildcards": {
@@ -90,7 +90,7 @@
    "partition": "medium",
    "runtime": 240
   },
-  "rule": "ngs_data_qc_fastqc_ngs_data_qc_fastqc_run",
+  "rule": "ngs_data_qc_fastqc_fastqc_run",
   "temp": [],
   "threads": 1,
   "wildcards": {

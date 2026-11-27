@@ -74,7 +74,7 @@
    "partition": "medium",
    "runtime": 2400
   },
-  "rule": "hla_typing_optitype_hla_typing_optitype_run",
+  "rule": "hla_typing_optitype_optitype_run",
   "temp": [],
   "threads": 1,
   "wildcards": {
@@ -126,7 +126,7 @@
    "partition": "medium",
    "runtime": 2400
   },
-  "rule": "hla_typing_optitype_hla_typing_optitype_run",
+  "rule": "hla_typing_optitype_optitype_run",
   "temp": [],
   "threads": 1,
   "wildcards": {

@@ -21,7 +21,7 @@ exclude_flag = step_config.exclude_variant_with_flag
 # cbioportal study metadata ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 
-rule cbioportal_export_meta_files:
+rule meta_files:
     output:
         wf.get_output_files("cbioportal_meta_files", "run"),
     log:
@@ -38,7 +38,7 @@ rule cbioportal_export_meta_files:
 # Merge all sample MAF files --------------------------------------------------
 
 
-rule cbioportal_export_concatenate_maf:
+rule concatenate_maf:
     input:
         unpack(wf.get_input_files("cbioportal_mutations", "run")),
     output:
@@ -63,7 +63,7 @@ if step_config.copy_number_alteration.enabled:
     # Create CNA files (discrete, continuous from cns files) ----------------------
 
     # Merge sample-based CNA files to cBioPortal ----------------------------------
-    rule cbioportal_export_concatenate_cna_log2:
+    rule concatenate_cna_log2:
         input:
             unpack(wf.get_input_files("cbioportal_cna", "log2")),
         output:
@@ -80,7 +80,7 @@ if step_config.copy_number_alteration.enabled:
         wrapper:
             wf.get_wrapper("cbioportal_cna", "log2")
 
-    rule cbioportal_export_concatenate_cna_gistic:
+    rule concatenate_cna_gistic:
         input:
             unpack(wf.get_input_files("cbioportal_cna", "gistic")),
         output:
@@ -98,7 +98,7 @@ if step_config.copy_number_alteration.enabled:
             wf.get_wrapper("cbioportal_cna", "gistic")
 
     # Merge sample-based segment files to cBioPortal ------------------------------
-    rule cbioportal_export_concatenate_segments:
+    rule concatenate_segments:
         input:
             unpack(wf.get_input_files("cbioportal_segment", "run")),
         output:
@@ -120,7 +120,7 @@ if step_config.copy_number_alteration.enabled:
 
 if step_config.expression.enabled:
 
-    rule cbioportal_export_expression:
+    rule expression:
         input:
             unpack(wf.get_input_files("cbioportal_expression", "run")),
         output:

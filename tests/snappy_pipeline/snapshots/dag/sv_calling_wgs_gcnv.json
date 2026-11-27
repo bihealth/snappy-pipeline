@@ -47,7 +47,7 @@
    "partition": "medium",
    "runtime": 1440
   },
-  "rule": "gcnv_model_wgs_gcnv_model_gcnv_annotate_gc",
+  "rule": "gcnv_model_wgs_gcnv_annotate_gc",
   "temp": [
    "tasks/gcnv_model_wgs/work/wgs/out/wgs.annotate_gc.tsv"
   ],
@@ -86,7 +86,7 @@
    "partition": "medium",
    "runtime": 1440
   },
-  "rule": "gcnv_model_wgs_gcnv_model_gcnv_coverage",
+  "rule": "gcnv_model_wgs_gcnv_coverage",
   "temp": [
    "tasks/gcnv_model_wgs/work/case001subregion-N1-DNA1-WES1/out/case001subregion-N1-DNA1-WES1.coverage.tsv"
   ],
@@ -126,7 +126,7 @@
    "partition": "medium",
    "runtime": 1440
   },
-  "rule": "gcnv_model_wgs_gcnv_model_gcnv_filter_intervals",
+  "rule": "gcnv_model_wgs_gcnv_filter_intervals",
   "temp": [
    "tasks/gcnv_model_wgs/work/wgs/out/wgs.filter_intervals.interval_list"
   ],
@@ -135,41 +135,6 @@
    "library_kit": "wgs"
   },
   "wrapper": "file://<repo>/snappy_wrappers/wrappers/gcnv/filter_intervals"
- },
- {
-  "benchmark": "tasks/gcnv_model_wgs/benchmarks/wgs/wgs.preprocess_intervals.tsv",
-  "input": [
-   "<repo>/.tests/test-workflow/resources/refs/subregion.fa",
-   "<repo>/.tests/test-workflow/resources/refs/subregion.fa.fai",
-   "<repo>/.tests/test-workflow/resources/refs/subregion.dict"
-  ],
-  "log": [
-   "tasks/gcnv_model_wgs/work/wgs/log/wgs.preprocess_intervals.log"
-  ],
-  "output": [
-   "tasks/gcnv_model_wgs/work/wgs/out/wgs.interval_list"
-  ],
-  "params": {
-   "args": {
-    "code": "<hash>",
-    "interval_merging_rule": "OVERLAPPING_ONLY",
-    "padding": 0
-   }
-  },
-  "resources": {
-   "mem": "7.68 GB",
-   "mem_mb": 7680,
-   "mem_mib": 7325,
-   "partition": "medium",
-   "runtime": 1440
-  },
-  "rule": "gcnv_model_wgs_gcnv_model_gcnv_preprocess_intervals",
-  "temp": [],
-  "threads": 1,
-  "wildcards": {
-   "library_kit": "wgs"
-  },
-  "wrapper": "file://<repo>/snappy_wrappers/wrappers/gcnv/preprocess_intervals_wgs"
  },
  {
   "benchmark": "tasks/gcnv_model_wgs/benchmarks/wgs/wgs.scatter_intervals.tsv",
@@ -205,6 +170,41 @@
    "library_kit": "wgs"
   },
   "wrapper": "file://<repo>/snappy_wrappers/wrappers/gcnv/scatter_intervals"
+ },
+ {
+  "benchmark": "tasks/gcnv_model_wgs/benchmarks/wgs/wgs.preprocess_intervals.tsv",
+  "input": [
+   "<repo>/.tests/test-workflow/resources/refs/subregion.fa",
+   "<repo>/.tests/test-workflow/resources/refs/subregion.fa.fai",
+   "<repo>/.tests/test-workflow/resources/refs/subregion.dict"
+  ],
+  "log": [
+   "tasks/gcnv_model_wgs/work/wgs/log/wgs.preprocess_intervals.log"
+  ],
+  "output": [
+   "tasks/gcnv_model_wgs/work/wgs/out/wgs.interval_list"
+  ],
+  "params": {
+   "args": {
+    "code": "<hash>",
+    "interval_merging_rule": "OVERLAPPING_ONLY",
+    "padding": 0
+   }
+  },
+  "resources": {
+   "mem": "7.68 GB",
+   "mem_mb": 7680,
+   "mem_mib": 7325,
+   "partition": "medium",
+   "runtime": 1440
+  },
+  "rule": "gcnv_model_wgs_gcnv_preprocess_intervals",
+  "temp": [],
+  "threads": 1,
+  "wildcards": {
+   "library_kit": "wgs"
+  },
+  "wrapper": "file://<repo>/snappy_wrappers/wrappers/gcnv/preprocess_intervals_wgs"
  },
  {
   "benchmark": "tasks/ngs_mapping_bwa/benchmarks/case001subregion-N1-DNA1-WES1/case001subregion-N1-DNA1-WES1.mapping.tsv",
@@ -265,7 +265,7 @@
    "partition": "medium",
    "runtime": 4320
   },
-  "rule": "ngs_mapping_bwa_ngs_mapping_bwa_run",
+  "rule": "ngs_mapping_bwa_bwa_run",
   "temp": [],
   "threads": 1,
   "wildcards": {
@@ -302,34 +302,11 @@
    "partition": "medium",
    "runtime": 1440
   },
-  "rule": "reference_index_bwa_reference_index_bwa_run",
+  "rule": "reference_index_bwa_bwa_run",
   "temp": [],
   "threads": 1,
   "wildcards": {},
   "wrapper": "file://<repo>/snappy_wrappers/wrappers/reference_index/bwa"
- },
- {
-  "benchmark": null,
-  "input": [
-   "tasks/sv_calling_wgs_gcnv/work/case001subregion/out/case001subregion.vcf.gz",
-   "tasks/sv_calling_wgs_gcnv/work/case001subregion/out/case001subregion.vcf.gz.tbi",
-   "tasks/sv_calling_wgs_gcnv/work/case001subregion/out/case001subregion.vcf.gz.md5",
-   "tasks/sv_calling_wgs_gcnv/work/case001subregion/out/case001subregion.vcf.gz.tbi.md5"
-  ],
-  "local": true,
-  "log": [],
-  "output": [
-   "tasks/sv_calling_wgs_gcnv/output/.manifest.tsv"
-  ],
-  "params": {
-   "task_dir": "tasks/sv_calling_wgs_gcnv"
-  },
-  "resources": {},
-  "rule": "sv_calling_wgs_gcnv_results",
-  "temp": [],
-  "threads": 1,
-  "wildcards": {},
-  "wrapper": null
  },
  {
   "benchmark": "tasks/sv_calling_wgs_gcnv/benchmarks/case001subregion/case001subregion.wgs.joint_segmentation.tsv",
@@ -360,7 +337,7 @@
    "partition": "medium",
    "runtime": 5760
   },
-  "rule": "sv_calling_wgs_gcnv_sv_calling_wgs_gcnv_joint_germline_cnv_segmentation",
+  "rule": "sv_calling_wgs_gcnv_gcnv_joint_germline_cnv_segmentation",
   "temp": [
    "tasks/sv_calling_wgs_gcnv/work/case001subregion/out/case001subregion.wgs.joint_segmentation.vcf.gz",
    "tasks/sv_calling_wgs_gcnv/work/case001subregion/out/case001subregion.wgs.joint_segmentation.vcf.gz.tbi"
@@ -399,13 +376,36 @@
    "partition": "medium",
    "runtime": 1440
   },
-  "rule": "sv_calling_wgs_gcnv_sv_calling_wgs_gcnv_merge_multikit_families",
+  "rule": "sv_calling_wgs_gcnv_gcnv_merge_multikit_families",
   "temp": [],
   "threads": 1,
   "wildcards": {
    "library_name": "case001subregion"
   },
   "wrapper": "file://<repo>/snappy_wrappers/wrappers/gcnv/merge_multikit_families"
+ },
+ {
+  "benchmark": null,
+  "input": [
+   "tasks/sv_calling_wgs_gcnv/work/case001subregion/out/case001subregion.vcf.gz",
+   "tasks/sv_calling_wgs_gcnv/work/case001subregion/out/case001subregion.vcf.gz.tbi",
+   "tasks/sv_calling_wgs_gcnv/work/case001subregion/out/case001subregion.vcf.gz.md5",
+   "tasks/sv_calling_wgs_gcnv/work/case001subregion/out/case001subregion.vcf.gz.tbi.md5"
+  ],
+  "local": true,
+  "log": [],
+  "output": [
+   "tasks/sv_calling_wgs_gcnv/output/.manifest.tsv"
+  ],
+  "params": {
+   "task_dir": "tasks/sv_calling_wgs_gcnv"
+  },
+  "resources": {},
+  "rule": "sv_calling_wgs_gcnv_results",
+  "temp": [],
+  "threads": 1,
+  "wildcards": {},
+  "wrapper": null
  },
  {
   "benchmark": "tasks/sv_calling_wgs_gcnv/benchmarks/case001subregion-N1-DNA1-WES1/case001subregion-N1-DNA1-WES1.post_germline_calls.tsv",

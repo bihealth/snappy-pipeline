@@ -46,7 +46,7 @@
    "partition": "medium",
    "runtime": 1440
   },
-  "rule": "gcnv_model_targeted_gcnv_model_gcnv_annotate_gc",
+  "rule": "gcnv_model_targeted_gcnv_annotate_gc",
   "temp": [
    "tasks/gcnv_model_targeted/work/MedExome/out/MedExome.annotate_gc.tsv"
   ],
@@ -85,7 +85,7 @@
    "partition": "medium",
    "runtime": 1440
   },
-  "rule": "gcnv_model_targeted_gcnv_model_gcnv_coverage",
+  "rule": "gcnv_model_targeted_gcnv_coverage",
   "temp": [
    "tasks/gcnv_model_targeted/work/case001subregion-N1-DNA1-WES1/out/case001subregion-N1-DNA1-WES1.coverage.tsv"
   ],
@@ -125,7 +125,7 @@
    "partition": "medium",
    "runtime": 1440
   },
-  "rule": "gcnv_model_targeted_gcnv_model_gcnv_filter_intervals",
+  "rule": "gcnv_model_targeted_gcnv_filter_intervals",
   "temp": [
    "tasks/gcnv_model_targeted/work/MedExome/out/MedExome.filter_intervals.interval_list"
   ],
@@ -134,80 +134,6 @@
    "library_kit": "MedExome"
   },
   "wrapper": "file://<repo>/snappy_wrappers/wrappers/gcnv/filter_intervals"
- },
- {
-  "benchmark": "tasks/gcnv_model_targeted/benchmarks/case001subregion-N1-DNA1-WES1/case001subregion-N1-DNA1-WES1.post_germline_calls.tsv",
-  "input": [
-   "tasks/gcnv_model_targeted/work/MedExome/out/MedExome.scatter_intervals"
-  ],
-  "log": [
-   "tasks/gcnv_model_targeted/work/case001subregion-N1-DNA1-WES1/log/case001subregion-N1-DNA1-WES1.post_germline_calls.log"
-  ],
-  "output": [
-   "tasks/gcnv_model_targeted/work/case001subregion-N1-DNA1-WES1/out/case001subregion-N1-DNA1-WES1.post_germline_calls.ratio.tsv",
-   "tasks/gcnv_model_targeted/work/case001subregion-N1-DNA1-WES1/out/case001subregion-N1-DNA1-WES1.post_germline_calls.interval.vcf.gz",
-   "tasks/gcnv_model_targeted/work/case001subregion-N1-DNA1-WES1/out/case001subregion-N1-DNA1-WES1.post_germline_calls.vcf.gz"
-  ],
-  "params": {
-   "args": {
-    "allosomal_contigs": [
-     "X",
-     "Y"
-    ],
-    "autosomal_ref_copy_number": 2,
-    "code": "<hash>"
-   }
-  },
-  "resources": {
-   "mem": "46.08 GB",
-   "mem_mb": 46080,
-   "mem_mib": 43946,
-   "partition": "medium",
-   "runtime": 5760
-  },
-  "rule": "gcnv_model_targeted_gcnv_model_gcnv_post_germline_calls",
-  "temp": [],
-  "threads": 1,
-  "wildcards": {
-   "library_name": "case001subregion-N1-DNA1-WES1"
-  },
-  "wrapper": "file://<repo>/snappy_wrappers/wrappers/gcnv/post_germline_calls"
- },
- {
-  "benchmark": "tasks/gcnv_model_targeted/benchmarks/MedExome/MedExome.preprocess_intervals.tsv",
-  "input": [
-   "<repo>/.tests/test-workflow/resources/refs/subregion.fa",
-   "<repo>/.tests/test-workflow/resources/refs/subregion.fa.fai",
-   "<repo>/.tests/test-workflow/resources/refs/subregion.dict",
-   "<repo>/tests/snappy_pipeline/fixtures/cnvkit_targets.bed"
-  ],
-  "log": [
-   "tasks/gcnv_model_targeted/work/MedExome/log/MedExome.preprocess_intervals.log"
-  ],
-  "output": [
-   "tasks/gcnv_model_targeted/work/MedExome/out/MedExome.interval_list"
-  ],
-  "params": {
-   "args": {
-    "bin_length": 0,
-    "code": "<hash>",
-    "interval_merging_rule": "OVERLAPPING_ONLY"
-   }
-  },
-  "resources": {
-   "mem": "7.68 GB",
-   "mem_mb": 7680,
-   "mem_mib": 7325,
-   "partition": "medium",
-   "runtime": 1440
-  },
-  "rule": "gcnv_model_targeted_gcnv_model_gcnv_preprocess_intervals",
-  "temp": [],
-  "threads": 1,
-  "wildcards": {
-   "library_kit": "MedExome"
-  },
-  "wrapper": "file://<repo>/snappy_wrappers/wrappers/gcnv/preprocess_intervals"
  },
  {
   "benchmark": "tasks/gcnv_model_targeted/benchmarks/MedExome/MedExome.scatter_intervals.tsv",
@@ -243,6 +169,80 @@
    "library_kit": "MedExome"
   },
   "wrapper": "file://<repo>/snappy_wrappers/wrappers/gcnv/scatter_intervals"
+ },
+ {
+  "benchmark": "tasks/gcnv_model_targeted/benchmarks/case001subregion-N1-DNA1-WES1/case001subregion-N1-DNA1-WES1.post_germline_calls.tsv",
+  "input": [
+   "tasks/gcnv_model_targeted/work/MedExome/out/MedExome.scatter_intervals"
+  ],
+  "log": [
+   "tasks/gcnv_model_targeted/work/case001subregion-N1-DNA1-WES1/log/case001subregion-N1-DNA1-WES1.post_germline_calls.log"
+  ],
+  "output": [
+   "tasks/gcnv_model_targeted/work/case001subregion-N1-DNA1-WES1/out/case001subregion-N1-DNA1-WES1.post_germline_calls.ratio.tsv",
+   "tasks/gcnv_model_targeted/work/case001subregion-N1-DNA1-WES1/out/case001subregion-N1-DNA1-WES1.post_germline_calls.interval.vcf.gz",
+   "tasks/gcnv_model_targeted/work/case001subregion-N1-DNA1-WES1/out/case001subregion-N1-DNA1-WES1.post_germline_calls.vcf.gz"
+  ],
+  "params": {
+   "args": {
+    "allosomal_contigs": [
+     "X",
+     "Y"
+    ],
+    "autosomal_ref_copy_number": 2,
+    "code": "<hash>"
+   }
+  },
+  "resources": {
+   "mem": "46.08 GB",
+   "mem_mb": 46080,
+   "mem_mib": 43946,
+   "partition": "medium",
+   "runtime": 5760
+  },
+  "rule": "gcnv_model_targeted_gcnv_post_germline_calls",
+  "temp": [],
+  "threads": 1,
+  "wildcards": {
+   "library_name": "case001subregion-N1-DNA1-WES1"
+  },
+  "wrapper": "file://<repo>/snappy_wrappers/wrappers/gcnv/post_germline_calls"
+ },
+ {
+  "benchmark": "tasks/gcnv_model_targeted/benchmarks/MedExome/MedExome.preprocess_intervals.tsv",
+  "input": [
+   "<repo>/.tests/test-workflow/resources/refs/subregion.fa",
+   "<repo>/.tests/test-workflow/resources/refs/subregion.fa.fai",
+   "<repo>/.tests/test-workflow/resources/refs/subregion.dict",
+   "<repo>/tests/snappy_pipeline/fixtures/cnvkit_targets.bed"
+  ],
+  "log": [
+   "tasks/gcnv_model_targeted/work/MedExome/log/MedExome.preprocess_intervals.log"
+  ],
+  "output": [
+   "tasks/gcnv_model_targeted/work/MedExome/out/MedExome.interval_list"
+  ],
+  "params": {
+   "args": {
+    "bin_length": 0,
+    "code": "<hash>",
+    "interval_merging_rule": "OVERLAPPING_ONLY"
+   }
+  },
+  "resources": {
+   "mem": "7.68 GB",
+   "mem_mb": 7680,
+   "mem_mib": 7325,
+   "partition": "medium",
+   "runtime": 1440
+  },
+  "rule": "gcnv_model_targeted_gcnv_preprocess_intervals",
+  "temp": [],
+  "threads": 1,
+  "wildcards": {
+   "library_kit": "MedExome"
+  },
+  "wrapper": "file://<repo>/snappy_wrappers/wrappers/gcnv/preprocess_intervals"
  },
  {
   "benchmark": null,
@@ -325,7 +325,7 @@
    "partition": "medium",
    "runtime": 4320
   },
-  "rule": "ngs_mapping_bwa_ngs_mapping_bwa_run",
+  "rule": "ngs_mapping_bwa_bwa_run",
   "temp": [],
   "threads": 1,
   "wildcards": {
@@ -362,7 +362,7 @@
    "partition": "medium",
    "runtime": 1440
   },
-  "rule": "reference_index_bwa_reference_index_bwa_run",
+  "rule": "reference_index_bwa_bwa_run",
   "temp": [],
   "threads": 1,
   "wildcards": {},

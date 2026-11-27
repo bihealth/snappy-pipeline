@@ -464,7 +464,7 @@ def test_mapping_reads_trimmed_fastqs(generated_task_config: dict[str, Any], tmp
     assert job["params"]["args"]["input"]["reads_left"] == [
         f"tasks/trimming/work/{lib}/out/{lib}.R1.fastq.gz"
     ]
-    assert any(j["rule"].startswith("trimming_adapter_trimming_fastp") for j in jobs)
+    assert any(j["rule"].startswith("trimming_fastp") for j in jobs)
 
 
 @pytest.mark.integration
@@ -587,7 +587,7 @@ def test_somatic_trio_calls_the_relapse_against_the_primary_tumor(
     bams = {}
     for name in tasks:
         for job in _dump(tmp_path, name):
-            if job["rule"] == f"{name}_variant_calling_mutect2_run":
+            if job["rule"] == f"{name}_mutect2_run":
                 libraries = [
                     Path(p).name.removesuffix(".bam") for p in job["input"] if p.endswith(".bam")
                 ]

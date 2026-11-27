@@ -85,7 +85,7 @@
    "partition": "medium",
    "runtime": 4320
   },
-  "rule": "ngs_mapping_bwa_ngs_mapping_bwa_run",
+  "rule": "ngs_mapping_bwa_bwa_run",
   "temp": [],
   "threads": 1,
   "wildcards": {
@@ -152,7 +152,7 @@
    "partition": "medium",
    "runtime": 4320
   },
-  "rule": "ngs_mapping_bwa_ngs_mapping_bwa_run",
+  "rule": "ngs_mapping_bwa_bwa_run",
   "temp": [],
   "threads": 1,
   "wildcards": {
@@ -189,42 +189,11 @@
    "partition": "medium",
    "runtime": 1440
   },
-  "rule": "reference_index_bwa_reference_index_bwa_run",
+  "rule": "reference_index_bwa_bwa_run",
   "temp": [],
   "threads": 1,
   "wildcards": {},
   "wrapper": "file://<repo>/snappy_wrappers/wrappers/reference_index/bwa"
- },
- {
-  "benchmark": null,
-  "input": [
-   "tasks/somatic_wgs_cnv_calling_control_freec/work/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1.ratio.txt",
-   "tasks/somatic_wgs_cnv_calling_control_freec/work/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1.ratio.txt.md5",
-   "tasks/somatic_wgs_cnv_calling_control_freec/work/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1.gene_log2.txt",
-   "tasks/somatic_wgs_cnv_calling_control_freec/work/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1.gene_call.txt",
-   "tasks/somatic_wgs_cnv_calling_control_freec/work/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1.segments.txt",
-   "tasks/somatic_wgs_cnv_calling_control_freec/work/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1.gene_log2.txt.md5",
-   "tasks/somatic_wgs_cnv_calling_control_freec/work/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1.gene_call.txt.md5",
-   "tasks/somatic_wgs_cnv_calling_control_freec/work/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1.segments.txt.md5",
-   "tasks/somatic_wgs_cnv_calling_control_freec/work/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1.scatter.png",
-   "tasks/somatic_wgs_cnv_calling_control_freec/work/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1.diagram.pdf",
-   "tasks/somatic_wgs_cnv_calling_control_freec/work/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1.scatter.png.md5",
-   "tasks/somatic_wgs_cnv_calling_control_freec/work/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1.diagram.pdf.md5"
-  ],
-  "local": true,
-  "log": [],
-  "output": [
-   "tasks/somatic_wgs_cnv_calling_control_freec/output/.manifest.tsv"
-  ],
-  "params": {
-   "task_dir": "tasks/somatic_wgs_cnv_calling_control_freec"
-  },
-  "resources": {},
-  "rule": "somatic_wgs_cnv_calling_control_freec_results",
-  "temp": [],
-  "threads": 1,
-  "wildcards": {},
-  "wrapper": null
  },
  {
   "benchmark": "tasks/somatic_wgs_cnv_calling_control_freec/benchmarks/case001subregion-T1-DNA1-WES1/case001subregion-T1-DNA1-WES1.plot.tsv",
@@ -263,7 +232,7 @@
    "partition": "medium",
    "runtime": 2400
   },
-  "rule": "somatic_wgs_cnv_calling_control_freec_somatic_wgs_cnv_calling_control_freec_plot",
+  "rule": "somatic_wgs_cnv_calling_control_freec_control_freec_plot",
   "temp": [],
   "threads": 1,
   "wildcards": {
@@ -312,7 +281,7 @@
    "partition": "medium",
    "runtime": 2400
   },
-  "rule": "somatic_wgs_cnv_calling_control_freec_somatic_wgs_cnv_calling_control_freec_run",
+  "rule": "somatic_wgs_cnv_calling_control_freec_control_freec_run",
   "temp": [],
   "threads": 1,
   "wildcards": {
@@ -355,7 +324,7 @@
    "partition": "medium",
    "runtime": 2400
   },
-  "rule": "somatic_wgs_cnv_calling_control_freec_somatic_wgs_cnv_calling_control_freec_transform",
+  "rule": "somatic_wgs_cnv_calling_control_freec_control_freec_transform",
   "temp": [
    "tasks/somatic_wgs_cnv_calling_control_freec/work/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1.cnr",
    "tasks/somatic_wgs_cnv_calling_control_freec/work/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1.cns"
@@ -365,5 +334,36 @@
    "tumor_library": "case001subregion-T1-DNA1-WES1"
   },
   "wrapper": "file://<repo>/snappy_wrappers/wrappers/control_freec/transform"
+ },
+ {
+  "benchmark": null,
+  "input": [
+   "tasks/somatic_wgs_cnv_calling_control_freec/work/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1.ratio.txt",
+   "tasks/somatic_wgs_cnv_calling_control_freec/work/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1.ratio.txt.md5",
+   "tasks/somatic_wgs_cnv_calling_control_freec/work/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1.gene_log2.txt",
+   "tasks/somatic_wgs_cnv_calling_control_freec/work/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1.gene_call.txt",
+   "tasks/somatic_wgs_cnv_calling_control_freec/work/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1.segments.txt",
+   "tasks/somatic_wgs_cnv_calling_control_freec/work/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1.gene_log2.txt.md5",
+   "tasks/somatic_wgs_cnv_calling_control_freec/work/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1.gene_call.txt.md5",
+   "tasks/somatic_wgs_cnv_calling_control_freec/work/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1.segments.txt.md5",
+   "tasks/somatic_wgs_cnv_calling_control_freec/work/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1.scatter.png",
+   "tasks/somatic_wgs_cnv_calling_control_freec/work/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1.diagram.pdf",
+   "tasks/somatic_wgs_cnv_calling_control_freec/work/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1.scatter.png.md5",
+   "tasks/somatic_wgs_cnv_calling_control_freec/work/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1.diagram.pdf.md5"
+  ],
+  "local": true,
+  "log": [],
+  "output": [
+   "tasks/somatic_wgs_cnv_calling_control_freec/output/.manifest.tsv"
+  ],
+  "params": {
+   "task_dir": "tasks/somatic_wgs_cnv_calling_control_freec"
+  },
+  "resources": {},
+  "rule": "somatic_wgs_cnv_calling_control_freec_results",
+  "temp": [],
+  "threads": 1,
+  "wildcards": {},
+  "wrapper": null
  }
 ]

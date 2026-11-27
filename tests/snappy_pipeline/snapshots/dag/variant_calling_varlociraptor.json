@@ -77,7 +77,7 @@
    "partition": "medium",
    "runtime": 4320
   },
-  "rule": "ngs_mapping_bwa_ngs_mapping_bwa_run",
+  "rule": "ngs_mapping_bwa_bwa_run",
   "temp": [],
   "threads": 1,
   "wildcards": {
@@ -144,7 +144,7 @@
    "partition": "medium",
    "runtime": 4320
   },
-  "rule": "ngs_mapping_bwa_ngs_mapping_bwa_run",
+  "rule": "ngs_mapping_bwa_bwa_run",
   "temp": [],
   "threads": 1,
   "wildcards": {
@@ -181,7 +181,7 @@
    "partition": "medium",
    "runtime": 1440
   },
-  "rule": "reference_index_bwa_reference_index_bwa_run",
+  "rule": "reference_index_bwa_bwa_run",
   "temp": [],
   "threads": 1,
   "wildcards": {},
@@ -216,7 +216,7 @@
    "partition": "medium",
    "runtime": 120
   },
-  "rule": "variant_calling_freebayes_variant_calling_freebayes_gather",
+  "rule": "variant_calling_freebayes_freebayes_gather",
   "temp": [],
   "threads": 1,
   "wildcards": {
@@ -260,7 +260,7 @@
    "partition": "medium",
    "runtime": 1440
   },
-  "rule": "variant_calling_freebayes_variant_calling_freebayes_run",
+  "rule": "variant_calling_freebayes_freebayes_run",
   "temp": [
    "tasks/variant_calling_freebayes/work/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1/calls/1-of-2.bcf",
    "tasks/variant_calling_freebayes/work/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1/calls/1-of-2.bcf.csi"
@@ -308,7 +308,7 @@
    "partition": "medium",
    "runtime": 1440
   },
-  "rule": "variant_calling_freebayes_variant_calling_freebayes_run",
+  "rule": "variant_calling_freebayes_freebayes_run",
   "temp": [
    "tasks/variant_calling_freebayes/work/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1/calls/2-of-2.bcf",
    "tasks/variant_calling_freebayes/work/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1/calls/2-of-2.bcf.csi"
@@ -354,7 +354,7 @@
    "partition": "medium",
    "runtime": 2
   },
-  "rule": "variant_calling_freebayes_variant_calling_freebayes_scatter",
+  "rule": "variant_calling_freebayes_freebayes_scatter",
   "temp": [
    "tasks/variant_calling_freebayes/work/scatter/1-of-2.region.bed",
    "tasks/variant_calling_freebayes/work/scatter/2-of-2.region.bed"
@@ -413,7 +413,7 @@
    "partition": "medium",
    "runtime": 120
   },
-  "rule": "variant_calling_varlociraptor_variant_calling_varlociraptor_alignment_properties",
+  "rule": "variant_calling_varlociraptor_varlociraptor_alignment_properties",
   "temp": [
    "tasks/variant_calling_varlociraptor/work/case001subregion-N1-DNA1-WES1/out/case001subregion-N1-DNA1-WES1.alignment_properties.json"
   ],
@@ -450,7 +450,7 @@
    "partition": "medium",
    "runtime": 120
   },
-  "rule": "variant_calling_varlociraptor_variant_calling_varlociraptor_alignment_properties",
+  "rule": "variant_calling_varlociraptor_varlociraptor_alignment_properties",
   "temp": [
    "tasks/variant_calling_varlociraptor/work/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1.alignment_properties.json"
   ],
@@ -492,7 +492,7 @@
    "partition": "medium",
    "runtime": 1440
   },
-  "rule": "variant_calling_varlociraptor_variant_calling_varlociraptor_call",
+  "rule": "variant_calling_varlociraptor_varlociraptor_call",
   "temp": [
    "tasks/variant_calling_varlociraptor/work/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1/calls/1-of-2.bcf",
    "tasks/variant_calling_varlociraptor/work/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1/calls/1-of-2.bcf.csi"
@@ -536,7 +536,7 @@
    "partition": "medium",
    "runtime": 1440
   },
-  "rule": "variant_calling_varlociraptor_variant_calling_varlociraptor_call",
+  "rule": "variant_calling_varlociraptor_varlociraptor_call",
   "temp": [
    "tasks/variant_calling_varlociraptor/work/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1/calls/2-of-2.bcf",
    "tasks/variant_calling_varlociraptor/work/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1/calls/2-of-2.bcf.csi"
@@ -577,7 +577,7 @@
    "partition": "medium",
    "runtime": 120
   },
-  "rule": "variant_calling_varlociraptor_variant_calling_varlociraptor_gather",
+  "rule": "variant_calling_varlociraptor_varlociraptor_gather",
   "temp": [],
   "threads": 1,
   "wildcards": {
@@ -616,7 +616,7 @@
    "partition": "medium",
    "runtime": 1440
   },
-  "rule": "variant_calling_varlociraptor_variant_calling_varlociraptor_preprocess",
+  "rule": "variant_calling_varlociraptor_varlociraptor_preprocess",
   "temp": [
    "tasks/variant_calling_varlociraptor/work/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1/observations/case001subregion-N1-DNA1-WES1.1-of-2.bcf"
   ],
@@ -659,7 +659,7 @@
    "partition": "medium",
    "runtime": 1440
   },
-  "rule": "variant_calling_varlociraptor_variant_calling_varlociraptor_preprocess",
+  "rule": "variant_calling_varlociraptor_varlociraptor_preprocess",
   "temp": [
    "tasks/variant_calling_varlociraptor/work/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1/observations/case001subregion-N1-DNA1-WES1.2-of-2.bcf"
   ],
@@ -702,7 +702,7 @@
    "partition": "medium",
    "runtime": 1440
   },
-  "rule": "variant_calling_varlociraptor_variant_calling_varlociraptor_preprocess",
+  "rule": "variant_calling_varlociraptor_varlociraptor_preprocess",
   "temp": [
    "tasks/variant_calling_varlociraptor/work/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1/observations/case001subregion-T1-DNA1-WES1.1-of-2.bcf"
   ],
@@ -745,7 +745,7 @@
    "partition": "medium",
    "runtime": 1440
   },
-  "rule": "variant_calling_varlociraptor_variant_calling_varlociraptor_preprocess",
+  "rule": "variant_calling_varlociraptor_varlociraptor_preprocess",
   "temp": [
    "tasks/variant_calling_varlociraptor/work/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1/observations/case001subregion-T1-DNA1-WES1.2-of-2.bcf"
   ],
@@ -781,7 +781,7 @@
    "partition": "medium",
    "runtime": 120
   },
-  "rule": "variant_calling_varlociraptor_variant_calling_varlociraptor_scatter",
+  "rule": "variant_calling_varlociraptor_varlociraptor_scatter",
   "temp": [
    "tasks/variant_calling_varlociraptor/work/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1/candidates/1-of-2.bcf",
    "tasks/variant_calling_varlociraptor/work/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1/candidates/2-of-2.bcf"

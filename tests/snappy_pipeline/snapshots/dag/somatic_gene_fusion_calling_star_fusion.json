@@ -64,7 +64,7 @@
    "partition": "medium",
    "runtime": 7200
   },
-  "rule": "somatic_gene_fusion_calling_star_fusion_somatic_gene_fusion_calling_star_fusion_run",
+  "rule": "somatic_gene_fusion_calling_star_fusion_star_fusion_run",
   "temp": [],
   "threads": 1,
   "wildcards": {

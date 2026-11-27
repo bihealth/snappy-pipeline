@@ -20,7 +20,7 @@ include: "../common/wrapper_rules.rules"
 
 if tool == "purecn":
 
-    rule somatic_targeted_seq_cnv_calling_purecn_coverage:
+    rule purecn_coverage:
         input:
             unpack(wf.get_input_files("purecn", "coverage")),
         output:
@@ -41,7 +41,7 @@ if tool == "purecn":
         wrapper:
             wf.get_wrapper("purecn", "coverage")
 
-    rule somatic_targeted_seq_cnv_calling_purecn_run:
+    rule purecn_run:
         input:
             unpack(wf.get_input_files("purecn", "run")),
         output:

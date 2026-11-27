@@ -377,7 +377,7 @@ Files that main's wrappers wrote without declaring them are declared outputs now
 
 ### Rule names and the temporary directory
 
-The rules of the wrapper actions are generated from the step parts and named `<task>_<step>_<part>_<action>`, for example `calling_variant_calling_mutect2_run`.
+The rules of the wrapper actions are generated from the step parts and named `<task>_<part>_<action>`, for example `calling_mutect2_run`.
 A rule that main named differently (`variant_annotation_vep`, `somatic_msi_calling_mantis_msi2`) now carries its action.
 So `--until`, `--omit-from` and `--allowed-rules` arguments need the new names.
 

@@ -14,7 +14,7 @@ include: "../common/wrapper_rules.rules"
 # Write out pedigree file -----------------------------------------------------
 
 
-rule wgs_cnv_export_external_write_pedigree_run:
+rule write_pedigree_run:
     output:
         wf.get_output_files("write_pedigree_with_sample_name", "run"),
     localrule: True

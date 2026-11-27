@@ -48,11 +48,36 @@
    "partition": "medium",
    "runtime": 120
   },
-  "rule": "reference_download_refseq_reference_download_refseq_run",
+  "rule": "reference_download_refseq_refseq_run",
   "temp": [],
   "threads": 1,
   "wildcards": {},
   "wrapper": "file://<repo>/snappy_wrappers/wrappers/reference_download/refseq"
+ },
+ {
+  "benchmark": null,
+  "input": [
+   "tasks/reference_download_refseq/work/reference_download/out/reference.fa",
+   "tasks/reference_download_refseq/work/reference_download/out/reference.fa.md5",
+   "tasks/reference_download_refseq/work/reference_download/out/reference.fa.fai",
+   "tasks/reference_download_refseq/work/reference_download/out/reference.fa.fai.md5",
+   "tasks/reference_download_refseq/work/reference_download/out/reference.dict",
+   "tasks/reference_download_refseq/work/reference_download/out/reference.dict.md5"
+  ],
+  "local": true,
+  "log": [],
+  "output": [
+   "tasks/reference_download_refseq/output/.manifest.tsv"
+  ],
+  "params": {
+   "task_dir": "tasks/reference_download_refseq"
+  },
+  "resources": {},
+  "rule": "reference_download_refseq_results",
+  "temp": [],
+  "threads": 1,
+  "wildcards": {},
+  "wrapper": null
  },
  {
   "benchmark": "tasks/reference_download_refseq/benchmarks/reference_download/reference_download.sidecars.tsv",
@@ -81,35 +106,10 @@
    "partition": "medium",
    "runtime": 60
   },
-  "rule": "reference_download_refseq_reference_download_sidecars_run",
+  "rule": "reference_download_refseq_sidecars_run",
   "temp": [],
   "threads": 1,
   "wildcards": {},
   "wrapper": "file://<repo>/snappy_wrappers/wrappers/reference_download/sidecars"
- },
- {
-  "benchmark": null,
-  "input": [
-   "tasks/reference_download_refseq/work/reference_download/out/reference.fa",
-   "tasks/reference_download_refseq/work/reference_download/out/reference.fa.md5",
-   "tasks/reference_download_refseq/work/reference_download/out/reference.fa.fai",
-   "tasks/reference_download_refseq/work/reference_download/out/reference.fa.fai.md5",
-   "tasks/reference_download_refseq/work/reference_download/out/reference.dict",
-   "tasks/reference_download_refseq/work/reference_download/out/reference.dict.md5"
-  ],
-  "local": true,
-  "log": [],
-  "output": [
-   "tasks/reference_download_refseq/output/.manifest.tsv"
-  ],
-  "params": {
-   "task_dir": "tasks/reference_download_refseq"
-  },
-  "resources": {},
-  "rule": "reference_download_refseq_results",
-  "temp": [],
-  "threads": 1,
-  "wildcards": {},
-  "wrapper": null
  }
 ]

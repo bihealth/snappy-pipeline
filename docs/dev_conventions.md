@@ -45,7 +45,7 @@ Anything else is an error.
 A step Snakefile defines `wf` and its global `wildcard_constraints`.
 Then it includes `snappy_pipeline/workflows/common/wrapper_rules.rules`.
 For every registered step part, the include writes one rule per action that has a wrapper (`BaseStep.wrapper_rules`).
-The rule is named `<step>_<part>_<action>`.
+The rule is named `<part>_<action>`; the orchestrator prefixes the task name, so the jobs of a task are `<task>_<part>_<action>`.
 Snakefiles stay thin and call the workflow object for everything.
 
 A part's `rule_options` give an action's `localrule`, `retries`, `cache` and `wildcard_constraints`.

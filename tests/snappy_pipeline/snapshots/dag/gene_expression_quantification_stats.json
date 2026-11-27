@@ -17,6 +17,27 @@
   "wrapper": null
  },
  {
+  "benchmark": null,
+  "input": [
+   "tasks/gene_expression_quantification_stats/work/case001subregion-T1-RNA1-mRNA_seq1/out/case001subregion-T1-RNA1-mRNA_seq1.read_alignment_report.tsv",
+   "tasks/gene_expression_quantification_stats/work/case001subregion-T1-RNA1-mRNA_seq1/out/case001subregion-T1-RNA1-mRNA_seq1.read_alignment_report.tsv.md5"
+  ],
+  "local": true,
+  "log": [],
+  "output": [
+   "tasks/gene_expression_quantification_stats/output/.manifest.tsv"
+  ],
+  "params": {
+   "task_dir": "tasks/gene_expression_quantification_stats"
+  },
+  "resources": {},
+  "rule": "gene_expression_quantification_stats_results",
+  "temp": [],
+  "threads": 1,
+  "wildcards": {},
+  "wrapper": null
+ },
+ {
   "benchmark": "tasks/gene_expression_quantification_stats/benchmarks/case001subregion-T1-RNA1-mRNA_seq1/case001subregion-T1-RNA1-mRNA_seq1.tsv",
   "input": [
    "tasks/ngs_mapping_star/work/case001subregion-T1-RNA1-mRNA_seq1/out/case001subregion-T1-RNA1-mRNA_seq1.bam",
@@ -41,34 +62,13 @@
    "partition": "medium",
    "runtime": 240
   },
-  "rule": "gene_expression_quantification_stats_gene_expression_quantification_stats_run",
+  "rule": "gene_expression_quantification_stats_stats_run",
   "temp": [],
   "threads": 1,
   "wildcards": {
    "library_name": "case001subregion-T1-RNA1-mRNA_seq1"
   },
   "wrapper": "file://<repo>/snappy_wrappers/wrappers/rnaqc/stats"
- },
- {
-  "benchmark": null,
-  "input": [
-   "tasks/gene_expression_quantification_stats/work/case001subregion-T1-RNA1-mRNA_seq1/out/case001subregion-T1-RNA1-mRNA_seq1.read_alignment_report.tsv",
-   "tasks/gene_expression_quantification_stats/work/case001subregion-T1-RNA1-mRNA_seq1/out/case001subregion-T1-RNA1-mRNA_seq1.read_alignment_report.tsv.md5"
-  ],
-  "local": true,
-  "log": [],
-  "output": [
-   "tasks/gene_expression_quantification_stats/output/.manifest.tsv"
-  ],
-  "params": {
-   "task_dir": "tasks/gene_expression_quantification_stats"
-  },
-  "resources": {},
-  "rule": "gene_expression_quantification_stats_results",
-  "temp": [],
-  "threads": 1,
-  "wildcards": {},
-  "wrapper": null
  },
  {
   "benchmark": "tasks/ngs_mapping_star/benchmarks/case001subregion-T1-RNA1-mRNA_seq1/case001subregion-T1-RNA1-mRNA_seq1.mapping.tsv",
@@ -142,7 +142,7 @@
    "partition": "medium",
    "runtime": 2880
   },
-  "rule": "ngs_mapping_star_ngs_mapping_star_run",
+  "rule": "ngs_mapping_star_star_run",
   "temp": [
    "tasks/ngs_mapping_star/work/case001subregion-T1-RNA1-mRNA_seq1/out/case001subregion-T1-RNA1-mRNA_seq1.ReadsPerGene.tab"
   ],
@@ -191,7 +191,7 @@
    "partition": "medium",
    "runtime": 1440
   },
-  "rule": "reference_index_star_reference_index_star_run",
+  "rule": "reference_index_star_star_run",
   "temp": [],
   "threads": 1,
   "wildcards": {},

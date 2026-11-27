@@ -85,7 +85,7 @@
    "partition": "medium",
    "runtime": 4320
   },
-  "rule": "ngs_mapping_bwa_ngs_mapping_bwa_run",
+  "rule": "ngs_mapping_bwa_bwa_run",
   "temp": [],
   "threads": 1,
   "wildcards": {
@@ -152,7 +152,7 @@
    "partition": "medium",
    "runtime": 4320
   },
-  "rule": "ngs_mapping_bwa_ngs_mapping_bwa_run",
+  "rule": "ngs_mapping_bwa_bwa_run",
   "temp": [],
   "threads": 1,
   "wildcards": {
@@ -196,7 +196,7 @@
    "partition": "medium",
    "runtime": 2880
   },
-  "rule": "panel_of_normals_mutect2_panel_of_normals_mutect2_create_panel",
+  "rule": "panel_of_normals_mutect2_mutect2_create_panel",
   "temp": [],
   "threads": 1,
   "wildcards": {},
@@ -273,7 +273,7 @@
    "partition": "medium",
    "runtime": 240
   },
-  "rule": "panel_of_normals_mutect2_panel_of_normals_mutect2_gather",
+  "rule": "panel_of_normals_mutect2_mutect2_gather",
   "temp": [
    "tasks/panel_of_normals_mutect2/work/case001subregion-N1-DNA1-WES1/out/case001subregion-N1-DNA1-WES1.prepare.vcf.gz",
    "tasks/panel_of_normals_mutect2/work/case001subregion-N1-DNA1-WES1/out/case001subregion-N1-DNA1-WES1.prepare.vcf.gz.tbi"
@@ -316,7 +316,7 @@
    "partition": "medium",
    "runtime": 4320
   },
-  "rule": "panel_of_normals_mutect2_panel_of_normals_mutect2_prepare_panel",
+  "rule": "panel_of_normals_mutect2_mutect2_prepare_panel",
   "temp": [
    "tasks/panel_of_normals_mutect2/work/case001subregion-N1-DNA1-WES1/par/run/1-of-24.vcf.gz",
    "tasks/panel_of_normals_mutect2/work/case001subregion-N1-DNA1-WES1/par/run/1-of-24.vcf.gz.tbi"
@@ -360,7 +360,7 @@
    "partition": "medium",
    "runtime": 4320
   },
-  "rule": "panel_of_normals_mutect2_panel_of_normals_mutect2_prepare_panel",
+  "rule": "panel_of_normals_mutect2_mutect2_prepare_panel",
   "temp": [
    "tasks/panel_of_normals_mutect2/work/case001subregion-N1-DNA1-WES1/par/run/10-of-24.vcf.gz",
    "tasks/panel_of_normals_mutect2/work/case001subregion-N1-DNA1-WES1/par/run/10-of-24.vcf.gz.tbi"
@@ -404,7 +404,7 @@
    "partition": "medium",
    "runtime": 4320
   },
-  "rule": "panel_of_normals_mutect2_panel_of_normals_mutect2_prepare_panel",
+  "rule": "panel_of_normals_mutect2_mutect2_prepare_panel",
   "temp": [
    "tasks/panel_of_normals_mutect2/work/case001subregion-N1-DNA1-WES1/par/run/11-of-24.vcf.gz",
    "tasks/panel_of_normals_mutect2/work/case001subregion-N1-DNA1-WES1/par/run/11-of-24.vcf.gz.tbi"
@@ -448,7 +448,7 @@
    "partition": "medium",
    "runtime": 4320
   },
-  "rule": "panel_of_normals_mutect2_panel_of_normals_mutect2_prepare_panel",
+  "rule": "panel_of_normals_mutect2_mutect2_prepare_panel",
   "temp": [
    "tasks/panel_of_normals_mutect2/work/case001subregion-N1-DNA1-WES1/par/run/12-of-24.vcf.gz",
    "tasks/panel_of_normals_mutect2/work/case001subregion-N1-DNA1-WES1/par/run/12-of-24.vcf.gz.tbi"
@@ -492,7 +492,7 @@
    "partition": "medium",
    "runtime": 4320
   },
-  "rule": "panel_of_normals_mutect2_panel_of_normals_mutect2_prepare_panel",
+  "rule": "panel_of_normals_mutect2_mutect2_prepare_panel",
   "temp": [
    "tasks/panel_of_normals_mutect2/work/case001subregion-N1-DNA1-WES1/par/run/13-of-24.vcf.gz",
    "tasks/panel_of_normals_mutect2/work/case001subregion-N1-DNA1-WES1/par/run/13-of-24.vcf.gz.tbi"
@@ -536,7 +536,7 @@
    "partition": "medium",
    "runtime": 4320
   },
-  "rule": "panel_of_normals_mutect2_panel_of_normals_mutect2_prepare_panel",
+  "rule": "panel_of_normals_mutect2_mutect2_prepare_panel",
   "temp": [
    "tasks/panel_of_normals_mutect2/work/case001subregion-N1-DNA1-WES1/par/run/14-of-24.vcf.gz",
    "tasks/panel_of_normals_mutect2/work/case001subregion-N1-DNA1-WES1/par/run/14-of-24.vcf.gz.tbi"
@@ -580,7 +580,7 @@
    "partition": "medium",
    "runtime": 4320
   },
-  "rule": "panel_of_normals_mutect2_panel_of_normals_mutect2_prepare_panel",
+  "rule": "panel_of_normals_mutect2_mutect2_prepare_panel",
   "temp": [
    "tasks/panel_of_normals_mutect2/work/case001subregion-N1-DNA1-WES1/par/run/15-of-24.vcf.gz",
    "tasks/panel_of_normals_mutect2/work/case001subregion-N1-DNA1-WES1/par/run/15-of-24.vcf.gz.tbi"
@@ -624,7 +624,7 @@
    "partition": "medium",
    "runtime": 4320
   },
-  "rule": "panel_of_normals_mutect2_panel_of_normals_mutect2_prepare_panel",
+  "rule": "panel_of_normals_mutect2_mutect2_prepare_panel",
   "temp": [
    "tasks/panel_of_normals_mutect2/work/case001subregion-N1-DNA1-WES1/par/run/16-of-24.vcf.gz",
    "tasks/panel_of_normals_mutect2/work/case001subregion-N1-DNA1-WES1/par/run/16-of-24.vcf.gz.tbi"
@@ -668,7 +668,7 @@
    "partition": "medium",
    "runtime": 4320
   },
-  "rule": "panel_of_normals_mutect2_panel_of_normals_mutect2_prepare_panel",
+  "rule": "panel_of_normals_mutect2_mutect2_prepare_panel",
   "temp": [
    "tasks/panel_of_normals_mutect2/work/case001subregion-N1-DNA1-WES1/par/run/17-of-24.vcf.gz",
    "tasks/panel_of_normals_mutect2/work/case001subregion-N1-DNA1-WES1/par/run/17-of-24.vcf.gz.tbi"
@@ -712,7 +712,7 @@
    "partition": "medium",
    "runtime": 4320
   },
-  "rule": "panel_of_normals_mutect2_panel_of_normals_mutect2_prepare_panel",
+  "rule": "panel_of_normals_mutect2_mutect2_prepare_panel",
   "temp": [
    "tasks/panel_of_normals_mutect2/work/case001subregion-N1-DNA1-WES1/par/run/18-of-24.vcf.gz",
    "tasks/panel_of_normals_mutect2/work/case001subregion-N1-DNA1-WES1/par/run/18-of-24.vcf.gz.tbi"
@@ -756,7 +756,7 @@
    "partition": "medium",
    "runtime": 4320
   },
-  "rule": "panel_of_normals_mutect2_panel_of_normals_mutect2_prepare_panel",
+  "rule": "panel_of_normals_mutect2_mutect2_prepare_panel",
   "temp": [
    "tasks/panel_of_normals_mutect2/work/case001subregion-N1-DNA1-WES1/par/run/19-of-24.vcf.gz",
    "tasks/panel_of_normals_mutect2/work/case001subregion-N1-DNA1-WES1/par/run/19-of-24.vcf.gz.tbi"
@@ -800,7 +800,7 @@
    "partition": "medium",
    "runtime": 4320
   },
-  "rule": "panel_of_normals_mutect2_panel_of_normals_mutect2_prepare_panel",
+  "rule": "panel_of_normals_mutect2_mutect2_prepare_panel",
   "temp": [
    "tasks/panel_of_normals_mutect2/work/case001subregion-N1-DNA1-WES1/par/run/2-of-24.vcf.gz",
    "tasks/panel_of_normals_mutect2/work/case001subregion-N1-DNA1-WES1/par/run/2-of-24.vcf.gz.tbi"
@@ -844,7 +844,7 @@
    "partition": "medium",
    "runtime": 4320
   },
-  "rule": "panel_of_normals_mutect2_panel_of_normals_mutect2_prepare_panel",
+  "rule": "panel_of_normals_mutect2_mutect2_prepare_panel",
   "temp": [
    "tasks/panel_of_normals_mutect2/work/case001subregion-N1-DNA1-WES1/par/run/20-of-24.vcf.gz",
    "tasks/panel_of_normals_mutect2/work/case001subregion-N1-DNA1-WES1/par/run/20-of-24.vcf.gz.tbi"
@@ -888,7 +888,7 @@
    "partition": "medium",
    "runtime": 4320
   },
-  "rule": "panel_of_normals_mutect2_panel_of_normals_mutect2_prepare_panel",
+  "rule": "panel_of_normals_mutect2_mutect2_prepare_panel",
   "temp": [
    "tasks/panel_of_normals_mutect2/work/case001subregion-N1-DNA1-WES1/par/run/21-of-24.vcf.gz",
    "tasks/panel_of_normals_mutect2/work/case001subregion-N1-DNA1-WES1/par/run/21-of-24.vcf.gz.tbi"
@@ -932,7 +932,7 @@
    "partition": "medium",
    "runtime": 4320
   },
-  "rule": "panel_of_normals_mutect2_panel_of_normals_mutect2_prepare_panel",
+  "rule": "panel_of_normals_mutect2_mutect2_prepare_panel",
   "temp": [
    "tasks/panel_of_normals_mutect2/work/case001subregion-N1-DNA1-WES1/par/run/22-of-24.vcf.gz",
    "tasks/panel_of_normals_mutect2/work/case001subregion-N1-DNA1-WES1/par/run/22-of-24.vcf.gz.tbi"
@@ -976,7 +976,7 @@
    "partition": "medium",
    "runtime": 4320
   },
-  "rule": "panel_of_normals_mutect2_panel_of_normals_mutect2_prepare_panel",
+  "rule": "panel_of_normals_mutect2_mutect2_prepare_panel",
   "temp": [
    "tasks/panel_of_normals_mutect2/work/case001subregion-N1-DNA1-WES1/par/run/23-of-24.vcf.gz",
    "tasks/panel_of_normals_mutect2/work/case001subregion-N1-DNA1-WES1/par/run/23-of-24.vcf.gz.tbi"
@@ -1020,7 +1020,7 @@
    "partition": "medium",
    "runtime": 4320
   },
-  "rule": "panel_of_normals_mutect2_panel_of_normals_mutect2_prepare_panel",
+  "rule": "panel_of_normals_mutect2_mutect2_prepare_panel",
   "temp": [
    "tasks/panel_of_normals_mutect2/work/case001subregion-N1-DNA1-WES1/par/run/24-of-24.vcf.gz",
    "tasks/panel_of_normals_mutect2/work/case001subregion-N1-DNA1-WES1/par/run/24-of-24.vcf.gz.tbi"
@@ -1064,7 +1064,7 @@
    "partition": "medium",
    "runtime": 4320
   },
-  "rule": "panel_of_normals_mutect2_panel_of_normals_mutect2_prepare_panel",
+  "rule": "panel_of_normals_mutect2_mutect2_prepare_panel",
   "temp": [
    "tasks/panel_of_normals_mutect2/work/case001subregion-N1-DNA1-WES1/par/run/3-of-24.vcf.gz",
    "tasks/panel_of_normals_mutect2/work/case001subregion-N1-DNA1-WES1/par/run/3-of-24.vcf.gz.tbi"
@@ -1108,7 +1108,7 @@
    "partition": "medium",
    "runtime": 4320
   },
-  "rule": "panel_of_normals_mutect2_panel_of_normals_mutect2_prepare_panel",
+  "rule": "panel_of_normals_mutect2_mutect2_prepare_panel",
   "temp": [
    "tasks/panel_of_normals_mutect2/work/case001subregion-N1-DNA1-WES1/par/run/4-of-24.vcf.gz",
    "tasks/panel_of_normals_mutect2/work/case001subregion-N1-DNA1-WES1/par/run/4-of-24.vcf.gz.tbi"
@@ -1152,7 +1152,7 @@
    "partition": "medium",
    "runtime": 4320
   },
-  "rule": "panel_of_normals_mutect2_panel_of_normals_mutect2_prepare_panel",
+  "rule": "panel_of_normals_mutect2_mutect2_prepare_panel",
   "temp": [
    "tasks/panel_of_normals_mutect2/work/case001subregion-N1-DNA1-WES1/par/run/5-of-24.vcf.gz",
    "tasks/panel_of_normals_mutect2/work/case001subregion-N1-DNA1-WES1/par/run/5-of-24.vcf.gz.tbi"
@@ -1196,7 +1196,7 @@
    "partition": "medium",
    "runtime": 4320
   },
-  "rule": "panel_of_normals_mutect2_panel_of_normals_mutect2_prepare_panel",
+  "rule": "panel_of_normals_mutect2_mutect2_prepare_panel",
   "temp": [
    "tasks/panel_of_normals_mutect2/work/case001subregion-N1-DNA1-WES1/par/run/6-of-24.vcf.gz",
    "tasks/panel_of_normals_mutect2/work/case001subregion-N1-DNA1-WES1/par/run/6-of-24.vcf.gz.tbi"
@@ -1240,7 +1240,7 @@
    "partition": "medium",
    "runtime": 4320
   },
-  "rule": "panel_of_normals_mutect2_panel_of_normals_mutect2_prepare_panel",
+  "rule": "panel_of_normals_mutect2_mutect2_prepare_panel",
   "temp": [
    "tasks/panel_of_normals_mutect2/work/case001subregion-N1-DNA1-WES1/par/run/7-of-24.vcf.gz",
    "tasks/panel_of_normals_mutect2/work/case001subregion-N1-DNA1-WES1/par/run/7-of-24.vcf.gz.tbi"
@@ -1284,7 +1284,7 @@
    "partition": "medium",
    "runtime": 4320
   },
-  "rule": "panel_of_normals_mutect2_panel_of_normals_mutect2_prepare_panel",
+  "rule": "panel_of_normals_mutect2_mutect2_prepare_panel",
   "temp": [
    "tasks/panel_of_normals_mutect2/work/case001subregion-N1-DNA1-WES1/par/run/8-of-24.vcf.gz",
    "tasks/panel_of_normals_mutect2/work/case001subregion-N1-DNA1-WES1/par/run/8-of-24.vcf.gz.tbi"
@@ -1328,7 +1328,7 @@
    "partition": "medium",
    "runtime": 4320
   },
-  "rule": "panel_of_normals_mutect2_panel_of_normals_mutect2_prepare_panel",
+  "rule": "panel_of_normals_mutect2_mutect2_prepare_panel",
   "temp": [
    "tasks/panel_of_normals_mutect2/work/case001subregion-N1-DNA1-WES1/par/run/9-of-24.vcf.gz",
    "tasks/panel_of_normals_mutect2/work/case001subregion-N1-DNA1-WES1/par/run/9-of-24.vcf.gz.tbi"
@@ -1389,7 +1389,7 @@
    "partition": "medium",
    "runtime": 2
   },
-  "rule": "panel_of_normals_mutect2_panel_of_normals_mutect2_scatter",
+  "rule": "panel_of_normals_mutect2_mutect2_scatter",
   "temp": [
    "tasks/panel_of_normals_mutect2/work/scatter/1-of-24.region.bed",
    "tasks/panel_of_normals_mutect2/work/scatter/10-of-24.region.bed",
@@ -1452,7 +1452,7 @@
    "partition": "medium",
    "runtime": 240
   },
-  "rule": "panel_of_normals_purecn_panel_of_normals_purecn_coverage",
+  "rule": "panel_of_normals_purecn_purecn_coverage",
   "temp": [
    "tasks/panel_of_normals_purecn/work/case001subregion-N1-DNA1-WES1/out/case001subregion-N1-DNA1-WES1.coverage_loess.txt.gz"
   ],
@@ -1504,7 +1504,7 @@
    "partition": "medium",
    "runtime": 720
   },
-  "rule": "panel_of_normals_purecn_panel_of_normals_purecn_create_panel",
+  "rule": "panel_of_normals_purecn_purecn_create_panel",
   "temp": [],
   "threads": 1,
   "wildcards": {},
@@ -1549,7 +1549,7 @@
    "partition": "medium",
    "runtime": 240
   },
-  "rule": "panel_of_normals_purecn_panel_of_normals_purecn_prepare",
+  "rule": "panel_of_normals_purecn_purecn_prepare",
   "temp": [],
   "threads": 1,
   "wildcards": {},
@@ -1584,42 +1584,11 @@
    "partition": "medium",
    "runtime": 1440
   },
-  "rule": "reference_index_bwa_reference_index_bwa_run",
+  "rule": "reference_index_bwa_bwa_run",
   "temp": [],
   "threads": 1,
   "wildcards": {},
   "wrapper": "file://<repo>/snappy_wrappers/wrappers/reference_index/bwa"
- },
- {
-  "benchmark": null,
-  "input": [
-   "tasks/somatic_targeted_seq_cnv_calling_purecn/work/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1.dnacopy.seg",
-   "tasks/somatic_targeted_seq_cnv_calling_purecn/work/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1.csv",
-   "tasks/somatic_targeted_seq_cnv_calling_purecn/work/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1.amplification_pvalues.csv",
-   "tasks/somatic_targeted_seq_cnv_calling_purecn/work/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1.loh.csv",
-   "tasks/somatic_targeted_seq_cnv_calling_purecn/work/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1.dnacopy.seg.md5",
-   "tasks/somatic_targeted_seq_cnv_calling_purecn/work/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1.csv.md5",
-   "tasks/somatic_targeted_seq_cnv_calling_purecn/work/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1.amplification_pvalues.csv.md5",
-   "tasks/somatic_targeted_seq_cnv_calling_purecn/work/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1.loh.csv.md5",
-   "tasks/somatic_targeted_seq_cnv_calling_purecn/work/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1.vcf.gz",
-   "tasks/somatic_targeted_seq_cnv_calling_purecn/work/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1.vcf.gz.tbi",
-   "tasks/somatic_targeted_seq_cnv_calling_purecn/work/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1.vcf.gz.md5",
-   "tasks/somatic_targeted_seq_cnv_calling_purecn/work/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1.vcf.gz.tbi.md5"
-  ],
-  "local": true,
-  "log": [],
-  "output": [
-   "tasks/somatic_targeted_seq_cnv_calling_purecn/output/.manifest.tsv"
-  ],
-  "params": {
-   "task_dir": "tasks/somatic_targeted_seq_cnv_calling_purecn"
-  },
-  "resources": {},
-  "rule": "somatic_targeted_seq_cnv_calling_purecn_results",
-  "temp": [],
-  "threads": 1,
-  "wildcards": {},
-  "wrapper": null
  },
  {
   "benchmark": "tasks/somatic_targeted_seq_cnv_calling_purecn/benchmarks/case001subregion-T1-DNA1-WES1/case001subregion-T1-DNA1-WES1.coverage.tsv",
@@ -1657,7 +1626,7 @@
    "partition": "medium",
    "runtime": 240
   },
-  "rule": "somatic_targeted_seq_cnv_calling_purecn_somatic_targeted_seq_cnv_calling_purecn_coverage",
+  "rule": "somatic_targeted_seq_cnv_calling_purecn_purecn_coverage",
   "temp": [
    "tasks/somatic_targeted_seq_cnv_calling_purecn/work/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1.coverage_loess.txt.gz"
   ],
@@ -1728,13 +1697,44 @@
    "partition": "medium",
    "runtime": 1440
   },
-  "rule": "somatic_targeted_seq_cnv_calling_purecn_somatic_targeted_seq_cnv_calling_purecn_run",
+  "rule": "somatic_targeted_seq_cnv_calling_purecn_purecn_run",
   "temp": [],
   "threads": 1,
   "wildcards": {
    "tumor_library": "case001subregion-T1-DNA1-WES1"
   },
   "wrapper": "file://<repo>/snappy_wrappers/wrappers/purecn/run"
+ },
+ {
+  "benchmark": null,
+  "input": [
+   "tasks/somatic_targeted_seq_cnv_calling_purecn/work/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1.dnacopy.seg",
+   "tasks/somatic_targeted_seq_cnv_calling_purecn/work/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1.csv",
+   "tasks/somatic_targeted_seq_cnv_calling_purecn/work/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1.amplification_pvalues.csv",
+   "tasks/somatic_targeted_seq_cnv_calling_purecn/work/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1.loh.csv",
+   "tasks/somatic_targeted_seq_cnv_calling_purecn/work/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1.dnacopy.seg.md5",
+   "tasks/somatic_targeted_seq_cnv_calling_purecn/work/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1.csv.md5",
+   "tasks/somatic_targeted_seq_cnv_calling_purecn/work/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1.amplification_pvalues.csv.md5",
+   "tasks/somatic_targeted_seq_cnv_calling_purecn/work/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1.loh.csv.md5",
+   "tasks/somatic_targeted_seq_cnv_calling_purecn/work/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1.vcf.gz",
+   "tasks/somatic_targeted_seq_cnv_calling_purecn/work/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1.vcf.gz.tbi",
+   "tasks/somatic_targeted_seq_cnv_calling_purecn/work/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1.vcf.gz.md5",
+   "tasks/somatic_targeted_seq_cnv_calling_purecn/work/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1.vcf.gz.tbi.md5"
+  ],
+  "local": true,
+  "log": [],
+  "output": [
+   "tasks/somatic_targeted_seq_cnv_calling_purecn/output/.manifest.tsv"
+  ],
+  "params": {
+   "task_dir": "tasks/somatic_targeted_seq_cnv_calling_purecn"
+  },
+  "resources": {},
+  "rule": "somatic_targeted_seq_cnv_calling_purecn_results",
+  "temp": [],
+  "threads": 1,
+  "wildcards": {},
+  "wrapper": null
  },
  {
   "benchmark": "tasks/variant_calling_mutect2/benchmarks/case001subregion-T1-DNA1-WES1/case001subregion-T1-DNA1-WES1.filter.tsv",
@@ -1772,7 +1772,7 @@
    "partition": "medium",
    "runtime": 240
   },
-  "rule": "variant_calling_mutect2_variant_calling_mutect2_filter",
+  "rule": "variant_calling_mutect2_mutect2_filter",
   "temp": [],
   "threads": 1,
   "wildcards": {
@@ -1901,7 +1901,7 @@
    "partition": "medium",
    "runtime": 240
   },
-  "rule": "variant_calling_mutect2_variant_calling_mutect2_gather",
+  "rule": "variant_calling_mutect2_mutect2_gather",
   "temp": [
    "tasks/variant_calling_mutect2/work/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1.raw.read_orientation_model.tar.gz",
    "tasks/variant_calling_mutect2/work/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1.raw.vcf.gz",
@@ -1954,7 +1954,7 @@
    "partition": "medium",
    "runtime": 7200
   },
-  "rule": "variant_calling_mutect2_variant_calling_mutect2_run",
+  "rule": "variant_calling_mutect2_mutect2_run",
   "temp": [
    "tasks/variant_calling_mutect2/work/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1/calls/1-of-24.raw.f1r2.tar.gz",
    "tasks/variant_calling_mutect2/work/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1/calls/1-of-24.raw.vcf.gz",
@@ -2008,7 +2008,7 @@
    "partition": "medium",
    "runtime": 7200
   },
-  "rule": "variant_calling_mutect2_variant_calling_mutect2_run",
+  "rule": "variant_calling_mutect2_mutect2_run",
   "temp": [
    "tasks/variant_calling_mutect2/work/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1/calls/10-of-24.raw.f1r2.tar.gz",
    "tasks/variant_calling_mutect2/work/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1/calls/10-of-24.raw.vcf.gz",
@@ -2062,7 +2062,7 @@
    "partition": "medium",
    "runtime": 7200
   },
-  "rule": "variant_calling_mutect2_variant_calling_mutect2_run",
+  "rule": "variant_calling_mutect2_mutect2_run",
   "temp": [
    "tasks/variant_calling_mutect2/work/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1/calls/11-of-24.raw.f1r2.tar.gz",
    "tasks/variant_calling_mutect2/work/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1/calls/11-of-24.raw.vcf.gz",
@@ -2116,7 +2116,7 @@
    "partition": "medium",
    "runtime": 7200
   },
-  "rule": "variant_calling_mutect2_variant_calling_mutect2_run",
+  "rule": "variant_calling_mutect2_mutect2_run",
   "temp": [
    "tasks/variant_calling_mutect2/work/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1/calls/12-of-24.raw.f1r2.tar.gz",
    "tasks/variant_calling_mutect2/work/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1/calls/12-of-24.raw.vcf.gz",
@@ -2170,7 +2170,7 @@
    "partition": "medium",
    "runtime": 7200
   },
-  "rule": "variant_calling_mutect2_variant_calling_mutect2_run",
+  "rule": "variant_calling_mutect2_mutect2_run",
   "temp": [
    "tasks/variant_calling_mutect2/work/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1/calls/13-of-24.raw.f1r2.tar.gz",
    "tasks/variant_calling_mutect2/work/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1/calls/13-of-24.raw.vcf.gz",
@@ -2224,7 +2224,7 @@
    "partition": "medium",
    "runtime": 7200
   },
-  "rule": "variant_calling_mutect2_variant_calling_mutect2_run",
+  "rule": "variant_calling_mutect2_mutect2_run",
   "temp": [
    "tasks/variant_calling_mutect2/work/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1/calls/14-of-24.raw.f1r2.tar.gz",
    "tasks/variant_calling_mutect2/work/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1/calls/14-of-24.raw.vcf.gz",
@@ -2278,7 +2278,7 @@
    "partition": "medium",
    "runtime": 7200
   },
-  "rule": "variant_calling_mutect2_variant_calling_mutect2_run",
+  "rule": "variant_calling_mutect2_mutect2_run",
   "temp": [
    "tasks/variant_calling_mutect2/work/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1/calls/15-of-24.raw.f1r2.tar.gz",
    "tasks/variant_calling_mutect2/work/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1/calls/15-of-24.raw.vcf.gz",
@@ -2332,7 +2332,7 @@
    "partition": "medium",
    "runtime": 7200
   },
-  "rule": "variant_calling_mutect2_variant_calling_mutect2_run",
+  "rule": "variant_calling_mutect2_mutect2_run",
   "temp": [
    "tasks/variant_calling_mutect2/work/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1/calls/16-of-24.raw.f1r2.tar.gz",
    "tasks/variant_calling_mutect2/work/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1/calls/16-of-24.raw.vcf.gz",
@@ -2386,7 +2386,7 @@
    "partition": "medium",
    "runtime": 7200
   },
-  "rule": "variant_calling_mutect2_variant_calling_mutect2_run",
+  "rule": "variant_calling_mutect2_mutect2_run",
   "temp": [
    "tasks/variant_calling_mutect2/work/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1/calls/17-of-24.raw.f1r2.tar.gz",
    "tasks/variant_calling_mutect2/work/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1/calls/17-of-24.raw.vcf.gz",
@@ -2440,7 +2440,7 @@
    "partition": "medium",
    "runtime": 7200
   },
-  "rule": "variant_calling_mutect2_variant_calling_mutect2_run",
+  "rule": "variant_calling_mutect2_mutect2_run",
   "temp": [
    "tasks/variant_calling_mutect2/work/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1/calls/18-of-24.raw.f1r2.tar.gz",
    "tasks/variant_calling_mutect2/work/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1/calls/18-of-24.raw.vcf.gz",
@@ -2494,7 +2494,7 @@
    "partition": "medium",
    "runtime": 7200
   },
-  "rule": "variant_calling_mutect2_variant_calling_mutect2_run",
+  "rule": "variant_calling_mutect2_mutect2_run",
   "temp": [
    "tasks/variant_calling_mutect2/work/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1/calls/19-of-24.raw.f1r2.tar.gz",
    "tasks/variant_calling_mutect2/work/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1/calls/19-of-24.raw.vcf.gz",
@@ -2548,7 +2548,7 @@
    "partition": "medium",
    "runtime": 7200
   },
-  "rule": "variant_calling_mutect2_variant_calling_mutect2_run",
+  "rule": "variant_calling_mutect2_mutect2_run",
   "temp": [
    "tasks/variant_calling_mutect2/work/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1/calls/2-of-24.raw.f1r2.tar.gz",
    "tasks/variant_calling_mutect2/work/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1/calls/2-of-24.raw.vcf.gz",
@@ -2602,7 +2602,7 @@
    "partition": "medium",
    "runtime": 7200
   },
-  "rule": "variant_calling_mutect2_variant_calling_mutect2_run",
+  "rule": "variant_calling_mutect2_mutect2_run",
   "temp": [
    "tasks/variant_calling_mutect2/work/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1/calls/20-of-24.raw.f1r2.tar.gz",
    "tasks/variant_calling_mutect2/work/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1/calls/20-of-24.raw.vcf.gz",
@@ -2656,7 +2656,7 @@
    "partition": "medium",
    "runtime": 7200
   },
-  "rule": "variant_calling_mutect2_variant_calling_mutect2_run",
+  "rule": "variant_calling_mutect2_mutect2_run",
   "temp": [
    "tasks/variant_calling_mutect2/work/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1/calls/21-of-24.raw.f1r2.tar.gz",
    "tasks/variant_calling_mutect2/work/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1/calls/21-of-24.raw.vcf.gz",
@@ -2710,7 +2710,7 @@
    "partition": "medium",
    "runtime": 7200
   },
-  "rule": "variant_calling_mutect2_variant_calling_mutect2_run",
+  "rule": "variant_calling_mutect2_mutect2_run",
   "temp": [
    "tasks/variant_calling_mutect2/work/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1/calls/22-of-24.raw.f1r2.tar.gz",
    "tasks/variant_calling_mutect2/work/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1/calls/22-of-24.raw.vcf.gz",
@@ -2764,7 +2764,7 @@
    "partition": "medium",
    "runtime": 7200
   },
-  "rule": "variant_calling_mutect2_variant_calling_mutect2_run",
+  "rule": "variant_calling_mutect2_mutect2_run",
   "temp": [
    "tasks/variant_calling_mutect2/work/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1/calls/23-of-24.raw.f1r2.tar.gz",
    "tasks/variant_calling_mutect2/work/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1/calls/23-of-24.raw.vcf.gz",
@@ -2818,7 +2818,7 @@
    "partition": "medium",
    "runtime": 7200
   },
-  "rule": "variant_calling_mutect2_variant_calling_mutect2_run",
+  "rule": "variant_calling_mutect2_mutect2_run",
   "temp": [
    "tasks/variant_calling_mutect2/work/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1/calls/24-of-24.raw.f1r2.tar.gz",
    "tasks/variant_calling_mutect2/work/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1/calls/24-of-24.raw.vcf.gz",
@@ -2872,7 +2872,7 @@
    "partition": "medium",
    "runtime": 7200
   },
-  "rule": "variant_calling_mutect2_variant_calling_mutect2_run",
+  "rule": "variant_calling_mutect2_mutect2_run",
   "temp": [
    "tasks/variant_calling_mutect2/work/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1/calls/3-of-24.raw.f1r2.tar.gz",
    "tasks/variant_calling_mutect2/work/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1/calls/3-of-24.raw.vcf.gz",
@@ -2926,7 +2926,7 @@
    "partition": "medium",
    "runtime": 7200
   },
-  "rule": "variant_calling_mutect2_variant_calling_mutect2_run",
+  "rule": "variant_calling_mutect2_mutect2_run",
   "temp": [
    "tasks/variant_calling_mutect2/work/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1/calls/4-of-24.raw.f1r2.tar.gz",
    "tasks/variant_calling_mutect2/work/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1/calls/4-of-24.raw.vcf.gz",
@@ -2980,7 +2980,7 @@
    "partition": "medium",
    "runtime": 7200
   },
-  "rule": "variant_calling_mutect2_variant_calling_mutect2_run",
+  "rule": "variant_calling_mutect2_mutect2_run",
   "temp": [
    "tasks/variant_calling_mutect2/work/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1/calls/5-of-24.raw.f1r2.tar.gz",
    "tasks/variant_calling_mutect2/work/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1/calls/5-of-24.raw.vcf.gz",
@@ -3034,7 +3034,7 @@
    "partition": "medium",
    "runtime": 7200
   },
-  "rule": "variant_calling_mutect2_variant_calling_mutect2_run",
+  "rule": "variant_calling_mutect2_mutect2_run",
   "temp": [
    "tasks/variant_calling_mutect2/work/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1/calls/6-of-24.raw.f1r2.tar.gz",
    "tasks/variant_calling_mutect2/work/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1/calls/6-of-24.raw.vcf.gz",
@@ -3088,7 +3088,7 @@
    "partition": "medium",
    "runtime": 7200
   },
-  "rule": "variant_calling_mutect2_variant_calling_mutect2_run",
+  "rule": "variant_calling_mutect2_mutect2_run",
   "temp": [
    "tasks/variant_calling_mutect2/work/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1/calls/7-of-24.raw.f1r2.tar.gz",
    "tasks/variant_calling_mutect2/work/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1/calls/7-of-24.raw.vcf.gz",
@@ -3142,7 +3142,7 @@
    "partition": "medium",
    "runtime": 7200
   },
-  "rule": "variant_calling_mutect2_variant_calling_mutect2_run",
+  "rule": "variant_calling_mutect2_mutect2_run",
   "temp": [
    "tasks/variant_calling_mutect2/work/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1/calls/8-of-24.raw.f1r2.tar.gz",
    "tasks/variant_calling_mutect2/work/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1/calls/8-of-24.raw.vcf.gz",
@@ -3196,7 +3196,7 @@
    "partition": "medium",
    "runtime": 7200
   },
-  "rule": "variant_calling_mutect2_variant_calling_mutect2_run",
+  "rule": "variant_calling_mutect2_mutect2_run",
   "temp": [
    "tasks/variant_calling_mutect2/work/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1/calls/9-of-24.raw.f1r2.tar.gz",
    "tasks/variant_calling_mutect2/work/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1/calls/9-of-24.raw.vcf.gz",
@@ -3265,7 +3265,7 @@
    "partition": "medium",
    "runtime": 2
   },
-  "rule": "variant_calling_mutect2_variant_calling_mutect2_scatter",
+  "rule": "variant_calling_mutect2_mutect2_scatter",
   "temp": [
    "tasks/variant_calling_mutect2/work/scatter/1-of-24.region.bed",
    "tasks/variant_calling_mutect2/work/scatter/10-of-24.region.bed",

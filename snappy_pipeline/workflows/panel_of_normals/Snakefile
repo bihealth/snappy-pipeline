@@ -27,7 +27,7 @@ include: "../common/wrapper_rules.rules"
 
 if tool == "purecn":
 
-    rule panel_of_normals_purecn_prepare:
+    rule purecn_prepare:
         input:
             unpack(wf.get_input_files("purecn", "prepare")),
         output:
@@ -47,7 +47,7 @@ if tool == "purecn":
         wrapper:
             wf.get_wrapper("purecn", "prepare")
 
-    rule panel_of_normals_purecn_coverage:
+    rule purecn_coverage:
         input:
             unpack(wf.get_input_files("purecn", "coverage")),
         output:
@@ -67,7 +67,7 @@ if tool == "purecn":
         wrapper:
             wf.get_wrapper("purecn", "coverage")
 
-    rule panel_of_normals_purecn_create_panel:
+    rule purecn_create_panel:
         input:
             unpack(wf.get_input_files("purecn", "create_panel")),
         output:

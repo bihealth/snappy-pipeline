@@ -14,7 +14,7 @@ include: "../common/wrapper_rules.rules"
 # Write out pedigree file -----------------------------------------------------
 
 
-rule variant_export_external_write_pedigree_run:
+rule write_pedigree_run:
     input:
         unpack(wf.get_input_files("write_pedigree_with_sample_name", "run")),
     output:

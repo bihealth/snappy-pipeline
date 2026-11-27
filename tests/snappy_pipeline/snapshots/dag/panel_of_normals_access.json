@@ -44,7 +44,7 @@
    "partition": "medium",
    "runtime": 120
   },
-  "rule": "panel_of_normals_access_panel_of_normals_access_run",
+  "rule": "panel_of_normals_access_access_run",
   "temp": [],
   "threads": 1,
   "wildcards": {},

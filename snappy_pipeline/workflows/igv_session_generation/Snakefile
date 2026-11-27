@@ -17,7 +17,7 @@ include: "../common/wrapper_rules.rules"
 # IGV Session Generation ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 
-rule igv_session_generation_write_igv_session_file:
+rule write_igv_session_file:
     input:
         unpack(wf.get_input_files("write_igv_session_file", "run")),
     output:

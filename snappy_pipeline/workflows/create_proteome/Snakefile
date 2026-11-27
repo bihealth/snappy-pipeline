@@ -8,7 +8,7 @@ wf = task_instance(config["__task_name__"])
 include: "../common/wrapper_rules.rules"
 
 
-rule create_proteome_link_out_run:
+rule link_out_run:
     input:
         wf.get_input_files("link_out", "run"),
     output:

@@ -39,7 +39,7 @@
    "partition": "medium",
    "runtime": 720
   },
-  "rule": "reference_index_minimap2_reference_index_minimap2_run",
+  "rule": "reference_index_minimap2_minimap2_run",
   "temp": [],
   "threads": 1,
   "wildcards": {},

@@ -37,6 +37,7 @@ from ..log_archive import (
     untracked_sheet_hints,
 )
 from ..models import ConfigMode
+from ..rule_names import parse_rule_name, task_parts
 from ..workflow_registry import WORKFLOW_REGISTRY
 from .impl.fsmanip import (
     create_directory,
@@ -1166,22 +1167,16 @@ def _rule_names(directory_path: str) -> list[str]:
 
 
 def _rule_rows(names: list[str], instances: dict[str, Any]) -> list[dict[str, str]]:
-    """Rule name -> task, step, part and action: a rule is ``<task>_<step>_<part>_<action>`` for
-    the jobs of a step part or ``<task>_results``; a rule outside the pattern (``all``) keeps the
+    """Rule name -> task, step, part and action: a rule is ``<task>_<part>_<action>`` for the
+    jobs of a step part or ``<task>_results``; a rule outside the pattern (``all``) keeps the
     fields empty."""
+    parts = task_parts(instances)
     rows = []
     for name in names:
         row = {"rule": name, "task": "", "step": "", "part": "", "action": ""}
-        task = max((t for t in instances if name.startswith(t + "_")), key=len, default=None)
-        if task is not None:
-            step = instances[task]
-            row["task"], row["step"] = task, step.name
-            rest = name.removeprefix(f"{task}_{step.name}_")
-            for part in sorted(step.sub_steps.values(), key=lambda p: -len(p.name)):
-                action = rest.removeprefix(part.name + "_")
-                if action != rest and action in part.actions:
-                    row["part"], row["action"] = part.name, action
-                    break
+        if parsed := parse_rule_name(name, parts):
+            row["task"], row["step"] = parsed.task, instances[parsed.task].name
+            row["part"], row["action"] = parsed.part, parsed.action
         rows.append(row)
     return rows
 
@@ -1206,7 +1201,7 @@ def _rule_rows(names: list[str], instances: dict[str, Any]) -> list[dict[str, st
 )
 @listing_options
 def rules(directory, task_names, parts, names, as_json, plain):
-    """List the rules of the project as Snakemake names them: <task>_<step>_<part>_<action> for
+    """List the rules of the project as Snakemake names them: <task>_<part>_<action> for
     the jobs of a step part, <task>_results for the job that links the results of a task.
 
     Rerun the QC summaries of every task:

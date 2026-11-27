@@ -17,6 +17,27 @@
   "wrapper": null
  },
  {
+  "benchmark": null,
+  "input": [
+   "tasks/homologous_recombination_deficiency_scarHRD/work/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1.hrd.json",
+   "tasks/homologous_recombination_deficiency_scarHRD/work/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1.hrd.json.md5"
+  ],
+  "local": true,
+  "log": [],
+  "output": [
+   "tasks/homologous_recombination_deficiency_scarHRD/output/.manifest.tsv"
+  ],
+  "params": {
+   "task_dir": "tasks/homologous_recombination_deficiency_scarHRD"
+  },
+  "resources": {},
+  "rule": "homologous_recombination_deficiency_scarHRD_results",
+  "temp": [],
+  "threads": 1,
+  "wildcards": {},
+  "wrapper": null
+ },
+ {
   "benchmark": "tasks/homologous_recombination_deficiency_scarHRD/benchmarks/case001subregion-T1-DNA1-WES1/case001subregion-T1-DNA1-WES1.tsv",
   "input": [
    "tasks/somatic_targeted_seq_cnv_calling_sequenza/work/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1.seqz.gz"
@@ -42,34 +63,13 @@
    "partition": "medium",
    "runtime": 1440
   },
-  "rule": "homologous_recombination_deficiency_scarHRD_homologous_recombination_deficiency_scarHRD_run",
+  "rule": "homologous_recombination_deficiency_scarHRD_scarHRD_run",
   "temp": [],
   "threads": 1,
   "wildcards": {
    "library_name": "case001subregion-T1-DNA1-WES1"
   },
   "wrapper": "file://<repo>/snappy_wrappers/wrappers/scarHRD/run"
- },
- {
-  "benchmark": null,
-  "input": [
-   "tasks/homologous_recombination_deficiency_scarHRD/work/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1.hrd.json",
-   "tasks/homologous_recombination_deficiency_scarHRD/work/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1.hrd.json.md5"
-  ],
-  "local": true,
-  "log": [],
-  "output": [
-   "tasks/homologous_recombination_deficiency_scarHRD/output/.manifest.tsv"
-  ],
-  "params": {
-   "task_dir": "tasks/homologous_recombination_deficiency_scarHRD"
-  },
-  "resources": {},
-  "rule": "homologous_recombination_deficiency_scarHRD_results",
-  "temp": [],
-  "threads": 1,
-  "wildcards": {},
-  "wrapper": null
  },
  {
   "benchmark": "tasks/ngs_mapping_bwa/benchmarks/case001subregion-N1-DNA1-WES1/case001subregion-N1-DNA1-WES1.mapping.tsv",
@@ -130,7 +130,7 @@
    "partition": "medium",
    "runtime": 4320
   },
-  "rule": "ngs_mapping_bwa_ngs_mapping_bwa_run",
+  "rule": "ngs_mapping_bwa_bwa_run",
   "temp": [],
   "threads": 1,
   "wildcards": {
@@ -197,7 +197,7 @@
    "partition": "medium",
    "runtime": 4320
   },
-  "rule": "ngs_mapping_bwa_ngs_mapping_bwa_run",
+  "rule": "ngs_mapping_bwa_bwa_run",
   "temp": [],
   "threads": 1,
   "wildcards": {
@@ -234,7 +234,7 @@
    "partition": "medium",
    "runtime": 1440
   },
-  "rule": "reference_index_bwa_reference_index_bwa_run",
+  "rule": "reference_index_bwa_bwa_run",
   "temp": [],
   "threads": 1,
   "wildcards": {},
@@ -290,7 +290,7 @@
    "partition": "medium",
    "runtime": 1440
   },
-  "rule": "somatic_targeted_seq_cnv_calling_sequenza_somatic_targeted_seq_cnv_calling_sequenza_coverage",
+  "rule": "somatic_targeted_seq_cnv_calling_sequenza_sequenza_coverage",
   "temp": [],
   "threads": 1,
   "wildcards": {
@@ -324,7 +324,7 @@
    "partition": "medium",
    "runtime": 60
   },
-  "rule": "somatic_targeted_seq_cnv_calling_sequenza_somatic_targeted_seq_cnv_calling_sequenza_gcreference",
+  "rule": "somatic_targeted_seq_cnv_calling_sequenza_sequenza_gcreference",
   "temp": [],
   "threads": 1,
   "wildcards": {},

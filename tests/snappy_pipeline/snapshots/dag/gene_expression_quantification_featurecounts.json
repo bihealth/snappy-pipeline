@@ -53,7 +53,7 @@
    "partition": "medium",
    "runtime": 1440
   },
-  "rule": "gene_expression_quantification_featurecounts_gene_expression_quantification_featurecounts_run",
+  "rule": "gene_expression_quantification_featurecounts_featurecounts_run",
   "temp": [],
   "threads": 1,
   "wildcards": {
@@ -119,7 +119,7 @@
    "partition": "medium",
    "runtime": 720
   },
-  "rule": "gene_expression_quantification_strandedness_gene_expression_quantification_strandedness_run",
+  "rule": "gene_expression_quantification_strandedness_strandedness_run",
   "temp": [],
   "threads": 1,
   "wildcards": {
@@ -199,7 +199,7 @@
    "partition": "medium",
    "runtime": 2880
   },
-  "rule": "ngs_mapping_star_ngs_mapping_star_run",
+  "rule": "ngs_mapping_star_star_run",
   "temp": [
    "tasks/ngs_mapping_star/work/case001subregion-T1-RNA1-mRNA_seq1/out/case001subregion-T1-RNA1-mRNA_seq1.ReadsPerGene.tab"
   ],
@@ -248,7 +248,7 @@
    "partition": "medium",
    "runtime": 1440
   },
-  "rule": "reference_index_star_reference_index_star_run",
+  "rule": "reference_index_star_star_run",
   "temp": [],
   "threads": 1,
   "wildcards": {},

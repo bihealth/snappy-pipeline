@@ -54,11 +54,36 @@
    "partition": "medium",
    "runtime": 120
   },
-  "rule": "reference_download_reference_download_ensembl_run",
+  "rule": "reference_download_ensembl_run",
   "temp": [],
   "threads": 1,
   "wildcards": {},
   "wrapper": "file://<repo>/snappy_wrappers/wrappers/reference_download/ensembl"
+ },
+ {
+  "benchmark": null,
+  "input": [
+   "tasks/reference_download/work/reference_download/out/reference.fa",
+   "tasks/reference_download/work/reference_download/out/reference.fa.md5",
+   "tasks/reference_download/work/reference_download/out/reference.fa.fai",
+   "tasks/reference_download/work/reference_download/out/reference.fa.fai.md5",
+   "tasks/reference_download/work/reference_download/out/reference.dict",
+   "tasks/reference_download/work/reference_download/out/reference.dict.md5"
+  ],
+  "local": true,
+  "log": [],
+  "output": [
+   "tasks/reference_download/output/.manifest.tsv"
+  ],
+  "params": {
+   "task_dir": "tasks/reference_download"
+  },
+  "resources": {},
+  "rule": "reference_download_results",
+  "temp": [],
+  "threads": 1,
+  "wildcards": {},
+  "wrapper": null
  },
  {
   "benchmark": "tasks/reference_download/benchmarks/reference_download/reference_download.sidecars.tsv",
@@ -87,35 +112,10 @@
    "partition": "medium",
    "runtime": 60
   },
-  "rule": "reference_download_reference_download_sidecars_run",
+  "rule": "reference_download_sidecars_run",
   "temp": [],
   "threads": 1,
   "wildcards": {},
   "wrapper": "file://<repo>/snappy_wrappers/wrappers/reference_download/sidecars"
- },
- {
-  "benchmark": null,
-  "input": [
-   "tasks/reference_download/work/reference_download/out/reference.fa",
-   "tasks/reference_download/work/reference_download/out/reference.fa.md5",
-   "tasks/reference_download/work/reference_download/out/reference.fa.fai",
-   "tasks/reference_download/work/reference_download/out/reference.fa.fai.md5",
-   "tasks/reference_download/work/reference_download/out/reference.dict",
-   "tasks/reference_download/work/reference_download/out/reference.dict.md5"
-  ],
-  "local": true,
-  "log": [],
-  "output": [
-   "tasks/reference_download/output/.manifest.tsv"
-  ],
-  "params": {
-   "task_dir": "tasks/reference_download"
-  },
-  "resources": {},
-  "rule": "reference_download_results",
-  "temp": [],
-  "threads": 1,
-  "wildcards": {},
-  "wrapper": null
  }
 ]

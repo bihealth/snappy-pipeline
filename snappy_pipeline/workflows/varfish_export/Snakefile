@@ -14,7 +14,7 @@ include: "../common/wrapper_rules.rules"
 # Write out pedigree file -----------------------------------------------------
 
 
-rule varfish_export_write_pedigree_run:
+rule write_pedigree_run:
     input:
         unpack(wf.get_input_files("write_pedigree", "run")),
     output:

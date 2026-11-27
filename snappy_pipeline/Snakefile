@@ -9,6 +9,7 @@ from snappy_pipeline.orchestration import (
     select_target_tasks,
 )
 from snappy_pipeline.results import MANIFEST, link_results
+from snappy_pipeline.rule_names import task_parts
 from snappy_pipeline.rulegraph import (
     RULEGRAPH_CAPTION,
     RULEGRAPH_SVG,
@@ -122,7 +123,7 @@ if not target_task:
             write_rulegraph(
                 rule_graph_dot(
                     workflow.dag,
-                    task_steps={task.name: task.step for task in project.model.tasks},
+                    task_parts(task_instances),
                     skip=["all", "rulegraph", *(f"{name}_results" for name in target_task_names)],
                 ),
                 output[0],
