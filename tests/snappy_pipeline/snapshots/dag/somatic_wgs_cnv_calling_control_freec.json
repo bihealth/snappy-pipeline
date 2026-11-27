@@ -85,7 +85,7 @@
    "partition": "medium",
    "runtime": 4320
   },
-  "rule": "ngs_mapping_bwa_bwa_run",
+  "rule": "ngs_mapping_bwa__bwa_run",
   "temp": [],
   "threads": 1,
   "wildcards": {
@@ -152,7 +152,7 @@
    "partition": "medium",
    "runtime": 4320
   },
-  "rule": "ngs_mapping_bwa_bwa_run",
+  "rule": "ngs_mapping_bwa__bwa_run",
   "temp": [],
   "threads": 1,
   "wildcards": {
@@ -189,7 +189,7 @@
    "partition": "medium",
    "runtime": 1440
   },
-  "rule": "reference_index_bwa_bwa_run",
+  "rule": "reference_index_bwa__bwa_run",
   "temp": [],
   "threads": 1,
   "wildcards": {},
@@ -232,7 +232,7 @@
    "partition": "medium",
    "runtime": 2400
   },
-  "rule": "somatic_wgs_cnv_calling_control_freec_control_freec_plot",
+  "rule": "somatic_wgs_cnv_calling_control_freec__control_freec_plot",
   "temp": [],
   "threads": 1,
   "wildcards": {
@@ -281,7 +281,7 @@
    "partition": "medium",
    "runtime": 2400
   },
-  "rule": "somatic_wgs_cnv_calling_control_freec_control_freec_run",
+  "rule": "somatic_wgs_cnv_calling_control_freec__control_freec_run",
   "temp": [],
   "threads": 1,
   "wildcards": {
@@ -324,7 +324,7 @@
    "partition": "medium",
    "runtime": 2400
   },
-  "rule": "somatic_wgs_cnv_calling_control_freec_control_freec_transform",
+  "rule": "somatic_wgs_cnv_calling_control_freec__control_freec_transform",
   "temp": [
    "tasks/somatic_wgs_cnv_calling_control_freec/work/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1.cnr",
    "tasks/somatic_wgs_cnv_calling_control_freec/work/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1.cns"
@@ -360,7 +360,7 @@
    "task_dir": "tasks/somatic_wgs_cnv_calling_control_freec"
   },
   "resources": {},
-  "rule": "somatic_wgs_cnv_calling_control_freec_results",
+  "rule": "somatic_wgs_cnv_calling_control_freec__results",
   "temp": [],
   "threads": 1,
   "wildcards": {},

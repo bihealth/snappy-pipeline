@@ -136,7 +136,7 @@
    "partition": "medium",
    "runtime": 720
   },
-  "rule": "adapter_trimming_bbduk_bbduk_run",
+  "rule": "adapter_trimming_bbduk__bbduk_run",
   "temp": [],
   "threads": 1,
   "wildcards": {
@@ -281,7 +281,7 @@
    "partition": "medium",
    "runtime": 720
   },
-  "rule": "adapter_trimming_bbduk_bbduk_run",
+  "rule": "adapter_trimming_bbduk__bbduk_run",
   "temp": [],
   "threads": 1,
   "wildcards": {
@@ -306,7 +306,7 @@
    "task_dir": "tasks/adapter_trimming_bbduk"
   },
   "resources": {},
-  "rule": "adapter_trimming_bbduk_results",
+  "rule": "adapter_trimming_bbduk__results",
   "temp": [],
   "threads": 1,
   "wildcards": {},

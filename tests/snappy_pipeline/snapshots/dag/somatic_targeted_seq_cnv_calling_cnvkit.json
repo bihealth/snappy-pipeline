@@ -149,7 +149,7 @@
    "partition": "medium",
    "runtime": 4320
   },
-  "rule": "ngs_mapping_bwa_bwa_run",
+  "rule": "ngs_mapping_bwa__bwa_run",
   "temp": [],
   "threads": 1,
   "wildcards": {
@@ -216,7 +216,7 @@
    "partition": "medium",
    "runtime": 4320
   },
-  "rule": "ngs_mapping_bwa_bwa_run",
+  "rule": "ngs_mapping_bwa__bwa_run",
   "temp": [],
   "threads": 1,
   "wildcards": {
@@ -252,7 +252,7 @@
    "partition": "medium",
    "runtime": 120
   },
-  "rule": "panel_of_normals_access_access_run",
+  "rule": "panel_of_normals_access__access_run",
   "temp": [],
   "threads": 1,
   "wildcards": {},
@@ -282,7 +282,7 @@
    "partition": "medium",
    "runtime": 120
   },
-  "rule": "panel_of_normals_cnvkit_cnvkit_antitarget",
+  "rule": "panel_of_normals_cnvkit__cnvkit_antitarget",
   "temp": [],
   "threads": 1,
   "wildcards": {},
@@ -320,7 +320,7 @@
    "partition": "medium",
    "runtime": 120
   },
-  "rule": "panel_of_normals_cnvkit_cnvkit_coverage",
+  "rule": "panel_of_normals_cnvkit__cnvkit_coverage",
   "temp": [
    "tasks/panel_of_normals_cnvkit/work/case001subregion-N1-DNA1-WES1/out/case001subregion-N1-DNA1-WES1.antitargetcoverage.cnn",
    "tasks/panel_of_normals_cnvkit/work/case001subregion-N1-DNA1-WES1/out/case001subregion-N1-DNA1-WES1.targetcoverage.cnn"
@@ -365,7 +365,7 @@
    "partition": "medium",
    "runtime": 120
   },
-  "rule": "panel_of_normals_cnvkit_cnvkit_create_panel",
+  "rule": "panel_of_normals_cnvkit__cnvkit_create_panel",
   "temp": [],
   "threads": 1,
   "wildcards": {},
@@ -404,7 +404,7 @@
    "partition": "medium",
    "runtime": 120
   },
-  "rule": "panel_of_normals_cnvkit_cnvkit_target",
+  "rule": "panel_of_normals_cnvkit__cnvkit_target",
   "temp": [],
   "threads": 1,
   "wildcards": {},
@@ -439,7 +439,7 @@
    "partition": "medium",
    "runtime": 1440
   },
-  "rule": "reference_index_bwa_bwa_run",
+  "rule": "reference_index_bwa__bwa_run",
   "temp": [],
   "threads": 1,
   "wildcards": {},
@@ -475,7 +475,7 @@
    "partition": "medium",
    "runtime": 240
   },
-  "rule": "somatic_targeted_seq_cnv_calling_cnvkit_cnvkit_call",
+  "rule": "somatic_targeted_seq_cnv_calling_cnvkit__cnvkit_call",
   "temp": [
    "tasks/somatic_targeted_seq_cnv_calling_cnvkit/work/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1.call.cns"
   ],
@@ -517,7 +517,7 @@
    "partition": "medium",
    "runtime": 480
   },
-  "rule": "somatic_targeted_seq_cnv_calling_cnvkit_cnvkit_coverage",
+  "rule": "somatic_targeted_seq_cnv_calling_cnvkit__cnvkit_coverage",
   "temp": [
    "tasks/somatic_targeted_seq_cnv_calling_cnvkit/work/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1.antitargetcoverage.cnn",
    "tasks/somatic_targeted_seq_cnv_calling_cnvkit/work/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1.targetcoverage.cnn"
@@ -560,7 +560,7 @@
    "partition": "medium",
    "runtime": 240
   },
-  "rule": "somatic_targeted_seq_cnv_calling_cnvkit_cnvkit_export",
+  "rule": "somatic_targeted_seq_cnv_calling_cnvkit__cnvkit_export",
   "temp": [],
   "threads": 1,
   "wildcards": {
@@ -597,7 +597,7 @@
    "partition": "medium",
    "runtime": 240
   },
-  "rule": "somatic_targeted_seq_cnv_calling_cnvkit_cnvkit_fix",
+  "rule": "somatic_targeted_seq_cnv_calling_cnvkit__cnvkit_fix",
   "temp": [],
   "threads": 1,
   "wildcards": {
@@ -711,7 +711,7 @@
    "partition": "medium",
    "runtime": 480
   },
-  "rule": "somatic_targeted_seq_cnv_calling_cnvkit_cnvkit_plot",
+  "rule": "somatic_targeted_seq_cnv_calling_cnvkit__cnvkit_plot",
   "temp": [],
   "threads": 1,
   "wildcards": {
@@ -746,7 +746,7 @@
    "partition": "medium",
    "runtime": 240
   },
-  "rule": "somatic_targeted_seq_cnv_calling_cnvkit_cnvkit_postprocess",
+  "rule": "somatic_targeted_seq_cnv_calling_cnvkit__cnvkit_postprocess",
   "temp": [],
   "threads": 1,
   "wildcards": {
@@ -811,7 +811,7 @@
    "partition": "medium",
    "runtime": 240
   },
-  "rule": "somatic_targeted_seq_cnv_calling_cnvkit_cnvkit_report",
+  "rule": "somatic_targeted_seq_cnv_calling_cnvkit__cnvkit_report",
   "temp": [],
   "threads": 1,
   "wildcards": {
@@ -848,7 +848,7 @@
    "partition": "medium",
    "runtime": 240
   },
-  "rule": "somatic_targeted_seq_cnv_calling_cnvkit_cnvkit_segment",
+  "rule": "somatic_targeted_seq_cnv_calling_cnvkit__cnvkit_segment",
   "temp": [
    "tasks/somatic_targeted_seq_cnv_calling_cnvkit/work/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1.segment.cns"
   ],
@@ -947,7 +947,7 @@
    "task_dir": "tasks/somatic_targeted_seq_cnv_calling_cnvkit"
   },
   "resources": {},
-  "rule": "somatic_targeted_seq_cnv_calling_cnvkit_results",
+  "rule": "somatic_targeted_seq_cnv_calling_cnvkit__results",
   "temp": [],
   "threads": 1,
   "wildcards": {},

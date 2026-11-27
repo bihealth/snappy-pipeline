@@ -47,7 +47,7 @@
    "partition": "medium",
    "runtime": 1440
   },
-  "rule": "reference_index_bwa_mem2_bwa_mem2_run",
+  "rule": "reference_index_bwa_mem2__bwa_mem2_run",
   "temp": [],
   "threads": 1,
   "wildcards": {},
@@ -71,7 +71,7 @@
    "task_dir": "tasks/reference_index_bwa_mem2"
   },
   "resources": {},
-  "rule": "reference_index_bwa_mem2_results",
+  "rule": "reference_index_bwa_mem2__results",
   "temp": [],
   "threads": 1,
   "wildcards": {},

@@ -39,7 +39,7 @@
    "task_dir": "tasks/reference_download_ucsc"
   },
   "resources": {},
-  "rule": "reference_download_ucsc_results",
+  "rule": "reference_download_ucsc__results",
   "temp": [],
   "threads": 1,
   "wildcards": {},
@@ -72,7 +72,7 @@
    "partition": "medium",
    "runtime": 60
   },
-  "rule": "reference_download_ucsc_sidecars_run",
+  "rule": "reference_download_ucsc__sidecars_run",
   "temp": [],
   "threads": 1,
   "wildcards": {},
@@ -105,7 +105,7 @@
    "partition": "medium",
    "runtime": 120
   },
-  "rule": "reference_download_ucsc_ucsc_run",
+  "rule": "reference_download_ucsc__ucsc_run",
   "temp": [],
   "threads": 1,
   "wildcards": {},

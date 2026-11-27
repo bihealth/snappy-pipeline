@@ -1,33 +1,31 @@
-"""Rule names: the task, part and action of ``<task>_<part>_<action>``."""
+"""Rule names: the task, part and action of ``<task>__<part>_<action>``."""
 
 from types import SimpleNamespace
 
-from snappy_pipeline.rule_names import RuleName, parse_rule_name, task_parts
+from snappy_pipeline.rule_names import RuleName, parse_rule_name, split_task, task_parts
 
-PARTS = {
-    "mapping": {"bwa": ("run",), "qc_summary": ("run",)},
-    "mapping_qc": {"alfred": ("run",), "qc_summary": ("run",)},
-}
+PARTS = {"mapping": {"bwa": ("run",), "qc_summary": ("run",)}, "mapping_qc": {"alfred": ("run",)}}
 
 
-def test_parse_rule_name_resolves_a_task_that_prefixes_another():
-    assert parse_rule_name("mapping_bwa_run", PARTS) == RuleName("mapping", "bwa", "run")
-    assert parse_rule_name("mapping_qc_summary_run", PARTS) == RuleName(
+def test_split_task_cuts_at_the_separator():
+    assert split_task("mapping_qc__qc_summary_run") == ("mapping_qc", "qc_summary_run")
+    assert split_task("mapping__results") == ("mapping", "results")
+    assert split_task("all") is None
+
+
+def test_parse_rule_name_finds_the_part_and_action():
+    assert parse_rule_name("mapping__bwa_run", PARTS) == RuleName("mapping", "bwa", "run")
+    assert parse_rule_name("mapping__qc_summary_run", PARTS) == RuleName(
         "mapping", "qc_summary", "run"
     )
-    assert parse_rule_name("mapping_qc_qc_summary_run", PARTS) == RuleName(
-        "mapping_qc", "qc_summary", "run"
-    )
-    assert parse_rule_name("mapping_qc_alfred_run", PARTS) == RuleName(
+    assert parse_rule_name("mapping_qc__alfred_run", PARTS) == RuleName(
         "mapping_qc", "alfred", "run"
     )
 
 
 def test_parse_rule_name_keeps_the_task_of_other_rules():
-    # the results job and a handwritten rule of no part: the longest task name
-    assert parse_rule_name("mapping_results", PARTS) == RuleName("mapping", "", "")
-    assert parse_rule_name("mapping_qc_results", PARTS) == RuleName("mapping_qc", "", "")
-    assert parse_rule_name("mapping_bwa_index", PARTS) == RuleName("mapping", "", "")
+    assert parse_rule_name("mapping__results", PARTS) == RuleName("mapping", "", "")
+    assert parse_rule_name("mapping__bwa_index", PARTS) == RuleName("mapping", "", "")
     assert parse_rule_name("all", PARTS) is None
 
 

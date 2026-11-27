@@ -37,7 +37,7 @@
    "partition": "medium",
    "runtime": 1440
   },
-  "rule": "alignment_processing_gatk4_bqsr_gatk4_bqsr_run",
+  "rule": "alignment_processing_gatk4_bqsr__gatk4_bqsr_run",
   "temp": [],
   "threads": 1,
   "wildcards": {
@@ -83,7 +83,7 @@
    "partition": "medium",
    "runtime": 1440
   },
-  "rule": "alignment_processing_gatk4_bqsr_gatk4_bqsr_run",
+  "rule": "alignment_processing_gatk4_bqsr__gatk4_bqsr_run",
   "temp": [],
   "threads": 1,
   "wildcards": {
@@ -116,7 +116,7 @@
    "task_dir": "tasks/alignment_processing_gatk4_bqsr"
   },
   "resources": {},
-  "rule": "alignment_processing_gatk4_bqsr_results",
+  "rule": "alignment_processing_gatk4_bqsr__results",
   "temp": [],
   "threads": 1,
   "wildcards": {},
@@ -208,7 +208,7 @@
    "partition": "medium",
    "runtime": 4320
   },
-  "rule": "ngs_mapping_bwa_bwa_run",
+  "rule": "ngs_mapping_bwa__bwa_run",
   "temp": [],
   "threads": 1,
   "wildcards": {
@@ -275,7 +275,7 @@
    "partition": "medium",
    "runtime": 4320
   },
-  "rule": "ngs_mapping_bwa_bwa_run",
+  "rule": "ngs_mapping_bwa__bwa_run",
   "temp": [],
   "threads": 1,
   "wildcards": {
@@ -312,7 +312,7 @@
    "partition": "medium",
    "runtime": 1440
   },
-  "rule": "reference_index_bwa_bwa_run",
+  "rule": "reference_index_bwa__bwa_run",
   "temp": [],
   "threads": 1,
   "wildcards": {},

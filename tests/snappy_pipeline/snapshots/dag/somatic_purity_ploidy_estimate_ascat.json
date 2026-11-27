@@ -89,7 +89,7 @@
    "partition": "medium",
    "runtime": 4320
   },
-  "rule": "ngs_mapping_bwa_bwa_run",
+  "rule": "ngs_mapping_bwa__bwa_run",
   "temp": [],
   "threads": 1,
   "wildcards": {
@@ -156,7 +156,7 @@
    "partition": "medium",
    "runtime": 4320
   },
-  "rule": "ngs_mapping_bwa_bwa_run",
+  "rule": "ngs_mapping_bwa__bwa_run",
   "temp": [],
   "threads": 1,
   "wildcards": {
@@ -193,7 +193,7 @@
    "partition": "medium",
    "runtime": 1440
   },
-  "rule": "reference_index_bwa_bwa_run",
+  "rule": "reference_index_bwa__bwa_run",
   "temp": [],
   "threads": 1,
   "wildcards": {},
@@ -227,7 +227,7 @@
    "partition": "medium",
    "runtime": 2880
   },
-  "rule": "somatic_purity_ploidy_estimate_ascat_ascat_baf_normal",
+  "rule": "somatic_purity_ploidy_estimate_ascat__ascat_baf_normal",
   "temp": [
    "tasks/somatic_purity_ploidy_estimate_ascat/work/case001subregion-N1-DNA1-WES1/out/case001subregion-N1-DNA1-WES1.baf_normal.txt"
   ],
@@ -265,7 +265,7 @@
    "partition": "medium",
    "runtime": 2880
   },
-  "rule": "somatic_purity_ploidy_estimate_ascat_ascat_baf_tumor",
+  "rule": "somatic_purity_ploidy_estimate_ascat__ascat_baf_tumor",
   "temp": [
    "tasks/somatic_purity_ploidy_estimate_ascat/work/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1.baf_tumor.txt"
   ],
@@ -303,7 +303,7 @@
    "partition": "medium",
    "runtime": 2880
   },
-  "rule": "somatic_purity_ploidy_estimate_ascat_ascat_cnv_normal",
+  "rule": "somatic_purity_ploidy_estimate_ascat__ascat_cnv_normal",
   "temp": [
    "tasks/somatic_purity_ploidy_estimate_ascat/work/case001subregion-N1-DNA1-WES1/out/case001subregion-N1-DNA1-WES1.cnv_normal.txt"
   ],
@@ -341,7 +341,7 @@
    "partition": "medium",
    "runtime": 2880
   },
-  "rule": "somatic_purity_ploidy_estimate_ascat_ascat_cnv_tumor",
+  "rule": "somatic_purity_ploidy_estimate_ascat__ascat_cnv_tumor",
   "temp": [
    "tasks/somatic_purity_ploidy_estimate_ascat/work/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1.cnv_tumor.txt"
   ],
@@ -398,7 +398,7 @@
    "partition": "medium",
    "runtime": 2880
   },
-  "rule": "somatic_purity_ploidy_estimate_ascat_ascat_run_ascat",
+  "rule": "somatic_purity_ploidy_estimate_ascat__ascat_run_ascat",
   "temp": [],
   "threads": 1,
   "wildcards": {
@@ -435,7 +435,7 @@
    "task_dir": "tasks/somatic_purity_ploidy_estimate_ascat"
   },
   "resources": {},
-  "rule": "somatic_purity_ploidy_estimate_ascat_results",
+  "rule": "somatic_purity_ploidy_estimate_ascat__results",
   "temp": [],
   "threads": 1,
   "wildcards": {},

@@ -77,7 +77,7 @@
    "partition": "medium",
    "runtime": 4320
   },
-  "rule": "ngs_mapping_bwa_bwa_run",
+  "rule": "ngs_mapping_bwa__bwa_run",
   "temp": [],
   "threads": 1,
   "wildcards": {
@@ -144,7 +144,7 @@
    "partition": "medium",
    "runtime": 4320
   },
-  "rule": "ngs_mapping_bwa_bwa_run",
+  "rule": "ngs_mapping_bwa__bwa_run",
   "temp": [],
   "threads": 1,
   "wildcards": {
@@ -211,7 +211,7 @@
    "partition": "medium",
    "runtime": 4320
   },
-  "rule": "ngs_mapping_bwa_bwa_run",
+  "rule": "ngs_mapping_bwa__bwa_run",
   "temp": [],
   "threads": 1,
   "wildcards": {
@@ -248,7 +248,7 @@
    "partition": "medium",
    "runtime": 1440
   },
-  "rule": "reference_index_bwa_bwa_run",
+  "rule": "reference_index_bwa__bwa_run",
   "temp": [],
   "threads": 1,
   "wildcards": {},
@@ -314,7 +314,7 @@
    "partition": "medium",
    "runtime": 1440
   },
-  "rule": "variant_annotation_vep_vep_run",
+  "rule": "variant_annotation_vep__vep_run",
   "temp": [],
   "threads": 1,
   "wildcards": {
@@ -372,7 +372,7 @@
    "partition": "medium",
    "runtime": 2880
   },
-  "rule": "variant_calling_gatk4_hc_gvcf_gatk4_hc_gvcf_combine_gvcfs",
+  "rule": "variant_calling_gatk4_hc_gvcf__gatk4_hc_gvcf_combine_gvcfs",
   "temp": [],
   "threads": 1,
   "wildcards": {
@@ -427,7 +427,7 @@
    "partition": "medium",
    "runtime": 2880
   },
-  "rule": "variant_calling_gatk4_hc_gvcf_gatk4_hc_gvcf_discover",
+  "rule": "variant_calling_gatk4_hc_gvcf__gatk4_hc_gvcf_discover",
   "temp": [
    "tasks/variant_calling_gatk4_hc_gvcf/work/case001subregion-N1-DNA1-WES1/out/case001subregion-N1-DNA1-WES1.discover.g.vcf.gz",
    "tasks/variant_calling_gatk4_hc_gvcf/work/case001subregion-N1-DNA1-WES1/out/case001subregion-N1-DNA1-WES1.discover.g.vcf.gz.tbi"
@@ -485,7 +485,7 @@
    "partition": "medium",
    "runtime": 2880
   },
-  "rule": "variant_calling_gatk4_hc_gvcf_gatk4_hc_gvcf_discover",
+  "rule": "variant_calling_gatk4_hc_gvcf__gatk4_hc_gvcf_discover",
   "temp": [
    "tasks/variant_calling_gatk4_hc_gvcf/work/case001subregionFather-N1-DNA1-WES1/out/case001subregionFather-N1-DNA1-WES1.discover.g.vcf.gz",
    "tasks/variant_calling_gatk4_hc_gvcf/work/case001subregionFather-N1-DNA1-WES1/out/case001subregionFather-N1-DNA1-WES1.discover.g.vcf.gz.tbi"
@@ -543,7 +543,7 @@
    "partition": "medium",
    "runtime": 2880
   },
-  "rule": "variant_calling_gatk4_hc_gvcf_gatk4_hc_gvcf_discover",
+  "rule": "variant_calling_gatk4_hc_gvcf__gatk4_hc_gvcf_discover",
   "temp": [
    "tasks/variant_calling_gatk4_hc_gvcf/work/case001subregionMother-N1-DNA1-WES1/out/case001subregionMother-N1-DNA1-WES1.discover.g.vcf.gz",
    "tasks/variant_calling_gatk4_hc_gvcf/work/case001subregionMother-N1-DNA1-WES1/out/case001subregionMother-N1-DNA1-WES1.discover.g.vcf.gz.tbi"
@@ -604,7 +604,7 @@
    "partition": "medium",
    "runtime": 2880
   },
-  "rule": "variant_calling_gatk4_hc_gvcf_gatk4_hc_gvcf_genotype",
+  "rule": "variant_calling_gatk4_hc_gvcf__gatk4_hc_gvcf_genotype",
   "temp": [],
   "threads": 1,
   "wildcards": {
@@ -655,7 +655,7 @@
    }
   },
   "resources": {},
-  "rule": "variant_calling_gatk4_hc_gvcf_write_pedigree_run",
+  "rule": "variant_calling_gatk4_hc_gvcf__write_pedigree_run",
   "temp": [],
   "threads": 1,
   "wildcards": {
@@ -698,7 +698,7 @@
    "partition": "medium",
    "runtime": 1440
   },
-  "rule": "variant_phasing_gatk_phase_by_transmission_gatk_phase_by_transmission_run",
+  "rule": "variant_phasing_gatk_phase_by_transmission__gatk_phase_by_transmission_run",
   "temp": [],
   "threads": 1,
   "wildcards": {
@@ -723,7 +723,7 @@
    "task_dir": "tasks/variant_phasing_gatk_phase_by_transmission"
   },
   "resources": {},
-  "rule": "variant_phasing_gatk_phase_by_transmission_results",
+  "rule": "variant_phasing_gatk_phase_by_transmission__results",
   "temp": [],
   "threads": 1,
   "wildcards": {},
@@ -768,7 +768,7 @@
    }
   },
   "resources": {},
-  "rule": "variant_phasing_gatk_phase_by_transmission_write_trio_pedigree_run",
+  "rule": "variant_phasing_gatk_phase_by_transmission__write_trio_pedigree_run",
   "temp": [],
   "threads": 1,
   "wildcards": {

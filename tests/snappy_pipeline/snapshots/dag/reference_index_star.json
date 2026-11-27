@@ -57,7 +57,7 @@
    "task_dir": "tasks/reference_index_star"
   },
   "resources": {},
-  "rule": "reference_index_star_results",
+  "rule": "reference_index_star__results",
   "temp": [],
   "threads": 1,
   "wildcards": {},
@@ -102,7 +102,7 @@
    "partition": "medium",
    "runtime": 1440
   },
-  "rule": "reference_index_star_star_run",
+  "rule": "reference_index_star__star_run",
   "temp": [],
   "threads": 1,
   "wildcards": {},

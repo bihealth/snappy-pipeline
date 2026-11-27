@@ -93,7 +93,7 @@
    "partition": "medium",
    "runtime": 720
   },
-  "rule": "adapter_trimming_fastp_fastp_run",
+  "rule": "adapter_trimming_fastp__fastp_run",
   "temp": [],
   "threads": 1,
   "wildcards": {
@@ -195,7 +195,7 @@
    "partition": "medium",
    "runtime": 720
   },
-  "rule": "adapter_trimming_fastp_fastp_run",
+  "rule": "adapter_trimming_fastp__fastp_run",
   "temp": [],
   "threads": 1,
   "wildcards": {
@@ -220,7 +220,7 @@
    "task_dir": "tasks/adapter_trimming_fastp"
   },
   "resources": {},
-  "rule": "adapter_trimming_fastp_results",
+  "rule": "adapter_trimming_fastp__results",
   "temp": [],
   "threads": 1,
   "wildcards": {},

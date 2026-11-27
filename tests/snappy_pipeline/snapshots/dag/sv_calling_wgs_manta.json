@@ -77,7 +77,7 @@
    "partition": "medium",
    "runtime": 4320
   },
-  "rule": "ngs_mapping_bwa_bwa_run",
+  "rule": "ngs_mapping_bwa__bwa_run",
   "temp": [],
   "threads": 1,
   "wildcards": {
@@ -114,7 +114,7 @@
    "partition": "medium",
    "runtime": 1440
   },
-  "rule": "reference_index_bwa_bwa_run",
+  "rule": "reference_index_bwa__bwa_run",
   "temp": [],
   "threads": 1,
   "wildcards": {},
@@ -150,7 +150,7 @@
    "partition": "medium",
    "runtime": 10080
   },
-  "rule": "sv_calling_wgs_manta_manta_run",
+  "rule": "sv_calling_wgs_manta__manta_run",
   "temp": [],
   "threads": 1,
   "wildcards": {
@@ -175,7 +175,7 @@
    "task_dir": "tasks/sv_calling_wgs_manta"
   },
   "resources": {},
-  "rule": "sv_calling_wgs_manta_results",
+  "rule": "sv_calling_wgs_manta__results",
   "temp": [],
   "threads": 1,
   "wildcards": {},

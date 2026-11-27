@@ -106,7 +106,7 @@ Only result files have a `.md5` file.
 It holds relative symlinks into `work/` that mirror the paths below `work/`.
 No task reads from it.
 
-For each task with result files, one local job, `<task>_results`, creates the links to them.
+For each task with result files, one local job, `<task>__results`, creates the links to them.
 Each result file has its `.md5` file, and VCF and BED files also have their index.
 The job writes `output/.manifest.tsv`, which lists the path, size and md5 file of each result file.
 It removes links to files that are no longer result files.

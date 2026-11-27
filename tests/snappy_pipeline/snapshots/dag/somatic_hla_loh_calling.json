@@ -59,7 +59,7 @@
    "partition": "medium",
    "runtime": 2400
   },
-  "rule": "hla_typing_optitype_optitype_run",
+  "rule": "hla_typing_optitype__optitype_run",
   "temp": [],
   "threads": 1,
   "wildcards": {
@@ -126,7 +126,7 @@
    "partition": "medium",
    "runtime": 4320
   },
-  "rule": "ngs_mapping_bwa_bwa_run",
+  "rule": "ngs_mapping_bwa__bwa_run",
   "temp": [],
   "threads": 1,
   "wildcards": {
@@ -193,7 +193,7 @@
    "partition": "medium",
    "runtime": 4320
   },
-  "rule": "ngs_mapping_bwa_bwa_run",
+  "rule": "ngs_mapping_bwa__bwa_run",
   "temp": [],
   "threads": 1,
   "wildcards": {
@@ -230,7 +230,7 @@
    "partition": "medium",
    "runtime": 1440
   },
-  "rule": "reference_index_bwa_bwa_run",
+  "rule": "reference_index_bwa__bwa_run",
   "temp": [],
   "threads": 1,
   "wildcards": {},
@@ -275,7 +275,7 @@
    "partition": "medium",
    "runtime": 60
   },
-  "rule": "somatic_hla_loh_calling_lohhla_run",
+  "rule": "somatic_hla_loh_calling__lohhla_run",
   "temp": [],
   "threads": 1,
   "wildcards": {
@@ -297,7 +297,7 @@
    "task_dir": "tasks/somatic_hla_loh_calling"
   },
   "resources": {},
-  "rule": "somatic_hla_loh_calling_results",
+  "rule": "somatic_hla_loh_calling__results",
   "temp": [],
   "threads": 1,
   "wildcards": {},

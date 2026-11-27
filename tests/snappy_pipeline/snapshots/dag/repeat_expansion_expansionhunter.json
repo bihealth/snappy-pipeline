@@ -77,7 +77,7 @@
    "partition": "medium",
    "runtime": 4320
   },
-  "rule": "ngs_mapping_bwa_bwa_run",
+  "rule": "ngs_mapping_bwa__bwa_run",
   "temp": [],
   "threads": 1,
   "wildcards": {
@@ -114,7 +114,7 @@
    "partition": "medium",
    "runtime": 1440
   },
-  "rule": "reference_index_bwa_bwa_run",
+  "rule": "reference_index_bwa__bwa_run",
   "temp": [],
   "threads": 1,
   "wildcards": {},
@@ -139,7 +139,7 @@
    "partition": "medium",
    "runtime": 10
   },
-  "rule": "repeat_expansion_expansionhunter_annotate_expansionhunter",
+  "rule": "repeat_expansion_expansionhunter__annotate_expansionhunter",
   "temp": [],
   "threads": 1,
   "wildcards": {
@@ -179,7 +179,7 @@
    "partition": "medium",
    "runtime": 60
   },
-  "rule": "repeat_expansion_expansionhunter_expansionhunter_run",
+  "rule": "repeat_expansion_expansionhunter__expansionhunter_run",
   "temp": [
    "tasks/repeat_expansion_expansionhunter/work/case001subregion-N1-DNA1-WES1/out/case001subregion-N1-DNA1-WES1.json"
   ],
@@ -206,7 +206,7 @@
    "task_dir": "tasks/repeat_expansion_expansionhunter"
   },
   "resources": {},
-  "rule": "repeat_expansion_expansionhunter_results",
+  "rule": "repeat_expansion_expansionhunter__results",
   "temp": [],
   "threads": 1,
   "wildcards": {},

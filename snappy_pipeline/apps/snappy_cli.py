@@ -1167,8 +1167,8 @@ def _rule_names(directory_path: str) -> list[str]:
 
 
 def _rule_rows(names: list[str], instances: dict[str, Any]) -> list[dict[str, str]]:
-    """Rule name -> task, step, part and action: a rule is ``<task>_<part>_<action>`` for the
-    jobs of a step part or ``<task>_results``; a rule outside the pattern (``all``) keeps the
+    """Rule name -> task, step, part and action: a rule is ``<task>__<part>_<action>`` for the
+    jobs of a step part or ``<task>__results``; a rule outside the pattern (``all``) keeps the
     fields empty."""
     parts = task_parts(instances)
     rows = []
@@ -1201,8 +1201,8 @@ def _rule_rows(names: list[str], instances: dict[str, Any]) -> list[dict[str, st
 )
 @listing_options
 def rules(directory, task_names, parts, names, as_json, plain):
-    """List the rules of the project as Snakemake names them: <task>_<part>_<action> for
-    the jobs of a step part, <task>_results for the job that links the results of a task.
+    """List the rules of the project as Snakemake names them: <task>__<part>_<action> for
+    the jobs of a step part, <task>__results for the job that links the results of a task.
 
     Rerun the QC summaries of every task:
         snappy run -- --forcerun $(snappy rules --part qc_summary --names)

@@ -81,7 +81,7 @@
    "partition": "medium",
    "runtime": 4320
   },
-  "rule": "ngs_mapping_bwa_bwa_run",
+  "rule": "ngs_mapping_bwa__bwa_run",
   "temp": [],
   "threads": 1,
   "wildcards": {
@@ -148,7 +148,7 @@
    "partition": "medium",
    "runtime": 4320
   },
-  "rule": "ngs_mapping_bwa_bwa_run",
+  "rule": "ngs_mapping_bwa__bwa_run",
   "temp": [],
   "threads": 1,
   "wildcards": {
@@ -185,7 +185,7 @@
    "partition": "medium",
    "runtime": 1440
   },
-  "rule": "reference_index_bwa_bwa_run",
+  "rule": "reference_index_bwa__bwa_run",
   "temp": [],
   "threads": 1,
   "wildcards": {},
@@ -220,7 +220,7 @@
    "partition": "medium",
    "runtime": 120
   },
-  "rule": "variant_calling_freebayes_freebayes_gather",
+  "rule": "variant_calling_freebayes__freebayes_gather",
   "temp": [],
   "threads": 1,
   "wildcards": {
@@ -257,7 +257,7 @@
    "partition": "medium",
    "runtime": 120
   },
-  "rule": "variant_calling_freebayes_freebayes_gather",
+  "rule": "variant_calling_freebayes__freebayes_gather",
   "temp": [],
   "threads": 1,
   "wildcards": {
@@ -301,7 +301,7 @@
    "partition": "medium",
    "runtime": 1440
   },
-  "rule": "variant_calling_freebayes_freebayes_run",
+  "rule": "variant_calling_freebayes__freebayes_run",
   "temp": [
    "tasks/variant_calling_freebayes/work/case001subregion-N1-DNA1-WES1/out/case001subregion-N1-DNA1-WES1/calls/1-of-2.bcf",
    "tasks/variant_calling_freebayes/work/case001subregion-N1-DNA1-WES1/out/case001subregion-N1-DNA1-WES1/calls/1-of-2.bcf.csi"
@@ -349,7 +349,7 @@
    "partition": "medium",
    "runtime": 1440
   },
-  "rule": "variant_calling_freebayes_freebayes_run",
+  "rule": "variant_calling_freebayes__freebayes_run",
   "temp": [
    "tasks/variant_calling_freebayes/work/case001subregion-N1-DNA1-WES1/out/case001subregion-N1-DNA1-WES1/calls/2-of-2.bcf",
    "tasks/variant_calling_freebayes/work/case001subregion-N1-DNA1-WES1/out/case001subregion-N1-DNA1-WES1/calls/2-of-2.bcf.csi"
@@ -397,7 +397,7 @@
    "partition": "medium",
    "runtime": 1440
   },
-  "rule": "variant_calling_freebayes_freebayes_run",
+  "rule": "variant_calling_freebayes__freebayes_run",
   "temp": [
    "tasks/variant_calling_freebayes/work/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1/calls/1-of-2.bcf",
    "tasks/variant_calling_freebayes/work/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1/calls/1-of-2.bcf.csi"
@@ -445,7 +445,7 @@
    "partition": "medium",
    "runtime": 1440
   },
-  "rule": "variant_calling_freebayes_freebayes_run",
+  "rule": "variant_calling_freebayes__freebayes_run",
   "temp": [
    "tasks/variant_calling_freebayes/work/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1/calls/2-of-2.bcf",
    "tasks/variant_calling_freebayes/work/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1/calls/2-of-2.bcf.csi"
@@ -491,7 +491,7 @@
    "partition": "medium",
    "runtime": 2
   },
-  "rule": "variant_calling_freebayes_freebayes_scatter",
+  "rule": "variant_calling_freebayes__freebayes_scatter",
   "temp": [
    "tasks/variant_calling_freebayes/work/scatter/1-of-2.region.bed",
    "tasks/variant_calling_freebayes/work/scatter/2-of-2.region.bed"
@@ -521,7 +521,7 @@
    "task_dir": "tasks/variant_calling_freebayes"
   },
   "resources": {},
-  "rule": "variant_calling_freebayes_results",
+  "rule": "variant_calling_freebayes__results",
   "temp": [],
   "threads": 1,
   "wildcards": {},

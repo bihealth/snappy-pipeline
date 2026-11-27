@@ -48,7 +48,7 @@
    "partition": "medium",
    "runtime": 120
   },
-  "rule": "reference_download_refseq_refseq_run",
+  "rule": "reference_download_refseq__refseq_run",
   "temp": [],
   "threads": 1,
   "wildcards": {},
@@ -73,7 +73,7 @@
    "task_dir": "tasks/reference_download_refseq"
   },
   "resources": {},
-  "rule": "reference_download_refseq_results",
+  "rule": "reference_download_refseq__results",
   "temp": [],
   "threads": 1,
   "wildcards": {},
@@ -106,7 +106,7 @@
    "partition": "medium",
    "runtime": 60
   },
-  "rule": "reference_download_refseq_sidecars_run",
+  "rule": "reference_download_refseq__sidecars_run",
   "temp": [],
   "threads": 1,
   "wildcards": {},

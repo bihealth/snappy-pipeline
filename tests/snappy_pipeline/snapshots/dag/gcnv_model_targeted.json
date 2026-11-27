@@ -46,7 +46,7 @@
    "partition": "medium",
    "runtime": 1440
   },
-  "rule": "gcnv_model_targeted_gcnv_annotate_gc",
+  "rule": "gcnv_model_targeted__gcnv_annotate_gc",
   "temp": [
    "tasks/gcnv_model_targeted/work/MedExome/out/MedExome.annotate_gc.tsv"
   ],
@@ -85,7 +85,7 @@
    "partition": "medium",
    "runtime": 1440
   },
-  "rule": "gcnv_model_targeted_gcnv_coverage",
+  "rule": "gcnv_model_targeted__gcnv_coverage",
   "temp": [
    "tasks/gcnv_model_targeted/work/case001subregion-N1-DNA1-WES1/out/case001subregion-N1-DNA1-WES1.coverage.tsv"
   ],
@@ -125,7 +125,7 @@
    "partition": "medium",
    "runtime": 1440
   },
-  "rule": "gcnv_model_targeted_gcnv_filter_intervals",
+  "rule": "gcnv_model_targeted__gcnv_filter_intervals",
   "temp": [
    "tasks/gcnv_model_targeted/work/MedExome/out/MedExome.filter_intervals.interval_list"
   ],
@@ -162,7 +162,7 @@
    "partition": "medium",
    "runtime": 1440
   },
-  "rule": "gcnv_model_targeted_gcnv_model_scatter_intervals",
+  "rule": "gcnv_model_targeted__gcnv_model_scatter_intervals",
   "temp": [],
   "threads": 1,
   "wildcards": {
@@ -200,7 +200,7 @@
    "partition": "medium",
    "runtime": 5760
   },
-  "rule": "gcnv_model_targeted_gcnv_post_germline_calls",
+  "rule": "gcnv_model_targeted__gcnv_post_germline_calls",
   "temp": [],
   "threads": 1,
   "wildcards": {
@@ -236,7 +236,7 @@
    "partition": "medium",
    "runtime": 1440
   },
-  "rule": "gcnv_model_targeted_gcnv_preprocess_intervals",
+  "rule": "gcnv_model_targeted__gcnv_preprocess_intervals",
   "temp": [],
   "threads": 1,
   "wildcards": {
@@ -260,7 +260,7 @@
    "task_dir": "tasks/gcnv_model_targeted"
   },
   "resources": {},
-  "rule": "gcnv_model_targeted_results",
+  "rule": "gcnv_model_targeted__results",
   "temp": [],
   "threads": 1,
   "wildcards": {},
@@ -325,7 +325,7 @@
    "partition": "medium",
    "runtime": 4320
   },
-  "rule": "ngs_mapping_bwa_bwa_run",
+  "rule": "ngs_mapping_bwa__bwa_run",
   "temp": [],
   "threads": 1,
   "wildcards": {
@@ -362,7 +362,7 @@
    "partition": "medium",
    "runtime": 1440
   },
-  "rule": "reference_index_bwa_bwa_run",
+  "rule": "reference_index_bwa__bwa_run",
   "temp": [],
   "threads": 1,
   "wildcards": {},

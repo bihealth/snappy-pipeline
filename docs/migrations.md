@@ -250,7 +250,7 @@ Each task has its own directory `tasks/<task>/`.
 `work/` holds every file the jobs write and is the contract between tasks.
 A task reads the `work/` files of its upstream tasks, never their `output/`.
 `output/` holds only the result files.
-For each task with result files, one local `<task>_results` job links them from `work/` and writes `output/.manifest.tsv`.
+For each task with result files, one local `<task>__results` job links them from `work/` and writes `output/.manifest.tsv`.
 
 ```{graphviz}
 :alt: The jobs of a task write into work/, which the results job and the downstream tasks read; the results job links the result files into output/
@@ -377,7 +377,7 @@ Files that main's wrappers wrote without declaring them are declared outputs now
 
 ### Rule names and the temporary directory
 
-The rules of the wrapper actions are generated from the step parts and named `<task>_<part>_<action>`, for example `calling_mutect2_run`.
+The rules of the wrapper actions are generated from the step parts and named `<task>__<part>_<action>`, for example `calling__mutect2_run`.
 A rule that main named differently (`variant_annotation_vep`, `somatic_msi_calling_mantis_msi2`) now carries its action.
 So `--until`, `--omit-from` and `--allowed-rules` arguments need the new names.
 

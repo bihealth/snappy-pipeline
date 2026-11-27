@@ -74,7 +74,7 @@
    "partition": "medium",
    "runtime": 2400
   },
-  "rule": "hla_typing_optitype_optitype_run",
+  "rule": "hla_typing_optitype__optitype_run",
   "temp": [],
   "threads": 1,
   "wildcards": {
@@ -126,7 +126,7 @@
    "partition": "medium",
    "runtime": 2400
   },
-  "rule": "hla_typing_optitype_optitype_run",
+  "rule": "hla_typing_optitype__optitype_run",
   "temp": [],
   "threads": 1,
   "wildcards": {
@@ -163,7 +163,7 @@
    "task_dir": "tasks/hla_typing_optitype"
   },
   "resources": {},
-  "rule": "hla_typing_optitype_results",
+  "rule": "hla_typing_optitype__results",
   "temp": [],
   "threads": 1,
   "wildcards": {},

@@ -47,7 +47,7 @@
    "partition": "medium",
    "runtime": 1440
   },
-  "rule": "gcnv_model_targeted_gcnv_annotate_gc",
+  "rule": "gcnv_model_targeted__gcnv_annotate_gc",
   "temp": [
    "tasks/gcnv_model_targeted/work/MedExome/out/MedExome.annotate_gc.tsv"
   ],
@@ -86,7 +86,7 @@
    "partition": "medium",
    "runtime": 1440
   },
-  "rule": "gcnv_model_targeted_gcnv_coverage",
+  "rule": "gcnv_model_targeted__gcnv_coverage",
   "temp": [
    "tasks/gcnv_model_targeted/work/case001subregion-N1-DNA1-WES1/out/case001subregion-N1-DNA1-WES1.coverage.tsv"
   ],
@@ -126,7 +126,7 @@
    "partition": "medium",
    "runtime": 1440
   },
-  "rule": "gcnv_model_targeted_gcnv_filter_intervals",
+  "rule": "gcnv_model_targeted__gcnv_filter_intervals",
   "temp": [
    "tasks/gcnv_model_targeted/work/MedExome/out/MedExome.filter_intervals.interval_list"
   ],
@@ -163,7 +163,7 @@
    "partition": "medium",
    "runtime": 1440
   },
-  "rule": "gcnv_model_targeted_gcnv_model_scatter_intervals",
+  "rule": "gcnv_model_targeted__gcnv_model_scatter_intervals",
   "temp": [],
   "threads": 1,
   "wildcards": {
@@ -199,7 +199,7 @@
    "partition": "medium",
    "runtime": 1440
   },
-  "rule": "gcnv_model_targeted_gcnv_preprocess_intervals",
+  "rule": "gcnv_model_targeted__gcnv_preprocess_intervals",
   "temp": [],
   "threads": 1,
   "wildcards": {
@@ -266,7 +266,7 @@
    "partition": "medium",
    "runtime": 4320
   },
-  "rule": "ngs_mapping_bwa_bwa_run",
+  "rule": "ngs_mapping_bwa__bwa_run",
   "temp": [],
   "threads": 1,
   "wildcards": {
@@ -303,7 +303,7 @@
    "partition": "medium",
    "runtime": 1440
   },
-  "rule": "reference_index_bwa_bwa_run",
+  "rule": "reference_index_bwa__bwa_run",
   "temp": [],
   "threads": 1,
   "wildcards": {},
@@ -338,7 +338,7 @@
    "partition": "medium",
    "runtime": 5760
   },
-  "rule": "sv_calling_targeted_gcnv_gcnv_joint_germline_cnv_segmentation",
+  "rule": "sv_calling_targeted_gcnv__gcnv_joint_germline_cnv_segmentation",
   "temp": [
    "tasks/sv_calling_targeted_gcnv/work/case001subregion/out/case001subregion.MedExome.joint_segmentation.vcf.gz",
    "tasks/sv_calling_targeted_gcnv/work/case001subregion/out/case001subregion.MedExome.joint_segmentation.vcf.gz.tbi"
@@ -377,7 +377,7 @@
    "partition": "medium",
    "runtime": 1440
   },
-  "rule": "sv_calling_targeted_gcnv_gcnv_merge_multikit_families",
+  "rule": "sv_calling_targeted_gcnv__gcnv_merge_multikit_families",
   "temp": [],
   "threads": 1,
   "wildcards": {
@@ -402,7 +402,7 @@
    "task_dir": "tasks/sv_calling_targeted_gcnv"
   },
   "resources": {},
-  "rule": "sv_calling_targeted_gcnv_results",
+  "rule": "sv_calling_targeted_gcnv__results",
   "temp": [],
   "threads": 1,
   "wildcards": {},
@@ -438,7 +438,7 @@
    "partition": "medium",
    "runtime": 5760
   },
-  "rule": "sv_calling_targeted_gcnv_sv_calling_targeted_gcnv_post_germline_calls",
+  "rule": "sv_calling_targeted_gcnv__sv_calling_targeted_gcnv_post_germline_calls",
   "temp": [
    "tasks/sv_calling_targeted_gcnv/work/case001subregion-N1-DNA1-WES1/out/case001subregion-N1-DNA1-WES1.post_germline_calls.vcf.gz"
   ],
@@ -460,7 +460,7 @@
   ],
   "params": {},
   "resources": {},
-  "rule": "sv_calling_targeted_gcnv_sv_calling_targeted_gcnv_shards",
+  "rule": "sv_calling_targeted_gcnv__sv_calling_targeted_gcnv_shards",
   "temp": [],
   "threads": 1,
   "wildcards": {
@@ -482,7 +482,7 @@
    }
   },
   "resources": {},
-  "rule": "sv_calling_targeted_gcnv_sv_calling_targeted_write_pedigree_run",
+  "rule": "sv_calling_targeted_gcnv__sv_calling_targeted_write_pedigree_run",
   "temp": [],
   "threads": 1,
   "wildcards": {

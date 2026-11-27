@@ -77,7 +77,7 @@
    "partition": "medium",
    "runtime": 4320
   },
-  "rule": "ngs_mapping_bwa_bwa_run",
+  "rule": "ngs_mapping_bwa__bwa_run",
   "temp": [],
   "threads": 1,
   "wildcards": {
@@ -114,7 +114,7 @@
    "partition": "medium",
    "runtime": 1440
   },
-  "rule": "reference_index_bwa_bwa_run",
+  "rule": "reference_index_bwa__bwa_run",
   "temp": [],
   "threads": 1,
   "wildcards": {},
@@ -154,7 +154,7 @@
    "partition": "medium",
    "runtime": 1440
   },
-  "rule": "sv_calling_wgs_melt_melt_genotype",
+  "rule": "sv_calling_wgs_melt__melt_genotype",
   "temp": [
    "tasks/sv_calling_wgs_melt/work/genotype.case001subregion.ALU/out/case001subregion-N1-DNA1-WES1.ALU.tsv"
   ],
@@ -200,7 +200,7 @@
    "partition": "medium",
    "runtime": 1440
   },
-  "rule": "sv_calling_wgs_melt_melt_genotype",
+  "rule": "sv_calling_wgs_melt__melt_genotype",
   "temp": [
    "tasks/sv_calling_wgs_melt/work/genotype.case001subregion.LINE1/out/case001subregion-N1-DNA1-WES1.LINE1.tsv"
   ],
@@ -246,7 +246,7 @@
    "partition": "medium",
    "runtime": 1440
   },
-  "rule": "sv_calling_wgs_melt_melt_genotype",
+  "rule": "sv_calling_wgs_melt__melt_genotype",
   "temp": [
    "tasks/sv_calling_wgs_melt/work/genotype.case001subregion.SVA/out/case001subregion-N1-DNA1-WES1.SVA.tsv"
   ],
@@ -295,7 +295,7 @@
    "partition": "medium",
    "runtime": 1440
   },
-  "rule": "sv_calling_wgs_melt_melt_group_analysis",
+  "rule": "sv_calling_wgs_melt__melt_group_analysis",
   "temp": [
    "tasks/sv_calling_wgs_melt/work/group_analysis.case001subregion.ALU/out/ALU.pre_geno.tsv"
   ],
@@ -343,7 +343,7 @@
    "partition": "medium",
    "runtime": 1440
   },
-  "rule": "sv_calling_wgs_melt_melt_group_analysis",
+  "rule": "sv_calling_wgs_melt__melt_group_analysis",
   "temp": [
    "tasks/sv_calling_wgs_melt/work/group_analysis.case001subregion.LINE1/out/LINE1.pre_geno.tsv"
   ],
@@ -391,7 +391,7 @@
    "partition": "medium",
    "runtime": 1440
   },
-  "rule": "sv_calling_wgs_melt_melt_group_analysis",
+  "rule": "sv_calling_wgs_melt__melt_group_analysis",
   "temp": [
    "tasks/sv_calling_wgs_melt/work/group_analysis.case001subregion.SVA/out/SVA.pre_geno.tsv"
   ],
@@ -444,7 +444,7 @@
    "partition": "medium",
    "runtime": 1440
   },
-  "rule": "sv_calling_wgs_melt_melt_indiv_analysis",
+  "rule": "sv_calling_wgs_melt__melt_indiv_analysis",
   "temp": [
    "tasks/sv_calling_wgs_melt/work/indiv_analysis.case001subregion-N1-DNA1-WES1.ALU/out"
   ],
@@ -497,7 +497,7 @@
    "partition": "medium",
    "runtime": 1440
   },
-  "rule": "sv_calling_wgs_melt_melt_indiv_analysis",
+  "rule": "sv_calling_wgs_melt__melt_indiv_analysis",
   "temp": [
    "tasks/sv_calling_wgs_melt/work/indiv_analysis.case001subregion-N1-DNA1-WES1.LINE1/out"
   ],
@@ -550,7 +550,7 @@
    "partition": "medium",
    "runtime": 1440
   },
-  "rule": "sv_calling_wgs_melt_melt_indiv_analysis",
+  "rule": "sv_calling_wgs_melt__melt_indiv_analysis",
   "temp": [
    "tasks/sv_calling_wgs_melt/work/indiv_analysis.case001subregion-N1-DNA1-WES1.SVA/out"
   ],
@@ -595,7 +595,7 @@
    "partition": "medium",
    "runtime": 1440
   },
-  "rule": "sv_calling_wgs_melt_melt_make_vcf",
+  "rule": "sv_calling_wgs_melt__melt_make_vcf",
   "temp": [
    "tasks/sv_calling_wgs_melt/work/make_vcf.case001subregion.ALU/out/case001subregion.ALU.final_comp.vcf.gz",
    "tasks/sv_calling_wgs_melt/work/make_vcf.case001subregion.ALU/out/case001subregion.ALU.final_comp.vcf.gz.tbi"
@@ -641,7 +641,7 @@
    "partition": "medium",
    "runtime": 1440
   },
-  "rule": "sv_calling_wgs_melt_melt_make_vcf",
+  "rule": "sv_calling_wgs_melt__melt_make_vcf",
   "temp": [
    "tasks/sv_calling_wgs_melt/work/make_vcf.case001subregion.LINE1/out/case001subregion.LINE1.final_comp.vcf.gz",
    "tasks/sv_calling_wgs_melt/work/make_vcf.case001subregion.LINE1/out/case001subregion.LINE1.final_comp.vcf.gz.tbi"
@@ -687,7 +687,7 @@
    "partition": "medium",
    "runtime": 1440
   },
-  "rule": "sv_calling_wgs_melt_melt_make_vcf",
+  "rule": "sv_calling_wgs_melt__melt_make_vcf",
   "temp": [
    "tasks/sv_calling_wgs_melt/work/make_vcf.case001subregion.SVA/out/case001subregion.SVA.final_comp.vcf.gz",
    "tasks/sv_calling_wgs_melt/work/make_vcf.case001subregion.SVA/out/case001subregion.SVA.final_comp.vcf.gz.tbi"
@@ -730,7 +730,7 @@
    "partition": "medium",
    "runtime": 1440
   },
-  "rule": "sv_calling_wgs_melt_melt_merge_vcf",
+  "rule": "sv_calling_wgs_melt__melt_merge_vcf",
   "temp": [],
   "threads": 1,
   "wildcards": {
@@ -770,7 +770,7 @@
    "partition": "medium",
    "runtime": 1440
   },
-  "rule": "sv_calling_wgs_melt_melt_preprocess",
+  "rule": "sv_calling_wgs_melt__melt_preprocess",
   "temp": [
    "tasks/sv_calling_wgs_melt/work/case001subregion-N1-DNA1-WES1/out/case001subregion-N1-DNA1-WES1.bam",
    "tasks/sv_calling_wgs_melt/work/case001subregion-N1-DNA1-WES1/out/case001subregion-N1-DNA1-WES1.bam.bai",
@@ -800,7 +800,7 @@
    "task_dir": "tasks/sv_calling_wgs_melt"
   },
   "resources": {},
-  "rule": "sv_calling_wgs_melt_results",
+  "rule": "sv_calling_wgs_melt__results",
   "temp": [],
   "threads": 1,
   "wildcards": {},

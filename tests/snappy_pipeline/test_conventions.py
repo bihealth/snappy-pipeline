@@ -115,7 +115,7 @@ def _path_violations() -> list[str]:
     found = set()
     for snapshot in sorted((SNAPSHOTS / "dag").glob("*.json")):
         for job in json.loads(snapshot.read_text(encoding="utf-8")):
-            if job["rule"] == "all" or job["rule"].endswith("_results"):
+            if job["rule"] == "all" or job["rule"].endswith("__results"):
                 continue
             step = next(s for s in steps if job["rule"].startswith(s + "_"))
             values = sorted(job["wildcards"].items(), key=lambda kv: (-len(str(kv[1])), kv[0]))
@@ -515,7 +515,7 @@ def test_result_files_are_targets():
         jobs = json.loads(snapshot.read_text(encoding="utf-8"))
         targets = {path for job in jobs if job["rule"] == "all" for path in job["input"]}
         for job in jobs:
-            if job["rule"].endswith("_results"):
+            if job["rule"].endswith("__results"):
                 found += [
                     f"{snapshot.stem}: {path}" for path in job["input"] if path not in targets
                 ]
@@ -547,7 +547,7 @@ def test_plots_and_diagnostic_outputs_are_in_the_report():
     found, used = set(), set()
     for _, job in _snapshot_jobs():
         owner = (job.get("wrapper") or "").partition("snappy_wrappers/wrappers/")[2] or job["rule"]
-        if job["rule"].endswith("_results"):
+        if job["rule"].endswith("__results"):
             continue
         missing = [o for o in job["output"] if _diagnostic(o) and o not in job.get("report", ())]
         if not missing:
@@ -840,7 +840,7 @@ def _snapshot_jobs() -> Iterator[tuple[str, dict]]:
 def _snapshot_dags() -> Iterator[tuple[str, list[dict], set[str]]]:
     """Yield (snapshot, jobs, result files) per DAG snapshot, without the steps on hold.
 
-    The result files are the inputs of the ``<task>_results`` jobs: ``work/`` files that the
+    The result files are the inputs of the ``<task>__results`` jobs: ``work/`` files that the
     results job links into ``output/``.
     """
     for snapshot in sorted((SNAPSHOTS / "dag").glob("*.json")):
@@ -850,7 +850,7 @@ def _snapshot_dags() -> Iterator[tuple[str, list[dict], set[str]]]:
             if not job["rule"].startswith(ON_HOLD_RULES)
         ]
         result_files = {
-            path for job in jobs if job["rule"].endswith("_results") for path in job["input"]
+            path for job in jobs if job["rule"].endswith("__results") for path in job["input"]
         }
         yield snapshot.stem, jobs, result_files
 
@@ -861,7 +861,7 @@ def test_only_the_results_job_writes_into_output():
         f"{name}: {job['rule']}: {path}"
         for name, jobs, _ in _snapshot_dags()
         for job in jobs
-        if not job["rule"].endswith("_results")
+        if not job["rule"].endswith("__results")
         for path in job["output"]
         if "/output/" in path
     }

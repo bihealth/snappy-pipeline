@@ -20,6 +20,7 @@ from snappy_pipeline.library_table import build_library_dataframe
 from snappy_pipeline.log_archive import archive_after_run, record_git_state
 from snappy_pipeline.models import SnappyStepModel
 from snappy_pipeline.reads import FilesTable, read_files_tables
+from snappy_pipeline.rule_names import TASK_SEPARATOR
 from snappy_pipeline.workflow_model import ConfigModel, TaskModel
 from snappy_pipeline.workflows.abstract.protocol import (
     DataSignature,
@@ -153,6 +154,11 @@ def load_project(config: Mapping[str, Any], project_dir: str) -> Project:
     duplicates = sorted({name for name in names if names.count(name) > 1})
     if duplicates:
         raise ConfigError(f"Task names must be unique; duplicates: {', '.join(duplicates)}")
+    # The separator between the task and the rule in a rule name
+    if separated := [name for name in names if TASK_SEPARATOR in name]:
+        raise ConfigError(
+            f"Task names must not contain '{TASK_SEPARATOR}': {', '.join(sorted(separated))}"
+        )
 
     task_configs: dict[str, SnappyStepModel] = {}
     dependencies: dict[str, dict[str, str]] = {}

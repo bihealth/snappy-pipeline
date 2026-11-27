@@ -68,7 +68,7 @@
    "partition": "medium",
    "runtime": 1440
   },
-  "rule": "ngs_data_qc_picard_picard_metrics",
+  "rule": "ngs_data_qc_picard__picard_metrics",
   "temp": [],
   "threads": 1,
   "wildcards": {
@@ -120,7 +120,7 @@
    "partition": "medium",
    "runtime": 1440
   },
-  "rule": "ngs_data_qc_picard_picard_metrics",
+  "rule": "ngs_data_qc_picard__picard_metrics",
   "temp": [],
   "threads": 1,
   "wildcards": {
@@ -156,7 +156,7 @@
    "partition": "medium",
    "runtime": 60
   },
-  "rule": "ngs_data_qc_picard_picard_prepare",
+  "rule": "ngs_data_qc_picard__picard_prepare",
   "temp": [
    "tasks/ngs_data_qc_picard/work/MedExome/out/MedExome.baits.interval_list",
    "tasks/ngs_data_qc_picard/work/MedExome/out/MedExome.targets.interval_list"
@@ -207,7 +207,7 @@
    "partition": "medium",
    "runtime": 120
   },
-  "rule": "ngs_data_qc_picard_qc_summary_run",
+  "rule": "ngs_data_qc_picard__qc_summary_run",
   "temp": [],
   "threads": 1,
   "wildcards": {},
@@ -236,7 +236,7 @@
    "task_dir": "tasks/ngs_data_qc_picard"
   },
   "resources": {},
-  "rule": "ngs_data_qc_picard_results",
+  "rule": "ngs_data_qc_picard__results",
   "temp": [],
   "threads": 1,
   "wildcards": {},
@@ -301,7 +301,7 @@
    "partition": "medium",
    "runtime": 4320
   },
-  "rule": "ngs_mapping_bwa_bwa_run",
+  "rule": "ngs_mapping_bwa__bwa_run",
   "temp": [],
   "threads": 1,
   "wildcards": {
@@ -368,7 +368,7 @@
    "partition": "medium",
    "runtime": 4320
   },
-  "rule": "ngs_mapping_bwa_bwa_run",
+  "rule": "ngs_mapping_bwa__bwa_run",
   "temp": [],
   "threads": 1,
   "wildcards": {
@@ -405,7 +405,7 @@
    "partition": "medium",
    "runtime": 1440
   },
-  "rule": "reference_index_bwa_bwa_run",
+  "rule": "reference_index_bwa__bwa_run",
   "temp": [],
   "threads": 1,
   "wildcards": {},

@@ -39,7 +39,7 @@
    "partition": "medium",
    "runtime": 720
   },
-  "rule": "reference_index_minimap2_minimap2_run",
+  "rule": "reference_index_minimap2__minimap2_run",
   "temp": [],
   "threads": 1,
   "wildcards": {},
@@ -59,7 +59,7 @@
    "task_dir": "tasks/reference_index_minimap2"
   },
   "resources": {},
-  "rule": "reference_index_minimap2_results",
+  "rule": "reference_index_minimap2__results",
   "temp": [],
   "threads": 1,
   "wildcards": {},

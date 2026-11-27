@@ -29,7 +29,7 @@
    "task_dir": "tasks/somatic_gene_fusion_calling_star_fusion"
   },
   "resources": {},
-  "rule": "somatic_gene_fusion_calling_star_fusion_results",
+  "rule": "somatic_gene_fusion_calling_star_fusion__results",
   "temp": [],
   "threads": 1,
   "wildcards": {},
@@ -64,7 +64,7 @@
    "partition": "medium",
    "runtime": 7200
   },
-  "rule": "somatic_gene_fusion_calling_star_fusion_star_fusion_run",
+  "rule": "somatic_gene_fusion_calling_star_fusion__star_fusion_run",
   "temp": [],
   "threads": 1,
   "wildcards": {

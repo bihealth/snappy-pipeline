@@ -325,10 +325,7 @@ def _unread_dependencies(task_name: str, project_dir: Path, jobs: list[dict]) ->
     ``task_name`` that no job of the task reads; unmarked optional fields are skipped."""
     config = yaml.safe_load((project_dir / "config.yaml").read_text(encoding="utf-8"))
     tasks = {task["name"]: task for task in config["tasks"]}
-    # The rules of the task, not those of another task whose name starts like this one
-    others = [f"{name}_" for name in tasks if name.startswith(f"{task_name}_")]
-    own = [job for job in jobs if job["rule"].startswith(f"{task_name}_")]
-    own = [job for job in own if not any(job["rule"].startswith(other) for other in others)]
+    own = [job for job in jobs if job["rule"].startswith(f"{task_name}__")]
     inputs = [path for job in own for path in job["input"]]
     model = WORKFLOW_REGISTRY[tasks[task_name]["step"]].config_model_class
     if "depends_on" not in model.model_fields:
@@ -464,7 +461,7 @@ def test_mapping_reads_trimmed_fastqs(generated_task_config: dict[str, Any], tmp
     assert job["params"]["args"]["input"]["reads_left"] == [
         f"tasks/trimming/work/{lib}/out/{lib}.R1.fastq.gz"
     ]
-    assert any(j["rule"].startswith("trimming_fastp") for j in jobs)
+    assert any(j["rule"].startswith("trimming__fastp") for j in jobs)
 
 
 @pytest.mark.integration
@@ -486,7 +483,7 @@ def test_mapping_bam_is_temp_when_the_task_deletes_it(
     bam = f"tasks/ngs_mapping_bwa/work/{lib}/out/{lib}.bam"
     assert {bam, bam + ".bai"} <= set(job["temp"])
     assert not [path for path in job["output"] if path.endswith((".bam.md5", ".bai.md5"))]
-    results = next(j for j in jobs if j["rule"] == "ngs_mapping_bwa_results")
+    results = next(j for j in jobs if j["rule"] == "ngs_mapping_bwa__results")
     assert not [path for path in results["input"] if path.endswith((".bam", ".bai"))]
     assert any(path.endswith(".bamstats.txt") for path in results["input"])
 
@@ -587,7 +584,7 @@ def test_somatic_trio_calls_the_relapse_against_the_primary_tumor(
     bams = {}
     for name in tasks:
         for job in _dump(tmp_path, name):
-            if job["rule"] == f"{name}_mutect2_run":
+            if job["rule"] == f"{name}__mutect2_run":
                 libraries = [
                     Path(p).name.removesuffix(".bam") for p in job["input"] if p.endswith(".bam")
                 ]

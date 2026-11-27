@@ -77,7 +77,7 @@
    "partition": "medium",
    "runtime": 4320
   },
-  "rule": "ngs_mapping_bwa_bwa_run",
+  "rule": "ngs_mapping_bwa__bwa_run",
   "temp": [],
   "threads": 1,
   "wildcards": {
@@ -144,7 +144,7 @@
    "partition": "medium",
    "runtime": 4320
   },
-  "rule": "ngs_mapping_bwa_bwa_run",
+  "rule": "ngs_mapping_bwa__bwa_run",
   "temp": [],
   "threads": 1,
   "wildcards": {
@@ -211,7 +211,7 @@
    "partition": "medium",
    "runtime": 4320
   },
-  "rule": "ngs_mapping_bwa_bwa_run",
+  "rule": "ngs_mapping_bwa__bwa_run",
   "temp": [],
   "threads": 1,
   "wildcards": {
@@ -248,7 +248,7 @@
    "partition": "medium",
    "runtime": 1440
   },
-  "rule": "reference_index_bwa_bwa_run",
+  "rule": "reference_index_bwa__bwa_run",
   "temp": [],
   "threads": 1,
   "wildcards": {},
@@ -301,7 +301,7 @@
    "partition": "medium",
    "runtime": 2880
   },
-  "rule": "variant_calling_gatk3_hc_gatk3_hc_run",
+  "rule": "variant_calling_gatk3_hc__gatk3_hc_run",
   "temp": [],
   "threads": 1,
   "wildcards": {
@@ -326,7 +326,7 @@
    "task_dir": "tasks/variant_calling_gatk3_hc"
   },
   "resources": {},
-  "rule": "variant_calling_gatk3_hc_results",
+  "rule": "variant_calling_gatk3_hc__results",
   "temp": [],
   "threads": 1,
   "wildcards": {},
@@ -375,7 +375,7 @@
    }
   },
   "resources": {},
-  "rule": "variant_calling_gatk3_hc_write_pedigree_run",
+  "rule": "variant_calling_gatk3_hc__write_pedigree_run",
   "temp": [],
   "threads": 1,
   "wildcards": {

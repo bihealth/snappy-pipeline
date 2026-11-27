@@ -204,28 +204,28 @@ def test_rule_rows_name_the_task_step_part_and_action():
     }
     names = [
         "all",
-        "mapping_bwa_run",
-        "mapping_qc_summary_run",
-        "mapping_qc_bam_collect_doc_run",
-        "mapping_qc_results",
-        "mapping_results",
+        "mapping__bwa_run",
+        "mapping__qc_summary_run",
+        "mapping_qc__bam_collect_doc_run",
+        "mapping_qc__results",
+        "mapping__results",
     ]
 
     rows = snappy_cli._rule_rows(names, instances)
 
     assert [tuple(row.values()) for row in rows] == [
         ("all", "", "", "", ""),
-        ("mapping_bwa_run", "mapping", "ngs_mapping", "bwa", "run"),
-        ("mapping_qc_summary_run", "mapping", "ngs_mapping", "qc_summary", "run"),
+        ("mapping__bwa_run", "mapping", "ngs_mapping", "bwa", "run"),
+        ("mapping__qc_summary_run", "mapping", "ngs_mapping", "qc_summary", "run"),
         (
-            "mapping_qc_bam_collect_doc_run",
+            "mapping_qc__bam_collect_doc_run",
             "mapping_qc",
             "ngs_data_qc",
             "bam_collect_doc",
             "run",
         ),
-        ("mapping_qc_results", "mapping_qc", "ngs_data_qc", "", ""),
-        ("mapping_results", "mapping", "ngs_mapping", "", ""),
+        ("mapping_qc__results", "mapping_qc", "ngs_data_qc", "", ""),
+        ("mapping__results", "mapping", "ngs_mapping", "", ""),
     ]
 
 
@@ -237,12 +237,12 @@ def test_rules_lists_the_rules_of_the_project(tmp_path):
 
     assert result.returncode == 0, result.stderr
     lines = result.stdout.splitlines()
-    assert "mapping_bwa_run\tmapping\tngs_mapping\tbwa\trun" in lines
-    assert "mapping_results\tmapping\tngs_mapping\t\t" in lines
+    assert "mapping__bwa_run\tmapping\tngs_mapping\tbwa\trun" in lines
+    assert "mapping__results\tmapping\tngs_mapping\t\t" in lines
     assert "all\t\t\t\t" in lines
     assert "[snappy]" not in result.stdout  # the library summary of the Snakefile is left out
     result = _snappy(tmp_path / "project", "rules", "--part", "qc_summary", "--names")
-    assert result.stdout.splitlines() == ["mapping_qc_summary_run"]
+    assert result.stdout.splitlines() == ["mapping__qc_summary_run"]
     result = _snappy(tmp_path / "project", "rules", "--task", "genome", "--json")
     assert json.loads(result.stdout) == []
 

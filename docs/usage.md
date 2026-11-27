@@ -20,7 +20,7 @@ On a terminal they print a table; on a pipe, or with `--plain`, tab-separated li
 The data goes to stdout and the messages to stderr, so `snappy check-files --json > missing.json` holds only the rows.
 `snappy scan-files` writes the files tables of the `external_data` tasks from the folders of the libraries (see {ref}`overview`); `snappy run --scan` runs it first.
 `snappy sheet check` checks sample sheets and lists the cells that are synonyms of a value (`F` for `female`, `yes` for `true`, `exome` for `WES`), which `--fix` rewrites.
-`snappy rules` lists the rules of the project as Snakemake names them: `<task>_<part>_<action>` for the jobs of a step part and `<task>_results` for the job that links the results of a task.
+`snappy rules` lists the rules of the project as Snakemake names them: `<task>__<part>_<action>` for the jobs of a step part and `<task>__results` for the job that links the results of a task.
 `--task` and `--part` restrict the listing, and `--names` prints only the names, one per line, so that a rerun of the QC summaries of every task is one command:
 
 ```shell
@@ -168,7 +168,7 @@ Each task has its own directory `tasks/<task_name>/`.
 : Holds only the result files.
     No task reads from it.
     It holds relative symlinks into `work/` with the same paths, and `output/.manifest.tsv`.
-    For each task with result files, one local job, `<task>_results`, creates the links and the manifest.
+    For each task with result files, one local job, `<task>__results`, creates the links and the manifest.
     The manifest lists the path, size and md5 file of each result file.
     The job removes links to files that are no longer result files.
     A result file that is missing in `work/`, for example after a failed rerun, is built and linked again by the next `snappy run`.

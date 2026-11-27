@@ -24,7 +24,7 @@ needs_git = pytest.mark.skipif(shutil.which("git") is None, reason="git is not i
 SNAKEMAKE_LOG = """\
 Building DAG of jobs...
 [Sat Oct 10 12:00:00 2026]
-rule mapping_bwa_run:
+rule mapping__bwa_run:
     input: raw/L1.R1.fastq.gz
     output: tasks/mapping/work/L1/out/L1.bam
     log: tasks/mapping/work/L1/log/L1.log, tasks/mapping/work/L1/log/L1.conda_info.txt

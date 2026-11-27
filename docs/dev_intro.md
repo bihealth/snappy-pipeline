@@ -93,7 +93,7 @@ With `--task`, `--frozen` reads the outputs of the upstream tasks as existing fi
 `work/` is the contract between tasks.
 A task reads the `work/` files of its upstream tasks and never their `output/` files.
 `output/` holds only the result files.
-Each task with result files has one local `<task>_results` job, which links them into `output/` and writes `output/.manifest.tsv`.
+Each task with result files has one local `<task>__results` job, which links them into `output/` and writes `output/.manifest.tsv`.
 
 ## Anatomy of a step
 

@@ -156,6 +156,12 @@ def test_load_project_rejects_duplicate_task_names():
         load_project(_config(_mapping(), _mapping()), WORK_DIR)
 
 
+def test_load_project_rejects_the_rule_name_separator_in_a_task_name():
+    step, _, config = _mapping()
+    with pytest.raises(ValueError, match="must not contain '__': map__ping"):
+        load_project(_config((step, "map__ping", config)), WORK_DIR)
+
+
 def _vembrane_tag(name, variants, **expressions):
     config = {"tool": "vembrane", "vembrane": {"mode": "tag", "expressions": expressions}}
     return ("variant_filtration", name, {"depends_on": {"variants": variants}, **config})

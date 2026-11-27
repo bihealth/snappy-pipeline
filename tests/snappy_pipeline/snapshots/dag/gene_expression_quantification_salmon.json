@@ -41,7 +41,7 @@
    "task_dir": "tasks/gene_expression_quantification_salmon"
   },
   "resources": {},
-  "rule": "gene_expression_quantification_salmon_results",
+  "rule": "gene_expression_quantification_salmon__results",
   "temp": [],
   "threads": 1,
   "wildcards": {},
@@ -87,7 +87,7 @@
    "partition": "medium",
    "runtime": 240
   },
-  "rule": "gene_expression_quantification_salmon_salmon_run",
+  "rule": "gene_expression_quantification_salmon__salmon_run",
   "temp": [],
   "threads": 1,
   "wildcards": {

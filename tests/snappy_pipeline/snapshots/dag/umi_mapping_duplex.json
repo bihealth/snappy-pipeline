@@ -103,7 +103,7 @@
    "partition": "medium",
    "runtime": 1440
   },
-  "rule": "reference_index_bwa_mem3_bwa_mem3_run",
+  "rule": "reference_index_bwa_mem3__bwa_mem3_run",
   "temp": [],
   "threads": 1,
   "wildcards": {},
@@ -203,7 +203,7 @@
    "partition": "medium",
    "runtime": 4320
   },
-  "rule": "umi_mapping_duplex_fgumi_consensus",
+  "rule": "umi_mapping_duplex__fgumi_consensus",
   "temp": [],
   "threads": 1,
   "wildcards": {
@@ -305,7 +305,7 @@
    "partition": "medium",
    "runtime": 4320
   },
-  "rule": "umi_mapping_duplex_fgumi_consensus",
+  "rule": "umi_mapping_duplex__fgumi_consensus",
   "temp": [],
   "threads": 1,
   "wildcards": {
@@ -385,7 +385,7 @@
    "partition": "medium",
    "runtime": 4320
   },
-  "rule": "umi_mapping_duplex_fgumi_grouping",
+  "rule": "umi_mapping_duplex__fgumi_grouping",
   "temp": [
    "tasks/umi_mapping_duplex/work/case001subregion-N1-DNA1-WES1/out/case001subregion-N1-DNA1-WES1.grouped.bam"
   ],
@@ -467,7 +467,7 @@
    "partition": "medium",
    "runtime": 4320
   },
-  "rule": "umi_mapping_duplex_fgumi_grouping",
+  "rule": "umi_mapping_duplex__fgumi_grouping",
   "temp": [
    "tasks/umi_mapping_duplex/work/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1.grouped.bam"
   ],
@@ -540,7 +540,7 @@
    "partition": "medium",
    "runtime": 120
   },
-  "rule": "umi_mapping_duplex_qc_summary_run",
+  "rule": "umi_mapping_duplex__qc_summary_run",
   "temp": [],
   "threads": 1,
   "wildcards": {},
@@ -621,7 +621,7 @@
    "task_dir": "tasks/umi_mapping_duplex"
   },
   "resources": {},
-  "rule": "umi_mapping_duplex_results",
+  "rule": "umi_mapping_duplex__results",
   "temp": [],
   "threads": 1,
   "wildcards": {},

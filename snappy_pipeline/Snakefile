@@ -9,7 +9,7 @@ from snappy_pipeline.orchestration import (
     select_target_tasks,
 )
 from snappy_pipeline.results import MANIFEST, link_results
-from snappy_pipeline.rule_names import task_parts
+from snappy_pipeline.rule_names import TASK_SEPARATOR
 from snappy_pipeline.rulegraph import (
     RULEGRAPH_CAPTION,
     RULEGRAPH_SVG,
@@ -57,7 +57,7 @@ for task in project.model.tasks:
         continue
     t_name = task.name
     t_step = task.step
-    alias = t_name + "_"
+    alias = t_name + TASK_SEPARATOR
     # Each task writes below tasks/<name>/
     task_root = BaseStep.task_root(t_name)
     prefixes = {d: f"{task_root}/{d}" for d in ("output/", "work/", "benchmarks/")}
@@ -96,7 +96,7 @@ for t_name in target_task_names:
 
     rule:
         name:
-            f"{t_name}_results"
+            f"{t_name}{TASK_SEPARATOR}results"
         input:
             work_files
         output:
@@ -123,8 +123,11 @@ if not target_task:
             write_rulegraph(
                 rule_graph_dot(
                     workflow.dag,
-                    task_parts(task_instances),
-                    skip=["all", "rulegraph", *(f"{name}_results" for name in target_task_names)],
+                    skip=[
+                        "all",
+                        "rulegraph",
+                        *(f"{name}{TASK_SEPARATOR}results" for name in target_task_names),
+                    ],
                 ),
                 output[0],
             )

@@ -88,7 +88,7 @@
    "partition": "medium",
    "runtime": 1440
   },
-  "rule": "ngs_mapping_bwa_bam_collect_doc_run",
+  "rule": "ngs_mapping_bwa__bam_collect_doc_run",
   "temp": [],
   "threads": 1,
   "wildcards": {
@@ -132,7 +132,7 @@
    "partition": "medium",
    "runtime": 1440
   },
-  "rule": "ngs_mapping_bwa_bam_collect_doc_run",
+  "rule": "ngs_mapping_bwa__bam_collect_doc_run",
   "temp": [],
   "threads": 1,
   "wildcards": {
@@ -199,7 +199,7 @@
    "partition": "medium",
    "runtime": 4320
   },
-  "rule": "ngs_mapping_bwa_bwa_run",
+  "rule": "ngs_mapping_bwa__bwa_run",
   "temp": [],
   "threads": 1,
   "wildcards": {
@@ -266,7 +266,7 @@
    "partition": "medium",
    "runtime": 4320
   },
-  "rule": "ngs_mapping_bwa_bwa_run",
+  "rule": "ngs_mapping_bwa__bwa_run",
   "temp": [],
   "threads": 1,
   "wildcards": {
@@ -316,7 +316,7 @@
    "partition": "medium",
    "runtime": 120
   },
-  "rule": "ngs_mapping_bwa_qc_summary_run",
+  "rule": "ngs_mapping_bwa__qc_summary_run",
   "temp": [],
   "threads": 1,
   "wildcards": {},
@@ -373,7 +373,7 @@
    "task_dir": "tasks/ngs_mapping_bwa"
   },
   "resources": {},
-  "rule": "ngs_mapping_bwa_results",
+  "rule": "ngs_mapping_bwa__results",
   "temp": [],
   "threads": 1,
   "wildcards": {},
@@ -408,7 +408,7 @@
    "partition": "medium",
    "runtime": 1440
   },
-  "rule": "reference_index_bwa_bwa_run",
+  "rule": "reference_index_bwa__bwa_run",
   "temp": [],
   "threads": 1,
   "wildcards": {},

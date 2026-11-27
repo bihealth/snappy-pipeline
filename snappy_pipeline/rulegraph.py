@@ -7,7 +7,7 @@ from collections.abc import Iterable
 
 from snakevision.snakevision import SnakeVision
 
-from snappy_pipeline.rule_names import TaskParts, parse_rule_name
+from snappy_pipeline.rule_names import split_task
 
 #: The SVG below the project directory, a ``report()`` output of the main Snakefile
 RULEGRAPH_SVG = "report/rulegraph.svg"
@@ -20,20 +20,20 @@ CHAR_WIDTH = 9.0
 SVG_NS = "http://www.w3.org/2000/svg"
 
 
-def rule_label(rule: str, parts: TaskParts) -> str:
-    """``<task>: <part> <action>`` for a task's rule ``<task>_<part>_<action>``, else ``rule``."""
-    parsed = parse_rule_name(rule, parts)
-    if parsed is None:
+def rule_label(rule: str) -> str:
+    """``<task>: <part> <action>`` for a task's rule ``<task>__<part>_<action>``, else ``rule``."""
+    split = split_task(rule)
+    if split is None:
         return rule
-    rest = f"{parsed.part}_{parsed.action}" if parsed.part else rule.removeprefix(f"{parsed.task}_")
-    return f"{parsed.task}: {rest.replace('_', ' ')}"
+    task, rest = split
+    return f"{task}: {rest.replace('_', ' ')}"
 
 
-def rule_graph_dot(dag, parts: TaskParts | None = None, skip: Iterable[str] = ()) -> str:
+def rule_graph_dot(dag, skip: Iterable[str] = ()) -> str:
     """The rule graph of Snakemake's ``dag`` as DOT text, as ``snakemake --rulegraph`` prints it.
 
-    One node per rule with a job, labelled by ``rule_label`` with the tasks' ``parts``, and one
-    edge from a rule to each rule that reads its outputs. The rules in ``skip`` are left out.
+    One node per rule with a job, labelled by ``rule_label``, and one edge from a rule to each
+    rule that reads its outputs. The rules in ``skip`` are left out.
     """
     skipped = set(skip)
     graph: dict[str, set[str]] = defaultdict(set)
@@ -44,7 +44,7 @@ def rule_graph_dot(dag, parts: TaskParts | None = None, skip: Iterable[str] = ()
             dep.rule.name for dep in dag.dependencies[job] if dep.rule.name not in skipped
         )
     ids = {name: i for i, name in enumerate(sorted(graph))}
-    labels = {name: rule_label(name, parts or {}) for name in ids}
+    labels = {name: rule_label(name) for name in ids}
     nodes = [f'\t{i}[label = "{labels[name]}", style="rounded"];' for name, i in ids.items()]
     edges = [f"\t{ids[dep]} -> {ids[name]}" for name in ids for dep in sorted(graph[name])]
     return "digraph snakemake_dag {\n" + "\n".join(nodes + edges) + "\n}\n"

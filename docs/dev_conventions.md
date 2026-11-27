@@ -45,7 +45,7 @@ Anything else is an error.
 A step Snakefile defines `wf` and its global `wildcard_constraints`.
 Then it includes `snappy_pipeline/workflows/common/wrapper_rules.rules`.
 For every registered step part, the include writes one rule per action that has a wrapper (`BaseStep.wrapper_rules`).
-The rule is named `<part>_<action>`; the orchestrator prefixes the task name, so the jobs of a task are `<task>_<part>_<action>`.
+The rule is named `<part>_<action>`; the orchestrator prefixes the task name and `__`, so the jobs of a task are `<task>__<part>_<action>`.
 Snakefiles stay thin and call the workflow object for everything.
 
 A part's `rule_options` give an action's `localrule`, `retries`, `cache` and `wildcard_constraints`.
@@ -326,7 +326,7 @@ Wrappers never read md5 files.
 
 A step's `get_result_files` lists the result files as `work/` paths, each with its md5 file.
 Bgzipped VCF and BED files also come with `.tbi` and `.tbi.md5`.
-Each task with result files has one local job, `<task>_results` (`snappy_pipeline/results.py`).
+Each task with result files has one local job, `<task>__results` (`snappy_pipeline/results.py`).
 It links the result files and writes `output/.manifest.tsv`.
 Only the results job derives their `output/` links, and no other rule writes into `output/`.
 
