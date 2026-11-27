@@ -384,29 +384,30 @@ Three columns are the core, present in every library row: `donor_name`, `library
 The other known columns are typed and checked at load, and a step requires the ones it reads from the libraries it takes; anything else is an optional column kept as a string.
 Each known column belongs to a level, and all rows of one donor, sample or extract agree on the columns of that level.
 
-| Column             | Level   | Values                                                                                                       |
-| ------------------ | ------- | ------------------------------------------------------------------------------------------------------------ |
-| `donor_name`       | donor   | A name (`A-Za-z0-9_.-`)                                                                                      |
-| `family_id`        | donor   | The pedigree of the donor; needed by `group_by: family`                                                      |
-| `father`, `mother` | donor   | The `donor_name` of a parent with a row in the sheets, with or without libraries                             |
-| `sex`              | donor   | `male`, `female`, `unknown`                                                                                  |
-| `is_affected`      | donor   | `true`, `false`; empty for unknown                                                                           |
-| `is_index`         | donor   | `true` for the index donor of a family; needed where several donors of the family have a normal DNA library  |
-| `hpo_terms`        | donor   | `HP:0000001,HP:0000002`                                                                                      |
-| `sample_name`      | sample  | The full name of the sample (`P001-N1`); DNA and RNA libraries of one sample share it                        |
-| `is_tumor`         | sample  | `true` for a tumor sample; the library's role is then `tumor`, else `normal`                                 |
-| `purity`           | sample  | The tumor purity, 0 to 1                                                                                     |
-| `is_ffpe`          | sample  | `true` for an FFPE sample                                                                                    |
-| `extract_name`     | extract | The extract (`P001-N1-DNA1`), only for the ISA-Tab mapping                                                   |
-| `library_name`     | library | A name, unique across the sheets, written as is: it names the files of the library                           |
-| `library_type`     | library | `WES`, `WGS`, `Panel_seq`, `mRNA_seq`, `total_RNA_seq`                                                       |
-| `library_kit`      | library | The enrichment kit of a `WES` or `Panel_seq` library, as the kits task names it; the chemistry of long reads |
-| `folder_name`      | library | The folder of the library's files, for `snappy scan-files`; default: the library's name                      |
-| `seq_platform`     | library | `Illumina`, `PacBio`, `ONT`, `other`; `PacBio` and `ONT` libraries are long reads                            |
-| `read_structure`   | library | The fgumi read structures of a UMI library, such as `8M+T 8M+T`                                              |
-| `batch_no`         | library | The sequencing batch, a string                                                                               |
-| `is_primary`       | library | `true` for the primary library where a donor has several of one role and extraction type                     |
-| `is_background`    | library | `true` for a library of a reference cohort that is no task's result                                          |
+| Column             | Level   | Values                                                                                                                                |
+| ------------------ | ------- | ------------------------------------------------------------------------------------------------------------------------------------- |
+| `donor_name`       | donor   | A name (`A-Za-z0-9_.-`)                                                                                                               |
+| `family_id`        | donor   | The pedigree of the donor; needed by `group_by: family`                                                                               |
+| `father`, `mother` | donor   | The `donor_name` of a parent with a row in the sheets, with or without libraries                                                      |
+| `sex`              | donor   | `male`, `female`, `unknown`                                                                                                           |
+| `is_affected`      | donor   | `true`, `false`; empty for unknown                                                                                                    |
+| `is_index`         | donor   | `true` for the index donor of a family; needed where several donors of the family have a normal DNA library                           |
+| `hpo_terms`        | donor   | `HP:0000001,HP:0000002`                                                                                                               |
+| `sample_name`      | sample  | The full name of the sample (`P001-N1`); DNA and RNA libraries of one sample share it                                                 |
+| `is_tumor`         | sample  | `true` for a tumor sample; the library's role is then `tumor`, else `normal`                                                          |
+| `purity`           | sample  | The tumor purity, 0 to 1                                                                                                              |
+| `is_ffpe`          | sample  | `true` for an FFPE sample                                                                                                             |
+| `extract_name`     | extract | The extract (`P001-N1-DNA1`), only for the ISA-Tab mapping                                                                            |
+| `library_name`     | library | A name, unique across the sheets, written as is: it names the files of the library                                                    |
+| `library_type`     | library | `WES`, `WGS`, `Panel_seq`, `mRNA_seq`, `total_RNA_seq`                                                                                |
+| `library_kit`      | library | The enrichment kit of a `WES` or `Panel_seq` library, as the kits task names it; the chemistry of long reads                          |
+| `folder_name`      | library | The folder of the library's files, for `snappy scan-files`; default: the library's name                                               |
+| `seq_platform`     | library | `Illumina`, `PacBio`, `ONT`, `other`; `PacBio` and `ONT` libraries are long reads; follows from a known `instrument_model` when empty |
+| `instrument_model` | library | The sequencer, such as `NextSeq 1000` or `Revio`, which gives the platform                                                            |
+| `read_structure`   | library | The fgumi read structures of a UMI library, such as `8M+T 8M+T`                                                                       |
+| `batch_no`         | library | The sequencing batch, a string                                                                                                        |
+| `is_primary`       | library | `true` for the primary library where a donor has several of one role and extraction type                                              |
+| `is_background`    | library | `true` for a library of a reference cohort that is no task's result                                                                   |
 
 A donor without libraries, such as a parent who completes a pedigree, has a row with the donor columns only.
 Any pedigree fits: a parent is optional, so half-siblings and consanguinity work, and relatives without data, such as the grandparents that connect two cousins, get donor-only rows that complete the paths between the sequenced donors.

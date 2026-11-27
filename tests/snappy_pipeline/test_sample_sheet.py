@@ -374,3 +374,34 @@ def test_fix_sheet_rewrites_the_synonyms_and_nothing_else(tmp_path):
         "P2\tmale\tfalse\tL2\tWGS\t\r\n"
     )
     assert fix_sheet(path) == 0 and read_sheets([path]).notes == []
+
+
+def test_the_platform_follows_from_the_instrument(tmp_path):
+    text = (
+        "donor_name\tlibrary_name\tlibrary_type\tinstrument_model\tseq_platform\n"
+        "P1\tL1\tWES\tNextSeq 1000\t\n"
+        "P2\tL2\tWGS\tRevio\t\n"
+        "P3\tL3\tWGS\tPromethION 2\t\n"
+        "P4\tL4\tWGS\tAVITI\t\n"
+        "P5\tL5\tWGS\tUnheard-of 3000\t\n"
+        "P6\tL6\tWGS\tNovaSeq X\tother\n"
+    )
+    rows = [row.values for row in read_sheets([_write(tmp_path, text)]).rows]
+    assert [row.seq_platform for row in rows] == [
+        "Illumina",
+        "PacBio",
+        "ONT",
+        "other",
+        None,
+        "other",
+    ]
+    assert rows[0].instrument_model == "NextSeq 1000"
+
+
+def test_a_sequencer_in_seq_platform_names_the_instrument_column(tmp_path):
+    text = "donor_name\tlibrary_name\tlibrary_type\tseq_platform\nP1\tL1\tWES\tNextSeq 1000\n"
+    assert _problems(tmp_path, text) == [
+        "samplesheet.tsv:2: seq_platform: 'NextSeq 1000' is no known value; the platform is "
+        "Illumina, PacBio, ONT or other, a sequencer such as 'NextSeq 1000' goes into "
+        "instrument_model, which gives the platform"
+    ]

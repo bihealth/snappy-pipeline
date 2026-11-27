@@ -32,7 +32,14 @@ import typing
 from collections.abc import Iterable, Mapping
 from dataclasses import dataclass, field
 
-from pydantic import BaseModel, ConfigDict, Field, StringConstraints, ValidationError
+from pydantic import (
+    BaseModel,
+    ConfigDict,
+    Field,
+    StringConstraints,
+    ValidationError,
+    model_validator,
+)
 
 from snappy_pipeline.base import ConfigError
 
@@ -40,6 +47,13 @@ NAME_PATTERN = r"^[A-Za-z0-9_.-]+$"
 Name = typing.Annotated[str, StringConstraints(pattern=NAME_PATTERN)]
 Sex = typing.Literal["male", "female", "unknown"]
 SeqPlatform = typing.Literal["Illumina", "PacBio", "ONT", "other"]
+#: The platform of a sequencer named in ``instrument_model`` (searched case-insensitively)
+INSTRUMENT_PLATFORMS = (
+    (re.compile(r"illumina|novaseq|nextseq|hiseq|miseq|miniseq|iseq|genome analyzer", re.I), "Illumina"),
+    (re.compile(r"pacbio|pacific biosciences|sequel|revio", re.I), "PacBio"),
+    (re.compile(r"nanopore|oxford|minion|gridion|promethion|flongle", re.I), "ONT"),
+    (re.compile(r"aviti|element bio|ultima|dnbseq|mgiseq|bgiseq|ion torrent|ion proton|ion s5|genexus", re.I), "other"),
+)  # fmt: skip
 LibraryType = typing.Literal["WES", "WGS", "Panel_seq", "mRNA_seq", "total_RNA_seq"]
 
 #: Library type -> extraction type
@@ -99,6 +113,15 @@ BOOLEANS = {
 }  # fmt: skip
 #: Boolean columns whose digits are PED codes with another meaning, so no digits are read
 NO_DIGIT_BOOLEANS = frozenset({"is_affected"})
+
+
+def instrument_platform(instrument_model: str) -> str | None:
+    """The ``seq_platform`` of a sequencer (:data:`INSTRUMENT_PLATFORMS`), ``None`` for an unknown
+    one."""
+    for pattern, platform in INSTRUMENT_PLATFORMS:
+        if pattern.search(instrument_model):
+            return platform
+    return None
 
 
 def canonical(column: str, cell: str) -> str | None:
@@ -174,6 +197,9 @@ class SheetRow(BaseModel):
     seq_platform: typing.Annotated[
         SeqPlatform | None, Column(Level.LIBRARY, "Parameter Value[Platform]")
     ] = None
+    instrument_model: typing.Annotated[
+        str | None, Column(Level.LIBRARY, "Parameter Value[Instrument model]")
+    ] = None
     read_structure: typing.Annotated[
         str | None,
         StringConstraints(pattern=READ_STRUCTURE_PATTERN),
@@ -184,6 +210,19 @@ class SheetRow(BaseModel):
     is_background: typing.Annotated[bool | None, Column(Level.LIBRARY, "Comment[Background]")] = (
         None
     )
+
+    @model_validator(mode="before")
+    @classmethod
+    def platform_of_the_instrument(cls, data):
+        """``seq_platform`` follows from a known ``instrument_model`` when the row has none."""
+        if (
+            isinstance(data, dict)
+            and data.get("seq_platform") is None
+            and data.get("instrument_model")
+        ):
+            if platform := instrument_platform(data["instrument_model"]):
+                return {**data, "seq_platform": platform}
+        return data
 
     @property
     def is_library(self) -> bool:
@@ -426,11 +465,14 @@ def _convert_cells(
         if name in BOOL_COLUMNS or name in SYNONYMS:
             value = canonical(name, cell)
             if value is None:
-                hint = (
-                    "; the PED codes 1 and 2 are ambiguous, write true or false"
-                    if name in NO_DIGIT_BOOLEANS and cell.isdigit()
-                    else ""
-                )
+                hint = ""
+                if name in NO_DIGIT_BOOLEANS and cell.isdigit():
+                    hint = "; the PED codes 1 and 2 are ambiguous, write true or false"
+                elif name == "seq_platform":
+                    hint = (
+                        "; the platform is Illumina, PacBio, ONT or other, a sequencer such as "
+                        "'NextSeq 1000' goes into instrument_model, which gives the platform"
+                    )
                 problems.append(Problem(path, line, name, f"{cell!r} is no known value{hint}"))
                 continue
             if value != cell:
