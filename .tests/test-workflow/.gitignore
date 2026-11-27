@@ -7,3 +7,4 @@ logs
 snappy-pipeline
 pipelines/*/.snappy_pipeline/config.yaml
 **/__pycache__
+pipelines/*/report
