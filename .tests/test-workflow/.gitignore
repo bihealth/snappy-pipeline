@@ -2,6 +2,7 @@
 **/.*.lock
 **/output
 **/work
+pipelines/*/tasks
 logs
 snappy-pipeline
 pipelines/*/.snappy_pipeline/config.yaml
