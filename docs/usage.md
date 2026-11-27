@@ -186,7 +186,7 @@ A `.zip` report (the default `report.zip`) can hold HTML directories such as the
 ### Contents
 
 The report has one category per task, with outputs such as FastQC, Picard metrics, BAM statistics, `bcftools stats`, the copy number plots and peddy.
-The `Workflow` category holds the rule graph of the run as a metro map, `report/rulegraph.svg`, which a full `snappy run` draws with [snakevision](https://github.com/OpenOmics/snakevision).
+The `Rule graph` category holds the rule graph of the run as a metro map, `report/rulegraph.svg`, which a full `snappy run` draws with [snakevision](https://github.com/OpenOmics/snakevision).
 It embeds images, PDF and HTML, and offers tables of statistics only as downloads.
 So a task whose tools write statistics also renders an HTML site into the report: a QC summary of all its libraries, or a calls report of its VCFs.
 

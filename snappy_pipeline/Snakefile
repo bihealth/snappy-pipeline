@@ -121,7 +121,9 @@ if not target_task:
         input:
             workflow.configfiles[0],
         output:
-            report(RULEGRAPH_SVG, category="Workflow", caption=RULEGRAPH_CAPTION),
+            # Not "Workflow": Snakemake's report defines an RST link target of that name (its
+            # own panel) in every caption, and a category of the same name would duplicate it
+            report(RULEGRAPH_SVG, category="Rule graph", caption=RULEGRAPH_CAPTION),
         localrule: True
         run:
             write_rulegraph(
