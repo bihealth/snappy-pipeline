@@ -57,6 +57,8 @@ dependencies = [
     "vcfpy >=0.14.2,<0.15",
     # Jinja 2 template rendering
     "jinja2 >=3.1.6,<4",
+    # The rule graph of a run as a metro map (SVG) for the report
+    "snakevision >=1.1.0,<2",
     # The library and donor tables of the sample sheets, the sheet summary and the gCNV tools
     "pandas >=3.1.1,<4",
     # YTE rendering of custom varlociraptor scenarios

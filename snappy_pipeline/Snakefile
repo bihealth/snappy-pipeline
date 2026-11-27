@@ -9,6 +9,12 @@ from snappy_pipeline.orchestration import (
     select_target_tasks,
 )
 from snappy_pipeline.results import MANIFEST, link_results
+from snappy_pipeline.rulegraph import (
+    RULEGRAPH_CAPTION,
+    RULEGRAPH_SVG,
+    rule_graph_dot,
+    write_rulegraph,
+)
 from snappy_pipeline.sheet_summary import print_library_summary
 from snappy_pipeline.workflows.abstract import BaseStep
 
@@ -99,6 +105,29 @@ for t_name in target_task_names:
         localrule: True
         run:
             link_results(params.task_dir, list(input), output[0])
+
+# The rule graph of the run as a metro map for the report: a local job in the main process draws
+# the DAG itself with snakevision. Its input is the config file, so a changed task layout redraws
+# it; the result-linking jobs and the final target stay out of the picture.
+if not target_task:
+    targets.append(RULEGRAPH_SVG)
+
+    rule rulegraph:
+        input:
+            workflow.configfiles[0],
+        output:
+            report(RULEGRAPH_SVG, category="Workflow", caption=RULEGRAPH_CAPTION),
+        localrule: True
+        run:
+            write_rulegraph(
+                rule_graph_dot(
+                    workflow.dag,
+                    task_steps={task.name: task.step for task in project.model.tasks},
+                    skip=["all", "rulegraph", *(f"{name}_results" for name in target_task_names)],
+                ),
+                output[0],
+            )
+
 
 rule all:
     input:

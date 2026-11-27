@@ -362,6 +362,7 @@ Multi-tool workflows and substeps whose paths would otherwise collide still use 
 The default is a single wildcard.
 
 `report/` holds what the Snakemake report shows.
+The main Snakefile adds the rule graph of the run as a metro map, `report/rulegraph.svg` below the project directory, drawn by snakevision into the report's `Workflow` category.
 Data for other tools is in `out/`, such as the coverage VCF and bigWig files of `bam_collect_doc` (main: `report/cov/`).
 Tasks whose tools write statistics add one job that writes the result file `qc_summary/out/qc_summary.tsv`, with one row per library.
 These are `ngs_mapping`, `ngs_data_qc` with `alfred`, `picard` or `ngs_chew`, `variant_calling` with `bcftools_stats`, and `variant_checking`.
