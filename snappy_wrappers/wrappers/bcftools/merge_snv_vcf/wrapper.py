@@ -10,11 +10,14 @@ if TYPE_CHECKING:
     from snakemake.iocontainers import snakemake
 
 
+# One line per input VCF: its path and the path of its index
+pairs = zip(snakemake.input.vcf, snakemake.input.vcf_tbi, strict=True)
+
 with tempfile.NamedTemporaryFile("wt") as tmpf:
     # Write paths to input files into temporary file.
     #
     # cf. https://bitbucket.org/snakemake/snakemake/issues/878
-    print("\n".join(snakemake.input.vcf), file=tmpf)
+    print("\n".join(f"{vcf}\t{tbi}" for vcf, tbi in pairs), file=tmpf)
     tmpf.flush()
     ShellWrapper(snakemake).run(
         r"""
@@ -37,11 +40,11 @@ check_vcf() {{
 # Symlink input VCF files
 i=0
 mkdir $TMPDIR/cwd
-for x in $(cat {tmpf.name}); do
+while read -r vcf tbi; do
     let "i=$i+1"
-    ln -s $(readlink -f $x) $TMPDIR/cwd/$i.vcf.gz
-    ln -s $(readlink -f $x).tbi $TMPDIR/cwd/$i.vcf.gz.tbi
-done
+    ln -s $(readlink -f $vcf) $TMPDIR/cwd/$i.vcf.gz
+    ln -s $(readlink -f $tbi) $TMPDIR/cwd/$i.vcf.gz.tbi
+done < {tmpf.name}
 
 # -----------
 # Merge VCFs

@@ -126,8 +126,9 @@ def load_project(config: Mapping[str, Any], project_dir: str) -> Project:
     Raises :class:`ConfigError` for invalid values (the pydantic errors, with the task and step
     names), unknown steps, duplicate task names, ``depends_on`` values that name no task,
     dependency cycles, upstream tasks that do not produce what a ``depends_on`` field requires,
-    ``FILTER`` IDs that could mean two things (see :func:`_check_filter_ids`), and indexes built
-    from another genome than the reader's ``depends_on.reference``.
+    ``FILTER`` IDs that could mean two things (see :func:`_check_filter_ids`), indexes built
+    from another genome than the reader's ``depends_on.reference``, and keys of an
+    ``external_data`` task that no consumer reads (see :func:`_check_unread_keys`).
     """
     from snappy_pipeline.workflow_registry import WORKFLOW_REGISTRY
 
@@ -199,6 +200,7 @@ def load_project(config: Mapping[str, Any], project_dir: str) -> Project:
     _check_granularity(project)
     _check_filter_ids(project)
     _check_index_references(project)
+    _check_unread_keys(project)
     return project
 
 
@@ -241,6 +243,45 @@ def _check_index_references(project: Project) -> None:
                     f"the index of task {index!r} is built from the genome of task "
                     f"{built_from!r}, but depends_on.reference names task {reference!r}; "
                     "name the same genome in both"
+                )
+
+
+def _check_unread_keys(project: Project) -> None:
+    """Raise if an ``external_data`` task gives a key (of ``files``, of its kits, or a column of
+    its files tables) that none of its consumers reads: ``get_upstream_paths`` keeps only the keys
+    of the consumer's schema, so a misspelled key would be dropped without notice. A consumer
+    whose field has no schema reads every key; a task without consumers is not checked."""
+    from snappy_pipeline.workflow_registry import WORKFLOW_REGISTRY
+
+    read: dict[str, set[str] | None] = {}  # external_data task -> the keys its consumers read
+    consumers: dict[str, list[str]] = {}
+    steps = {task.name: task.step for task in project.tasks}
+    for task in project.tasks:
+        config = project.task_configs[task.name]
+        dependencies = project.dependencies[task.name]
+        fields = type(config.depends_on).model_fields if dependencies else {}
+        for field, value in dependencies.items():
+            schema = field_contract(fields[field], config.tool_tag()).schema
+            for upstream in value if isinstance(value, tuple) else (value,):
+                if steps[upstream] != "external_data":
+                    continue
+                consumers.setdefault(upstream, []).append(f"{task.name}.depends_on.{field}")
+                if schema is None:
+                    read[upstream] = None
+                elif upstream not in read:
+                    read[upstream] = set(schema.model_fields)
+                elif read[upstream] is not None:
+                    read[upstream].update(schema.model_fields)
+    for name, keys_read in read.items():
+        if keys_read is None:
+            continue
+        keys = WORKFLOW_REGISTRY["external_data"].output_keys(project.task_configs[name])
+        unread = sorted(keys - keys_read) if keys else []
+        if unread:
+            with in_task(project.task(name)):
+                raise ConfigError(
+                    f"no consumer reads {', '.join(unread)}; the consumers "
+                    f"({', '.join(consumers[name])}) read {', '.join(sorted(keys_read))}"
                 )
 
 

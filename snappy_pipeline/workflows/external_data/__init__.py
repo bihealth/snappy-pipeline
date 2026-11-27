@@ -30,6 +30,7 @@ Tags say what the regions are, such as ``exons``.
 
 The output keys must be the keys that the consumer reads through its ``depends_on`` field.
 Their names are checked against that field when the project loads.
+A key that none of the task's consumers reads is an error, as it would otherwise be dropped without notice; a task without consumers is not checked.
 
 Examples
 --------

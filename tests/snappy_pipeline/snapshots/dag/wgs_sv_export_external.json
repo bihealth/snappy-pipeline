@@ -112,7 +112,8 @@
  {
   "benchmark": "tasks/wgs_sv_export_external/benchmarks/case001subregion/case001subregion.merge_vcf.tsv",
   "input": [
-   "<project>/raw/case001subregion-N1-DNA1-WES1/case001subregion-N1-DNA1-WES1.vcf.gz"
+   "<project>/raw/case001subregion-N1-DNA1-WES1/case001subregion-N1-DNA1-WES1.vcf.gz",
+   "<project>/raw/case001subregion-N1-DNA1-WES1/case001subregion-N1-DNA1-WES1.vcf.gz.tbi"
   ],
   "log": [
    "tasks/wgs_sv_export_external/work/case001subregion/log/case001subregion.merge_vcf.log"

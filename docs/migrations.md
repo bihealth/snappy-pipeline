@@ -293,7 +293,7 @@ For developers writing new workflow steps, `load_project()` validates the depend
   A required tag is a string that must be present, or a tuple of which one must be present.
   A string with a `-` prefix names a tag that must be absent, such as `"-somatic"`.
 
-`load_project()` checks that each upstream task produces what the `depends_on` field requires, and that an `external_data` task has the keys the consumer reads.
+`load_project()` checks that each upstream task produces what the `depends_on` field requires, and that an `external_data` task has the keys the consumer reads and no key that none of its consumers reads.
 This catches mismatches such as wiring an RNA alignment step into a variant caller that expects DNA, or a germline caller into a somatic pipeline.
 It also checks that an index from a `reference_index` task is built from the genome the reader names, and that `FILTER` IDs cannot mean two things.
 Consumers read upstream files only through `get_upstream_paths()`.
@@ -708,6 +708,7 @@ To migrate an existing project, go through these notes.
 
 26. `variant_export_external` has no `external_tool` field any more.
     The merged VCF of a pedigree is named after the pedigree, without main's `dragen.` prefix.
+    Its VCFs, like those of `wgs_cnv_export_external` and `wgs_sv_export_external`, come from an `external_data` task whose files table lists each VCF as `vcf` and its tabix index as `vcf_tbi`; main took the index from the VCF path.
 
 27. A `gene_expression_quantification` task with `tool: strandedness` takes a forced strand from `strandedness.strand`, as `ngs_mapping` does with STAR.
     Main took the forced strand from the step's `strand`.

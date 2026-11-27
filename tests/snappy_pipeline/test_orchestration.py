@@ -552,6 +552,24 @@ def test_external_data_files_may_name_lists():
     assert paths == {"transcript_db": ["/a.bin", "/b.bin"]}
 
 
+def test_external_data_keys_that_no_consumer_reads_are_an_error():
+    dbs = _external(
+        "mehari_db", "database", ["mehari"], files={"transcript_db": "/db/txs", "cadd": "/db/cadd"}
+    )
+    annotation = _annotation()
+    annotation[2].update(tool="mehari", mehari={})
+    annotation[2]["depends_on"]["database"] = "mehari_db"
+    with pytest.raises(
+        ConfigError,
+        match=r"Task 'mehari_db' \(step external_data\): no consumer reads cadd; the consumers "
+        r"\(annotation.depends_on.database\) read cadd_db, clinvar_db, dbsnp_db, frequency_db, "
+        r"spliceai_db, transcript_db",
+    ):
+        load_project(_config(_mapping(), _calling(), dbs, annotation), WORK_DIR)
+    # A task without consumers is not checked
+    load_project(_config(dbs), WORK_DIR)
+
+
 def test_requirement_with_tool_placeholder_names_the_task_tool():
     # ngs_mapping requires the index of its tool
     bwa_mem2 = _mapping(tool="bwa_mem2", bwa_mem2={})

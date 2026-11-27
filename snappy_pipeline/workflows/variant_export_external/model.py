@@ -8,7 +8,7 @@ from snappy_pipeline.workflows.abstract.protocol import (
     Exons,
     ExpectedAlignments,
     ExpectedPathSchema,
-    ExpectedVcf,
+    ExpectedVariants,
     Kits,
     Reference,
 )
@@ -18,9 +18,9 @@ class VariantExportExternalDependsOn(SnappyModel):
     variants: Annotated[
         str,
         DataSignature(DataType.VARIANTS, frozenset({"germline"})),
-        ExpectedPathSchema(ExpectedVcf),
+        ExpectedPathSchema(ExpectedVariants),
     ]
-    """``external_data`` task with the (g)VCF of each library."""
+    """``external_data`` task with the (g)VCF of each library (``vcf``) and its tabix index (``vcf_tbi``)."""
 
     alignments: Annotated[
         str,

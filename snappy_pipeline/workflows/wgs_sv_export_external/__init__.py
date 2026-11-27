@@ -2,7 +2,7 @@
 """VarFish export of externally generated WGS SV calls
 
 The step annotates externally generated SV VCF files with ``varfish-annotator-cli annotate-sv`` and creates the files that VarFish Server imports.
-The VCFs come from an ``external_data`` task.
+The VCFs come from an ``external_data`` task with the keys ``vcf`` and ``vcf_tbi`` (the tabix index) per library.
 The step has no ``tool`` field.
 
 The task gives one result per pedigree, named after the pedigree (its ``family_id``).
@@ -116,9 +116,11 @@ class VarfishAnnotatorExternalStepPart(BaseStepPart):
     @dictify
     def _get_input_files_merge_vcf(self, wildcards):
         if self.config.merge_vcf_flag:
-            yield "vcf", sorted(self._collect_vcfs(wildcards))
+            members = self.parent.pedigree_members(wildcards.related_group, include_background=True)
+            libraries = list(members["library_name"])
         else:
-            yield "vcf", [self._vcf(self.parent.pedigree_index(wildcards.related_group))]
+            libraries = [self.parent.pedigree_index(wildcards.related_group)]
+        yield from self._variants(libraries).items()
 
     @dictify
     def _get_output_files_merge_vcf(self):
@@ -141,14 +143,13 @@ class VarfishAnnotatorExternalStepPart(BaseStepPart):
         }
         return result
 
-    def _vcf(self, library_name):
-        return self.parent.get_upstream_paths("variants", library_name=library_name).vcf
-
-    def _collect_vcfs(self, wildcards):
-        """Yield the paths of the VCFs of the pedigree's DNA libraries"""
-        members = self.parent.pedigree_members(wildcards.related_group, include_background=True)
-        for library_name in members["library_name"]:
-            yield self._vcf(library_name)
+    def _variants(self, library_names) -> dict[str, list[str]]:
+        """The VCFs of ``library_names`` and their indexes, both in the order of the VCF paths"""
+        paths = sorted(
+            (self.parent.get_upstream_paths("variants", library_name=n) for n in library_names),
+            key=lambda p: p.vcf,
+        )
+        return {"vcf": [p.vcf for p in paths], "vcf_tbi": [p.vcf_tbi for p in paths]}
 
     def _collect_sample_ids(self, wildcards):
         """Yield sample ids in pedigree"""

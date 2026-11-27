@@ -6,7 +6,7 @@ from snappy_pipeline.workflows.abstract.protocol import (
     DataSignature,
     DataType,
     ExpectedPathSchema,
-    ExpectedVcf,
+    ExpectedVariants,
     Reference,
 )
 
@@ -15,9 +15,9 @@ class WgsSvExportExternalDependsOn(SnappyModel):
     variants: Annotated[
         str,
         DataSignature(DataType.VARIANTS, frozenset({"sv"})),
-        ExpectedPathSchema(ExpectedVcf),
+        ExpectedPathSchema(ExpectedVariants),
     ]
-    """``external_data`` task with the SV VCF of each library."""
+    """``external_data`` task with the SV VCF of each library (``vcf``) and its tabix index (``vcf_tbi``)."""
 
     reference: Reference
 
