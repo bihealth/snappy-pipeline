@@ -47,7 +47,9 @@ def test_summary_splits_by_the_batches_of_the_sheet():
     assert lines[2].split() == ["run-2024-B", "normal", "dna", "WES", "MedExome", "1"]
 
 
-def test_warnings_name_mixed_rna_types_several_kits_and_missing_kits():
+def test_warnings_name_the_targeted_libraries_without_a_kit():
+    """Several kits and mixed RNA types are no warnings: the kits task has a kit per library,
+    and a task that needs one kit for its libraries fails with the kits it found."""
     df = _libraries(
         ("a", "normal", "dna", "WES", "MedExome"),
         ("b", "normal", "dna", "WES", "Twist_Exome_2"),
@@ -56,17 +58,13 @@ def test_warnings_name_mixed_rna_types_several_kits_and_missing_kits():
         ("e", "normal", "rna", "mRNA_seq", None),
         ("f", "normal", "rna", "total_RNA_seq", None),
     )
-    assert library_warnings(df) == [
-        "The sample sheets have mRNA_seq and total_RNA_seq libraries",
-        "The targeted libraries have several kits: MedExome (1), Twist_Exome_2 (1)",
-        "1 targeted libraries have no library_kit: c",
-    ]
+    assert library_warnings(df) == ["1 targeted libraries have no library_kit: c"]
 
 
-def test_no_warnings_for_one_kit():
+def test_no_warnings_with_kits():
     df = _libraries(
         ("a", "normal", "dna", "WES", "MedExome"),
-        ("b", "normal", "dna", "WES", "MedExome"),
+        ("b", "normal", "dna", "WES", "Twist_Exome_2"),
     )
     assert library_warnings(df) == []
 

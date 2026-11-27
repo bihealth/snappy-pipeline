@@ -37,19 +37,13 @@ def _names(names: list[str]) -> str:
 
 
 def library_warnings(df: pd.DataFrame) -> list[str]:
-    """Return warnings about the libraries: mRNA and total RNA libraries together, targeted
-    libraries of several kits, and targeted libraries without a kit."""
+    """Return warnings about the libraries: the targeted libraries without a kit, which every
+    task that reads the kits rejects."""
     warnings = []
     if df.empty:
         return warnings
-    if {"mRNA_seq", "total_RNA_seq"} <= set(df["library_type"]):
-        warnings.append("The sample sheets have mRNA_seq and total_RNA_seq libraries")
     targeted = df[df["library_type"].isin(TARGETED_LIBRARY_TYPES)]
     kits = targeted["library_kit"].fillna("")
-    counts = kits[kits != ""].value_counts()
-    if len(counts) > 1:
-        listed = ", ".join(f"{kit} ({n})" for kit, n in sorted(counts.items()))
-        warnings.append(f"The targeted libraries have several kits: {listed}")
     if without := targeted["library_name"][kits == ""].tolist():
         warnings.append(
             f"{len(without)} targeted libraries have no library_kit: " + _names(without)
