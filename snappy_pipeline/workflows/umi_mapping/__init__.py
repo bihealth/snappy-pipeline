@@ -83,7 +83,6 @@ It renders a datavzrd site below ``qc_summary/report/html/`` with the family siz
 import re
 from typing import Any
 
-import pandas as pd
 from snakemake.iocontainers import Wildcards
 
 from snappy_pipeline.base import ConfigError
@@ -132,6 +131,8 @@ UMI_QC = "work/{library_name}/report/umi_qc/{library_name}"
 def parse_read_structures(library_name: str, value) -> list[str]:
     """The read structures of ``library_name`` from the value of its ``read_structure`` column,
     one per FASTQ file of a read group; a missing or malformed value raises ``ConfigError``."""
+    import pandas as pd
+
     if value is None or pd.isna(value) or str(value).strip() in ("", "."):
         raise ConfigError(
             f"library {library_name!r} has no read_structure in its sample sheet; "

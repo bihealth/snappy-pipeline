@@ -1,10 +1,13 @@
 # -*- coding: utf-8 -*-
 """Implementation of the gCNV common methods."""
 
-import pandas as pd
+from typing import TYPE_CHECKING
 
 from snappy_pipeline.utils import dictify
 from snappy_pipeline.workflows.abstract import BaseStepPart, ResourceUsage
+
+if TYPE_CHECKING:
+    import pandas as pd
 
 
 #: The kit name of whole genome models
@@ -12,7 +15,7 @@ WGS_KIT = "wgs"
 
 
 def build_ngs_library_to_kit(
-    libraries: pd.DataFrame, intervals: str, library_kits: dict[str, str]
+    libraries: "pd.DataFrame", intervals: str, library_kits: dict[str, str]
 ) -> dict[str, str]:
     """Return the gCNV kit of each library in ``libraries``, the primary DNA library rows.
 

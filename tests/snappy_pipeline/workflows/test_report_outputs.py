@@ -57,7 +57,9 @@ def _subclasses(cls):
 def test_declared_captions_exist():
     import inspect
 
-    import snappy_pipeline.workflow_registry  # noqa: F401 (imports every step module)
+    from snappy_pipeline.workflow_registry import WORKFLOW_REGISTRY
+
+    list(WORKFLOW_REGISTRY.values())  # imports every step module
 
     missing = []
     for part in _subclasses(BaseStepPart):

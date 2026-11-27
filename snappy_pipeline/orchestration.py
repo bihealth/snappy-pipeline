@@ -15,7 +15,7 @@ from typing import TYPE_CHECKING, Any
 from pydantic import ValidationError
 from snakemake.pathvars import Pathvars
 
-from snappy_pipeline.base import ConfigError, in_task
+from snappy_pipeline.base import CONFIG_FILE, ConfigError, in_task
 from snappy_pipeline.library_table import build_library_dataframe
 from snappy_pipeline.log_archive import archive_after_run, record_git_state
 from snappy_pipeline.models import SnappyStepModel
@@ -43,9 +43,6 @@ ON_HOLD_STEPS = frozenset({"create_proteome"})
 
 #: Task name -> workflow object, filled by the orchestrator before it loads the step modules.
 _TASK_INSTANCES: dict[str, BaseStep] = {}
-
-#: Name of the project configuration file in the project directory.
-CONFIG_FILE = "config.yaml"
 
 
 @dataclass(frozen=True)

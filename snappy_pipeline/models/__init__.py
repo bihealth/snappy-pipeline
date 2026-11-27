@@ -21,7 +21,6 @@ from pydantic import (
 )
 from pydantic_core import PydanticUndefined
 from ruamel.yaml import YAML
-from snakemake.exceptions import UndefinedPathvarException
 
 
 def _resolve_path(value: str, info: ValidationInfo) -> str:
@@ -34,6 +33,8 @@ def _resolve_path(value: str, info: ValidationInfo) -> str:
     context = info.context or {}
     if not value or "project_dir" not in context:
         return value
+    from snakemake.exceptions import UndefinedPathvarException
+
     try:
         expanded = context["pathvars"].apply(value)
     except UndefinedPathvarException as e:

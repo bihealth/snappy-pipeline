@@ -10,6 +10,9 @@ __author__ = "Manuel Holtgrewe <manuel.holtgrewe@bih-charite.de>"
 if TYPE_CHECKING:
     from snappy_pipeline.workflow_model import TaskModel
 
+#: Name of the project configuration file in the project directory.
+CONFIG_FILE = "config.yaml"
+
 
 class SkipLibraryWarning(UserWarning):
     """Raised when libraries are skipped."""

@@ -2,6 +2,8 @@
 """Unified Click-based CLI for the snappy pipeline.
 
 Replaces the previous multi-script CLI entry points with a single `snappy` command.
+The commands import Snakemake, the orchestration and the step modules when they run, not here:
+the shell completion runs this module for every completed word.
 """
 
 import contextlib
@@ -17,18 +19,16 @@ import subprocess
 import sys
 import textwrap
 from types import SimpleNamespace
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
 import rich_click as click
 from click.core import ParameterSource
 import ruamel.yaml as ruamel_yaml
 from ruamel.yaml.comments import CommentedMap
 from ruamel.yaml.util import load_yaml_guess_indent
-from snakemake.cli import main as snakemake_main
-from snakemake.common.configfile import load_configfile
 
 from .. import __version__
-from ..base import ConfigError
+from ..base import CONFIG_FILE, ConfigError
 from ..log_archive import (
     SNKMT_DB,
     build_archive,
@@ -37,9 +37,6 @@ from ..log_archive import (
     untracked_sheet_hints,
 )
 from ..models import ConfigMode
-from ..orchestration import CONFIG_FILE, create_task_instances, load_project, missing_files
-from ..sheet_summary import missing_library_files
-from .scan_files import scan_files
 from ..workflow_registry import WORKFLOW_REGISTRY
 from .impl.fsmanip import (
     create_directory,
@@ -49,17 +46,10 @@ from .impl.fsmanip import (
 from .impl.logging import LVL_ERROR, LVL_IMPORTANT, LVL_INFO, LVL_SUCCESS, log
 from .impl.output import Column, listing_options, print_listing
 from .impl.prompts import ask_confirm, ask_select, ask_text
-from .impl.task_chain import (
-    EXTERNAL,
-    Key,
-    candidates,
-    entries_of,
-    entry_for,
-    external_data_settings,
-    providers,
-    required_keys,
-    step_tools,
-)
+
+if TYPE_CHECKING:
+    from ..orchestration import Project
+    from .impl.task_chain import Key
 
 logger = logging.getLogger(__name__)
 
@@ -75,6 +65,22 @@ def _get_cwd():
 def _interactive() -> bool:
     """Whether to ask questions: stdin and stdout are a terminal."""
     return sys.stdin.isatty() and sys.stdout.isatty()
+
+
+def snakemake_main(argv: list[str]):
+    """Run Snakemake's command line (``snakemake.cli.main``); its import takes half a second."""
+    from snakemake.cli import main
+
+    return main(argv)
+
+
+def _load_project(config_path: str) -> "Project":
+    """Load the project of ``config_path`` as the Snakefile does."""
+    from snakemake.common.configfile import load_configfile
+
+    from ..orchestration import load_project
+
+    return load_project(load_configfile(config_path), os.path.dirname(config_path))
 
 
 #: The project directory of the commands that work on a project
@@ -599,6 +605,8 @@ class _TaskQuestions:
     keys, or a new task added on the spot for a key nothing provides yet."""
 
     def __init__(self, project_directory: str, config_mode: ConfigMode | str):
+        from .impl.task_chain import entries_of
+
         self.project_directory = project_directory
         self.config_mode = config_mode
         self.config_filename = _project_config(project_directory)
@@ -619,9 +627,19 @@ class _TaskQuestions:
     def _step_choices(self, steps) -> list[tuple[str, str, str | None]]:
         return [(step, step, self.summaries.get(step)) for step in steps]
 
-    def task(self, step: str, provides: Key | None = None) -> str:
+    def task(self, step: str, provides: "Key | None" = None) -> str:
         """Ask for one task of ``step`` and write it; ``provides`` is the key of the task that
         asked for it, which names the task by default and sets the data of ``external_data``."""
+        from .impl.task_chain import (
+            EXTERNAL,
+            candidates,
+            entry_for,
+            external_data_settings,
+            providers,
+            required_keys,
+            step_tools,
+        )
+
         taken = {entry.name for entry in self.entries}
         default = provides.name if provides else step
         name = ""
@@ -1010,9 +1028,11 @@ def scan_files_command(directory, task_names, search_paths, patterns):
     library has no files or two libraries share a folder; the table is written anyway, with the
     libraries that have files.
     """
+    from .scan_files import scan_files
+
     config_path = _project_config(directory)
     try:
-        project = load_project(load_configfile(config_path), os.path.dirname(config_path))
+        project = _load_project(config_path)
         written, problems = scan_files(project, task_names, search_paths, patterns)
     except (ConfigError, ValueError) as e:
         log(str(e), level=LVL_ERROR)
@@ -1099,9 +1119,12 @@ def check_files(directory, as_json, plain):
     example after moving a project to another machine. Each row has the kind (file or reads), the
     task, the file or the library, and the problem. It exits with 1 if a file is missing.
     """
+    from ..orchestration import create_task_instances, missing_files
+    from ..sheet_summary import missing_library_files
+
     config_path = _project_config(directory)
     try:
-        project = load_project(load_configfile(config_path), os.path.dirname(config_path))
+        project = _load_project(config_path)
         missing = missing_files(project)
         # The task objects load the sample sheets and find the reads as the Snakefile does
         problems = missing_library_files(create_task_instances(None, project))
@@ -1191,9 +1214,11 @@ def rules(directory, task_names, parts, names, as_json, plain):
     """
     if names and (as_json or plain):
         raise click.UsageError("--names excludes --json and --plain")
+    from ..orchestration import create_task_instances
+
     config_path = _project_config(directory)
     try:
-        project = load_project(load_configfile(config_path), os.path.dirname(config_path))
+        project = _load_project(config_path)
         instances = create_task_instances(None, project)
     except ConfigError as e:
         log(str(e), level=LVL_ERROR)

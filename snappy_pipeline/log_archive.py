@@ -23,8 +23,6 @@ import tempfile
 from dataclasses import dataclass
 from pathlib import Path
 
-from snappy_wrappers.snappy_wrapper import SCRIPT_SUFFIXES, script_path
-
 #: ``log:`` line of a job in the Snakemake log, with comma-separated paths
 _JOB_LOGS = re.compile(r"^    log: (.+)$", re.M)
 
@@ -153,6 +151,8 @@ def build_archive(directory: Path, snakemake_log: Path) -> Path:
     def arcname(path: Path) -> str:
         path = path.resolve()
         return str(path.relative_to(directory)) if path.is_relative_to(directory) else path.name
+
+    from snappy_wrappers.snappy_wrapper import SCRIPT_SUFFIXES, script_path
 
     with tarfile.open(target, "w:gz") as tar:
         tar.add(snakemake_log, arcname=arcname(snakemake_log))

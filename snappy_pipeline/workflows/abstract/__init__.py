@@ -16,7 +16,6 @@ from functools import cached_property, wraps
 from typing import Any, Callable
 
 import pydantic
-from snakemake.api import Workflow
 from snakemake.io import expand, report, temp
 from snakemake.iocontainers import InputFiles, OutputFiles, Wildcards
 
@@ -51,6 +50,8 @@ from snappy_pipeline.workflows.abstract.protocol import (
 )
 
 if typing.TYPE_CHECKING:
+    from snakemake.api import Workflow
+
     from snappy_pipeline.orchestration import Project
 from snappy_pipeline.resource_usage import ResourceUsage, mem_mb, runtime_minutes
 
@@ -643,7 +644,7 @@ class BaseStep:
         task name; ``load_project()`` rejects other tasks named like one of them."""
         return frozenset()
 
-    def __init__(self, workflow: Workflow, project: "Project", task_name: str):
+    def __init__(self, workflow: "Workflow", project: "Project", task_name: str):
         self.step_name = self.__class__.name
         self.workflow = workflow
         self.project = project

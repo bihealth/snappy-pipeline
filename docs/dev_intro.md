@@ -130,8 +130,8 @@ The workflow class derives from {class}`BaseStep <snappy_pipeline.workflows.abst
 It sets `name`, `config_model_class` and `produces`.
 It names its step parts in `tool_parts` and `helper_parts`, and `BaseStep.__init__` registers them.
 A step whose parts depend on more than the tool registers them itself with `register_sub_step_classes(...)`.
-`WORKFLOW_REGISTRY` in `snappy_pipeline/workflow_registry.py` lists the workflow classes.
-A new step needs an entry there.
+`WORKFLOW_CLASSES` in `snappy_pipeline/workflow_registry.py` maps each step name to the name of its workflow class.
+A new step needs an entry there; `WORKFLOW_REGISTRY` imports the class from `snappy_pipeline/workflows/<step name>/` on first access.
 
 A step part derives from {class}`BaseStepPart <snappy_pipeline.workflows.abstract.BaseStepPart>`.
 It implements one tool or one helper of the step.

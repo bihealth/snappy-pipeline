@@ -12,6 +12,7 @@ from types import SimpleNamespace
 
 import pytest
 from click.testing import CliRunner
+from snakemake.common.configfile import load_configfile
 
 from snappy_pipeline.apps import snappy_cli
 
@@ -368,9 +369,7 @@ def test_task_add_keeps_the_style_of_the_config_and_comments_the_new_task(tmp_pa
     assert any(line.startswith("        #alignments: ''") for line in lines)
     assert "      tool:" in {line.split("#")[0].rstrip() for line in lines}
     # The file still loads, with both tasks
-    assert [
-        task["name"] for task in snappy_cli.load_configfile(str(tmp_path / "config.yaml"))["tasks"]
-    ] == [
+    assert [task["name"] for task in load_configfile(str(tmp_path / "config.yaml"))["tasks"]] == [
         "genome",
         "bwa_index",
         "reads",
@@ -463,7 +462,7 @@ def test_task_add_minimal_writes_the_required_fields_only(tmp_path):
     # No descriptions, only the REQUIRED tags
     assert not any(line.lstrip().startswith("#") for line in text.splitlines())
     assert "# REQUIRED for tool: star" in text and "Options:" not in text
-    config = snappy_cli.load_configfile(str(tmp_path / "config.yaml"))
+    config = load_configfile(str(tmp_path / "config.yaml"))
     assert config["tasks"][0]["config"]["depends_on"] == {
         "reads": None,
         "index": None,
@@ -485,7 +484,7 @@ def test_init_writes_the_static_sections_before_the_tasks(tmp_path):
     sheets, tasks = lines.index("sample_sheets:"), lines.index("tasks:")
     assert sheets < tasks < lines.index("  - name: genome") < lines.index("  - name: mapping")
     assert not any(line.startswith("#") for line in lines[tasks:])
-    config = snappy_cli.load_configfile(str(project / "config.yaml"))
+    config = load_configfile(str(project / "config.yaml"))
     # The reads task of the template comes first
     assert [task["name"] for task in config["tasks"]] == ["reads", "genome", "mapping"]
     assert config["sample_sheets"] == ["samplesheet.tsv"]
