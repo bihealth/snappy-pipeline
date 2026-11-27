@@ -414,7 +414,7 @@ def cadd_values(record: Record) -> dict[str, float | None]:
 
 def cadd_columns() -> dict[str, Column]:
     return {
-        "CADD": ticks(precision=1, domain=(0, 50)),
+        "CADD": ticks(precision=1, domain=(0, 99)),
         "CADD raw": Column(precision=3, display="available"),
     }
 

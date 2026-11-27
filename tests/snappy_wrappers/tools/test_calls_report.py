@@ -383,7 +383,7 @@ def test_cadd_and_spliceai_come_from_the_fields_mehari_adds():
     frame = summary.table.frame
     columns = summary.table.columns
 
-    assert frame["CADD"].to_list() == [12.3, 3.5, None, None, 22.0, None]
+    assert frame["CADD"].to_list() == [12.3, 3.5, None, None, 61.0, None]
     assert frame["CADD raw"].to_list()[:2] == [1.234, -0.21]
     # The largest delta score over the effects and genes; the predictions per gene on demand
     assert frame["SpliceAI"].to_list() == [0.35, 0.8, None, None, None, None]
@@ -399,7 +399,7 @@ def test_cadd_and_spliceai_come_from_the_fields_mehari_adds():
         "SpliceAI",
         "SpliceAI predictions",
     ]
-    assert columns["CADD"].plot["ticks"]["domain"] == [0, 50]
+    assert columns["CADD"].plot["ticks"]["domain"] == [0, 99]
     assert columns["CADD"].display is None
     assert columns["CADD raw"].display == "available"
     assert columns["SpliceAI predictions"].display == "available"
