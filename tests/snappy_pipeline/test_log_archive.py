@@ -11,7 +11,11 @@ import pytest
 from click.testing import CliRunner
 
 from snappy_pipeline.apps.snappy_cli import main
+from snappy_pipeline import __version__, log_archive
 from snappy_pipeline.log_archive import (
+    checkout_commit,
+    direct_url_commit,
+    pipeline_version,
     archive_after_run,
     build_archive,
     git_state,
@@ -156,8 +160,52 @@ def test_register_hooks_records_the_git_state_when_the_run_starts(
     hooks["start"]([str(snakemake_log)])
 
     record = (tmp_path / ".snakemake" / "log" / f"{STAMP}.git.txt").read_text()
-    assert record.startswith(f"commit {commit}\nuncommitted changes:\n")
+    assert record.startswith(f"snappy-pipeline {__version__}")
+    assert f"\ncommit {commit}\nuncommitted changes:\n" in record
     assert "[snappy] Warning: uncommitted changes in config.yaml" in capsys.readouterr().err
+
+
+def test_register_hooks_records_the_version_outside_a_repository(tmp_path, monkeypatch):
+    hooks = {}
+    register_hooks(_hooks(hooks))
+    snakemake_log = _project(tmp_path)
+    monkeypatch.chdir(tmp_path)
+    monkeypatch.setattr(log_archive, "pipeline_commit", lambda: ("abc123", False))
+
+    hooks["start"]([str(snakemake_log)])
+
+    record = (tmp_path / ".snakemake" / "log" / f"{STAMP}.git.txt").read_text()
+    assert record == f"snappy-pipeline {__version__} (commit abc123)\n"
+
+
+@needs_git
+def test_checkout_commit_names_the_commit_of_a_checkout(tmp_path, git):
+    commit = _repository(tmp_path, git)
+    assert checkout_commit(tmp_path) == (commit, False)
+    (tmp_path / "config.yaml").write_text("tasks: [a]\n")
+    assert checkout_commit(tmp_path) == (commit, True)
+    # a directory below the checkout is not the checkout
+    (tmp_path / "env").mkdir()
+    assert checkout_commit(tmp_path / "env") is None
+
+
+def test_checkout_commit_is_none_outside_a_repository(tmp_path):
+    assert checkout_commit(tmp_path) is None
+
+
+def test_direct_url_commit_reads_a_git_install():
+    git_install = '{"url": "https://x/y.git", "vcs_info": {"commit_id": "abc123", "vcs": "git"}}'
+    assert direct_url_commit(git_install) == "abc123"
+    assert direct_url_commit('{"url": "file:///x", "dir_info": {"editable": true}}') is None
+    assert direct_url_commit(None) is None
+
+
+def test_pipeline_version_names_the_commit(monkeypatch):
+    monkeypatch.setattr(log_archive, "pipeline_commit", lambda: ("a" * 40, True))
+    assert pipeline_version() == f"snappy-pipeline {__version__} (commit {'a' * 12}, modified)"
+    assert pipeline_version(full_commit=True).endswith(f"(commit {'a' * 40}, modified)")
+    monkeypatch.setattr(log_archive, "pipeline_commit", lambda: None)
+    assert pipeline_version() == f"snappy-pipeline {__version__}"
 
 
 def test_register_hooks_archives_the_logs_when_the_run_ends(tmp_path, monkeypatch, capsys):

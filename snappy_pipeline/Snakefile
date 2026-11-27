@@ -1,6 +1,7 @@
 import os
 import sys
 from snappy_pipeline.base import ConfigError
+from snappy_pipeline.log_archive import pipeline_version
 from snappy_pipeline.orchestration import (
     ON_HOLD_STEPS,
     create_task_instances,
@@ -40,7 +41,7 @@ try:
     target_task_names = select_target_tasks(project, target_task)
     module_task_names = target_task_names if frozen else [task.name for task in project.tasks]
     task_instances = create_task_instances(workflow, project, module_task_names)
-    print(f"[snappy] Targeting {_mode_desc}", flush=True)
+    print(f"[snappy] {pipeline_version()}, targeting {_mode_desc}", flush=True)
     # Once per run, not again in each cluster job
     if workflow.is_main_process:
         print_library_summary(task_instances)

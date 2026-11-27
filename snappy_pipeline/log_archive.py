@@ -6,12 +6,14 @@ the slurm executor logs the slurm log file of every job it submits. The archive 
 files plus a copy of the snkmt database, so building it reads one log instead of walking the
 task directories.
 
-In a git repository, the start hook of a run writes the commit of the configuration and its
-uncommitted changes next to the Snakemake log (``<run start>.git.txt``), and the archive holds
-that record too.
+The start hook of a run writes the record ``<run start>.git.txt`` next to the Snakemake log: the
+version of snappy-pipeline with the commit it runs from, and, in a git repository, the commit of
+the configuration and its uncommitted changes. The archive holds that record too.
 """
 
 import contextlib
+import importlib.metadata
+import json
 import os
 import re
 import shutil
@@ -22,6 +24,9 @@ import tarfile
 import tempfile
 from dataclasses import dataclass
 from pathlib import Path
+
+import snappy_pipeline
+from snappy_pipeline import __version__
 
 #: ``log:`` line of a job in the Snakemake log, with comma-separated paths
 _JOB_LOGS = re.compile(r"^    log: (.+)$", re.M)
@@ -81,6 +86,60 @@ def git_state(directory: Path) -> GitState | None:
     return GitState(head.stdout.strip(), status, diff)
 
 
+def checkout_commit(directory: Path) -> tuple[str, bool] | None:
+    """The commit of the git checkout at ``directory`` and whether it has uncommitted changes.
+
+    None without git, or when ``directory`` is not the top level of a repository, as a package
+    installed into an environment below a repository is not that repository's checkout.
+    """
+    top = run_git(directory, "rev-parse", "--show-toplevel")
+    if top is None or top.returncode != 0 or Path(top.stdout.strip()).resolve() != directory:
+        return None
+    head = run_git(directory, "rev-parse", "HEAD")
+    if head is None or head.returncode != 0:
+        return None
+    status = run_git(directory, "status", "--porcelain", "--untracked-files=no")
+    return head.stdout.strip(), bool(status and status.stdout.strip())
+
+
+def direct_url_commit(direct_url: str | None) -> str | None:
+    """The commit in the ``direct_url.json`` of a package installed from git, else None."""
+    if not direct_url:
+        return None
+    return json.loads(direct_url).get("vcs_info", {}).get("commit_id") or None
+
+
+def pipeline_commit() -> tuple[str, bool] | None:
+    """The commit snappy-pipeline runs from and whether its checkout has uncommitted changes.
+
+    From the checkout of an editable install, else from the ``direct_url.json`` of a package
+    installed from git (``pip install git+...``); None for a wheel or sdist install.
+    """
+    checkout = Path(snappy_pipeline.__file__).resolve().parent.parent
+    if commit := checkout_commit(checkout):
+        return commit
+    try:
+        direct_url = importlib.metadata.distribution("snappy-pipeline").read_text("direct_url.json")
+    except importlib.metadata.PackageNotFoundError:
+        return None
+    commit_id = direct_url_commit(direct_url)
+    return (commit_id, False) if commit_id else None
+
+
+def pipeline_version(full_commit: bool = False) -> str:
+    """``snappy-pipeline <version>`` with the commit it runs from, when known.
+
+    ``modified`` marks a checkout with uncommitted changes; the commit is abbreviated to 12
+    characters unless ``full_commit``.
+    """
+    commit = pipeline_commit()
+    if commit is None:
+        return f"snappy-pipeline {__version__}"
+    sha, modified = commit
+    sha = sha if full_commit else sha[:12]
+    return f"snappy-pipeline {__version__} (commit {sha}{', modified' if modified else ''})"
+
+
 def untracked_sheet_hints(directory: str, tables: list[str], sheets: list[str]) -> list[str]:
     """Hints for the files tables that the run record misses: ignored by git while a sample sheet
     is tracked, or allowed but not committed; nothing outside a repository."""
@@ -119,14 +178,17 @@ def git_record_path(snakemake_log: Path) -> Path:
 
 
 def record_git_state(directory: Path, snakemake_logs: list[str]) -> None:
-    """Write the git record of the run next to its Snakemake log and warn about uncommitted
-    changes; the start hook of the workflow."""
+    """Write the record of the run next to its Snakemake log and warn about uncommitted changes;
+    the start hook of the workflow.
+
+    The record names the version and commit of snappy-pipeline and, in a git repository, the
+    commit of the configuration with the diff of its uncommitted changes.
+    """
     state = git_state(Path(directory))
-    if state is None:
-        return
+    record = pipeline_version(full_commit=True) + "\n" + (state.text if state else "")
     for snakemake_log in snakemake_logs:
-        git_record_path(snakemake_log).write_text(state.text)
-    if state.status:
+        git_record_path(snakemake_log).write_text(record)
+    if state is not None and state.status:
         print(
             "[snappy] Warning: uncommitted changes in "
             + ", ".join(state.changed_files)

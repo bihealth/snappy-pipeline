@@ -309,9 +309,10 @@ It holds:
 - the Snakemake log of the run,
 - the logs of the jobs that ran, with their SLURM logs,
 - a copy of the `snkmt` database,
-- in a git repository, the record `.snakemake/log/<run start>.git.txt`.
-  The run writes it at its start, with the commit of the configuration and the diff of uncommitted changes to tracked files.
+- the record `.snakemake/log/<run start>.git.txt`.
+  The run writes it at its start: the version of snappy-pipeline with the commit it runs from (`modified` marks a checkout with uncommitted changes), and, in a git repository, the commit of the configuration and the diff of uncommitted changes to tracked files.
   snappy warns about uncommitted changes.
+  `snappy --version` prints the same version line.
 
 Next to each job log lie the scripts of the job with every placeholder filled in: `<name>.sh`, the shell script as run, and `<name>.R` or `<name>.py` when the wrapper embeds an R or Python script.
 From the project directory, `bash <name>.sh` reruns the job and `Rscript <name>.R` its R part; the archive holds the scripts.

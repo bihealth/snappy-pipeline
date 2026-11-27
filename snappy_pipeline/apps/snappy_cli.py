@@ -27,9 +27,9 @@ import ruamel.yaml as ruamel_yaml
 from ruamel.yaml.comments import CommentedMap
 from ruamel.yaml.util import load_yaml_guess_indent
 
-from .. import __version__
 from ..base import CONFIG_FILE, ConfigError
 from ..log_archive import (
+    pipeline_version,
     SNKMT_DB,
     build_archive,
     git_state,
@@ -378,8 +378,23 @@ def setup_logging(verbose):
     package_logger.setLevel(logging.DEBUG if verbose else logging.INFO)
 
 
+def _print_version(ctx: click.Context, _param: click.Parameter, value: bool) -> None:
+    """``--version``: the version and the commit snappy-pipeline runs from."""
+    if not value or ctx.resilient_parsing:
+        return
+    click.echo(pipeline_version())
+    ctx.exit()
+
+
 @click.group()
-@click.version_option(__version__, "--version", help="Show version and exit")
+@click.option(
+    "--version",
+    is_flag=True,
+    expose_value=False,
+    is_eager=True,
+    callback=_print_version,
+    help="Show the version and the commit snappy runs from, then exit",
+)
 def main():
     """SNAPPY Nucleic Acid Processing in Python."""
     pass
