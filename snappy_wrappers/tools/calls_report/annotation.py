@@ -7,7 +7,9 @@ Population frequencies come from the fields mehari adds with ``--frequencies`` (
 ``gnomad_genomes_*``, which hold gnomAD mtDNA on chrM, and ``helix_*``:
 allele numbers and carrier counts,
 from which the allele frequency is computed) or from VEP's ``gnomADe_AF`` and ``gnomADg_AF``;
-the ClinVar classification from mehari's ``clinvar_germline_classification`` and ``clinvar_vcv`` or VEP's ``CLIN_SIG``.
+the ClinVar classification from mehari's ``clinvar_germline_classification`` and ``clinvar_vcv`` or VEP's ``CLIN_SIG``;
+the CADD scores from mehari's ``CADD_PHRED`` and ``CADD_RAW``,
+the SpliceAI predictions from its ``SpliceAI_pred_*`` fields (one entry per gene).
 A VCF without a field gets no column.
 The linkouts are datavzrd ``link-to-url`` entries;
 the ones that depend on the genome build (gnomAD, ClinVar and dbSNP by position,
@@ -123,6 +125,9 @@ MEHARI_FREQUENCIES = {
 
 #: The frequency columns of VEP, by table column
 VEP_FREQUENCIES = {"gnomAD exomes AF": "gnomADe_AF", "gnomAD genomes AF": "gnomADg_AF"}
+
+#: The SpliceAI effects in the order of mehari's fields: acceptor gain and loss, donor gain and loss
+SPLICEAI_EFFECTS = ("AG", "AL", "DG", "DL")
 
 INSPECT_URL = "https://varlociraptor.github.io/varlociraptor-inspect/"
 
@@ -383,6 +388,68 @@ def clinvar_columns(links: dict[str, str]) -> dict[str, Column]:
         "ClinVar": pills(domain, colors, ellipsis=24, links=links or None),
         "ClinVar VCV": Column(display="available"),
         "clinvar_id": Column(display="hidden"),
+    }
+
+
+def _float(text: str | None) -> float | None:
+    return None if text in (None, "", ".") else float(text)
+
+
+def _list(text: str | None) -> list[str]:
+    """The entries of a ``Number=.`` field; empty when the field is missing."""
+    return [] if text in (None, "", ".") else text.split(",")
+
+
+def has_cadd(vcf: Vcf) -> bool:
+    return "CADD_PHRED" in vcf.info
+
+
+def cadd_values(record: Record) -> dict[str, float | None]:
+    """``CADD``: the PHRED-scaled score; ``CADD raw``: the raw score."""
+    return {
+        "CADD": _float(record.info.get("CADD_PHRED")),
+        "CADD raw": _float(record.info.get("CADD_RAW")),
+    }
+
+
+def cadd_columns() -> dict[str, Column]:
+    return {
+        "CADD": ticks(precision=1, domain=(0, 50)),
+        "CADD raw": Column(precision=3, display="available"),
+    }
+
+
+def has_spliceai(vcf: Vcf) -> bool:
+    return all(f"SpliceAI_pred_DS_{effect}" in vcf.info for effect in SPLICEAI_EFFECTS)
+
+
+def spliceai_values(record: Record) -> dict[str, Any]:
+    """``SpliceAI``: the largest delta score of the predictions;
+    ``SpliceAI predictions``: per gene the delta score and position of each effect."""
+    symbols = _list(record.info.get("SpliceAI_pred_SYMBOL"))
+    scores = {e: _list(record.info.get(f"SpliceAI_pred_DS_{e}")) for e in SPLICEAI_EFFECTS}
+    positions = {e: _list(record.info.get(f"SpliceAI_pred_DP_{e}")) for e in SPLICEAI_EFFECTS}
+    deltas = [_float(score) for effect in SPLICEAI_EFFECTS for score in scores[effect]]
+    observed = [delta for delta in deltas if delta is not None]
+    predictions = []
+    for index, symbol in enumerate(symbols):
+        effects = []
+        for effect in SPLICEAI_EFFECTS:
+            if index < len(scores[effect]) and scores[effect][index] != ".":
+                position = positions[effect][index] if index < len(positions[effect]) else "."
+                sign = "+" if position.isdigit() else ""
+                effects.append(f"{effect} {scores[effect][index]} ({sign}{position})")
+        predictions.append(f"{symbol}: {', '.join(effects)}")
+    return {
+        "SpliceAI": max(observed) if observed else None,
+        "SpliceAI predictions": "; ".join(predictions),
+    }
+
+
+def spliceai_columns() -> dict[str, Column]:
+    return {
+        "SpliceAI": ticks(precision=2, domain=(0, 1)),
+        "SpliceAI predictions": Column(display="available"),
     }
 
 

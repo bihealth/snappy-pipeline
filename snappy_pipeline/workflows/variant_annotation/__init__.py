@@ -10,7 +10,8 @@ The tool's database comes from ``depends_on.database``, an ``external_data`` tas
 Its ``files`` give the keys below.
 
 - ``vep``: ``cache`` (the VEP cache directory).
-- ``mehari``: ``transcript_db`` (one path or a list), and optionally ``frequency_db`` and ``clinvar_db``.
+- ``mehari``: ``transcript_db`` (one path or a list), and optionally ``frequency_db``, ``clinvar_db``, ``cadd_db``, ``spliceai_db`` and ``dbsnp_db``, databases built with annonars.
+  CADD adds ``CADD_RAW`` and ``CADD_PHRED``, SpliceAI the ``SpliceAI_pred_*`` fields (delta scores and positions per gene), dbSNP the rsID in ``ID``.
   Mehari 0.51 reads only transcript databases built by mehari 0.47 or newer (mehari-data-tx 0.14 or newer).
   The VarFish export wrappers run the same mehari version, so one database task serves both.
 
@@ -124,6 +125,12 @@ class MehariStepPart(VariantAnnotationStepPart):
             yield "frequencies", database.frequency_db
         if database.clinvar_db:
             yield "clinvar", database.clinvar_db
+        if database.cadd_db:
+            yield "cadd", database.cadd_db
+        if database.spliceai_db:
+            yield "spliceai", database.spliceai_db
+        if database.dbsnp_db:
+            yield "dbsnp", database.dbsnp_db
 
     def _get_params_run(self, wildcards):
         """Pass the options; the files (reference, databases) are inputs."""

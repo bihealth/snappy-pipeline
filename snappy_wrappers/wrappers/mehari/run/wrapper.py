@@ -23,11 +23,12 @@ if isinstance(tx_dbs, str):
     tx_dbs = [tx_dbs]
 tx_args = " ".join([f"--transcripts {tx}" for tx in tx_dbs])
 
-freq_db = snakemake.input.get("frequencies", "")
-freq_arg = f"--frequencies {freq_db}" if freq_db else ""
-
-clinvar_db = snakemake.input.get("clinvar", "")
-clinvar_arg = f"--clinvar {clinvar_db}" if clinvar_db else ""
+# The optional databases, each an input only when the task's database gives it
+databases = " ".join(
+    f"--{option} {path}"
+    for option in ("frequencies", "clinvar", "cadd", "spliceai", "dbsnp")
+    if (path := snakemake.input.get(option))
+)
 
 ShellWrapper(snakemake).run(
     r"""
@@ -37,8 +38,7 @@ bcftools norm --multiallelics -any {snakemake.input.vcf} --threads {num_threads}
     | mehari annotate seqvars \
         {mehari_options} \
         {tx_args} \
-        {freq_arg} \
-        {clinvar_arg} \
+        {databases} \
         {extra_arguments} \
         --reference {snakemake.input.reference} \
         --input - \

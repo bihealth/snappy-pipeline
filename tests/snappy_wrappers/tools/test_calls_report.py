@@ -378,6 +378,46 @@ def test_frequencies_and_clinvar_come_from_the_fields_mehari_adds():
     assert frame["id"].to_list() == ["", "rs123", "", "", "rs456", ""]
 
 
+def test_cadd_and_spliceai_come_from_the_fields_mehari_adds():
+    summary = summarize(str(ANNOTATED))
+    frame = summary.table.frame
+    columns = summary.table.columns
+
+    assert frame["CADD"].to_list() == [12.3, 3.5, None, None, 22.0, None]
+    assert frame["CADD raw"].to_list()[:2] == [1.234, -0.21]
+    # The largest delta score over the effects and genes; the predictions per gene on demand
+    assert frame["SpliceAI"].to_list() == [0.35, 0.8, None, None, None, None]
+    assert frame["SpliceAI predictions"][1] == (
+        "SOX5: AG 0.00 (+1), AL 0.00 (+0), DG 0.00 (+0), DL 0.05 (-7); "
+        "GENEB: AG 0.10 (-2), AL 0.00 (+0), DG 0.00 (+0), DL 0.80 (+15)"
+    )
+    assert frame["SpliceAI predictions"][4] == ""
+    after_clinvar = list(columns).index("clinvar_id") + 1
+    assert list(columns)[after_clinvar : after_clinvar + 4] == [
+        "CADD",
+        "CADD raw",
+        "SpliceAI",
+        "SpliceAI predictions",
+    ]
+    assert columns["CADD"].plot["ticks"]["domain"] == [0, 50]
+    assert columns["CADD"].display is None
+    assert columns["CADD raw"].display == "available"
+    assert columns["SpliceAI predictions"].display == "available"
+    assert "`CADD`: the PHRED-scaled CADD score" in summary.table.desc
+    _validate(summary)
+
+
+def test_the_tasks_display_modes_override_the_defaults(capsys):
+    options = Options(columns={"CADD raw": "normal", "gene": "pinned", "nothing": "hidden"})
+    summary = summarize(str(ANNOTATED), options)
+
+    assert summary.table.columns["CADD raw"].display == "normal"
+    assert summary.table.columns["gene"].display == "pinned"
+    assert summary.table.columns["gene"].links is None  # the other settings stay
+    assert "no column 'nothing'" in capsys.readouterr().err
+    _validate(summary)
+
+
 def test_linkouts_follow_the_assembly_and_the_selection():
     grch37 = summarize(str(ANNOTATED), Options(linkouts=LINKOUTS, assembly="GRCh37")).table
     grch38 = summarize(str(ANNOTATED), Options(linkouts=LINKOUTS, assembly="GRCh38")).table

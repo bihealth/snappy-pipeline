@@ -64,6 +64,30 @@ def test_mehari_database_may_list_transcript_databases():
     assert "clinvar" not in inputs
 
 
+def test_mehari_database_may_add_cadd_spliceai_and_dbsnp():
+    databases = _external(
+        "mehari_db",
+        "database",
+        ["mehari"],
+        files={
+            "transcript_db": "/db/txs.bin.zst",
+            "cadd_db": "/db/cadd",
+            "spliceai_db": "/db/spliceai",
+            "dbsnp_db": "/db/dbsnp",
+        },
+    )
+    project = load_project(
+        _config(_mapping(), _calling(), databases, _mehari_annotation()), WORK_DIR
+    )
+    inputs = _annotation_inputs(MehariStepPart, project)
+    assert (inputs["cadd"], inputs["spliceai"], inputs["dbsnp"]) == (
+        "/db/cadd",
+        "/db/spliceai",
+        "/db/dbsnp",
+    )
+    assert "frequencies" not in inputs and "clinvar" not in inputs
+
+
 def test_mehari_database_needs_transcripts():
     databases = _external("mehari_db", "database", ["mehari"], files={"clinvar_db": "/db/clinvar"})
     with pytest.raises(ValueError, match="transcript_db"):

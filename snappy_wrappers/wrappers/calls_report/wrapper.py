@@ -26,6 +26,7 @@ def main():
         page_size=args["page_size"],
         max_in_memory_rows=args["max_in_memory_rows"],
         linkouts=tuple(args["linkouts"]),
+        columns=args["columns"],
         assembly=args["assembly"],
         pedigree=tuple(args["pedigree"]),
     )

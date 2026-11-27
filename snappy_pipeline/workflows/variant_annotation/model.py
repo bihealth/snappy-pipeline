@@ -33,6 +33,15 @@ class ExpectedMehariDatabase(SnappyModel):
 
     clinvar_db: str | None = None
 
+    cadd_db: str | None = None
+    """The CADD database (``annonars cadd import``), for ``CADD_RAW`` and ``CADD_PHRED``"""
+
+    spliceai_db: str | None = None
+    """The SpliceAI database (``annonars spliceai import``), for the ``SpliceAI_pred_*`` fields"""
+
+    dbsnp_db: str | None = None
+    """The dbSNP database (``annonars dbsnp import``), which writes the rsID into ``ID``"""
+
 
 class VariantAnnotationDependsOn(SnappyModel):
     variants: Annotated[

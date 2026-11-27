@@ -97,6 +97,7 @@ class DatavzrdStepPart(BaseStepPart):
             "page_size": self.config.page_size,
             "max_in_memory_rows": self.config.max_in_memory_rows,
             "linkouts": [str(link) for link in self.config.linkouts],
+            "columns": self.config.columns,
             "assembly": self.assembly(),
             "igv": self._igv_params(wildcards.library_name),
             "pedigree": self.pedigree(wildcards.library_name),

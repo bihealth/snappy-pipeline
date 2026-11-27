@@ -61,10 +61,19 @@ def test_the_report_reads_the_vcf_of_the_entity_from_the_upstream_task():
             "sequence_ontology",
             "varlociraptor_inspect",
         ],
+        "columns": {},
         "assembly": None,
         "igv": None,
         "pedigree": [],
     }
+
+
+def test_the_display_modes_of_columns_reach_the_report():
+    part = _part(columns={"CADD": "pinned", "gnomAD hom": "normal"})
+    params = part._get_params_run(SimpleNamespace(library_name="P001-N1-DNA1-WES1"))
+    assert params["columns"] == {"CADD": "pinned", "gnomAD hom": "normal"}
+    with pytest.raises(ValidationError, match="shown"):
+        _part(columns={"CADD": "shown"})
 
 
 def test_the_steps_extra_arguments_reach_the_datavzrd_command():

@@ -635,6 +635,7 @@
    "args": {
     "assembly": null,
     "code": "<hash>",
+    "columns": {},
     "extra_arguments": [],
     "igv": null,
     "linkouts": [

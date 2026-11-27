@@ -27,6 +27,14 @@ class Linkout(enum.StrEnum):
     varlociraptor_inspect = "varlociraptor_inspect"
 
 
+class DisplayMode(enum.StrEnum):
+    normal = "normal"
+    pinned = "pinned"
+    available = "available"
+    detail = "detail"
+    hidden = "hidden"
+
+
 class IgvViews(ToolModel):
     """IGV views (igv-reports) of the top calls of each view in one page,
     ``igv/top.html`` in the site, which the ``igv`` column of the calls table links to;
@@ -76,7 +84,7 @@ class VariantReport(SnappyStepModel, ToolModel):
     varlociraptor's event probabilities and observations, or the genotypes,
     allele frequencies and depths of other callers;
     the gene, consequence, impact and HGVS of annotated variants;
-    the gnomAD frequency and ClinVar classification that mehari adds.
+    the gnomAD frequency, ClinVar classification, CADD and SpliceAI scores that mehari adds.
     ``extra_arguments`` go to ``datavzrd``."""
 
     depends_on: VariantReportDependsOn
@@ -97,6 +105,12 @@ class VariantReport(SnappyStepModel, ToolModel):
     and of its consequences (``sequence_ontology``); empty for none.
     gnomAD, ClinVar and dbSNP by position and Ensembl need the genome build,
     which an annotation task in the chain tags its variants with; without one they are left out"""
+
+    columns: dict[str, DisplayMode] = {}
+    """The display mode of a table column over the report's default, by column name as the result TSV has it:
+    ``normal``, ``pinned`` (kept at the left when the table scrolls), ``available`` (hidden until the reader shows it),
+    ``detail`` (in the details of a row) or ``hidden`` (kept for links, tooltips and the TSV),
+    e.g. ``{CADD: pinned, gnomAD hom: normal}``; a column the table lacks is noted in the log"""
 
     igv: IgvViews | None = None
     """IGV views of the top calls of each view,

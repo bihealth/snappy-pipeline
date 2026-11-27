@@ -262,6 +262,9 @@ The columns follow what the VCF carries:
   The consequences are pills on one line, split at `&` in the annotator's order (mehari: the most severe first), each colored by its own impact and labelled without the `_variant` suffix, with the term on hover; `impact` is the highest of them.
   A call with more than three consequences shows two and a `+N` pill, which lists the rest on hover and shows them on click.
   The frequency and ClinVar fields of mehari add the gnomAD frequency and the ClinVar classification.
+  Its CADD fields add `CADD` (the PHRED-scaled score, the raw score on demand), its SpliceAI fields `SpliceAI` (the largest delta score, the predictions per gene on demand), and its dbSNP annotation fills `id` with the rsID.
+- `columns` sets the display mode of any column over these defaults, by its name in the result TSV: `normal`, `pinned`, `available`, `detail` or `hidden`, for example `columns: {CADD: pinned, gnomAD hom: normal}`.
+  A column the table lacks is noted in the log.
 - `linkouts` open in a new window: gnomAD, ClinVar, dbSNP, Ensembl, GeneCards, OMIM, the Sequence Ontology (each consequence pill) and varlociraptor-inspect.
   varlociraptor-inspect shows the observations of a call and puts no sample names into its link.
   The linkouts that depend on the genome build need an annotation task in the chain, because that task tags its variants with the assembly.

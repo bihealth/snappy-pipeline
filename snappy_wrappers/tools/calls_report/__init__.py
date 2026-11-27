@@ -9,7 +9,8 @@ with varlociraptor's ``PROB_*`` fields the posterior probability of every event 
 otherwise the genotype, allele frequency, alt reads,
 depth and genotype quality of each sample (:mod:`.samples`);
 with an ``ANN`` or ``CSQ`` annotation the gene, consequence, impact and HGVS of the picked entry,
-and with mehari's frequency and ClinVar fields the gnomAD frequency and the ClinVar classification (:mod:`.annotation`).
+with mehari's frequency and ClinVar fields the gnomAD frequency and the ClinVar classification,
+and with its CADD and SpliceAI fields the scores (:mod:`.annotation`).
 A field the VCF lacks gives no column; nothing is required.
 Linkouts (gnomAD, ClinVar, dbSNP, Ensembl, GeneCards, OMIM,
 varlociraptor-inspect) are datavzrd links on the position, gene, ID, ClinVar and inspect columns;
@@ -18,7 +19,8 @@ the build-dependent ones need the assembly.
 
 from __future__ import annotations
 
-from dataclasses import dataclass, field
+import sys
+from dataclasses import dataclass, field, replace
 from typing import Any
 
 import polars as pl
@@ -44,6 +46,8 @@ class Options:
     assembly: str | None = None
     #: The members of the entity's pedigree (see :func:`pedigree.members_of`); empty for none
     pedigree: tuple[dict[str, Any], ...] = ()
+    #: The task's datavzrd display mode of a column over the report's default, by column name
+    columns: dict[str, str] = field(default_factory=dict)
 
 
 def variant_type(ref: str, alt: str, info: dict[str, str]) -> str:
@@ -99,12 +103,15 @@ def rows_and_columns(
 ) -> tuple[list[dict[str, Any]], dict[str, Column]]:
     """The rows of the calls table and the rendering of its columns, in column order:
     the core (with the length and the end of structural variants), the event probabilities,
-    the annotation, the frequencies and ClinVar, the samples,
-    then ID, quality, filter, hints and the inspect link."""
+    the annotation, the frequencies, ClinVar, CADD and SpliceAI, the samples,
+    then ID, quality, filter, hints and the inspect link;
+    ``options.columns`` sets the display mode of a column over the default."""
     events = varlociraptor.events(vcf)
     annotated = annotation.annotation_of(vcf)
     frequencies = annotation.frequency_columns(vcf, annotated)
     clinvar = annotation.has_clinvar(vcf, annotated)
+    cadd = annotation.has_cadd(vcf)
+    spliceai = annotation.has_spliceai(vcf)
     links = annotation.linkouts(set(options.linkouts), options.assembly)
     inspect = events and "varlociraptor_inspect" in options.linkouts
     members = pedigree.members_of(list(options.pedigree), vcf.samples)
@@ -128,6 +135,10 @@ def rows_and_columns(
         row |= annotation.frequency_values(record, frequencies, annotated)
         if clinvar:
             row |= annotation.clinvar_values(record, annotated)
+        if cadd:
+            row |= annotation.cadd_values(record)
+        if spliceai:
+            row |= annotation.spliceai_values(record)
         if events:
             row |= varlociraptor.sample_values(record, vcf.samples)
         else:
@@ -158,6 +169,10 @@ def rows_and_columns(
     columns |= annotation.frequency_column_specs(frequencies)
     if clinvar:
         columns |= annotation.clinvar_columns(links["ClinVar"])
+    if cadd:
+        columns |= annotation.cadd_columns()
+    if spliceai:
+        columns |= annotation.spliceai_columns()
     if events:
         columns |= varlociraptor.sample_columns(vcf, rows, on_demand=with_pedigree)
     else:
@@ -178,6 +193,11 @@ def rows_and_columns(
             del columns[name]
             for row in rows:
                 del row[name]
+    for name, mode in options.columns.items():
+        if name in columns:
+            columns[name] = replace(columns[name], display=mode)
+        else:
+            print(f"columns: this table has no column {name!r}", file=sys.stderr)
     return rows, columns
 
 
@@ -251,6 +271,17 @@ def describe(vcf: Vcf, columns: dict[str, Column], options: Options) -> Descript
         )
     if "ClinVar" in columns:
         column_notes.append("`ClinVar`: the germline classifications; the VCV accession on demand.")
+    if "CADD" in columns:
+        column_notes.append(
+            "`CADD`: the PHRED-scaled CADD score (20: the top 1 % of all possible substitutions, "
+            "30: the top 0.1 %); the raw score on demand."
+        )
+    if "SpliceAI" in columns:
+        column_notes.append(
+            "`SpliceAI`: the largest delta score of the SpliceAI predictions; on demand "
+            "`SpliceAI predictions` with, per gene, the delta score and position of acceptor "
+            "gain (AG), acceptor loss (AL), donor gain (DG) and donor loss (DL)."
+        )
     if "SV length" in columns:
         column_notes.append(
             "`SV length`: the length of a structural variant, `SVLEN` or else the span to `END`; "
