@@ -1,5 +1,6 @@
 """The metro-map rule graph of a run for the report."""
 
+import base64
 import re
 from pathlib import Path
 from types import SimpleNamespace
@@ -13,6 +14,7 @@ from snappy_pipeline.rulegraph import (
     fit_labels,
     rule_graph_dot,
     rule_label,
+    rulegraph_data_uri,
     write_rulegraph,
 )
 
@@ -77,6 +79,20 @@ def test_write_rulegraph_draws_the_rules_and_fits_the_longest_label(tmp_path):
     x = max(float(v) for v in re.findall(r'<text[^>]*x="([0-9.]+)"', text))
     assert left + width >= x + 9 * len(
         "annotation: mehari run with a label that runs past the drawing"
+    )
+
+
+def test_rulegraph_data_uri_embeds_the_svg_in_short_lines(tmp_path):
+    svg = tmp_path / "rulegraph.svg"
+    svg.write_text("<svg/>")
+    assert rulegraph_data_uri(str(svg)) == "data:image/svg+xml;base64,\n   PHN2Zy8+"
+
+    svg.write_text("<svg>" + "x" * 1000 + "</svg>")
+    uri = rulegraph_data_uri(str(svg))
+    lines = uri.split("\n   ")
+    assert all(len(line) <= 76 for line in lines)
+    assert (
+        "".join(lines) == "data:image/svg+xml;base64," + base64.b64encode(svg.read_bytes()).decode()
     )
 
 

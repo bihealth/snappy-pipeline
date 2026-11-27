@@ -11,7 +11,7 @@ from snappy_pipeline.orchestration import (
 )
 from snappy_pipeline.results import MANIFEST, link_results
 from snappy_pipeline.rule_names import TASK_SEPARATOR
-from snappy_pipeline.rulegraph import RULEGRAPH_CONFIG_KEY, RULEGRAPH_SVG
+from snappy_pipeline.rulegraph import RULEGRAPH_CONFIG_KEY, RULEGRAPH_SVG, rulegraph_data_uri
 from snappy_pipeline.sheet_summary import print_library_summary
 from snappy_pipeline.workflows.abstract import BaseStep
 
@@ -22,7 +22,7 @@ configfile: "config.yaml"
 report: "report/workflow.rst"
 
 
-config[RULEGRAPH_CONFIG_KEY] = RULEGRAPH_SVG if os.path.exists(RULEGRAPH_SVG) else ""
+config[RULEGRAPH_CONFIG_KEY] = rulegraph_data_uri() if os.path.exists(RULEGRAPH_SVG) else ""
 
 # Targeting mode:
 #   default          - every task builds and links its result files into output/

@@ -5,6 +5,7 @@ run's DAG (a job's ``run:`` block executes in a spawned Snakemake process with a
 alone), and the report's global description embeds the SVG on its Workflow panel.
 """
 
+import base64
 import xml.etree.ElementTree as ET
 from collections import defaultdict
 from collections.abc import Iterable
@@ -13,7 +14,8 @@ from snappy_pipeline.rule_names import split_task
 
 #: The SVG below the project directory
 RULEGRAPH_SVG = "report/rulegraph.svg"
-#: The config key through which the main Snakefile tells the report description the SVG's path
+#: The config key through which the main Snakefile hands the SVG, as a data URI, to the report
+#: description; Snakemake's ``embeddedimage`` directive leaves the file path in the image tag
 RULEGRAPH_CONFIG_KEY = "__rulegraph__"
 
 #: The width of a label character in the drawing's units (the labels have the viewer's default
@@ -62,6 +64,21 @@ def write_rulegraph(dot: str, path: str) -> None:
         svg = f.read()
     with open(path, "w", encoding="utf-8") as f:
         f.write(fit_labels(svg))
+
+
+def rulegraph_data_uri(path: str = RULEGRAPH_SVG) -> str:
+    """The SVG ``path`` as a data URI, for an ``image`` directive of the report description.
+
+    The base64 text is wrapped into indented lines: docutils rejects a line of more than 10000
+    characters, and it strips the whitespace of a directive's URI argument.
+    """
+    with open(path, "rb") as f:
+        encoded = base64.b64encode(f.read()).decode("ascii")
+    lines = [
+        "data:image/svg+xml;base64,",
+        *(encoded[i : i + 76] for i in range(0, len(encoded), 76)),
+    ]
+    return "\n   ".join(lines)
 
 
 def draw_rulegraph(dag, skip: Iterable[str] = ()) -> bool:
