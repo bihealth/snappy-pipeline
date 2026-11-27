@@ -231,15 +231,15 @@ def test_rule_rows_name_the_task_step_part_and_action():
 
 def test_a_task_may_be_named_like_a_snakemake_global(tmp_path):
     """Snakemake binds a task's module under the module's name in the Snakefile's namespace;
-    a task named report must not shadow Snakemake's report() there."""
-    config = CHECK_FILES_CONFIG.replace("name: mapping", "name: report")
+    a task named workflow must not shadow the workflow object the Snakefile uses after the
+    modules load."""
+    config = CHECK_FILES_CONFIG.replace("name: mapping", "name: workflow")
     _write_project(tmp_path / "project", config)
 
-    # Lists the rules after the Snakefile ran, which defines the rulegraph rule with report()
     result = _snappy(tmp_path / "project", "rules", "--names")
 
     assert result.returncode == 0, result.stderr
-    assert "report__bwa_run" in result.stdout.splitlines(), result.stderr
+    assert "workflow__bwa_run" in result.stdout.splitlines(), result.stderr
 
 
 def test_rules_lists_the_rules_of_the_project(tmp_path):

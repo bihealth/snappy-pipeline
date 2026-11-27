@@ -6,7 +6,7 @@ import glob
 import logging
 import os
 import sys
-from collections.abc import Mapping
+from collections.abc import Iterable, Mapping
 from dataclasses import dataclass
 from dataclasses import field as dataclass_field
 from pathlib import Path
@@ -21,6 +21,7 @@ from snappy_pipeline.log_archive import archive_after_run, record_git_state
 from snappy_pipeline.models import SnappyStepModel
 from snappy_pipeline.reads import FilesTable, read_files_tables
 from snappy_pipeline.rule_names import TASK_SEPARATOR
+from snappy_pipeline.rulegraph import draw_rulegraph
 from snappy_pipeline.workflow_model import ConfigModel, TaskModel
 from snappy_pipeline.workflows.abstract.protocol import (
     DataSignature,
@@ -462,16 +463,25 @@ def task_instance(task_name: str) -> BaseStep:
     return _TASK_INSTANCES[task_name]
 
 
-def register_hooks(workflow: Workflow) -> None:
+def register_hooks(workflow: Workflow, rulegraph_skip: Iterable[str] | None = None) -> None:
     """Record the git state of the configuration when the run starts, archive the logs of the run
-    and print a banner when the workflow fails or succeeds."""
+    and print a banner when the workflow fails or succeeds.
+
+    With ``rulegraph_skip``, the rules to leave out, the start hook also draws the rule graph of
+    the run for the report (``draw_rulegraph``).
+    """
+
+    def start(snakemake_logs: list[str]) -> None:
+        record_git_state(Path.cwd(), snakemake_logs)
+        if rulegraph_skip is not None:
+            draw_rulegraph(workflow.dag, rulegraph_skip)
 
     def finish(snakemake_logs: list[str], message: str) -> None:
         archive_after_run(Path.cwd(), snakemake_logs)
         line = "*" * len(message)
         print(f"\n{line}\n{message}\n{line}\n", file=sys.stderr)
 
-    workflow.onstart(lambda logs: record_git_state(Path.cwd(), logs))
+    workflow.onstart(start)
     workflow.onerror(lambda logs: finish(logs, "Oh no! Something went wrong."))
     workflow.onsuccess(lambda logs: finish(logs, "All done; have a nice day!"))
 

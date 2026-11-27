@@ -6,7 +6,15 @@ from types import SimpleNamespace
 
 from ruamel.yaml import YAML
 
-from snappy_pipeline.rulegraph import fit_labels, rule_graph_dot, rule_label, write_rulegraph
+from snappy_pipeline.orchestration import register_hooks
+from snappy_pipeline.rulegraph import (
+    RULEGRAPH_SVG,
+    draw_rulegraph,
+    fit_labels,
+    rule_graph_dot,
+    rule_label,
+    write_rulegraph,
+)
 
 #: Snakemake's ``--rulegraph`` output of a small run
 DOT = """digraph snakemake_dag {
@@ -77,17 +85,47 @@ def test_fit_labels_keeps_a_drawing_that_is_wide_enough():
         '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0,0,500,100">'
         '<text x="10" y="10">short</text></svg>'
     )
-    assert 'viewBox="0.0 0.0 500.0 100.0"' in fit_labels(svg)
+    fitted = fit_labels(svg)
+    assert 'viewBox="0.0 0.0 500.0 100.0"' in fitted
+    assert 'width="500"' in fitted and 'height="100"' in fitted
     assert fit_labels('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0,0,1,1"/>').endswith("/>")
 
 
-def test_the_rulegraph_job_draws_the_whole_run(tmp_path):
-    """In all-tasks mode the main Snakefile draws the rule graph of the full DAG for the report.
+def test_draw_rulegraph_needs_the_whole_workflow_as_the_target(tmp_path, monkeypatch):
+    """A run with file targets or --until has a partial DAG, which is not drawn."""
+    monkeypatch.chdir(tmp_path)
+    bwa, all_ = Job("mapping__bwa_run"), Job("all")
+    dag = SimpleNamespace(jobs=[all_, bwa], dependencies={all_: [bwa], bwa: []}, targetjobs=[bwa])
+    assert draw_rulegraph(dag, skip=["all"]) is False
+    assert not (tmp_path / RULEGRAPH_SVG).exists()
 
-    The DAG holds the finished jobs too, so a restarted run draws the whole workflow.
-    """
+    dag.targetjobs = [all_]
+    assert draw_rulegraph(dag, skip=["all"]) is True
+    assert "mapping: bwa run" in (tmp_path / RULEGRAPH_SVG).read_text()
+
+
+def test_the_start_hook_draws_the_rule_graph(tmp_path, monkeypatch):
+    """register_hooks draws the graph at the run's start, where the main process holds the DAG."""
+    monkeypatch.chdir(tmp_path)
+    (tmp_path / ".snakemake" / "log").mkdir(parents=True)
+    all_ = Job("all")
+    hooks = {}
+    workflow = SimpleNamespace(
+        onstart=lambda func: hooks.setdefault("start", func),
+        onsuccess=lambda func: None,
+        onerror=lambda func: None,
+        dag=SimpleNamespace(jobs=[all_], dependencies={all_: []}, targetjobs=[all_]),
+    )
+    register_hooks(workflow, rulegraph_skip=["all"])
+
+    hooks["start"]([str(tmp_path / ".snakemake" / "log" / "run.snakemake.log")])
+
+    assert (tmp_path / RULEGRAPH_SVG).exists()
+
+
+def test_the_full_dag_of_a_project_draws_the_whole_run(tmp_path):
+    """The DAG of a full run holds the finished jobs too, so a restarted run draws everything."""
     from snakemake.api import SnakemakeApi
-    from snakemake.io import is_flagged
     from snakemake.settings.types import (
         ConfigSettings,
         DAGSettings,
@@ -112,10 +150,8 @@ def test_the_rulegraph_job_draws_the_whole_run(tmp_path):
         workflow = dag_api.workflow_api._workflow
         workflow._prepare_dag(forceall=True, ignore_incomplete=True, lock_warn_only=True)
         workflow._build_dag()
-        jobs = [job for job in workflow.dag.jobs if job.rule.name == "rulegraph"]
-        assert len(jobs) == 1
-        assert is_flagged(jobs[0].output[0], "report")
-        skip = ["all", "rulegraph", *(f"{name}__results" for name in task_names)]
+        assert any(job.rule.name == "all" for job in workflow.dag.targetjobs)
+        skip = ["all", *(f"{name}__results" for name in task_names)]
         dot = rule_graph_dot(workflow.dag, skip=skip)
 
     labels = re.findall(r'label = "([^"]+)"', dot)

@@ -1,18 +1,20 @@
-"""The rule graph of a run as a metro map for the report, drawn by snakevision."""
+"""The rule graph of a run as a metro map for the report, drawn by snakevision.
 
-import os
+The start hook of ``snappy run`` draws it in the main process, the only place that holds the
+run's DAG (a job's ``run:`` block executes in a spawned Snakemake process with a DAG of that job
+alone), and the report's global description embeds the SVG on its Workflow panel.
+"""
+
 import xml.etree.ElementTree as ET
 from collections import defaultdict
 from collections.abc import Iterable
 
-from snakevision.snakevision import SnakeVision
-
 from snappy_pipeline.rule_names import split_task
 
-#: The SVG below the project directory, a ``report()`` output of the main Snakefile
+#: The SVG below the project directory
 RULEGRAPH_SVG = "report/rulegraph.svg"
-#: Its caption in the report
-RULEGRAPH_CAPTION = os.path.join(os.path.dirname(__file__), "report", "rulegraph.rst")
+#: The config key through which the main Snakefile tells the report description the SVG's path
+RULEGRAPH_CONFIG_KEY = "__rulegraph__"
 
 #: The width of a label character in the drawing's units (the labels have the viewer's default
 #: font size, 16 units)
@@ -52,6 +54,9 @@ def rule_graph_dot(dag, skip: Iterable[str] = ()) -> str:
 
 def write_rulegraph(dot: str, path: str) -> None:
     """Draw the DOT rule graph ``dot`` as the SVG ``path``, wide enough for its longest label."""
+    # Imported here: snakevision pulls in networkx, which the CLI does not need otherwise
+    from snakevision.snakevision import SnakeVision
+
     SnakeVision(dot.splitlines()).write(path)
     with open(path, encoding="utf-8") as f:
         svg = f.read()
@@ -59,10 +64,24 @@ def write_rulegraph(dot: str, path: str) -> None:
         f.write(fit_labels(svg))
 
 
-def fit_labels(svg: str) -> str:
-    """Widen the viewBox of the SVG ``svg`` to the end of its longest label.
+def draw_rulegraph(dag, skip: Iterable[str] = ()) -> bool:
+    """Draw the rule graph of the run's ``dag`` into ``RULEGRAPH_SVG`` and return whether it did.
 
-    dagviz sizes the drawing by its nodes only, so a long label would be cut off.
+    Only a run that targets the whole workflow draws it, that is, one whose target jobs include
+    the final target ``all``: a run with file targets or ``--until`` builds a partial DAG, which
+    would draw a part of the workflow.
+    """
+    if not any(job.rule.name == "all" for job in dag.targetjobs):
+        return False
+    write_rulegraph(rule_graph_dot(dag, skip=skip), RULEGRAPH_SVG)
+    return True
+
+
+def fit_labels(svg: str) -> str:
+    """Widen the viewBox of the SVG ``svg`` to the end of its longest label and size it to that.
+
+    dagviz sizes the drawing by its nodes only, so a long label would be cut off, and it sets
+    the width and height to 100 %, which leaves an ``<img>`` without a size.
     """
     ET.register_namespace("", SVG_NS)
     root = ET.fromstring(svg)
@@ -73,5 +92,9 @@ def fit_labels(svg: str) -> str:
     if not ends:
         return svg
     left, top, width, height = (float(v) for v in root.get("viewBox", "").replace(",", " ").split())
-    root.set("viewBox", f"{left} {top} {max(width, max(ends) - left)} {height}")
+    width = max(width, max(ends) - left)
+    root.set("viewBox", f"{left} {top} {width} {height}")
+    # The drawing's own size instead of 100 %, so that an <img> in the report has a size to show
+    root.set("width", f"{width:g}")
+    root.set("height", f"{height:g}")
     return ET.tostring(root, encoding="unicode")

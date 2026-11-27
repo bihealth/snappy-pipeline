@@ -11,16 +11,18 @@ from snappy_pipeline.orchestration import (
 )
 from snappy_pipeline.results import MANIFEST, link_results
 from snappy_pipeline.rule_names import TASK_SEPARATOR
-from snappy_pipeline.rulegraph import (
-    RULEGRAPH_CAPTION,
-    RULEGRAPH_SVG,
-    rule_graph_dot,
-    write_rulegraph,
-)
+from snappy_pipeline.rulegraph import RULEGRAPH_CONFIG_KEY, RULEGRAPH_SVG
 from snappy_pipeline.sheet_summary import print_library_summary
 from snappy_pipeline.workflows.abstract import BaseStep
 
 configfile: "config.yaml"
+
+
+# The report's Workflow panel: the rule graph of the run, which the start hook of a full run draws
+report: "report/workflow.rst"
+
+
+config[RULEGRAPH_CONFIG_KEY] = RULEGRAPH_SVG if os.path.exists(RULEGRAPH_SVG) else ""
 
 # Targeting mode:
 #   default          - every task builds and links its result files into output/
@@ -51,7 +53,14 @@ except ConfigError as e:
     print(f"[snappy] Error: {e}", file=sys.stderr, flush=True)
     sys.exit(1)
 
-register_hooks(workflow)
+# The start hook draws the rule graph in all-tasks mode, without the final target and the jobs
+# that link the results
+register_hooks(
+    workflow,
+    rulegraph_skip=None
+    if target_task
+    else ["all", *(f"{name}{TASK_SEPARATOR}results" for name in target_task_names)],
+)
 
 for task in project.model.tasks:
     if task.name not in module_task_names:
@@ -110,34 +119,6 @@ for t_name in target_task_names:
         localrule: True
         run:
             link_results(params.task_dir, list(input), output[0])
-
-# The rule graph of the run as a metro map for the report: a local job in the main process draws
-# the DAG itself with snakevision. Its input is the config file, so a changed task layout redraws
-# it; the result-linking jobs and the final target stay out of the picture.
-if not target_task:
-    targets.append(RULEGRAPH_SVG)
-
-    rule rulegraph:
-        input:
-            workflow.configfiles[0],
-        output:
-            # Not "Workflow": Snakemake's report defines an RST link target of that name (its
-            # own panel) in every caption, and a category of the same name would duplicate it
-            report(RULEGRAPH_SVG, category="Rule graph", caption=RULEGRAPH_CAPTION),
-        localrule: True
-        run:
-            write_rulegraph(
-                rule_graph_dot(
-                    workflow.dag,
-                    skip=[
-                        "all",
-                        "rulegraph",
-                        *(f"{name}{TASK_SEPARATOR}results" for name in target_task_names),
-                    ],
-                ),
-                output[0],
-            )
-
 
 rule all:
     input:
